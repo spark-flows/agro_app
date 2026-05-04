@@ -1,0 +1,10 @@
+class EndPoints {
+  static String loginApi = 'api/auth/login';
+  static String productApi = 'api/product';
+  static String customerListApi = 'api/customer';
+  static String createCustomerApi = 'api/customer/create';
+  static String profileApi = 'api/auth/profile';
+  static String orderListApi = 'api/order';
+  static String createOrderApi = 'api/order/create';
+  static String getOneOrderApi = 'api/order/getone';
+}

@@ -1,0 +1,71 @@
+import 'package:get/get.dart';
+import 'package:agro_app/app/pages/auth_screen/screens/register_screen.dart';
+import 'package:agro_app/app/pages/pages.dart';
+import 'package:agro_app/app/pages/profile_screen/profile_binding.dart';
+import 'package:agro_app/app/pages/profile_screen/profile_screen.dart';
+
+part 'app_routes.dart';
+
+class AppPages {
+  static var transitionDuration = const Duration(milliseconds: 300);
+
+  static const initial = _Paths.splashScreen;
+  static final pages = <GetPage>[
+    GetPage<SplashScreen>(
+      name: _Paths.splashScreen,
+      transitionDuration: transitionDuration,
+      page: SplashScreen.new,
+      binding: SplashBinding(),
+      transition: Transition.fadeIn,
+    ),
+    GetPage<RegisterScreen>(
+      name: _Paths.registerScreen,
+      transitionDuration: transitionDuration,
+      page: RegisterScreen.new,
+      binding: AuthBinding(),
+      transition: Transition.fadeIn,
+    ),
+    GetPage<AuthScreen>(
+      name: _Paths.authScreen,
+      transitionDuration: transitionDuration,
+      page: AuthScreen.new,
+      binding: AuthBinding(),
+      transition: Transition.fadeIn,
+    ),
+    GetPage<OtpScreen>(
+      name: _Paths.otpScreen,
+      transitionDuration: transitionDuration,
+      page: OtpScreen.new,
+      binding: AuthBinding(),
+      transition: Transition.fadeIn,
+    ),
+    GetPage<HomeScreen>(
+      name: _Paths.bottomScreen,
+      transitionDuration: transitionDuration,
+      page: HomeScreen.new,
+      binding: HomeBinding(),
+      transition: Transition.fadeIn,
+    ),
+    GetPage<CustomersScreen>(
+      name: _Paths.customersScreen,
+      transitionDuration: transitionDuration,
+      page: CustomersScreen.new,
+      binding: CustomersBinding(),
+      transition: Transition.rightToLeft,
+    ),
+    GetPage<OrdersScreen>(
+      name: _Paths.ordersScreen,
+      transitionDuration: transitionDuration,
+      page: OrdersScreen.new,
+      binding: OrdersBinding(),
+      transition: Transition.rightToLeft,
+    ),
+    GetPage<ProfileScreen>(
+      name: _Paths.profileScreen,
+      transitionDuration: transitionDuration,
+      page: ProfileScreen.new,
+      binding: ProfileBinding(),
+      transition: Transition.rightToLeft,
+    ),
+  ];
+}

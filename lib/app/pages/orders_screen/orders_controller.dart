@@ -1,0 +1,211 @@
+import 'package:agro_app/app/utils/utility.dart';
+import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:agro_app/domain/domain.dart';
+import 'package:agro_app/domain/models/get_order_list.dart';
+import 'package:agro_app/domain/models/get_all_customers_model.dart' as customer_model;
+import 'package:agro_app/domain/models/get_all_order_model.dart';
+import 'package:agro_app/domain/models/get_one_order_model.dart';
+
+class ProductItem {
+  final String id;
+  final String name;
+  final String description;
+  final String price;
+  final num rawPrice;
+  final String unit;
+  final String category;
+  final String emoji;
+  final Color gradStart;
+  final Color gradEnd;
+  int quantity;
+
+  ProductItem({
+    required this.id,
+    required this.name,
+    required this.description,
+    required this.price,
+    required this.rawPrice,
+    required this.unit,
+    required this.category,
+    required this.emoji,
+    required this.gradStart,
+    required this.gradEnd,
+    this.quantity = 0,
+  });
+}
+
+class OrdersController extends GetxController {
+  String selectedCategory = 'All';
+  List<ProductItem> allProducts = [];
+  bool isLoading = false;
+  
+  List<customer_model.Doc> customers = [];
+  String selectedCustomerId = '';
+  bool isPlacingOrder = false;
+  
+  List<GetAllOrderDoc> customerOrders = [];
+  bool isFetchingOrders = false;
+
+  GetOneOrderModel? selectedOrderDetails;
+  bool isFetchingOrderDetails = false;
+
+  final TextEditingController titleController = TextEditingController();
+  final TextEditingController deliveryDateController = TextEditingController();
+  final TextEditingController feedbackController = TextEditingController();
+
+  @override
+  void onInit() {
+    super.onInit();
+    fetchProducts();
+    fetchCustomers();
+  }
+
+  Future<void> fetchCustomers() async {
+    var response = await Get.find<Repository>().getCustomerListApi(isLoading: false);
+    if (response != null && response.data?.docs != null) {
+      customers = response.data!.docs!;
+      update();
+    }
+  }
+
+  Future<void> fetchOrderHistory(String customerId) async {
+    if (customerId.isEmpty) return;
+    isFetchingOrders = true;
+    update();
+    var response = await Get.find<Repository>().getOrderListApi(
+      customerid: customerId, 
+      isLoading: false,
+    );
+    if (response != null && response.data?.docs != null) {
+      customerOrders = response.data!.docs!;
+    } else {
+      customerOrders.clear();
+    }
+    isFetchingOrders = false;
+    update();
+  }
+
+  Future<void> fetchOrderDetails(String orderId) async {
+    isFetchingOrderDetails = true;
+    selectedOrderDetails = null;
+    update();
+    var response = await Get.find<Repository>().getOneOrderApi(
+      orderid: orderId,
+      isLoading: true,
+    );
+    if (response != null) {
+      selectedOrderDetails = response;
+    }
+    isFetchingOrderDetails = false;
+    update();
+  }
+
+  Future<void> fetchProducts() async {
+    isLoading = true;
+    update();
+    ProductListModel? response = await Get.find<Repository>().getProductListApi(isLoading: false);
+    if (response != null && response.data.docs.isNotEmpty) {
+      allProducts = response.data.docs.map((doc) => ProductItem(
+        id: doc.id,
+        name: doc.name,
+        description: doc.description,
+        price: '₹${doc.price}',
+        rawPrice: double.tryParse(doc.price.toString()) ?? 0,
+        unit: 'per ${doc.unit}',
+        category: 'Others',
+        emoji: '📦',
+        gradStart: const Color(0xFF16A34A),
+        gradEnd: const Color(0xFF4ADE80),
+      )).toList();
+    }
+    isLoading = false;
+    update();
+  }
+
+  final List<String> categories = ['All', 'Fertilizers', 'Seeds', 'Pesticides', 'Equipment', 'Others'];
+
+  List<ProductItem> get displayProducts {
+    if (selectedCategory == 'All') return allProducts;
+    return allProducts.where((p) => p.category == selectedCategory).toList();
+  }
+
+  void selectCategory(String cat) {
+    selectedCategory = cat;
+    update();
+  }
+
+  void incrementQuantity(String id) {
+    final idx = allProducts.indexWhere((p) => p.id == id);
+    if (idx != -1) {
+      allProducts[idx].quantity++;
+      update();
+    }
+  }
+
+  void decrementQuantity(String id) {
+    final idx = allProducts.indexWhere((p) => p.id == id);
+    if (idx != -1 && allProducts[idx].quantity > 0) {
+      allProducts[idx].quantity--;
+      update();
+    }
+  }
+
+  int get cartCount => allProducts.where((p) => p.quantity > 0).length;
+  num get cartTotal => allProducts.where((p) => p.quantity > 0).fold(0, (sum, p) => sum + (p.quantity * p.rawPrice));
+
+  void setSelectedCustomerId(String val) {
+    selectedCustomerId = val;
+    update();
+  }
+
+  Future<void> placeOrder() async {
+    if (selectedCustomerId.isEmpty) {
+      Utility.errorMessage('Please select a customer first');
+      return;
+    }
+    
+    final cartItems = allProducts.where((p) => p.quantity > 0).toList();
+    if (cartItems.isEmpty) {
+      Utility.errorMessage('Your cart is empty');
+      return;
+    }
+
+    final itemsPayload = cartItems.map((p) => {
+      "productid": p.id,
+      "quantity": p.quantity,
+      "price": p.rawPrice,
+    }).toList();
+
+    isPlacingOrder = true;
+    update();
+    var response = await Get.find<Repository>().createOrderApi(
+      orderid: titleController.text.trim(),
+      customerid: selectedCustomerId,
+      items: itemsPayload,
+      totalamount: cartTotal,
+      deliverydate: deliveryDateController.text.trim(),
+      feedback: feedbackController.text.trim(),
+      isLoading: true,
+    );
+    isPlacingOrder = false;
+    update();
+
+    if (response != null && response.isSuccess == true) {
+      Utility.closeDialog(); 
+      for (var p in allProducts) {
+        p.quantity = 0;
+      }
+      selectedCustomerId = '';
+      titleController.clear();
+      deliveryDateController.clear();
+      feedbackController.clear();
+      update();
+      Get.back();
+      Get.snackbar('Success', 'Order placed successfully!',
+          backgroundColor: Colors.green, colorText: Colors.white);
+    } else {
+      Utility.errorMessage(response?.message ?? 'Failed to place order');
+    }
+  }
+}
