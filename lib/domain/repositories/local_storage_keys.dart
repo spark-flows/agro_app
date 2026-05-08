@@ -11,4 +11,5 @@ abstract class LocalKeys {
   static String groupPeerId = "groupPeerId";
   static String distributorId = "distributorId";
   static String profileData = "profileData";
+  static String roleName = "roleName";
 }

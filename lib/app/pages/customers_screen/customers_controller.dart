@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:get/get.dart';
 import 'package:flutter/material.dart';
 import 'package:agro_app/domain/domain.dart';
@@ -22,62 +23,81 @@ class CustomerItem {
 }
 
 class CustomersController extends GetxController {
-  final RxList<CustomerItem> customers = <CustomerItem>[].obs;
+  List<CustomerItem> customers = [];
+  bool isLoading = false;
+  
+  int currentPage = 1;
+  int limit = 100;
+  String _searchQuery = '';
 
-  final RxList<CustomerItem> filtered = <CustomerItem>[].obs;
   final TextEditingController searchController = TextEditingController();
   final TextEditingController nameCtrl = TextEditingController();
   final TextEditingController phoneCtrl = TextEditingController();
   final TextEditingController locationCtrl = TextEditingController();
   final TextEditingController gstCtrl = TextEditingController();
   final GlobalKey<FormState> addFormKey = GlobalKey<FormState>();
-  final RxBool isLoading = false.obs;
+  
+  Timer? _searchTimer;
+  String editingCustomerId = '';
 
   @override
   void onInit() {
     super.onInit();
-    searchController.addListener(_onSearch);
     fetchCustomers();
   }
 
-  Future<void> fetchCustomers() async {
-    isLoading.value = true;
+  Future<void> fetchCustomers({bool isRefresh = true}) async {
+    if (isRefresh) {
+      currentPage = 1;
+      customers.clear();
+      isLoading = true;
+    }
+    update();
+
     try {
       var customerModel = await Get.find<Repository>().getCustomerListApi(
+        page: currentPage,
+        limit: limit,
+        search: _searchQuery,
         isLoading: false,
       );
       if (customerModel != null &&
           customerModel.data != null &&
           customerModel.data!.docs != null) {
-        customers.assignAll(
-          customerModel.data!.docs!
-              .map(
-                (doc) => CustomerItem(
-                  id: doc.id ?? '',
-                  name: doc.name ?? '',
-                  phone: '${doc.countrycode ?? ''} ${doc.mobile ?? ''}',
-                  location: (doc.email?.isNotEmpty ?? false)
-                      ? doc.email!
-                      : 'N/A',
-                  gstNumber: (doc.feedback?.isNotEmpty ?? false)
-                      ? doc.feedback!
-                      : 'N/A',
-                ),
-              )
-              .toList(),
-        );
-        _onSearch();
+        
+        final docs = customerModel.data!.docs!
+            .map(
+              (doc) => CustomerItem(
+                id: doc.id ?? '',
+                name: doc.name ?? '',
+                phone: '${doc.countrycode ?? ''} ${doc.mobile ?? ''}',
+                location: (doc.email?.isNotEmpty ?? false)
+                    ? doc.email!
+                    : 'N/A',
+                gstNumber: (doc.feedback?.isNotEmpty ?? false)
+                    ? doc.feedback!
+                    : 'N/A',
+              ),
+            )
+            .toList();
+            
+        if (isRefresh) {
+          customers = docs;
+        } else {
+          customers.addAll(docs);
+        }
       }
     } catch (e) {
       debugPrint('Error fetching customers: $e');
     } finally {
-      isLoading.value = false;
+      isLoading = false;
+      update();
     }
   }
 
   @override
   void onClose() {
-    searchController.removeListener(_onSearch);
+    _searchTimer?.cancel();
     searchController.dispose();
     nameCtrl.dispose();
     phoneCtrl.dispose();
@@ -86,35 +106,22 @@ class CustomersController extends GetxController {
     super.onClose();
   }
 
-  void _onSearch() {
-    final q = searchController.text.toLowerCase();
-    if (q.isEmpty) {
-      filtered.assignAll(customers);
-    } else {
-      filtered.assignAll(
-        customers.where(
-          (c) =>
-              c.name.toLowerCase().contains(q) ||
-              c.location.toLowerCase().contains(q) ||
-              c.phone.contains(q),
-        ),
-      );
-    }
+  void onSearchChanged(String query) {
+    _searchQuery = query;
+    _searchTimer?.cancel();
+    _searchTimer = Timer(const Duration(milliseconds: 500), () {
+      fetchCustomers(isRefresh: true);
+    });
   }
-
-  RxString editingCustomerId = ''.obs;
 
   void addCustomer() async {
     if (!addFormKey.currentState!.validate()) return;
 
     Utility.showLoader();
-    String distributorId = await Utility.getSecureValue(
-      LocalKeys.distributorId,
-    );
     var response = await Get.find<Repository>().createCustomerApi(
-      customerid: editingCustomerId.value.isEmpty
+      customerid: editingCustomerId.isEmpty
           ? null
-          : editingCustomerId.value,
+          : editingCustomerId,
       name: nameCtrl.text.trim(),
       email: locationCtrl.text.trim(),
       countrycode: '+91',
@@ -127,31 +134,32 @@ class CustomersController extends GetxController {
     if (response != null && response.isSuccess == true) {
       Get.back();
       clearAddForm();
-      fetchCustomers();
+      fetchCustomers(isRefresh: true);
     } else {
       Utility.errorMessage('Failed to save customer. Please try again.');
     }
   }
 
   void setupEdit(CustomerItem customer) {
-    editingCustomerId.value = customer.id;
+    editingCustomerId = customer.id;
     nameCtrl.text = customer.name;
     phoneCtrl.text = customer.phone.replaceAll('+91 ', '');
     locationCtrl.text = customer.location == 'N/A' ? '' : customer.location;
     gstCtrl.text = customer.gstNumber == 'N/A' ? '' : customer.gstNumber;
+    update();
   }
 
   void deleteCustomer(String id) {
     customers.removeWhere((c) => c.id == id);
-    filtered.removeWhere((c) => c.id == id);
     update();
   }
 
   void clearAddForm() {
-    editingCustomerId.value = '';
+    editingCustomerId = '';
     nameCtrl.clear();
     phoneCtrl.clear();
     locationCtrl.clear();
     gstCtrl.clear();
+    update();
   }
 }

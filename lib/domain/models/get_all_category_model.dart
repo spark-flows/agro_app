@@ -19,13 +19,51 @@ class GetAllCategoryModel {
     required this.isSuccess,
   });
 
-  factory GetAllCategoryModel.fromJson(Map<String, dynamic> json) =>
-      GetAllCategoryModel(
-        message: json["Message"],
-        data: GetAllCategoryData.fromJson(json["Data"]),
-        status: json["Status"],
-        isSuccess: json["IsSuccess"],
+  factory GetAllCategoryModel.fromJson(Map<String, dynamic> json) {
+    final dataJson = json["Data"];
+    GetAllCategoryData data;
+
+    if (dataJson is List) {
+      // API returns Data as a direct List of category objects
+      final docs = List<GetAllCategoryDoc>.from(
+        dataJson.map((x) => GetAllCategoryDoc.fromJson(x)),
       );
+      data = GetAllCategoryData(
+        docs: docs,
+        totalDocs: docs.length,
+        limit: docs.length,
+        totalPages: 1,
+        page: 1,
+        pagingCounter: 1,
+        hasPrevPage: false,
+        hasNextPage: false,
+        prevPage: null,
+        nextPage: null,
+      );
+    } else if (dataJson is Map<String, dynamic>) {
+      data = GetAllCategoryData.fromJson(dataJson);
+    } else {
+      data = GetAllCategoryData(
+        docs: [],
+        totalDocs: 0,
+        limit: 0,
+        totalPages: 0,
+        page: 0,
+        pagingCounter: 0,
+        hasPrevPage: false,
+        hasNextPage: false,
+        prevPage: null,
+        nextPage: null,
+      );
+    }
+
+    return GetAllCategoryModel(
+      message: json["Message"] ?? '',
+      data: data,
+      status: json["Status"] ?? 0,
+      isSuccess: json["IsSuccess"] ?? false,
+    );
+  }
 
   Map<String, dynamic> toJson() => {
     "Message": message,
@@ -62,16 +100,18 @@ class GetAllCategoryData {
 
   factory GetAllCategoryData.fromJson(Map<String, dynamic> json) =>
       GetAllCategoryData(
-        docs: List<GetAllCategoryDoc>.from(
-          json["docs"].map((x) => GetAllCategoryDoc.fromJson(x)),
-        ),
-        totalDocs: json["totalDocs"],
-        limit: json["limit"],
-        totalPages: json["totalPages"],
-        page: json["page"],
-        pagingCounter: json["pagingCounter"],
-        hasPrevPage: json["hasPrevPage"],
-        hasNextPage: json["hasNextPage"],
+        docs: json["docs"] == null
+            ? []
+            : List<GetAllCategoryDoc>.from(
+                json["docs"].map((x) => GetAllCategoryDoc.fromJson(x)),
+              ),
+        totalDocs: json["totalDocs"] ?? 0,
+        limit: json["limit"] ?? 0,
+        totalPages: json["totalPages"] ?? 0,
+        page: json["page"] ?? 0,
+        pagingCounter: json["pagingCounter"] ?? 0,
+        hasPrevPage: json["hasPrevPage"] ?? false,
+        hasNextPage: json["hasNextPage"] ?? false,
         prevPage: json["prevPage"],
         nextPage: json["nextPage"],
       );
@@ -117,18 +157,24 @@ class GetAllCategoryDoc {
 
   factory GetAllCategoryDoc.fromJson(Map<String, dynamic> json) =>
       GetAllCategoryDoc(
-        id: json["_id"],
-        name: json["name"],
-        status: json["status"],
-        isDeleted: json["isDeleted"],
+        id: json["_id"] ?? '',
+        name: json["name"] ?? '',
+        status: json["status"] ?? false,
+        isDeleted: json["isDeleted"] ?? false,
         deletedBy: json["deletedBy"],
-        createdBy: GetAllCategoryAtedBy.fromJson(json["createdBy"]),
+        createdBy: json["createdBy"] != null
+            ? GetAllCategoryAtedBy.fromJson(json["createdBy"])
+            : GetAllCategoryAtedBy(id: '', name: '', profilepic: ''),
         updatedBy: json["updatedBy"] == null
             ? null
             : GetAllCategoryAtedBy.fromJson(json["updatedBy"]),
-        createdAt: DateTime.parse(json["createdAt"]),
-        updatedAt: DateTime.parse(json["updatedAt"]),
-        docId: json["id"],
+        createdAt: json["createdAt"] != null
+            ? DateTime.tryParse(json["createdAt"]) ?? DateTime.now()
+            : DateTime.now(),
+        updatedAt: json["updatedAt"] != null
+            ? DateTime.tryParse(json["updatedAt"]) ?? DateTime.now()
+            : DateTime.now(),
+        docId: json["id"] ?? '',
       );
 
   Map<String, dynamic> toJson() => {
@@ -158,9 +204,9 @@ class GetAllCategoryAtedBy {
 
   factory GetAllCategoryAtedBy.fromJson(Map<String, dynamic> json) =>
       GetAllCategoryAtedBy(
-        id: json["_id"],
-        name: json["name"],
-        profilepic: json["profilepic"],
+        id: json["_id"] ?? '',
+        name: json["name"] ?? '',
+        profilepic: json["profilepic"] ?? '',
       );
 
   Map<String, dynamic> toJson() => {

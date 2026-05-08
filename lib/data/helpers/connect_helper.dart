@@ -99,17 +99,22 @@ class ConnectHelper {
     return response;
   }
 
-  Future<ResponseModel> getProductListApi({bool isLoading = false}) async {
+  Future<ResponseModel> getProductListApi({
+    int page = 1,
+    int limit = 10,
+    String search = '',
+    bool isLoading = false,
+  }) async {
     var data = {
-      "page": 1,
-      "limit": 10,
-      "search": {},
-      "categoryid": [],
-      "name": [],
-      "unit": [],
-      "price": [],
-      "description": [],
-      "sortoption": -1,
+      'page': page,
+      'limit': limit,
+      'search': search,
+      'categoryid': [],
+      'name': [],
+      'unit': [],
+      'price': [],
+      'description': [],
+      'sortoption': -1,
     };
     var response = await apiWrapper.makeRequest(
       EndPoints.productApi,
@@ -121,14 +126,59 @@ class ConnectHelper {
     return response;
   }
 
-  Future<ResponseModel> getCustomerListApi({bool isLoading = false}) async {
+  Future<ResponseModel> getCategoryListApi({bool isLoading = false}) async {
+    var response = await apiWrapper.makeRequest(
+      '${EndPoints.categoryApi}?search=',
+      Request.get,
+      null,
+      isLoading,
+      await Utility.commonHeader(),
+    );
+    return response;
+  }
+
+  Future<ResponseModel> createProductApi({
+    String? productid,
+    required String name,
+    required String unit,
+    required int price,
+    required String description,
+    required String image,
+    required String categoryid,
+    bool isLoading = false,
+  }) async {
+    var data = {
+      'productid': productid ?? '',
+      'name': name,
+      'unit': unit,
+      'price': price,
+      'description': description,
+      'image': image,
+      'categoryid': categoryid,
+    };
+    var response = await apiWrapper.makeRequest(
+      EndPoints.createProductApi,
+      Request.post,
+      data,
+      isLoading,
+      await Utility.commonHeader(),
+    );
+    return response;
+  }
+
+  Future<ResponseModel> getCustomerListApi({
+    int page = 1,
+    int limit = 100,
+    String search = "",
+    bool isLoading = false,
+  }) async {
     String distributorId = await Utility.getSecureValue(
       LocalKeys.distributorId,
     );
     var data = {
-      "page": 1,
-      "limit": 100,
-      "search": {},
+      "page": page,
+      "limit": limit,
+      "search": search,
       "distributorid": distributorId.isNotEmpty ? [distributorId] : [],
       "name": [],
       "email": [],
@@ -273,6 +323,36 @@ class ConnectHelper {
     return response;
   }
 
+  Future<ResponseModel> deleteProductApi({
+    required String productid,
+    bool isLoading = false,
+  }) async {
+    var data = {"productid": productid};
+    var response = await apiWrapper.makeRequest(
+      EndPoints.deleteProductApi,
+      Request.post,
+      data,
+      isLoading,
+      await Utility.commonHeader(),
+    );
+    return response;
+  }
+
+  Future<ResponseModel> deleteUsersApi({
+    required String userid,
+    bool isLoading = false,
+  }) async {
+    var data = {"userid": userid};
+    var response = await apiWrapper.makeRequest(
+      EndPoints.deleteUsersApi,
+      Request.post,
+      data,
+      isLoading,
+      await Utility.commonHeader(),
+    );
+    return response;
+  }
+
   Future<ResponseModel> getUsersListApi({
     int page = 1,
     int limit = 10,
@@ -324,6 +404,13 @@ class ConnectHelper {
     required String address,
     String? password,
     required String roleid,
+    String? surname,
+    String? fathername,
+    String? gstnumber,
+    String? location,
+    String? bankname,
+    String? bankaccountnumber,
+    String? bankifsscode,
     bool isLoading = false,
   }) async {
     var data = {
@@ -335,6 +422,15 @@ class ConnectHelper {
       "password": password ?? "",
       "address": address,
       "roleid": roleid,
+      if (surname != null && surname.isNotEmpty) "surname": surname,
+      if (fathername != null && fathername.isNotEmpty) "fathername": fathername,
+      if (gstnumber != null && gstnumber.isNotEmpty) "gstnumber": gstnumber,
+      if (location != null && location.isNotEmpty) "location": location,
+      if (bankname != null && bankname.isNotEmpty) "bankname": bankname,
+      if (bankaccountnumber != null && bankaccountnumber.isNotEmpty)
+        "bankaccountnumber": bankaccountnumber,
+      if (bankifsscode != null && bankifsscode.isNotEmpty)
+        "bankifsscode": bankifsscode,
     };
     var response = await apiWrapper.makeRequest(
       EndPoints.createUsersApi,

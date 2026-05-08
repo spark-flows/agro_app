@@ -1,5 +1,5 @@
 import 'package:agro_app/app/app.dart';
-import 'package:agro_app/app/pages/orders_screen/orders_controller.dart';
+import 'package:agro_app/domain/services/enum.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -15,6 +15,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
   Widget build(BuildContext context) {
     return GetBuilder<OrdersController>(
       builder: (controller) {
+        final homeController = Get.find<HomeController>();
         return Scaffold(
           backgroundColor: ColorsValue.bgMain,
           appBar: AppBar(
@@ -108,6 +109,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
                                     _showOrderDetailsDialog(
                                       context,
                                       controller,
+                                      homeController,
                                     );
                                   }
                                 },
@@ -154,22 +156,24 @@ class _OrdersScreenState extends State<OrdersScreen> {
               ],
             ),
           ),
-          floatingActionButton: FloatingActionButton.extended(
-            onPressed: () {
-              // Reset order state (clear cart/fields) and pre-select customer
-              controller.resetOrderFlow();
-              Get.to(() => NewOrderScreen(controller: controller));
-            },
-            backgroundColor: ColorsValue.primary,
-            icon: const Icon(Icons.add, color: Colors.white),
-            label: const Text(
-              'New Order',
-              style: TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
+          floatingActionButton: !RoleUtils.isAdmin(homeController.roleName)
+              ? FloatingActionButton.extended(
+                  onPressed: () {
+                    // Reset order state (clear cart/fields) and pre-select customer
+                    controller.resetOrderFlow();
+                    Get.to(() => NewOrderScreen(controller: controller));
+                  },
+                  backgroundColor: ColorsValue.primary,
+                  icon: const Icon(Icons.add, color: Colors.white),
+                  label: const Text(
+                    'New Order',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                )
+              : null,
         );
       },
     );
@@ -494,6 +498,7 @@ void _showCartBottomSheet(BuildContext context, OrdersController controller) {
 void _showOrderDetailsDialog(
   BuildContext context,
   OrdersController controller,
+  HomeController homeController,
 ) {
   Get.bottomSheet(
     Container(
@@ -641,79 +646,80 @@ void _showOrderDetailsDialog(
                 ],
               ),
               const SizedBox(height: 24),
-              Row(
-                children: [
-                  Expanded(
-                    child: ElevatedButton.icon(
-                      onPressed: () {
-                        controller.populateOrderForEdit(details);
-                        Get.back();
-                        Get.to(() => NewOrderScreen(controller: controller));
-                      },
-                      icon: const Icon(
-                        Icons.edit,
-                        color: Colors.white,
-                        size: 18,
-                      ),
-                      label: const Text(
-                        'Edit',
-                        style: TextStyle(
+              if (!RoleUtils.isAdmin(homeController.roleName))
+                Row(
+                  children: [
+                    Expanded(
+                      child: ElevatedButton.icon(
+                        onPressed: () {
+                          controller.populateOrderForEdit(details);
+                          Get.back();
+                          Get.to(() => NewOrderScreen(controller: controller));
+                        },
+                        icon: const Icon(
+                          Icons.edit,
                           color: Colors.white,
-                          fontWeight: FontWeight.bold,
+                          size: 18,
                         ),
-                      ),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: ColorsValue.primary,
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
+                        label: const Text(
+                          'Edit',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: ColorsValue.primary,
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
                         ),
                       ),
                     ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: ElevatedButton.icon(
-                      onPressed: () {
-                        Get.defaultDialog(
-                          title: 'Confirm Delete',
-                          middleText:
-                              'Are you sure you want to delete this order?',
-                          textConfirm: 'Delete',
-                          textCancel: 'Cancel',
-                          confirmTextColor: Colors.white,
-                          buttonColor: Colors.red,
-                          onConfirm: () {
-                            Get.back(); // Close dialog
-                            if (details.id != null) {
-                              controller.deleteOrder(details.id!);
-                            }
-                          },
-                        );
-                      },
-                      icon: const Icon(
-                        Icons.delete_outline,
-                        color: Colors.white,
-                        size: 18,
-                      ),
-                      label: const Text(
-                        'Delete',
-                        style: TextStyle(
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: ElevatedButton.icon(
+                        onPressed: () {
+                          Get.defaultDialog(
+                            title: 'Confirm Delete',
+                            middleText:
+                                'Are you sure you want to delete this order?',
+                            textConfirm: 'Delete',
+                            textCancel: 'Cancel',
+                            confirmTextColor: Colors.white,
+                            buttonColor: Colors.red,
+                            onConfirm: () {
+                              Get.back(); // Close dialog
+                              if (details.id != null) {
+                                controller.deleteOrder(details.id!);
+                              }
+                            },
+                          );
+                        },
+                        icon: const Icon(
+                          Icons.delete_outline,
                           color: Colors.white,
-                          fontWeight: FontWeight.bold,
+                          size: 18,
                         ),
-                      ),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.red.shade400,
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
+                        label: const Text(
+                          'Delete',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.red.shade400,
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
                         ),
                       ),
                     ),
-                  ),
-                ],
-              ),
+                  ],
+                ),
             ],
           );
         },

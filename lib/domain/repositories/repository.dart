@@ -1,16 +1,17 @@
 import 'dart:async';
+import 'dart:convert';
 import 'package:agro_app/app/utils/utility.dart';
 import 'package:agro_app/data/data.dart';
 import 'package:agro_app/device/device.dart';
 import 'package:agro_app/domain/models/auth_model.dart';
-import 'package:agro_app/domain/models/get_order_list.dart';
 import 'package:agro_app/domain/models/get_all_customers_model.dart';
 import 'package:agro_app/domain/models/create_customer_model.dart';
 import 'package:agro_app/domain/models/get_profille_model.dart';
 import 'package:agro_app/domain/models/get_all_order_model.dart';
 import 'package:agro_app/domain/models/create_order_model.dart';
 import 'package:agro_app/domain/models/get_one_order_model.dart';
-
+import 'package:agro_app/domain/models/get_all_product_model.dart';
+import 'package:agro_app/domain/models/get_all_category_model.dart';
 import 'package:agro_app/domain/models/get_all_users_model.dart';
 import 'package:agro_app/domain/models/get_all_roll_model.dart';
 
@@ -144,13 +145,21 @@ class Repository {
     }
   }
 
-  Future<ProductListModel?> getProductListApi({bool isLoading = false}) async {
+  Future<GetAllProductModel?> getProductListApi({
+    int page = 1,
+    int limit = 10,
+    String search = '',
+    bool isLoading = false,
+  }) async {
     try {
       var response = await _dataRepository.getProductListApi(
+        page: page,
+        limit: limit,
+        search: search,
         isLoading: isLoading,
       );
       if (response.data.isNotEmpty) {
-        return productListModelFromJson(response.data);
+        return getAllProductModelFromJson(response.data);
       } else {
         return null;
       }
@@ -161,11 +170,69 @@ class Repository {
     }
   }
 
+  Future<GetAllCategoryModel?> getCategoryListApi({
+    bool isLoading = false,
+  }) async {
+    try {
+      var response = await _dataRepository.getCategoryListApi(
+        isLoading: isLoading,
+      );
+      print('[Repo] getCategoryListApi raw data length: ${response.data.length}');
+      if (response.data.isNotEmpty) {
+        final model = getAllCategoryModelFromJson(response.data);
+        print('[Repo] getCategoryListApi parsed ${model.data.docs.length} docs, isSuccess=${model.isSuccess}');
+        return model;
+      } else {
+        print('[Repo] getCategoryListApi: empty response');
+        return null;
+      }
+    } catch (e, st) {
+      print('[Repo] getCategoryListApi error: $e\n$st');
+      Utility.closeDialog();
+      return null;
+    }
+  }
+
+  Future<bool> createProductApi({
+    String? productid,
+    required String name,
+    required String unit,
+    required int price,
+    required String description,
+    required String image,
+    required String categoryid,
+    bool isLoading = false,
+  }) async {
+    try {
+      var response = await _dataRepository.createProductApi(
+        productid: productid,
+        name: name,
+        unit: unit,
+        price: price,
+        description: description,
+        image: image,
+        categoryid: categoryid,
+        isLoading: isLoading,
+      );
+      return !response.hasError;
+    } catch (e) {
+      print('createProductApi error: $e');
+      Utility.closeDialog();
+      return false;
+    }
+  }
+
   Future<GetAllCustomerModel?> getCustomerListApi({
+    int page = 1,
+    int limit = 100,
+    String search = "",
     bool isLoading = false,
   }) async {
     try {
       var response = await _dataRepository.getCustomerListApi(
+        page: page,
+        limit: limit,
+        search: search,
         isLoading: isLoading,
       );
       if (response.data.isNotEmpty) {
@@ -313,6 +380,40 @@ class Repository {
     }
   }
 
+  Future<bool> deleteProductApi({
+    required String productid,
+    bool isLoading = false,
+  }) async {
+    try {
+      var response = await _dataRepository.deleteProductApi(
+        productid: productid,
+        isLoading: isLoading,
+      );
+      return !response.hasError;
+    } catch (e) {
+      print('deleteProductApi error: $e');
+      Utility.closeDialog();
+      return false;
+    }
+  }
+
+  Future<bool> deleteUsersApi({
+    required String userid,
+    bool isLoading = false,
+  }) async {
+    try {
+      var response = await _dataRepository.deleteUsersApi(
+        userid: userid,
+        isLoading: isLoading,
+      );
+      return !response.hasError;
+    } catch (e) {
+      print('deleteUsersApi error: $e');
+      Utility.closeDialog();
+      return false;
+    }
+  }
+
   Future<GetAllUsersModel?> getUsersListApi({
     int page = 1,
     int limit = 10,
@@ -365,7 +466,8 @@ class Repository {
     }
   }
 
-  Future<bool> createUserApi({
+  /// Returns null on success, or an error message string on failure.
+  Future<String?> createUserApi({
     String? userid,
     required String name,
     required String email,
@@ -374,6 +476,13 @@ class Repository {
     required String address,
     String? password,
     required String roleid,
+    String? surname,
+    String? fathername,
+    String? gstnumber,
+    String? location,
+    String? bankname,
+    String? bankaccountnumber,
+    String? bankifsscode,
     bool isLoading = false,
   }) async {
     try {
@@ -386,13 +495,29 @@ class Repository {
         password: password,
         roleid: roleid,
         address: address,
+        surname: surname,
+        fathername: fathername,
+        gstnumber: gstnumber,
+        location: location,
+        bankname: bankname,
+        bankaccountnumber: bankaccountnumber,
+        bankifsscode: bankifsscode,
         isLoading: isLoading,
       );
-      return !response.hasError;
+      if (!response.hasError) {
+        return null; // success
+      }
+      // Try to parse the error message from the response body JSON
+      try {
+        final decoded = json.decode(response.data);
+        return decoded['message']?.toString() ?? 'Failed to save user';
+      } catch (_) {
+        return 'Failed to save user';
+      }
     } catch (e) {
       print('createUserApi error: $e');
       Utility.closeDialog();
-      return false;
+      return 'An unexpected error occurred';
     }
   }
 }

@@ -68,7 +68,7 @@ dependencies:
   upgrader: ^11.5.0
   url_launcher: ^6.3.1
   validators: ^3.0.0
-  video_player: ^2.9.3
+  video_player: 
   video_thumbnail: ^0.5.3
 
 dev_dependencies:

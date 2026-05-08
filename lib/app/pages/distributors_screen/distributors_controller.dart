@@ -16,15 +16,29 @@ class DistributorsController extends GetxController {
   String get searchQuery => _searchQuery.value;
 
   final addFormKey = GlobalKey<FormState>();
+
+  // ── Basic fields ──────────────────────────────────────────────────────────
   final nameCtrl = TextEditingController();
+  final surnameCtrl = TextEditingController();
+  final fathernameCtrl = TextEditingController();
   final emailCtrl = TextEditingController();
   final phoneCtrl = TextEditingController();
   final passwordCtrl = TextEditingController();
   final addressCtrl = TextEditingController();
 
+  // ── Distributor-specific fields ───────────────────────────────────────────
+  final gstnumberCtrl = TextEditingController();
+  final locationCtrl = TextEditingController();
+  final banknameCtrl = TextEditingController();
+  final bankaccountnumberCtrl = TextEditingController();
+  final bankifscodeCtrl = TextEditingController();
+
   final RxString editingUserId = "".obs;
   String? selectedRoleId;
   List<GetAllRolesDatum> roles = [];
+
+  // Distributor role ID — fixed filter for this screen
+  static const String _distributorRoleId = 'cf4527b2-86df-4470-a14d-37288a536e37';
 
   // To debounce search calls
   Worker? _searchWorker;
@@ -47,10 +61,17 @@ class DistributorsController extends GetxController {
   void onClose() {
     _searchWorker?.dispose();
     nameCtrl.dispose();
+    surnameCtrl.dispose();
+    fathernameCtrl.dispose();
     emailCtrl.dispose();
     phoneCtrl.dispose();
     passwordCtrl.dispose();
     addressCtrl.dispose();
+    gstnumberCtrl.dispose();
+    locationCtrl.dispose();
+    banknameCtrl.dispose();
+    bankaccountnumberCtrl.dispose();
+    bankifscodeCtrl.dispose();
     super.onClose();
   }
 
@@ -82,7 +103,7 @@ class DistributorsController extends GetxController {
       page: currentPage,
       limit: limit,
       search: searchQuery,
-      roleid: 'cf4527b2-86df-4470-a14d-37288a536e37',
+      roleid: _distributorRoleId,
       isLoading: isRefresh,
     );
 
@@ -103,21 +124,36 @@ class DistributorsController extends GetxController {
   void clearAddForm() {
     editingUserId.value = "";
     nameCtrl.clear();
+    surnameCtrl.clear();
+    fathernameCtrl.clear();
     emailCtrl.clear();
     phoneCtrl.clear();
     passwordCtrl.clear();
     addressCtrl.clear();
-    selectedRoleId = 'cf4527b2-86df-4470-a14d-37288a536e37';
+    gstnumberCtrl.clear();
+    locationCtrl.clear();
+    banknameCtrl.clear();
+    bankaccountnumberCtrl.clear();
+    bankifscodeCtrl.clear();
+    selectedRoleId = _distributorRoleId;
     update();
   }
 
   void setupEdit(Doc user) {
     editingUserId.value = user.id;
     nameCtrl.text = user.name;
+    surnameCtrl.text = user.surname ?? '';
+    fathernameCtrl.text = user.fathername ?? '';
     emailCtrl.text = user.email;
     phoneCtrl.text = user.mobile;
     passwordCtrl.clear();
     addressCtrl.text = user.address ?? '';
+    // Extra fields from model (nullable – safe default to empty)
+    gstnumberCtrl.clear();
+    locationCtrl.clear();
+    banknameCtrl.clear();
+    bankaccountnumberCtrl.clear();
+    bankifscodeCtrl.clear();
     selectedRoleId = user.roleid.id;
     update();
   }
@@ -132,7 +168,7 @@ class DistributorsController extends GetxController {
       return;
     }
 
-    bool success = await Get.find<Repository>().createUserApi(
+    final errorMsg = await Get.find<Repository>().createUserApi(
       userid: editingUserId.value.isNotEmpty ? editingUserId.value : null,
       name: nameCtrl.text.trim(),
       email: emailCtrl.text.trim(),
@@ -141,22 +177,34 @@ class DistributorsController extends GetxController {
       password: passwordCtrl.text.trim(),
       address: addressCtrl.text.trim(),
       roleid: selectedRoleId!,
+      surname: surnameCtrl.text.trim(),
+      fathername: fathernameCtrl.text.trim(),
+      gstnumber: gstnumberCtrl.text.trim(),
+      location: locationCtrl.text.trim(),
+      bankname: banknameCtrl.text.trim(),
+      bankaccountnumber: bankaccountnumberCtrl.text.trim(),
+      bankifsscode: bankifscodeCtrl.text.trim(),
       isLoading: true,
     );
 
-    if (success) {
+    if (errorMsg == null) {
       Get.back();
       Get.snackbar(
         'Success',
-        editingUserId.value.isNotEmpty ? 'User updated' : 'User added',
+        editingUserId.value.isNotEmpty ? 'Distributor updated' : 'Distributor added',
         snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.green.withValues(alpha: 0.9),
+        colorText: Colors.white,
       );
       fetchUsers(isRefresh: true);
     } else {
       Get.snackbar(
         'Error',
-        'Failed to save user',
+        errorMsg,
         snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red.withValues(alpha: 0.9),
+        colorText: Colors.white,
+        duration: const Duration(seconds: 4),
       );
     }
   }

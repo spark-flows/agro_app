@@ -1,7 +1,6 @@
+import 'dart:convert';
 import 'package:get/get.dart';
 import 'package:agro_app/domain/domain.dart';
-import 'package:agro_app/domain/models/get_profille_model.dart';
-import 'dart:convert';
 import 'package:agro_app/app/navigators/routes_management.dart';
 
 class ProfileController extends GetxController {
@@ -43,6 +42,10 @@ class ProfileController extends GetxController {
         LocalKeys.profileData,
         json.encode(userData!.toJson()),
       );
+      Get.find<Repository>().saveSecureValue(
+        LocalKeys.roleName,
+        userData!.rolename,
+      );
     }
     isLoading.value = false;
     update();
@@ -52,6 +55,7 @@ class ProfileController extends GetxController {
     Get.find<Repository>().deleteSecuredValue(LocalKeys.authToken);
     Get.find<Repository>().deleteSecuredValue(LocalKeys.distributorId);
     Get.find<Repository>().deleteSecuredValue(LocalKeys.profileData);
+    Get.find<Repository>().deleteSecuredValue(LocalKeys.roleName);
     RouteManagement.goToAuthScreen();
   }
 }

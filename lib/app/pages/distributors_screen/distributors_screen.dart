@@ -56,7 +56,7 @@ class _DistributorsScreenState extends State<DistributorsScreen> {
                   controller: _searchController,
                   onChanged: controller.searchUsers,
                   decoration: InputDecoration(
-                    hintText: 'Search users...',
+                    hintText: 'Search distributors...',
                     hintStyle: Styles.txtGreyColorW40014,
                     prefixIcon: const Icon(
                       Icons.search,
@@ -85,7 +85,7 @@ class _DistributorsScreenState extends State<DistributorsScreen> {
                 ),
                 const SizedBox(height: 10),
 
-                /// Users List
+                /// Distributor List
                 Expanded(
                   child: controller.isLoading
                       ? const Center(child: CircularProgressIndicator())
@@ -95,13 +95,13 @@ class _DistributorsScreenState extends State<DistributorsScreen> {
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
                               Icon(
-                                Icons.group_off_outlined,
+                                Icons.local_shipping_outlined,
                                 size: 64,
                                 color: Colors.grey.shade300,
                               ),
                               const SizedBox(height: 16),
                               Text(
-                                'No users found',
+                                'No distributors found',
                                 style: Styles.txtGreyColorW40014,
                               ),
                             ],
@@ -137,7 +137,7 @@ class _DistributorsScreenState extends State<DistributorsScreen> {
                                 child: InkWell(
                                   onTap: () {
                                     controller.setupEdit(user);
-                                    _showAddDialog(context, controller);
+                                    Get.toNamed<void>('/distributorForm');
                                   },
                                   borderRadius: BorderRadius.circular(12),
                                   child: ListTile(
@@ -149,12 +149,12 @@ class _DistributorsScreenState extends State<DistributorsScreen> {
                                       backgroundColor: ColorsValue.primary
                                           .withValues(alpha: 0.1),
                                       child: const Icon(
-                                        Icons.person_outline,
+                                        Icons.local_shipping_outlined,
                                         color: ColorsValue.primary,
                                       ),
                                     ),
                                     title: Text(
-                                      user.name ?? 'No Name',
+                                      '${user.name}${user.surname != null && user.surname!.isNotEmpty ? " ${user.surname}" : ""}',
                                       style: Styles.txtBlackColorW60014,
                                     ),
                                     subtitle: Column(
@@ -163,7 +163,7 @@ class _DistributorsScreenState extends State<DistributorsScreen> {
                                       children: [
                                         const SizedBox(height: 4),
                                         Text(
-                                          user.email ?? '-',
+                                          user.email,
                                           style: Styles.txtGreyColorW40012,
                                         ),
                                         const SizedBox(height: 2),
@@ -176,39 +176,31 @@ class _DistributorsScreenState extends State<DistributorsScreen> {
                                         ),
                                       ],
                                     ),
-                                    trailing: Column(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.center,
-                                      children: [
-                                        Container(
-                                          padding: const EdgeInsets.symmetric(
-                                            horizontal: 10,
-                                            vertical: 4,
-                                          ),
-                                          decoration: BoxDecoration(
-                                            color: isActive
-                                                ? Colors.green.withValues(
-                                                    alpha: 0.1,
-                                                  )
-                                                : Colors.red.withValues(
-                                                    alpha: 0.1,
-                                                  ),
-                                            borderRadius: BorderRadius.circular(
-                                              20,
-                                            ),
-                                          ),
-                                          child: Text(
-                                            isActive ? 'Active' : 'Inactive',
-                                            style: TextStyle(
-                                              color: isActive
-                                                  ? Colors.green
-                                                  : Colors.red,
-                                              fontSize: 10,
-                                              fontWeight: FontWeight.bold,
-                                            ),
-                                          ),
+                                    trailing: Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 10,
+                                        vertical: 4,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: isActive
+                                            ? Colors.green.withValues(
+                                                alpha: 0.1,
+                                              )
+                                            : Colors.red.withValues(
+                                                alpha: 0.1,
+                                              ),
+                                        borderRadius: BorderRadius.circular(20),
+                                      ),
+                                      child: Text(
+                                        isActive ? 'Active' : 'Inactive',
+                                        style: TextStyle(
+                                          color: isActive
+                                              ? Colors.green
+                                              : Colors.red,
+                                          fontSize: 10,
+                                          fontWeight: FontWeight.bold,
                                         ),
-                                      ],
+                                      ),
                                     ),
                                   ),
                                 ),
@@ -224,7 +216,7 @@ class _DistributorsScreenState extends State<DistributorsScreen> {
             backgroundColor: ColorsValue.primary,
             onPressed: () {
               controller.clearAddForm();
-              _showAddDialog(context, controller);
+              Get.toNamed<void>('/distributorForm');
             },
             child: const Icon(Icons.add),
           ),
@@ -233,7 +225,12 @@ class _DistributorsScreenState extends State<DistributorsScreen> {
     );
   }
 
-  void _showAddDialog(BuildContext context, DistributorsController controller) {
+  // ─── Add / Edit Bottom Sheet ───────────────────────────────────────────────
+
+  void _showAddDialog(
+    BuildContext context,
+    DistributorsController controller,
+  ) {
     Get.bottomSheet(
       Container(
         padding: EdgeInsets.only(
@@ -253,6 +250,7 @@ class _DistributorsScreenState extends State<DistributorsScreen> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
+                // ── Drag handle
                 Center(
                   child: Container(
                     width: 40,
@@ -264,91 +262,163 @@ class _DistributorsScreenState extends State<DistributorsScreen> {
                   ),
                 ),
                 const SizedBox(height: 24),
+
+                // ── Title
                 Obx(
                   () => Text(
                     controller.editingUserId.value.isNotEmpty
-                        ? 'Edit User'
-                        : 'Add New User',
+                        ? 'Edit Distributor'
+                        : 'Add New Distributor',
                     style: Styles.txtBlackColorW70020,
                     textAlign: TextAlign.center,
                   ),
                 ),
                 const SizedBox(height: 24),
-                TextFormField(
+
+                // ── Section: Personal Info
+                _sectionHeader('Personal Information'),
+                const SizedBox(height: 12),
+
+                // First Name
+                _buildField(
                   controller: controller.nameCtrl,
-                  textInputAction: TextInputAction.next,
-                  decoration: InputDecoration(
-                    labelText: 'Full Name',
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    prefixIcon: const Icon(Icons.person_outline),
-                  ),
-                  validator: (v) => v!.isEmpty ? 'Please enter a name' : null,
-                ),
-                const SizedBox(height: 16),
-                TextFormField(
-                  controller: controller.emailCtrl,
-                  keyboardType: TextInputType.emailAddress,
-                  textInputAction: TextInputAction.next,
-                  decoration: InputDecoration(
-                    labelText: 'Email Address',
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    prefixIcon: const Icon(Icons.email_outlined),
-                  ),
-                  validator: (v) => v!.isEmpty ? 'Please enter an email' : null,
-                ),
-                const SizedBox(height: 16),
-                TextFormField(
-                  controller: controller.phoneCtrl,
-                  keyboardType: TextInputType.phone,
-                  textInputAction: TextInputAction.next,
-                  decoration: InputDecoration(
-                    labelText: 'Phone Number',
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    prefixIcon: const Icon(Icons.phone_outlined),
-                  ),
+                  label: 'First Name',
+                  icon: Icons.person_outline,
+                  action: TextInputAction.next,
                   validator: (v) =>
-                      v!.isEmpty ? 'Please enter a phone number' : null,
+                      v!.trim().isEmpty ? 'Please enter a name' : null,
                 ),
-                const SizedBox(height: 16),
-                TextFormField(
+                const SizedBox(height: 12),
+
+                // Surname
+                _buildField(
+                  controller: controller.surnameCtrl,
+                  label: 'Surname',
+                  icon: Icons.person_outline,
+                  action: TextInputAction.next,
+                ),
+                const SizedBox(height: 12),
+
+                // Father Name
+                _buildField(
+                  controller: controller.fathernameCtrl,
+                  label: 'Father Name',
+                  icon: Icons.family_restroom_outlined,
+                  action: TextInputAction.next,
+                ),
+                const SizedBox(height: 24),
+
+                // ── Section: Contact Info
+                _sectionHeader('Contact Information'),
+                const SizedBox(height: 12),
+
+                // Email
+                _buildField(
+                  controller: controller.emailCtrl,
+                  label: 'Email Address',
+                  icon: Icons.email_outlined,
+                  keyboardType: TextInputType.emailAddress,
+                  action: TextInputAction.next,
+                  validator: (v) =>
+                      v!.trim().isEmpty ? 'Please enter an email' : null,
+                ),
+                const SizedBox(height: 12),
+
+                // Phone
+                _buildField(
+                  controller: controller.phoneCtrl,
+                  label: 'Phone Number',
+                  icon: Icons.phone_outlined,
+                  keyboardType: TextInputType.phone,
+                  action: TextInputAction.next,
+                  validator: (v) =>
+                      v!.trim().isEmpty ? 'Please enter a phone number' : null,
+                ),
+                const SizedBox(height: 12),
+
+                // Password
+                _buildField(
                   controller: controller.passwordCtrl,
+                  label: 'Password',
+                  icon: Icons.lock_outline,
                   obscureText: true,
-                  textInputAction: TextInputAction.done,
-                  decoration: InputDecoration(
-                    labelText: 'Password',
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    prefixIcon: const Icon(Icons.lock_outline),
-                  ),
+                  action: TextInputAction.next,
                   validator: (v) {
-                    if (controller.editingUserId.value.isEmpty && v!.isEmpty) {
+                    if (controller.editingUserId.value.isEmpty &&
+                        v!.trim().isEmpty) {
                       return 'Please enter a password';
                     }
                     return null;
                   },
                 ),
-                const SizedBox(height: 16),
-                TextFormField(
+                const SizedBox(height: 12),
+
+                // Address
+                _buildField(
                   controller: controller.addressCtrl,
-                  textInputAction: TextInputAction.done,
-                  decoration: InputDecoration(
-                    labelText: 'Address',
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    prefixIcon: const Icon(Icons.lock_outline),
-                  ),
+                  label: 'Address',
+                  icon: Icons.home_outlined,
+                  action: TextInputAction.next,
                   validator: (v) =>
-                      v!.isEmpty ? 'Please enter a address' : null,
+                      v!.trim().isEmpty ? 'Please enter an address' : null,
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 24),
+
+                // ── Section: Business Info
+                _sectionHeader('Business Information'),
+                const SizedBox(height: 12),
+
+                // GST Number
+                _buildField(
+                  controller: controller.gstnumberCtrl,
+                  label: 'GST Number',
+                  icon: Icons.receipt_long_outlined,
+                  action: TextInputAction.next,
+                ),
+                const SizedBox(height: 12),
+
+                // Location
+                _buildField(
+                  controller: controller.locationCtrl,
+                  label: 'Location',
+                  icon: Icons.location_on_outlined,
+                  action: TextInputAction.next,
+                ),
+                const SizedBox(height: 24),
+
+                // ── Section: Bank Info
+                _sectionHeader('Bank Information'),
+                const SizedBox(height: 12),
+
+                // Bank Name
+                _buildField(
+                  controller: controller.banknameCtrl,
+                  label: 'Bank Name',
+                  icon: Icons.account_balance_outlined,
+                  action: TextInputAction.next,
+                ),
+                const SizedBox(height: 12),
+
+                // Bank Account Number
+                _buildField(
+                  controller: controller.bankaccountnumberCtrl,
+                  label: 'Bank Account Number',
+                  icon: Icons.credit_card_outlined,
+                  keyboardType: TextInputType.number,
+                  action: TextInputAction.next,
+                ),
+                const SizedBox(height: 12),
+
+                // IFSC Code
+                _buildField(
+                  controller: controller.bankifscodeCtrl,
+                  label: 'IFSC Code',
+                  icon: Icons.code_outlined,
+                  action: TextInputAction.next,
+                ),
+                const SizedBox(height: 24),
+
+                // ── Role Dropdown
                 DropdownButtonFormField<String>(
                   value: controller.selectedRoleId,
                   decoration: InputDecoration(
@@ -356,7 +426,9 @@ class _DistributorsScreenState extends State<DistributorsScreen> {
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    prefixIcon: const Icon(Icons.admin_panel_settings_outlined),
+                    prefixIcon: const Icon(
+                      Icons.admin_panel_settings_outlined,
+                    ),
                   ),
                   items: controller.roles.map((role) {
                     return DropdownMenuItem(
@@ -367,9 +439,12 @@ class _DistributorsScreenState extends State<DistributorsScreen> {
                   onChanged: (val) {
                     controller.selectedRoleId = val;
                   },
-                  validator: (v) => v == null ? 'Please select a role' : null,
+                  validator: (v) =>
+                      v == null ? 'Please select a role' : null,
                 ),
                 const SizedBox(height: 24),
+
+                // ── Save Button
                 ElevatedButton(
                   onPressed: () {
                     if (controller.addFormKey.currentState!.validate()) {
@@ -384,7 +459,7 @@ class _DistributorsScreenState extends State<DistributorsScreen> {
                     ),
                   ),
                   child: const Text(
-                    'Save User',
+                    'Save Distributor',
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
@@ -399,6 +474,53 @@ class _DistributorsScreenState extends State<DistributorsScreen> {
       ),
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
+    );
+  }
+
+  // ── Helpers ────────────────────────────────────────────────────────────────
+
+  Widget _sectionHeader(String title) {
+    return Row(
+      children: [
+        Container(
+          width: 4,
+          height: 18,
+          decoration: BoxDecoration(
+            color: ColorsValue.primary,
+            borderRadius: BorderRadius.circular(2),
+          ),
+        ),
+        const SizedBox(width: 8),
+        Text(
+          title,
+          style: Styles.txtBlackColorW60014,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildField({
+    required TextEditingController controller,
+    required String label,
+    required IconData icon,
+    TextInputType keyboardType = TextInputType.text,
+    TextInputAction action = TextInputAction.done,
+    bool obscureText = false,
+    String? Function(String?)? validator,
+  }) {
+    return TextFormField(
+      controller: controller,
+      keyboardType: keyboardType,
+      textInputAction: action,
+      obscureText: obscureText,
+      decoration: InputDecoration(
+        labelText: label,
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+        prefixIcon: Icon(icon),
+      ),
+      validator: validator,
     );
   }
 }

@@ -8,6 +8,10 @@ abstract class Routes {
   static const otpScreen = _Paths.otpScreen;
   static const bottomScreen = _Paths.bottomScreen;
   static const customersScreen = _Paths.customersScreen;
+  static const distributorsScreen = _Paths.distributorsScreen;
+  static const distributorForm = _Paths.distributorForm;
+  static const productsScreen = _Paths.productsScreen;
+  static const productForm = _Paths.productForm;
   static const ordersScreen = _Paths.ordersScreen;
   static const profileScreen = _Paths.profileScreen;
   static const createGroupScreen = _Paths.createGroupScreen;
@@ -25,6 +29,10 @@ abstract class _Paths {
   static const otpScreen = '/otpScreen';
   static const bottomScreen = '/bottomScreen';
   static const customersScreen = '/customersScreen';
+  static const distributorsScreen = '/distributorsScreen';
+  static const distributorForm = '/distributorForm';
+  static const productsScreen = '/productsScreen';
+  static const productForm = '/productForm';
   static const ordersScreen = '/ordersScreen';
   static const profileScreen = '/profileScreen';
   static const createGroupScreen = '/createGroupScreen';

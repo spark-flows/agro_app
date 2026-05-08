@@ -131,11 +131,11 @@ class UsersController extends GetxController {
       return;
     }
 
-    bool success = await Get.find<Repository>().createUserApi(
+    final errorMsg = await Get.find<Repository>().createUserApi(
       userid: editingUserId.value.isNotEmpty ? editingUserId.value : null,
       name: nameCtrl.text.trim(),
       email: emailCtrl.text.trim(),
-      countrycode: "+91", // Assuming +91 or can add field
+      countrycode: "+91",
       mobile: phoneCtrl.text.trim(),
       password: passwordCtrl.text.trim(),
       address: addressCtrl.text.trim(),
@@ -143,18 +143,44 @@ class UsersController extends GetxController {
       isLoading: true,
     );
 
-    if (success) {
+    if (errorMsg == null) {
       Get.back();
       Get.snackbar(
         'Success',
         editingUserId.value.isNotEmpty ? 'User updated' : 'User added',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.green.withValues(alpha: 0.9),
+        colorText: Colors.white,
+      );
+      fetchUsers(isRefresh: true);
+    } else {
+      Get.snackbar(
+        'Error',
+        errorMsg,
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red.withValues(alpha: 0.9),
+        colorText: Colors.white,
+        duration: const Duration(seconds: 4),
+      );
+    }
+  }
+
+  Future<void> deleteUser(String id) async {
+    final success = await Get.find<Repository>().deleteUsersApi(
+      userid: id,
+      isLoading: true,
+    );
+    if (success) {
+      Get.snackbar(
+        'Success',
+        'User deleted successfully',
         snackPosition: SnackPosition.BOTTOM,
       );
       fetchUsers(isRefresh: true);
     } else {
       Get.snackbar(
         'Error',
-        'Failed to save user',
+        'Failed to delete user',
         snackPosition: SnackPosition.BOTTOM,
       );
     }

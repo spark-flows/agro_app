@@ -76,11 +76,53 @@ class DataRepository extends DomainRepository {
     isLoading: isLoading,
   );
 
-  Future<ResponseModel> getProductListApi({bool isLoading = false}) async =>
-      connectHelper.getProductListApi(isLoading: isLoading);
+  Future<ResponseModel> getProductListApi({
+    int page = 1,
+    int limit = 10,
+    String search = '',
+    bool isLoading = false,
+  }) async => connectHelper.getProductListApi(
+    page: page,
+    limit: limit,
+    search: search,
+    isLoading: isLoading,
+  );
 
-  Future<ResponseModel> getCustomerListApi({bool isLoading = false}) async =>
-      connectHelper.getCustomerListApi(isLoading: isLoading);
+  Future<ResponseModel> getCategoryListApi({bool isLoading = false}) async =>
+      connectHelper.getCategoryListApi(isLoading: isLoading);
+
+  Future<ResponseModel> createProductApi({
+    String? productid,
+    required String name,
+    required String unit,
+    required int price,
+    required String description,
+    required String image,
+    required String categoryid,
+    bool isLoading = false,
+  }) async => connectHelper.createProductApi(
+    productid: productid,
+    name: name,
+    unit: unit,
+    price: price,
+    description: description,
+    image: image,
+    categoryid: categoryid,
+    isLoading: isLoading,
+  );
+
+  Future<ResponseModel> getCustomerListApi({
+    int page = 1,
+    int limit = 100,
+    String search = "",
+    bool isLoading = false,
+  }) async =>
+      connectHelper.getCustomerListApi(
+        page: page,
+        limit: limit,
+        search: search,
+        isLoading: isLoading,
+      );
 
   Future<ResponseModel> createCustomerApi({
     String? customerid,
@@ -141,6 +183,18 @@ class DataRepository extends DomainRepository {
   }) async =>
       connectHelper.deleteOrderApi(orderid: orderid, isLoading: isLoading);
 
+  Future<ResponseModel> deleteProductApi({
+    required String productid,
+    bool isLoading = false,
+  }) async =>
+      connectHelper.deleteProductApi(productid: productid, isLoading: isLoading);
+
+  Future<ResponseModel> deleteUsersApi({
+    required String userid,
+    bool isLoading = false,
+  }) async =>
+      connectHelper.deleteUsersApi(userid: userid, isLoading: isLoading);
+
   Future<ResponseModel> getUsersListApi({
     int page = 1,
     int limit = 10,
@@ -174,6 +228,13 @@ class DataRepository extends DomainRepository {
     required String address,
     String? password,
     required String roleid,
+    String? surname,
+    String? fathername,
+    String? gstnumber,
+    String? location,
+    String? bankname,
+    String? bankaccountnumber,
+    String? bankifsscode,
     bool isLoading = false,
   }) async => connectHelper.createUserApi(
     userid: userid,
@@ -184,6 +245,13 @@ class DataRepository extends DomainRepository {
     password: password,
     roleid: roleid,
     address: address,
+    surname: surname,
+    fathername: fathername,
+    gstnumber: gstnumber,
+    location: location,
+    bankname: bankname,
+    bankaccountnumber: bankaccountnumber,
+    bankifsscode: bankifsscode,
     isLoading: isLoading,
   );
 }

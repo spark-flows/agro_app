@@ -84,6 +84,11 @@ class AuthController extends GetxController {
           LocalKeys.profileData,
           json.encode(profileData.toJson()),
         );
+
+        Get.find<Repository>().saveSecureValue(
+          LocalKeys.roleName,
+          profileData.rolename,
+        );
       }
 
       RouteManagement.goToBottomScreen();

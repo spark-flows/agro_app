@@ -1,6 +1,8 @@
 class EndPoints {
   static String loginApi = 'api/auth/login';
   static String productApi = 'api/product';
+  static String createProductApi = 'api/product/create';
+  static String categoryApi = 'api/category';
   static String customerListApi = 'api/customer';
   static String createCustomerApi = 'api/customer/create';
   static String profileApi = 'api/auth/profile';
@@ -13,4 +15,7 @@ class EndPoints {
   static String users = 'api/users';
   static String rolesApi = 'api/role';
   static String createUsersApi = 'api/users/create';
+  static String productUploadApi = 'api/product/upload';
+  static String deleteProductApi = 'api/product/delete';
+  static String deleteUsersApi = 'api/users/delete';
 }

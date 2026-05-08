@@ -1,3 +1,4 @@
+import 'package:agro_app/app/utils/utility.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:agro_app/app/theme/theme.dart';
@@ -173,9 +174,8 @@ class _UsersScreenState extends State<UsersScreen> {
                                         ),
                                       ],
                                     ),
-                                    trailing: Column(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.center,
+                                    trailing: Row(
+                                      mainAxisSize: MainAxisSize.min,
                                       children: [
                                         Container(
                                           padding: const EdgeInsets.symmetric(
@@ -204,6 +204,24 @@ class _UsersScreenState extends State<UsersScreen> {
                                               fontWeight: FontWeight.bold,
                                             ),
                                           ),
+                                        ),
+                                        const SizedBox(width: 4),
+                                        IconButton(
+                                          icon: const Icon(
+                                            Icons.delete_outline,
+                                            color: Colors.red,
+                                            size: 20,
+                                          ),
+                                          onPressed: () {
+                                            Utility.showDeleteDialog(
+                                              title: 'Delete User',
+                                              message:
+                                                  'Are you sure you want to delete ${user.name}?',
+                                              onConfirm: () {
+                                                controller.deleteUser(user.id);
+                                              },
+                                            );
+                                          },
                                         ),
                                       ],
                                     ),

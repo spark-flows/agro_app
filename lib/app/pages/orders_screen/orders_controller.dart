@@ -2,11 +2,7 @@ import 'package:agro_app/app/utils/utility.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:agro_app/domain/domain.dart';
-import 'package:agro_app/domain/models/get_order_list.dart';
-import 'package:agro_app/domain/models/get_all_customers_model.dart'
-    as customer_model;
-import 'package:agro_app/domain/models/get_all_order_model.dart';
-import 'package:agro_app/domain/models/get_one_order_model.dart';
+import 'package:agro_app/domain/models/get_all_customers_model.dart';
 
 class ProductItem {
   final String id;
@@ -41,7 +37,7 @@ class OrdersController extends GetxController {
   List<ProductItem> allProducts = [];
   bool isLoading = false;
 
-  List<customer_model.Doc> customers = [];
+  List<GetAllCustomerDoc> customers = [];
   String selectedCustomerId = '';
   bool isPlacingOrder = false;
   String? editingOrderId;
@@ -110,20 +106,19 @@ class OrdersController extends GetxController {
   Future<void> fetchProducts() async {
     isLoading = true;
     update();
-    ProductListModel? response = await Get.find<Repository>().getProductListApi(
-      isLoading: false,
-    );
-    if (response != null && response.data.docs.isNotEmpty) {
-      allProducts = response.data.docs
+    GetAllProductModel? response = await Get.find<Repository>()
+        .getProductListApi(isLoading: false);
+    if (response != null && (response.data?.docs?.isNotEmpty ?? false)) {
+      allProducts = response.data!.docs!
           .map(
             (doc) => ProductItem(
-              id: doc.id,
-              name: doc.name,
-              description: doc.description,
-              price: '₹${doc.price}',
-              rawPrice: double.tryParse(doc.price.toString()) ?? 0,
-              unit: 'per ${doc.unit}',
-              category: 'Others',
+              id: doc.id ?? '',
+              name: doc.name ?? '',
+              description: doc.description ?? '',
+              price: '₹${doc.price ?? 0}',
+              rawPrice: (doc.price ?? 0).toDouble(),
+              unit: 'per ${doc.unit ?? "-"}',
+              category: doc.categoryid?.name ?? 'Others',
               emoji: '📦',
               gradStart: const Color(0xFF16A34A),
               gradEnd: const Color(0xFF4ADE80),
