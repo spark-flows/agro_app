@@ -11,9 +11,9 @@ import 'package:http_parser/src/media_type.dart' as media_type;
 
 /// API WRAPPER to call all the APIs and handle the error status codes
 class ApiWrapper {
-  final String _baseUrl = 'https://ngcz8dv0-3070.inc1.devtunnels.ms/';
-  static final String baseUrl = 'https://ngcz8dv0-3070.inc1.devtunnels.ms/';
-  static final String api = 'https://ngcz8dv0-3070.inc1.devtunnels.ms';
+  final String _baseUrl = 'https://ngcz8dv0-3080.inc1.devtunnels.ms/';
+  static final String baseUrl = 'https://ngcz8dv0-3080.inc1.devtunnels.ms/';
+  static final String api = 'https://ngcz8dv0-3080.inc1.devtunnels.ms';
   static String imageUrl = 'https://eventopackage.s3.ap-south-1.amazonaws.com/';
 
   static http.Client client = http.Client();

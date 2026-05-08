@@ -56,7 +56,7 @@ class CustomersScreen extends StatelessWidget {
                   final customer = controller.filtered[index];
                   return Card(
                     margin: const EdgeInsets.symmetric(
-                      horizontal: 16,
+                      horizontal: 10,
                       vertical: 6,
                     ),
                     elevation: 1,
@@ -67,15 +67,20 @@ class CustomersScreen extends StatelessWidget {
                     child: Column(
                       children: [
                         ListTile(
-                          contentPadding: const EdgeInsets.only(left: 16, right: 16, top: 4, bottom: 0),
+                          contentPadding: const EdgeInsets.only(
+                            left: 16,
+                            right: 16,
+                            top: 4,
+                            bottom: 0,
+                          ),
                           leading: CircleAvatar(
                             radius: 24,
                             backgroundColor: ColorsValue.primary.withValues(
                               alpha: 0.1,
                             ),
                             child: Text(
-                              customer.name.isNotEmpty 
-                                  ? customer.name.substring(0, 1).toUpperCase() 
+                              customer.name.isNotEmpty
+                                  ? customer.name.substring(0, 1).toUpperCase()
                                   : '?',
                               style: TextStyle(
                                 color: ColorsValue.primary,
@@ -86,7 +91,9 @@ class CustomersScreen extends StatelessWidget {
                           ),
                           title: Text(
                             customer.name,
-                            style: Styles.txtBlackColorW70020.copyWith(fontSize: 16),
+                            style: Styles.txtBlackColorW70020.copyWith(
+                              fontSize: 16,
+                            ),
                           ),
                           subtitle: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -94,7 +101,11 @@ class CustomersScreen extends StatelessWidget {
                               const SizedBox(height: 6),
                               Row(
                                 children: [
-                                  const Icon(Icons.phone_outlined, size: 14, color: Colors.grey),
+                                  const Icon(
+                                    Icons.phone_outlined,
+                                    size: 14,
+                                    color: Colors.grey,
+                                  ),
                                   const SizedBox(width: 4),
                                   Text(
                                     customer.phone,
@@ -105,7 +116,11 @@ class CustomersScreen extends StatelessWidget {
                               const SizedBox(height: 4),
                               Row(
                                 children: [
-                                  const Icon(Icons.email_outlined, size: 14, color: Colors.grey),
+                                  const Icon(
+                                    Icons.email_outlined,
+                                    size: 14,
+                                    color: Colors.grey,
+                                  ),
                                   const SizedBox(width: 4),
                                   Text(
                                     customer.location,
@@ -127,22 +142,42 @@ class CustomersScreen extends StatelessWidget {
                                     controller.setupEdit(customer);
                                     _showAddDialog(context, controller);
                                   },
-                                  icon: const Icon(Icons.edit_outlined, color: Colors.blue, size: 20),
-                                  label: const Text('Edit', style: TextStyle(color: Colors.blue, fontWeight: FontWeight.w600)),
+                                  icon: const Icon(
+                                    Icons.edit_outlined,
+                                    color: Colors.blue,
+                                    size: 20,
+                                  ),
+                                  label: const Text(
+                                    'Edit',
+                                    style: TextStyle(
+                                      color: Colors.blue,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
                                   style: TextButton.styleFrom(
-                                    padding: const EdgeInsets.symmetric(vertical: 14),
-                                    shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
+                                    padding: const EdgeInsets.symmetric(
+                                      vertical: 14,
+                                    ),
+                                    shape: const RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.zero,
+                                    ),
                                   ),
                                 ),
                               ),
-                              VerticalDivider(width: 1, color: Colors.grey.shade200, thickness: 1),
+                              VerticalDivider(
+                                width: 1,
+                                color: Colors.grey.shade200,
+                                thickness: 1,
+                              ),
                               Expanded(
                                 child: TextButton.icon(
                                   onPressed: () {
                                     Get.dialog(
                                       Dialog(
                                         shape: RoundedRectangleBorder(
-                                          borderRadius: BorderRadius.circular(24),
+                                          borderRadius: BorderRadius.circular(
+                                            24,
+                                          ),
                                         ),
                                         child: Padding(
                                           padding: const EdgeInsets.all(24.0),
@@ -150,7 +185,9 @@ class CustomersScreen extends StatelessWidget {
                                             mainAxisSize: MainAxisSize.min,
                                             children: [
                                               Container(
-                                                padding: const EdgeInsets.all(16),
+                                                padding: const EdgeInsets.all(
+                                                  16,
+                                                ),
                                                 decoration: BoxDecoration(
                                                   color: Colors.red.withValues(
                                                     alpha: 0.1,
@@ -166,20 +203,23 @@ class CustomersScreen extends StatelessWidget {
                                               const SizedBox(height: 20),
                                               Text(
                                                 'Delete Customer',
-                                                style: Styles.txtBlackColorW70020,
+                                                style:
+                                                    Styles.txtBlackColorW70020,
                                               ),
                                               const SizedBox(height: 12),
                                               Text(
                                                 'Are you sure you want to delete ${customer.name}? This action cannot be undone.',
                                                 textAlign: TextAlign.center,
-                                                style: Styles.txtGreyColorW40014,
+                                                style:
+                                                    Styles.txtGreyColorW40014,
                                               ),
                                               const SizedBox(height: 28),
                                               Row(
                                                 children: [
                                                   Expanded(
                                                     child: OutlinedButton(
-                                                      onPressed: () => Get.back(),
+                                                      onPressed: () =>
+                                                          Get.back(),
                                                       style: OutlinedButton.styleFrom(
                                                         padding:
                                                             const EdgeInsets.symmetric(
@@ -187,17 +227,22 @@ class CustomersScreen extends StatelessWidget {
                                                             ),
                                                         shape: RoundedRectangleBorder(
                                                           borderRadius:
-                                                              BorderRadius.circular(12),
+                                                              BorderRadius.circular(
+                                                                12,
+                                                              ),
                                                         ),
                                                         side: BorderSide(
-                                                          color: Colors.grey.shade300,
+                                                          color: Colors
+                                                              .grey
+                                                              .shade300,
                                                         ),
                                                       ),
                                                       child: const Text(
                                                         'Cancel',
                                                         style: TextStyle(
                                                           color: Colors.black87,
-                                                          fontWeight: FontWeight.bold,
+                                                          fontWeight:
+                                                              FontWeight.bold,
                                                           fontSize: 16,
                                                         ),
                                                       ),
@@ -207,20 +252,24 @@ class CustomersScreen extends StatelessWidget {
                                                   Expanded(
                                                     child: ElevatedButton(
                                                       onPressed: () {
-                                                        controller.deleteCustomer(
-                                                          customer.id,
-                                                        );
+                                                        controller
+                                                            .deleteCustomer(
+                                                              customer.id,
+                                                            );
                                                         Get.back(); // close dialog
                                                       },
                                                       style: ElevatedButton.styleFrom(
-                                                        backgroundColor: Colors.red,
+                                                        backgroundColor:
+                                                            Colors.red,
                                                         padding:
                                                             const EdgeInsets.symmetric(
                                                               vertical: 14,
                                                             ),
                                                         shape: RoundedRectangleBorder(
                                                           borderRadius:
-                                                              BorderRadius.circular(12),
+                                                              BorderRadius.circular(
+                                                                12,
+                                                              ),
                                                         ),
                                                         elevation: 0,
                                                       ),
@@ -228,7 +277,8 @@ class CustomersScreen extends StatelessWidget {
                                                         'Delete',
                                                         style: TextStyle(
                                                           color: Colors.white,
-                                                          fontWeight: FontWeight.bold,
+                                                          fontWeight:
+                                                              FontWeight.bold,
                                                           fontSize: 16,
                                                         ),
                                                       ),
@@ -242,11 +292,25 @@ class CustomersScreen extends StatelessWidget {
                                       ),
                                     );
                                   },
-                                  icon: const Icon(Icons.delete_outline, color: Colors.red, size: 20),
-                                  label: const Text('Delete', style: TextStyle(color: Colors.red, fontWeight: FontWeight.w600)),
+                                  icon: const Icon(
+                                    Icons.delete_outline,
+                                    color: Colors.red,
+                                    size: 20,
+                                  ),
+                                  label: const Text(
+                                    'Delete',
+                                    style: TextStyle(
+                                      color: Colors.red,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
                                   style: TextButton.styleFrom(
-                                    padding: const EdgeInsets.symmetric(vertical: 14),
-                                    shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
+                                    padding: const EdgeInsets.symmetric(
+                                      vertical: 14,
+                                    ),
+                                    shape: const RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.zero,
+                                    ),
                                   ),
                                 ),
                               ),
@@ -304,11 +368,15 @@ class CustomersScreen extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 24),
-                Obx(() => Text(
-                  controller.editingCustomerId.value.isNotEmpty ? 'Edit Customer' : 'Add New Customer',
-                  style: Styles.txtBlackColorW70020,
-                  textAlign: TextAlign.center,
-                )),
+                Obx(
+                  () => Text(
+                    controller.editingCustomerId.value.isNotEmpty
+                        ? 'Edit Customer'
+                        : 'Add New Customer',
+                    style: Styles.txtBlackColorW70020,
+                    textAlign: TextAlign.center,
+                  ),
+                ),
                 const SizedBox(height: 24),
                 TextFormField(
                   controller: controller.nameCtrl,

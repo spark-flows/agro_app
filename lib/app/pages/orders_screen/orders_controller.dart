@@ -3,7 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:agro_app/domain/domain.dart';
 import 'package:agro_app/domain/models/get_order_list.dart';
-import 'package:agro_app/domain/models/get_all_customers_model.dart' as customer_model;
+import 'package:agro_app/domain/models/get_all_customers_model.dart'
+    as customer_model;
 import 'package:agro_app/domain/models/get_all_order_model.dart';
 import 'package:agro_app/domain/models/get_one_order_model.dart';
 
@@ -39,16 +40,19 @@ class OrdersController extends GetxController {
   String selectedCategory = 'All';
   List<ProductItem> allProducts = [];
   bool isLoading = false;
-  
+
   List<customer_model.Doc> customers = [];
   String selectedCustomerId = '';
   bool isPlacingOrder = false;
-  
+  String? editingOrderId;
+
   List<GetAllOrderDoc> customerOrders = [];
   bool isFetchingOrders = false;
 
   GetOneOrderModel? selectedOrderDetails;
   bool isFetchingOrderDetails = false;
+
+  String? historyCustomerId;
 
   final TextEditingController titleController = TextEditingController();
   final TextEditingController deliveryDateController = TextEditingController();
@@ -62,7 +66,9 @@ class OrdersController extends GetxController {
   }
 
   Future<void> fetchCustomers() async {
-    var response = await Get.find<Repository>().getCustomerListApi(isLoading: false);
+    var response = await Get.find<Repository>().getCustomerListApi(
+      isLoading: false,
+    );
     if (response != null && response.data?.docs != null) {
       customers = response.data!.docs!;
       update();
@@ -74,7 +80,7 @@ class OrdersController extends GetxController {
     isFetchingOrders = true;
     update();
     var response = await Get.find<Repository>().getOrderListApi(
-      customerid: customerId, 
+      customerid: customerId,
       isLoading: false,
     );
     if (response != null && response.data?.docs != null) {
@@ -104,26 +110,39 @@ class OrdersController extends GetxController {
   Future<void> fetchProducts() async {
     isLoading = true;
     update();
-    ProductListModel? response = await Get.find<Repository>().getProductListApi(isLoading: false);
+    ProductListModel? response = await Get.find<Repository>().getProductListApi(
+      isLoading: false,
+    );
     if (response != null && response.data.docs.isNotEmpty) {
-      allProducts = response.data.docs.map((doc) => ProductItem(
-        id: doc.id,
-        name: doc.name,
-        description: doc.description,
-        price: '₹${doc.price}',
-        rawPrice: double.tryParse(doc.price.toString()) ?? 0,
-        unit: 'per ${doc.unit}',
-        category: 'Others',
-        emoji: '📦',
-        gradStart: const Color(0xFF16A34A),
-        gradEnd: const Color(0xFF4ADE80),
-      )).toList();
+      allProducts = response.data.docs
+          .map(
+            (doc) => ProductItem(
+              id: doc.id,
+              name: doc.name,
+              description: doc.description,
+              price: '₹${doc.price}',
+              rawPrice: double.tryParse(doc.price.toString()) ?? 0,
+              unit: 'per ${doc.unit}',
+              category: 'Others',
+              emoji: '📦',
+              gradStart: const Color(0xFF16A34A),
+              gradEnd: const Color(0xFF4ADE80),
+            ),
+          )
+          .toList();
     }
     isLoading = false;
     update();
   }
 
-  final List<String> categories = ['All', 'Fertilizers', 'Seeds', 'Pesticides', 'Equipment', 'Others'];
+  final List<String> categories = [
+    'All',
+    'Fertilizers',
+    'Seeds',
+    'Pesticides',
+    'Equipment',
+    'Others',
+  ];
 
   List<ProductItem> get displayProducts {
     if (selectedCategory == 'All') return allProducts;
@@ -152,10 +171,60 @@ class OrdersController extends GetxController {
   }
 
   int get cartCount => allProducts.where((p) => p.quantity > 0).length;
-  num get cartTotal => allProducts.where((p) => p.quantity > 0).fold(0, (sum, p) => sum + (p.quantity * p.rawPrice));
+  num get cartTotal => allProducts
+      .where((p) => p.quantity > 0)
+      .fold(0, (sum, p) => sum + (p.quantity * p.rawPrice));
 
   void setSelectedCustomerId(String val) {
     selectedCustomerId = val;
+    update();
+  }
+
+  void resetOrderFlow() {
+    for (var p in allProducts) {
+      p.quantity = 0;
+    }
+    selectedCustomerId = historyCustomerId ?? '';
+    editingOrderId = null; // Clear edit mode
+    titleController.clear();
+    deliveryDateController.clear();
+    feedbackController.clear();
+    update();
+  }
+
+  void populateOrderForEdit(GetOneOrderData details) {
+    for (var p in allProducts) {
+      p.quantity = 0;
+    }
+
+    editingOrderId = details.id; // Store the database ID for updating
+    if (details.customerid is Map) {
+      historyCustomerId = details.customerid["_id"];
+    } else {
+      historyCustomerId = details.customerid?.toString();
+    }
+    selectedCustomerId = historyCustomerId ?? '';
+
+    titleController.text = details.orderno ?? '';
+    deliveryDateController.text = details.deliverydate ?? '';
+    feedbackController.text = details.feedback ?? '';
+
+    if (details.items != null) {
+      for (var item in details.items!) {
+        String pId = '';
+        if (item.productid is Map) {
+          pId = item.productid["_id"];
+        } else {
+          pId = item.productid.toString();
+        }
+        final idx = allProducts.indexWhere((p) => p.id == pId);
+        if (idx != -1) {
+          allProducts[idx].quantity = (item.quantity is num)
+              ? item.quantity.toInt()
+              : int.tryParse(item.quantity.toString()) ?? 0;
+        }
+      }
+    }
     update();
   }
 
@@ -164,23 +233,27 @@ class OrdersController extends GetxController {
       Utility.errorMessage('Please select a customer first');
       return;
     }
-    
+
     final cartItems = allProducts.where((p) => p.quantity > 0).toList();
     if (cartItems.isEmpty) {
       Utility.errorMessage('Your cart is empty');
       return;
     }
 
-    final itemsPayload = cartItems.map((p) => {
-      "productid": p.id,
-      "quantity": p.quantity,
-      "price": p.rawPrice,
-    }).toList();
+    final itemsPayload = cartItems
+        .map(
+          (p) => {
+            "productid": p.id,
+            "quantity": p.quantity,
+            "price": p.rawPrice,
+          },
+        )
+        .toList();
 
     isPlacingOrder = true;
     update();
     var response = await Get.find<Repository>().createOrderApi(
-      orderid: titleController.text.trim(),
+      orderid: editingOrderId, // Use the database ID if editing
       customerid: selectedCustomerId,
       items: itemsPayload,
       totalamount: cartTotal,
@@ -192,20 +265,50 @@ class OrdersController extends GetxController {
     update();
 
     if (response != null && response.isSuccess == true) {
-      Utility.closeDialog(); 
+      Utility.closeDialog();
       for (var p in allProducts) {
         p.quantity = 0;
       }
+      historyCustomerId = selectedCustomerId;
+      fetchOrderHistory(historyCustomerId!);
       selectedCustomerId = '';
+      editingOrderId = null; // Clear edit mode after success
       titleController.clear();
       deliveryDateController.clear();
       feedbackController.clear();
       update();
       Get.back();
-      Get.snackbar('Success', 'Order placed successfully!',
-          backgroundColor: Colors.green, colorText: Colors.white);
+      Get.back();
+      Get.snackbar(
+        'Success',
+        'Order placed successfully!',
+        backgroundColor: Colors.green,
+        colorText: Colors.white,
+      );
     } else {
       Utility.errorMessage(response?.message ?? 'Failed to place order');
+    }
+  }
+
+  Future<void> deleteOrder(String orderId) async {
+    bool success = await Get.find<Repository>().deleteOrderApi(
+      orderid: orderId,
+      isLoading: true,
+    );
+
+    if (success) {
+      Get.back(); // Close details dialog
+      if (historyCustomerId != null) {
+        fetchOrderHistory(historyCustomerId!);
+      }
+      Get.snackbar(
+        'Deleted',
+        'Order deleted successfully',
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
+    } else {
+      Utility.errorMessage('Failed to delete order');
     }
   }
 }

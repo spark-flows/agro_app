@@ -1,6 +1,5 @@
 import 'package:agro_app/domain/domain.dart';
 import 'package:agro_app/domain/models/auth_model.dart';
-import 'package:agro_app/domain/models/user_register_model.dart';
 
 class AuthPresenter {
   AuthPresenter(this.authUsecases);
@@ -12,11 +11,10 @@ class AuthPresenter {
     required String password,
     required String fcmToken,
     bool isLoading = false,
-  }) =>
-      authUsecases.loginApi(
-        userName: userName,
-        password: password,
-        fcmToken: fcmToken,
-        isLoading: isLoading,
-      );
+  }) => authUsecases.loginApi(
+    userName: userName,
+    password: password,
+    fcmToken: fcmToken,
+    isLoading: isLoading,
+  );
 }

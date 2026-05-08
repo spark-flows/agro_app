@@ -25,20 +25,42 @@ class HomeScreen extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Welcome, Admin', style: Styles.txtBlackColorW70020),
-                const SizedBox(height: 8),
-                Text(
-                  'What would you like to manage today?',
-                  style: Styles.txtGreyColorW40014,
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Welcome, ${controller.roleName.isNotEmpty ? controller.roleName : 'Admin'}',
+                          style: Styles.txtBlackColorW70020,
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          'What would you like to manage today?',
+                          style: Styles.txtGreyColorW40014,
+                        ),
+                      ],
+                    ),
+                    IconButton(
+                      icon: Icon(
+                        Icons.perm_identity_sharp,
+                        color: Colors.black87,
+                      ),
+                      onPressed: controller.goToProfile,
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 24),
+
+                const SizedBox(height: 20),
 
                 GridView.count(
                   crossAxisCount: 2,
                   shrinkWrap: true,
                   physics: const NeverScrollableScrollPhysics(),
-                  crossAxisSpacing: 16,
-                  mainAxisSpacing: 16,
+                  crossAxisSpacing: 4,
+                  mainAxisSpacing: 4,
                   children: [
                     _buildMenuCard(
                       title: 'Customers',
@@ -53,37 +75,37 @@ class HomeScreen extends StatelessWidget {
                       onTap: controller.goToOrders,
                     ),
                     _buildMenuCard(
-                      title: 'Profile',
-                      icon: Icons.person,
+                      title: 'Users',
+                      icon: Icons.manage_accounts,
                       color: Colors.purple,
-                      onTap: controller.goToProfile,
+                      onTap: controller.goToUsers,
                     ),
                   ],
                 ),
                 const SizedBox(height: 32),
 
-                Text('Quick Overview', style: Styles.txtBlackColorW70018),
-                const SizedBox(height: 16),
-                _buildStatCard(
-                  'Total Revenue',
-                  '₹27,410',
-                  Icons.account_balance_wallet,
-                  Colors.green,
-                ),
-                const SizedBox(height: 12),
-                _buildStatCard(
-                  'Pending Orders',
-                  '1',
-                  Icons.pending_actions,
-                  Colors.red,
-                ),
-                const SizedBox(height: 12),
-                _buildStatCard(
-                  'Completed Orders',
-                  '3',
-                  Icons.check_circle,
-                  Colors.teal,
-                ),
+                // Text('Quick Overview', style: Styles.txtBlackColorW70018),
+                // const SizedBox(height: 16),
+                // _buildStatCard(
+                //   'Total Revenue',
+                //   '₹27,410',
+                //   Icons.account_balance_wallet,
+                //   Colors.green,
+                // ),
+                // const SizedBox(height: 12),
+                // _buildStatCard(
+                //   'Pending Orders',
+                //   '1',
+                //   Icons.pending_actions,
+                //   Colors.red,
+                // ),
+                // const SizedBox(height: 12),
+                // _buildStatCard(
+                //   'Completed Orders',
+                //   '3',
+                //   Icons.check_circle,
+                //   Colors.teal,
+                // ),
               ],
             ),
           ),

@@ -7,7 +7,6 @@ import 'package:agro_app/app/theme/dimens.dart';
 import 'package:agro_app/app/theme/styles.dart';
 import 'package:agro_app/app/utils/asset_constants.dart';
 import 'package:agro_app/app/utils/utility.dart';
-import 'package:agro_app/app/widgets/custom_button.dart';
 import 'package:agro_app/app/widgets/custom_text_form_field.dart';
 
 class ForgotScreen extends StatelessWidget {

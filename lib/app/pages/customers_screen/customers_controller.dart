@@ -43,15 +43,29 @@ class CustomersController extends GetxController {
   Future<void> fetchCustomers() async {
     isLoading.value = true;
     try {
-      var customerModel = await Get.find<Repository>().getCustomerListApi(isLoading: false);
-      if (customerModel != null && customerModel.data != null && customerModel.data!.docs != null) {
-        customers.assignAll(customerModel.data!.docs!.map((doc) => CustomerItem(
-          id: doc.id ?? '',
-          name: doc.name ?? '',
-          phone: '${doc.countrycode ?? ''} ${doc.mobile ?? ''}',
-          location: (doc.email?.isNotEmpty ?? false) ? doc.email! : 'N/A',
-          gstNumber: (doc.feedback?.isNotEmpty ?? false) ? doc.feedback! : 'N/A',
-        )).toList());
+      var customerModel = await Get.find<Repository>().getCustomerListApi(
+        isLoading: false,
+      );
+      if (customerModel != null &&
+          customerModel.data != null &&
+          customerModel.data!.docs != null) {
+        customers.assignAll(
+          customerModel.data!.docs!
+              .map(
+                (doc) => CustomerItem(
+                  id: doc.id ?? '',
+                  name: doc.name ?? '',
+                  phone: '${doc.countrycode ?? ''} ${doc.mobile ?? ''}',
+                  location: (doc.email?.isNotEmpty ?? false)
+                      ? doc.email!
+                      : 'N/A',
+                  gstNumber: (doc.feedback?.isNotEmpty ?? false)
+                      ? doc.feedback!
+                      : 'N/A',
+                ),
+              )
+              .toList(),
+        );
         _onSearch();
       }
     } catch (e) {
@@ -77,10 +91,14 @@ class CustomersController extends GetxController {
     if (q.isEmpty) {
       filtered.assignAll(customers);
     } else {
-      filtered.assignAll(customers.where((c) =>
-          c.name.toLowerCase().contains(q) ||
-          c.location.toLowerCase().contains(q) ||
-          c.phone.contains(q)));
+      filtered.assignAll(
+        customers.where(
+          (c) =>
+              c.name.toLowerCase().contains(q) ||
+              c.location.toLowerCase().contains(q) ||
+              c.phone.contains(q),
+        ),
+      );
     }
   }
 
@@ -88,16 +106,20 @@ class CustomersController extends GetxController {
 
   void addCustomer() async {
     if (!addFormKey.currentState!.validate()) return;
-    
+
     Utility.showLoader();
-    String distributorId = await Utility.getSecureValue(LocalKeys.distributorId);
+    String distributorId = await Utility.getSecureValue(
+      LocalKeys.distributorId,
+    );
     var response = await Get.find<Repository>().createCustomerApi(
-      customerid: editingCustomerId.value.isEmpty ? null : editingCustomerId.value,
+      customerid: editingCustomerId.value.isEmpty
+          ? null
+          : editingCustomerId.value,
       name: nameCtrl.text.trim(),
-      email: locationCtrl.text.trim(), 
+      email: locationCtrl.text.trim(),
       countrycode: '+91',
       mobile: phoneCtrl.text.trim(),
-      feedback: gstCtrl.text.trim(), 
+      feedback: gstCtrl.text.trim(),
       isLoading: false,
     );
     Utility.closeLoader();

@@ -186,14 +186,19 @@ class ConnectHelper {
     return response;
   }
 
-  Future<ResponseModel> getOrderListApi({String? customerid, bool isLoading = false}) async {
+  Future<ResponseModel> getOrderListApi({
+    String? customerid,
+    bool isLoading = false,
+  }) async {
     var distributorId = await Utility.getSecureValue(LocalKeys.distributorId);
     var data = {
       "page": 1,
       "limit": 100,
       "search": {},
       "distributorid": distributorId.isNotEmpty ? [distributorId] : [],
-      "customerid": customerid != null && customerid.isNotEmpty ? [customerid] : [],
+      "customerid": customerid != null && customerid.isNotEmpty
+          ? [customerid]
+          : [],
       "orderno": [],
       "deliverydate": [],
       "totalamount": [],
@@ -242,11 +247,97 @@ class ConnectHelper {
     required String orderid,
     bool isLoading = false,
   }) async {
-    var data = {
-      "orderid": orderid,
-    };
+    var data = {"orderid": orderid};
     var response = await apiWrapper.makeRequest(
       EndPoints.getOneOrderApi,
+      Request.post,
+      data,
+      isLoading,
+      await Utility.commonHeader(),
+    );
+    return response;
+  }
+
+  Future<ResponseModel> deleteOrderApi({
+    required String orderid,
+    bool isLoading = false,
+  }) async {
+    var data = {"orderid": orderid};
+    var response = await apiWrapper.makeRequest(
+      EndPoints.deleteOrderApi,
+      Request.post,
+      data,
+      isLoading,
+      await Utility.commonHeader(),
+    );
+    return response;
+  }
+
+  Future<ResponseModel> getUsersListApi({
+    int page = 1,
+    int limit = 10,
+    String search = "",
+    String sortfield = "_id",
+    int sortoption = -1,
+    String roleid = "",
+    bool isLoading = false,
+  }) async {
+    var data = {
+      "page": page,
+      "limit": limit,
+      "search": search,
+      "sortfield": sortfield,
+      "sortoption": sortoption,
+      "roleid": roleid,
+      "branchid": "",
+    };
+    var response = await apiWrapper.makeRequest(
+      EndPoints.usersApi,
+      Request.post,
+      data,
+      isLoading,
+      await Utility.commonHeader(),
+    );
+    return response;
+  }
+
+  Future<ResponseModel> getAllRolesApi({
+    String search = "",
+    bool isLoading = false,
+  }) async {
+    var response = await apiWrapper.makeRequest(
+      '${EndPoints.rolesApi}?search=$search',
+      Request.get,
+      null,
+      isLoading,
+      await Utility.commonHeader(),
+    );
+    return response;
+  }
+
+  Future<ResponseModel> createUserApi({
+    String? userid,
+    required String name,
+    required String email,
+    required String countrycode,
+    required String mobile,
+    required String address,
+    String? password,
+    required String roleid,
+    bool isLoading = false,
+  }) async {
+    var data = {
+      "userid": userid ?? "",
+      "name": name,
+      "email": email,
+      "countrycode": countrycode,
+      "mobile": mobile,
+      "password": password ?? "",
+      "address": address,
+      "roleid": roleid,
+    };
+    var response = await apiWrapper.makeRequest(
+      EndPoints.createUsersApi,
       Request.post,
       data,
       isLoading,

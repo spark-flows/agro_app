@@ -76,17 +76,11 @@ class DataRepository extends DomainRepository {
     isLoading: isLoading,
   );
 
-  Future<ResponseModel> getProductListApi({
-    bool isLoading = false,
-  }) async => connectHelper.getProductListApi(
-    isLoading: isLoading,
-  );
+  Future<ResponseModel> getProductListApi({bool isLoading = false}) async =>
+      connectHelper.getProductListApi(isLoading: isLoading);
 
-  Future<ResponseModel> getCustomerListApi({
-    bool isLoading = false,
-  }) async => connectHelper.getCustomerListApi(
-    isLoading: isLoading,
-  );
+  Future<ResponseModel> getCustomerListApi({bool isLoading = false}) async =>
+      connectHelper.getCustomerListApi(isLoading: isLoading);
 
   Future<ResponseModel> createCustomerApi({
     String? customerid,
@@ -106,11 +100,8 @@ class DataRepository extends DomainRepository {
     isLoading: isLoading,
   );
 
-  Future<ResponseModel> getProfileApi({
-    bool isLoading = false,
-  }) async => connectHelper.getProfileApi(
-    isLoading: isLoading,
-  );
+  Future<ResponseModel> getProfileApi({bool isLoading = false}) async =>
+      connectHelper.getProfileApi(isLoading: isLoading);
 
   Future<ResponseModel> getOrderListApi({
     String? customerid,
@@ -141,8 +132,58 @@ class DataRepository extends DomainRepository {
   Future<ResponseModel> getOneOrderApi({
     required String orderid,
     bool isLoading = false,
-  }) async => connectHelper.getOneOrderApi(
-    orderid: orderid,
+  }) async =>
+      connectHelper.getOneOrderApi(orderid: orderid, isLoading: isLoading);
+
+  Future<ResponseModel> deleteOrderApi({
+    required String orderid,
+    bool isLoading = false,
+  }) async =>
+      connectHelper.deleteOrderApi(orderid: orderid, isLoading: isLoading);
+
+  Future<ResponseModel> getUsersListApi({
+    int page = 1,
+    int limit = 10,
+    String search = "",
+    String sortfield = "_id",
+    int sortoption = -1,
+    String roleid = "",
+    bool isLoading = false,
+  }) async => connectHelper.getUsersListApi(
+    page: page,
+    limit: limit,
+    search: search,
+    sortfield: sortfield,
+    sortoption: sortoption,
+    roleid: roleid,
+    isLoading: isLoading,
+  );
+
+  Future<ResponseModel> getAllRolesApi({
+    String search = "",
+    bool isLoading = false,
+  }) async =>
+      connectHelper.getAllRolesApi(search: search, isLoading: isLoading);
+
+  Future<ResponseModel> createUserApi({
+    String? userid,
+    required String name,
+    required String email,
+    required String countrycode,
+    required String mobile,
+    required String address,
+    String? password,
+    required String roleid,
+    bool isLoading = false,
+  }) async => connectHelper.createUserApi(
+    userid: userid,
+    name: name,
+    email: email,
+    countrycode: countrycode,
+    mobile: mobile,
+    password: password,
+    roleid: roleid,
+    address: address,
     isLoading: isLoading,
   );
 }

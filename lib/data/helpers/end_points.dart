@@ -7,4 +7,10 @@ class EndPoints {
   static String orderListApi = 'api/order';
   static String createOrderApi = 'api/order/create';
   static String getOneOrderApi = 'api/order/getone';
+  static String deleteOrderApi = 'api/order/delete';
+  static String usersApi = 'api/users';
+
+  static String users = 'api/users';
+  static String rolesApi = 'api/role';
+  static String createUsersApi = 'api/users/create';
 }

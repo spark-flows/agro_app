@@ -69,15 +69,17 @@ class AuthController extends GetxController {
         );
       }
 
-      var profileResponse = await Get.find<Repository>().getProfileApi(isLoading: false);
+      var profileResponse = await Get.find<Repository>().getProfileApi(
+        isLoading: false,
+      );
       if (profileResponse != null) {
         final profileData = profileResponse.data.userData;
-        
+
         Get.find<Repository>().saveSecureValue(
           LocalKeys.distributorId,
           profileData.id,
         );
-        
+
         Get.find<Repository>().saveSecureValue(
           LocalKeys.profileData,
           json.encode(profileData.toJson()),

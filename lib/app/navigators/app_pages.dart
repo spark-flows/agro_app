@@ -60,6 +60,14 @@ class AppPages {
       binding: OrdersBinding(),
       transition: Transition.rightToLeft,
     ),
+    GetPage<UsersScreen>(
+      name: _Paths.userListScreen,
+      transitionDuration: transitionDuration,
+      page: UsersScreen.new,
+      binding: UsersBinding(),
+      transition: Transition.rightToLeft,
+    ),
+
     GetPage<ProfileScreen>(
       name: _Paths.profileScreen,
       transitionDuration: transitionDuration,

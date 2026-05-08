@@ -11,6 +11,9 @@ import 'package:agro_app/domain/models/get_all_order_model.dart';
 import 'package:agro_app/domain/models/create_order_model.dart';
 import 'package:agro_app/domain/models/get_one_order_model.dart';
 
+import 'package:agro_app/domain/models/get_all_users_model.dart';
+import 'package:agro_app/domain/models/get_all_roll_model.dart';
+
 /// The main repository which will get the data from [DeviceRepository] or the
 /// [DataRepository].
 class Repository {
@@ -290,6 +293,106 @@ class Repository {
       print('getOneOrderApi error: $e');
       Utility.closeDialog();
       return null;
+    }
+  }
+
+  Future<bool> deleteOrderApi({
+    required String orderid,
+    bool isLoading = false,
+  }) async {
+    try {
+      var response = await _dataRepository.deleteOrderApi(
+        orderid: orderid,
+        isLoading: isLoading,
+      );
+      return response.data.isNotEmpty == true;
+    } catch (e) {
+      print('deleteOrderApi error: $e');
+      Utility.closeDialog();
+      return false;
+    }
+  }
+
+  Future<GetAllUsersModel?> getUsersListApi({
+    int page = 1,
+    int limit = 10,
+    String search = "",
+    String sortfield = "_id",
+    int sortoption = -1,
+    String roleid = "",
+    bool isLoading = false,
+  }) async {
+    try {
+      var response = await _dataRepository.getUsersListApi(
+        page: page,
+        limit: limit,
+        search: search,
+        sortfield: sortfield,
+        sortoption: sortoption,
+        roleid: roleid,
+        isLoading: isLoading,
+      );
+      if (response.data.isNotEmpty) {
+        return getAllUsersModelFromJson(response.data);
+      } else {
+        return null;
+      }
+    } catch (e) {
+      print('getUsersListApi error: $e');
+      Utility.closeDialog();
+      return null;
+    }
+  }
+
+  Future<GetAllRolesModel?> getAllRolesApi({
+    String search = "",
+    bool isLoading = false,
+  }) async {
+    try {
+      var response = await _dataRepository.getAllRolesApi(
+        search: search,
+        isLoading: isLoading,
+      );
+      if (response.data.isNotEmpty) {
+        return getAllRolesModelFromJson(response.data);
+      } else {
+        return null;
+      }
+    } catch (e) {
+      print('getAllRolesApi error: $e');
+      Utility.closeDialog();
+      return null;
+    }
+  }
+
+  Future<bool> createUserApi({
+    String? userid,
+    required String name,
+    required String email,
+    required String countrycode,
+    required String mobile,
+    required String address,
+    String? password,
+    required String roleid,
+    bool isLoading = false,
+  }) async {
+    try {
+      var response = await _dataRepository.createUserApi(
+        userid: userid,
+        name: name,
+        email: email,
+        countrycode: countrycode,
+        mobile: mobile,
+        password: password,
+        roleid: roleid,
+        address: address,
+        isLoading: isLoading,
+      );
+      return !response.hasError;
+    } catch (e) {
+      print('createUserApi error: $e');
+      Utility.closeDialog();
+      return false;
     }
   }
 }
