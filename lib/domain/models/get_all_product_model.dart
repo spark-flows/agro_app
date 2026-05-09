@@ -99,8 +99,9 @@ class GetAllProductDoc {
   String? id;
   GetAllProductCategoryid? categoryid;
   String? name;
-  String? unit;
+  GetAllProductUnit? unit;
   int? price;
+  int? qty;
   String? image;
   String? description;
   bool? isDeleted;
@@ -112,6 +113,7 @@ class GetAllProductDoc {
     this.name,
     this.unit,
     this.price,
+    this.qty,
     this.image,
     this.description,
     this.isDeleted,
@@ -123,14 +125,21 @@ class GetAllProductDoc {
         id: json["_id"],
         categoryid: json["categoryid"] == null
             ? null
-            : GetAllProductCategoryid.fromJson(json["categoryid"]),
-        name: json["name"],
-        unit: json["unit"],
-        price: json["price"],
-        image: json["image"],
-        description: json["description"],
+            : (json["categoryid"] is String
+                  ? GetAllProductCategoryid(id: json["categoryid"], name: '')
+                  : GetAllProductCategoryid.fromJson(json["categoryid"])),
+        name: json["name"]?.toString(),
+        unit: json["unit"] == null
+            ? null
+            : (json["unit"] is String
+                  ? GetAllProductUnit(id: json["unit"], name: '')
+                  : GetAllProductUnit.fromJson(json["unit"])),
+        price: num.tryParse(json["price"]?.toString() ?? '')?.toInt(),
+        qty: num.tryParse(json["qty"]?.toString() ?? '')?.toInt(),
+        image: json["image"]?.toString(),
+        description: json["description"]?.toString(),
         isDeleted: json["isDeleted"],
-        createdAt: json["createdAt"],
+        createdAt: json["createdAt"]?.toString(),
       );
 
   Map<String, dynamic> toJson() => {
@@ -139,6 +148,7 @@ class GetAllProductDoc {
     "name": name,
     "unit": unit,
     "price": price,
+    "qty": qty,
     "image": image,
     "description": description,
     "isDeleted": isDeleted,
@@ -154,6 +164,18 @@ class GetAllProductCategoryid {
 
   factory GetAllProductCategoryid.fromJson(Map<String, dynamic> json) =>
       GetAllProductCategoryid(id: json["_id"], name: json["name"]);
+
+  Map<String, dynamic> toJson() => {"_id": id, "name": name};
+}
+
+class GetAllProductUnit {
+  String? id;
+  String? name;
+
+  GetAllProductUnit({this.id, this.name});
+
+  factory GetAllProductUnit.fromJson(Map<String, dynamic> json) =>
+      GetAllProductUnit(id: json["_id"], name: json["name"]);
 
   Map<String, dynamic> toJson() => {"_id": id, "name": name};
 }

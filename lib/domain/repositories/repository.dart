@@ -1,19 +1,22 @@
 import 'dart:async';
 import 'dart:convert';
+
 import 'package:agro_app/app/utils/utility.dart';
 import 'package:agro_app/data/data.dart';
 import 'package:agro_app/device/device.dart';
+import 'package:agro_app/domain/entities/enums.dart';
 import 'package:agro_app/domain/models/auth_model.dart';
-import 'package:agro_app/domain/models/get_all_customers_model.dart';
 import 'package:agro_app/domain/models/create_customer_model.dart';
-import 'package:agro_app/domain/models/get_profille_model.dart';
-import 'package:agro_app/domain/models/get_all_order_model.dart';
 import 'package:agro_app/domain/models/create_order_model.dart';
-import 'package:agro_app/domain/models/get_one_order_model.dart';
-import 'package:agro_app/domain/models/get_all_product_model.dart';
 import 'package:agro_app/domain/models/get_all_category_model.dart';
-import 'package:agro_app/domain/models/get_all_users_model.dart';
+import 'package:agro_app/domain/models/get_all_customers_model.dart';
+import 'package:agro_app/domain/models/get_all_order_model.dart';
+import 'package:agro_app/domain/models/get_all_product_model.dart';
 import 'package:agro_app/domain/models/get_all_roll_model.dart';
+import 'package:agro_app/domain/models/get_all_unit_model.dart';
+import 'package:agro_app/domain/models/get_all_users_model.dart';
+import 'package:agro_app/domain/models/get_one_order_model.dart';
+import 'package:agro_app/domain/models/get_profille_model.dart';
 
 /// The main repository which will get the data from [DeviceRepository] or the
 /// [DataRepository].
@@ -158,14 +161,27 @@ class Repository {
         search: search,
         isLoading: isLoading,
       );
-      if (response.data.isNotEmpty) {
-        return getAllProductModelFromJson(response.data);
-      } else {
+      if (response.hasError) {
+        final msg = _parseErrorMessage(
+          response.data,
+          'Failed to load products',
+        );
+        Utility.showMessage(msg, MessageType.error, null, '');
         return null;
       }
-    } catch (e) {
-      print('getProductListApi error: $e');
+      if (response.data.isNotEmpty) {
+        return getAllProductModelFromJson(response.data);
+      }
+      return null;
+    } catch (e, st) {
+      print('getProductListApi error: $e\n$st');
       Utility.closeDialog();
+      Utility.showMessage(
+        'Failed to load products',
+        MessageType.error,
+        null,
+        '',
+      );
       return null;
     }
   }
@@ -177,27 +193,58 @@ class Repository {
       var response = await _dataRepository.getCategoryListApi(
         isLoading: isLoading,
       );
-      print('[Repo] getCategoryListApi raw data length: ${response.data.length}');
-      if (response.data.isNotEmpty) {
-        final model = getAllCategoryModelFromJson(response.data);
-        print('[Repo] getCategoryListApi parsed ${model.data.docs.length} docs, isSuccess=${model.isSuccess}');
-        return model;
-      } else {
-        print('[Repo] getCategoryListApi: empty response');
+      if (response.hasError) {
+        final msg = _parseErrorMessage(
+          response.data,
+          'Failed to load categories',
+        );
+        Utility.showMessage(msg, MessageType.error, null, '');
         return null;
       }
+      if (response.data.isNotEmpty) {
+        return getAllCategoryModelFromJson(response.data);
+      }
+      return null;
     } catch (e, st) {
       print('[Repo] getCategoryListApi error: $e\n$st');
       Utility.closeDialog();
+      Utility.showMessage(
+        'Failed to load categories',
+        MessageType.error,
+        null,
+        '',
+      );
       return null;
     }
   }
 
-  Future<bool> createProductApi({
+  Future<GetAllUnitModel?> getUnitListApi({bool isLoading = false}) async {
+    try {
+      var response = await _dataRepository.getUnitListApi(isLoading: isLoading);
+      if (response.hasError) {
+        final msg = _parseErrorMessage(response.data, 'Failed to load units');
+        Utility.showMessage(msg, MessageType.error, null, '');
+        return null;
+      }
+      if (response.data.isNotEmpty) {
+        return getAllUnitModelFromJson(response.data);
+      }
+      return null;
+    } catch (e, st) {
+      print('[Repo] getUnitListApi error: $e\n$st');
+      Utility.closeDialog();
+      Utility.showMessage('Failed to load units', MessageType.error, null, '');
+      return null;
+    }
+  }
+
+  /// Returns null on success, or an error message string on failure.
+  Future<String?> createProductApi({
     String? productid,
     required String name,
     required String unit,
     required int price,
+    required int qty,
     required String description,
     required String image,
     required String categoryid,
@@ -209,16 +256,21 @@ class Repository {
         name: name,
         unit: unit,
         price: price,
+        qty: qty,
         description: description,
         image: image,
         categoryid: categoryid,
         isLoading: isLoading,
       );
-      return !response.hasError;
+      if (!response.hasError) {
+        return null; // success
+      }
+      // Parse the error message from the API response body
+      return _parseErrorMessage(response.data, 'Failed to save product');
     } catch (e) {
       print('createProductApi error: $e');
       Utility.closeDialog();
-      return false;
+      return 'An unexpected error occurred';
     }
   }
 
@@ -235,14 +287,27 @@ class Repository {
         search: search,
         isLoading: isLoading,
       );
-      if (response.data.isNotEmpty) {
-        return getAllCustomerModelFromJson(response.data);
-      } else {
+      if (response.hasError) {
+        final msg = _parseErrorMessage(
+          response.data,
+          'Failed to load customers',
+        );
+        Utility.showMessage(msg, MessageType.error, null, '');
         return null;
       }
+      if (response.data.isNotEmpty) {
+        return getAllCustomerModelFromJson(response.data);
+      }
+      return null;
     } catch (e) {
       print('getCustomerListApi error: $e');
       Utility.closeDialog();
+      Utility.showMessage(
+        'Failed to load customers',
+        MessageType.error,
+        null,
+        '',
+      );
       return null;
     }
   }
@@ -254,6 +319,7 @@ class Repository {
     required String countrycode,
     required String mobile,
     required String feedback,
+    required String village,
     bool isLoading = false,
   }) async {
     try {
@@ -264,15 +330,83 @@ class Repository {
         countrycode: countrycode,
         mobile: mobile,
         feedback: feedback,
+        village: village,
         isLoading: isLoading,
       );
+      if (response.hasError) {
+        final msg = _parseErrorMessage(
+          response.data,
+          'Failed to save customer',
+        );
+        Utility.showMessage(msg, MessageType.error, null, '');
+        return null;
+      }
       if (response.data.isNotEmpty) {
         return createCustomerModelFromJson(response.data);
       }
       return null;
     } catch (e) {
       Utility.closeDialog();
+      Utility.showMessage(
+        'Failed to save customer',
+        MessageType.error,
+        null,
+        '',
+      );
       return null;
+    }
+  }
+
+  Future<bool> deleteCustomerApi({
+    required String customerid,
+    bool isLoading = false,
+  }) async {
+    try {
+      var response = await _dataRepository.deleteCustomerApi(
+        customerid: customerid,
+        isLoading: isLoading,
+      );
+      if (response.hasError) {
+        final msg = _parseErrorMessage(
+          response.data,
+          'Failed to delete customer',
+        );
+        Utility.showMessage(msg, MessageType.error, null, '');
+        return false;
+      }
+      return true;
+    } catch (e) {
+      print('deleteCustomerApi error: $e');
+      Utility.closeDialog();
+      Utility.showMessage(
+        'Failed to delete customer',
+        MessageType.error,
+        null,
+        '',
+      );
+      return false;
+    }
+  }
+
+  Future<String?> customerFeedbackApi({
+    required String customerid,
+    required String feedback,
+    bool isLoading = false,
+  }) async {
+    try {
+      var response = await _dataRepository.customerFeedbackApi(
+        customerid: customerid,
+        feedback: feedback,
+        isLoading: isLoading,
+      );
+      if (!response.hasError) {
+        return null;
+      }
+      return _parseErrorMessage(response.data, 'Failed to submit feedback');
+    } catch (e) {
+      print('customerFeedbackApi error: $e');
+      Utility.closeDialog();
+      return e.toString();
     }
   }
 
@@ -299,14 +433,19 @@ class Repository {
         customerid: customerid,
         isLoading: isLoading,
       );
-      if (response.data.isNotEmpty) {
-        return getAllOrderModelFromJson(response.data);
-      } else {
+      if (response.hasError) {
+        final msg = _parseErrorMessage(response.data, 'Failed to load orders');
+        Utility.showMessage(msg, MessageType.error, null, '');
         return null;
       }
+      if (response.data.isNotEmpty) {
+        return getAllOrderModelFromJson(response.data);
+      }
+      return null;
     } catch (e) {
       print('getOrderListApi error: $e');
       Utility.closeDialog();
+      Utility.showMessage('Failed to load orders', MessageType.error, null, '');
       return null;
     }
   }
@@ -330,14 +469,19 @@ class Repository {
         feedback: feedback,
         isLoading: isLoading,
       );
-      if (response.data.isNotEmpty) {
-        return createorderModelFromJson(response.data);
-      } else {
+      if (response.hasError) {
+        final msg = _parseErrorMessage(response.data, 'Failed to save order');
+        Utility.showMessage(msg, MessageType.error, null, '');
         return null;
       }
+      if (response.data.isNotEmpty) {
+        return createorderModelFromJson(response.data);
+      }
+      return null;
     } catch (e) {
       print('createOrderApi error: $e');
       Utility.closeDialog();
+      Utility.showMessage('Failed to save order', MessageType.error, null, '');
       return null;
     }
   }
@@ -351,14 +495,27 @@ class Repository {
         orderid: orderid,
         isLoading: isLoading,
       );
-      if (response.data.isNotEmpty) {
-        return getOneOrderModelFromJson(response.data);
-      } else {
+      if (response.hasError) {
+        final msg = _parseErrorMessage(
+          response.data,
+          'Failed to load order details',
+        );
+        Utility.showMessage(msg, MessageType.error, null, '');
         return null;
       }
+      if (response.data.isNotEmpty) {
+        return getOneOrderModelFromJson(response.data);
+      }
+      return null;
     } catch (e) {
       print('getOneOrderApi error: $e');
       Utility.closeDialog();
+      Utility.showMessage(
+        'Failed to load order details',
+        MessageType.error,
+        null,
+        '',
+      );
       return null;
     }
   }
@@ -372,10 +529,21 @@ class Repository {
         orderid: orderid,
         isLoading: isLoading,
       );
-      return response.data.isNotEmpty == true;
+      if (response.hasError) {
+        final msg = _parseErrorMessage(response.data, 'Failed to delete order');
+        Utility.showMessage(msg, MessageType.error, null, '');
+        return false;
+      }
+      return true;
     } catch (e) {
       print('deleteOrderApi error: $e');
       Utility.closeDialog();
+      Utility.showMessage(
+        'Failed to delete order',
+        MessageType.error,
+        null,
+        '',
+      );
       return false;
     }
   }
@@ -389,10 +557,24 @@ class Repository {
         productid: productid,
         isLoading: isLoading,
       );
-      return !response.hasError;
+      if (response.hasError) {
+        final msg = _parseErrorMessage(
+          response.data,
+          'Failed to delete product',
+        );
+        Utility.showMessage(msg, MessageType.error, null, '');
+        return false;
+      }
+      return true;
     } catch (e) {
       print('deleteProductApi error: $e');
       Utility.closeDialog();
+      Utility.showMessage(
+        'Failed to delete product',
+        MessageType.error,
+        null,
+        '',
+      );
       return false;
     }
   }
@@ -406,7 +588,12 @@ class Repository {
         userid: userid,
         isLoading: isLoading,
       );
-      return !response.hasError;
+      if (response.hasError) {
+        final msg = _parseErrorMessage(response.data, 'Failed to delete user');
+        Utility.showMessage(msg, MessageType.error, null, '');
+        return false;
+      }
+      return true;
     } catch (e) {
       print('deleteUsersApi error: $e');
       Utility.closeDialog();
@@ -433,14 +620,27 @@ class Repository {
         roleid: roleid,
         isLoading: isLoading,
       );
-      if (response.data.isNotEmpty) {
-        return getAllUsersModelFromJson(response.data);
-      } else {
+      if (response.hasError) {
+        final msg = _parseErrorMessage(
+          response.data,
+          'Failed to load distributors',
+        );
+        Utility.showMessage(msg, MessageType.error, null, '');
         return null;
       }
-    } catch (e) {
-      print('getUsersListApi error: $e');
+      if (response.data.isNotEmpty) {
+        return getAllUsersModelFromJson(response.data);
+      }
+      return null;
+    } catch (e, st) {
+      print('getUsersListApi error: $e\n$st');
       Utility.closeDialog();
+      Utility.showMessage(
+        'Failed to load distributors',
+        MessageType.error,
+        null,
+        '',
+      );
       return null;
     }
   }
@@ -507,17 +707,26 @@ class Repository {
       if (!response.hasError) {
         return null; // success
       }
-      // Try to parse the error message from the response body JSON
-      try {
-        final decoded = json.decode(response.data);
-        return decoded['message']?.toString() ?? 'Failed to save user';
-      } catch (_) {
-        return 'Failed to save user';
-      }
+      // Parse the actual error message from the API response (handles both 'Message' and 'message' keys)
+      return _parseErrorMessage(response.data, 'Failed to save user');
     } catch (e) {
       print('createUserApi error: $e');
       Utility.closeDialog();
       return 'An unexpected error occurred';
+    }
+  }
+
+  /// Helper: extracts the error message from an API JSON response body.
+  String _parseErrorMessage(String? data, String fallback) {
+    if (data == null || data.isEmpty) return fallback;
+    try {
+      final decoded = json.decode(data);
+      return decoded['message']?.toString() ??
+          decoded['Message']?.toString() ??
+          decoded['error']?.toString() ??
+          fallback;
+    } catch (_) {
+      return fallback;
     }
   }
 }

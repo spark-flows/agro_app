@@ -1,11 +1,10 @@
 // coverage:ignore-file
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:agro_app/app/app.dart';
 import 'package:agro_app/data/data.dart';
-import 'package:agro_app/domain/entities/enums.dart';
-import 'package:agro_app/domain/models/response_model.dart';
-import 'package:agro_app/domain/repositories/local_storage_keys.dart';
+import 'package:agro_app/domain/domain.dart';
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:dio/dio.dart';
 import 'package:get/get.dart';
@@ -105,10 +104,35 @@ class ConnectHelper {
     String search = '',
     bool isLoading = false,
   }) async {
+    String distributorId = await Utility.getSecureValue(
+      LocalKeys.distributorId,
+    );
+    String role = await Utility.getSecureValue(LocalKeys.roleName);
+    if (role.isEmpty) {
+      final profileJson = await Utility.getSecureValue(LocalKeys.profileData);
+      if (profileJson.isNotEmpty) {
+        try {
+          final decoded = json.decode(profileJson);
+          role =
+              decoded['roleid']?['rolename']?.toString() ??
+              decoded['rolename']?.toString() ??
+              '';
+        } catch (_) {}
+      }
+    }
+
+    final bool isAdmin =
+        role.toLowerCase() == 'admin' ||
+        role.toLowerCase() == 'is_admin' ||
+        role == '1';
+
     var data = {
       'page': page,
       'limit': limit,
-      'search': search,
+      'search': search.isNotEmpty ? {'name': search} : {},
+      'distributorid': (distributorId.isNotEmpty && !isAdmin)
+          ? [distributorId]
+          : [],
       'categoryid': [],
       'name': [],
       'unit': [],
@@ -137,6 +161,17 @@ class ConnectHelper {
     return response;
   }
 
+  Future<ResponseModel> getUnitListApi({bool isLoading = false}) async {
+    var response = await apiWrapper.makeRequest(
+      '${EndPoints.unitApi}?search=',
+      Request.get,
+      null,
+      isLoading,
+      await Utility.commonHeader(),
+    );
+    return response;
+  }
+
   Future<ResponseModel> createProductApi({
     String? productid,
     required String name,
@@ -145,6 +180,7 @@ class ConnectHelper {
     required String description,
     required String image,
     required String categoryid,
+    required int qty,
     bool isLoading = false,
   }) async {
     var data = {
@@ -154,6 +190,7 @@ class ConnectHelper {
       'price': price,
       'description': description,
       'image': image,
+      'qty': qty,
       'categoryid': categoryid,
     };
     var response = await apiWrapper.makeRequest(
@@ -175,11 +212,80 @@ class ConnectHelper {
     String distributorId = await Utility.getSecureValue(
       LocalKeys.distributorId,
     );
+
+    // ── Step 1: Try LocalKeys.roleName directly ──────────────────────────────
+    String role = await Utility.getSecureValue(LocalKeys.roleName);
+    print('[CustomerList] Step1 - LocalKeys.roleName = "$role"');
+
+    // ── Step 2: Try parsing from cached profileData JSON ─────────────────────
+    if (role.isEmpty) {
+      final profileJson = await Utility.getSecureValue(LocalKeys.profileData);
+      print(
+        '[CustomerList] Step2 - profileData length = ${profileJson.length}',
+      );
+      if (profileJson.isNotEmpty) {
+        try {
+          final decoded = json.decode(profileJson);
+          role =
+              decoded['roleid']?['rolename']?.toString() ??
+              decoded['rolename']?.toString() ??
+              '';
+          print('[CustomerList] Step2 - parsed role = "$role"');
+        } catch (e) {
+          print('[CustomerList] Step2 - parse error: $e');
+        }
+      }
+    }
+
+    // ── Step 3: Last resort — call profile API directly ───────────────────────
+    if (role.isEmpty) {
+      print('[CustomerList] Step3 - calling profile API directly');
+      try {
+        final profileRes = await getProfileApi(isLoading: false);
+        if (!profileRes.hasError && profileRes.data.isNotEmpty) {
+          final decodedProfile = json.decode(profileRes.data);
+          final userData = decodedProfile['Data']?['userData'];
+          if (userData != null) {
+            role =
+                userData['roleid']?['rolename']?.toString() ??
+                userData['rolename']?.toString() ??
+                '';
+            print('[CustomerList] Step3 - profile API returned role = "$role"');
+            // Save for next time
+            if (role.isNotEmpty) {
+              Get.find<Repository>().saveSecureValue(LocalKeys.roleName, role);
+            }
+            final freshDistId = userData['_id']?.toString() ?? '';
+            if (freshDistId.isNotEmpty && distributorId.isEmpty) {
+              distributorId = freshDistId;
+              Get.find<Repository>().saveSecureValue(
+                LocalKeys.distributorId,
+                freshDistId,
+              );
+            }
+          }
+        }
+      } catch (e) {
+        print('[CustomerList] Step3 - profile API error: $e');
+      }
+    }
+
+    final isAdmin =
+        role.toLowerCase() == 'admin' ||
+        role.toLowerCase() == 'is_admin' ||
+        role == '1';
+
+    print(
+      '[CustomerList] Final - role="$role", isAdmin=$isAdmin, distributorId="$distributorId"',
+    );
+
     var data = {
       "page": page,
       "limit": limit,
-      "search": search,
-      "distributorid": distributorId.isNotEmpty ? [distributorId] : [],
+      "search": search.isNotEmpty ? {"name": search} : {},
+      "distributorid": isAdmin
+          ? []
+          : (distributorId.isNotEmpty ? [distributorId] : []),
       "name": [],
       "email": [],
       "countrycode": [],
@@ -203,6 +309,7 @@ class ConnectHelper {
     required String countrycode,
     required String mobile,
     required String feedback,
+    required String village,
     bool isLoading = false,
   }) async {
     var distributorId = await Utility.getSecureValue(LocalKeys.distributorId);
@@ -214,9 +321,41 @@ class ConnectHelper {
       "countrycode": countrycode,
       "mobile": mobile,
       "feedback": feedback,
+      "village": village,
     };
     var response = await apiWrapper.makeRequest(
       EndPoints.createCustomerApi,
+      Request.post,
+      data,
+      isLoading,
+      await Utility.commonHeader(),
+    );
+    return response;
+  }
+
+  Future<ResponseModel> deleteCustomerApi({
+    required String customerid,
+    bool isLoading = false,
+  }) async {
+    var data = {"customerid": customerid};
+    var response = await apiWrapper.makeRequest(
+      EndPoints.deleteCustomerApi,
+      Request.post,
+      data,
+      isLoading,
+      await Utility.commonHeader(),
+    );
+    return response;
+  }
+
+  Future<ResponseModel> customerFeedbackApi({
+    required String customerid,
+    required String feedback,
+    bool isLoading = false,
+  }) async {
+    var data = {"customerid": customerid, "feedback": feedback};
+    var response = await apiWrapper.makeRequest(
+      EndPoints.customerFeedbackApi,
       Request.post,
       data,
       isLoading,
@@ -365,7 +504,7 @@ class ConnectHelper {
     var data = {
       "page": page,
       "limit": limit,
-      "search": search,
+      "search": search.isNotEmpty ? {"name": search} : {},
       "sortfield": sortfield,
       "sortoption": sortoption,
       "roleid": roleid,
@@ -420,12 +559,12 @@ class ConnectHelper {
       "countrycode": countrycode,
       "mobile": mobile,
       "password": password ?? "",
-      "address": address,
+      "location": address,
       "roleid": roleid,
       if (surname != null && surname.isNotEmpty) "surname": surname,
       if (fathername != null && fathername.isNotEmpty) "fathername": fathername,
       if (gstnumber != null && gstnumber.isNotEmpty) "gstnumber": gstnumber,
-      if (location != null && location.isNotEmpty) "location": location,
+      // if (location != null && location.isNotEmpty) "location": location,
       if (bankname != null && bankname.isNotEmpty) "bankname": bankname,
       if (bankaccountnumber != null && bankaccountnumber.isNotEmpty)
         "bankaccountnumber": bankaccountnumber,

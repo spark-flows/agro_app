@@ -1,8 +1,7 @@
 import 'package:agro_app/app/utils/utility.dart';
+import 'package:agro_app/domain/domain.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:agro_app/domain/domain.dart';
-import 'package:agro_app/domain/models/get_all_customers_model.dart';
 
 class ProductItem {
   final String id;
@@ -15,6 +14,7 @@ class ProductItem {
   final String emoji;
   final Color gradStart;
   final Color gradEnd;
+  final int? qty;
   int quantity;
 
   ProductItem({
@@ -28,6 +28,7 @@ class ProductItem {
     required this.emoji,
     required this.gradStart,
     required this.gradEnd,
+    this.qty,
     this.quantity = 0,
   });
 }
@@ -59,6 +60,22 @@ class OrdersController extends GetxController {
     super.onInit();
     fetchProducts();
     fetchCustomers();
+    fetchAllOrders();
+  }
+
+  Future<void> fetchAllOrders() async {
+    isFetchingOrders = true;
+    update();
+    var response = await Get.find<Repository>().getOrderListApi(
+      isLoading: false,
+    );
+    if (response != null && response.data?.docs != null) {
+      customerOrders = response.data!.docs!;
+    } else {
+      customerOrders.clear();
+    }
+    isFetchingOrders = false;
+    update();
   }
 
   Future<void> fetchCustomers() async {
@@ -117,11 +134,12 @@ class OrdersController extends GetxController {
               description: doc.description ?? '',
               price: '₹${doc.price ?? 0}',
               rawPrice: (doc.price ?? 0).toDouble(),
-              unit: 'per ${doc.unit ?? "-"}',
+              unit: 'per ${doc.unit?.name ?? "-"}',
               category: doc.categoryid?.name ?? 'Others',
               emoji: '📦',
               gradStart: const Color(0xFF16A34A),
               gradEnd: const Color(0xFF4ADE80),
+              qty: doc.qty,
             ),
           )
           .toList();
@@ -152,8 +170,17 @@ class OrdersController extends GetxController {
   void incrementQuantity(String id) {
     final idx = allProducts.indexWhere((p) => p.id == id);
     if (idx != -1) {
-      allProducts[idx].quantity++;
-      update();
+      final product = allProducts[idx];
+      if (product.qty == null || product.quantity < product.qty!) {
+        product.quantity++;
+        update();
+      } else {
+        Get.snackbar(
+          'Limit Reached',
+          'Only ${product.qty} items available in stock',
+          snackPosition: SnackPosition.BOTTOM,
+        );
+      }
     }
   }
 
@@ -201,7 +228,7 @@ class OrdersController extends GetxController {
     selectedCustomerId = historyCustomerId ?? '';
 
     titleController.text = details.orderno ?? '';
-    deliveryDateController.text = details.deliverydate ?? '';
+    deliveryDateController.text = details.deliverydate?.split('T').first ?? '';
     feedbackController.text = details.feedback ?? '';
 
     if (details.items != null) {

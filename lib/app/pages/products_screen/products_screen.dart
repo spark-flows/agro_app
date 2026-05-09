@@ -1,8 +1,8 @@
 import 'package:agro_app/app/pages/products_screen/products_controller.dart';
+import 'package:agro_app/app/theme/theme.dart';
 import 'package:agro_app/app/utils/utility.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:agro_app/app/theme/theme.dart';
 
 class ProductsScreen extends StatefulWidget {
   const ProductsScreen({super.key});
@@ -187,9 +187,8 @@ class _ProductsScreenState extends State<ProductsScreen> {
                                           ),
                                         Text(
                                           [
-                                            if (product.unit != null &&
-                                                product.unit!.trim().isNotEmpty)
-                                              'Unit: ${product.unit}',
+                                            if (product.unit != null)
+                                              'Unit: ${product.unit?.name}',
                                             'Price: ₹${product.price ?? 0}',
                                           ].join(' | '),
                                           style: Styles.txtGreyColorW40012,

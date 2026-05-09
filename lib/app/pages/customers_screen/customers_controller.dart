@@ -9,7 +9,8 @@ class CustomerItem {
   final String name;
   final String phone;
   final String location;
-  final String gstNumber;
+  final String feedback;
+  final String village;
   final bool isActive;
 
   CustomerItem({
@@ -17,7 +18,8 @@ class CustomerItem {
     required this.name,
     required this.phone,
     required this.location,
-    required this.gstNumber,
+    required this.feedback,
+    required this.village,
     this.isActive = true,
   });
 }
@@ -35,6 +37,7 @@ class CustomersController extends GetxController {
   final TextEditingController phoneCtrl = TextEditingController();
   final TextEditingController locationCtrl = TextEditingController();
   final TextEditingController gstCtrl = TextEditingController();
+  final TextEditingController villageCtrl = TextEditingController();
   final GlobalKey<FormState> addFormKey = GlobalKey<FormState>();
   
   Timer? _searchTimer;
@@ -74,8 +77,11 @@ class CustomersController extends GetxController {
                 location: (doc.email?.isNotEmpty ?? false)
                     ? doc.email!
                     : 'N/A',
-                gstNumber: (doc.feedback?.isNotEmpty ?? false)
+                feedback: (doc.feedback?.isNotEmpty ?? false)
                     ? doc.feedback!
+                    : 'N/A',
+                village: (doc.village?.isNotEmpty ?? false)
+                    ? doc.village!
                     : 'N/A',
               ),
             )
@@ -103,6 +109,7 @@ class CustomersController extends GetxController {
     phoneCtrl.dispose();
     locationCtrl.dispose();
     gstCtrl.dispose();
+    villageCtrl.dispose();
     super.onClose();
   }
 
@@ -127,6 +134,7 @@ class CustomersController extends GetxController {
       countrycode: '+91',
       mobile: phoneCtrl.text.trim(),
       feedback: gstCtrl.text.trim(),
+      village: villageCtrl.text.trim(),
       isLoading: false,
     );
     Utility.closeLoader();
@@ -145,14 +153,36 @@ class CustomersController extends GetxController {
     nameCtrl.text = customer.name;
     phoneCtrl.text = customer.phone.replaceAll('+91 ', '');
     locationCtrl.text = customer.location == 'N/A' ? '' : customer.location;
-    gstCtrl.text = customer.gstNumber == 'N/A' ? '' : customer.gstNumber;
+    gstCtrl.text = customer.feedback == 'N/A' ? '' : customer.feedback;
+    villageCtrl.text = customer.village == 'N/A' ? '' : customer.village;
     update();
   }
 
-  void deleteCustomer(String id) {
-    customers.removeWhere((c) => c.id == id);
-    update();
+  Future<void> deleteCustomer(String id) async {
+    Utility.showLoader();
+    final success = await Get.find<Repository>().deleteCustomerApi(
+      customerid: id,
+      isLoading: false,
+    );
+    Utility.closeLoader();
+
+    if (success) {
+      Get.snackbar(
+        'Success',
+        'Customer deleted successfully',
+        snackPosition: SnackPosition.BOTTOM,
+      );
+      fetchCustomers(isRefresh: true);
+    } else {
+      Get.snackbar(
+        'Error',
+        'Failed to delete customer',
+        snackPosition: SnackPosition.BOTTOM,
+      );
+    }
   }
+
+  final TextEditingController feedbackCtrl = TextEditingController();
 
   void clearAddForm() {
     editingCustomerId = '';
@@ -160,6 +190,50 @@ class CustomersController extends GetxController {
     phoneCtrl.clear();
     locationCtrl.clear();
     gstCtrl.clear();
+    villageCtrl.clear();
     update();
+  }
+
+  Future<void> submitFeedback(String customerId) async {
+    final feedback = feedbackCtrl.text.trim();
+    if (feedback.isEmpty) {
+      Get.snackbar(
+        'Error',
+        'Please enter feedback',
+        snackPosition: SnackPosition.BOTTOM,
+      );
+      return;
+    }
+
+    Utility.showLoader();
+    final errorMsg = await Get.find<Repository>().customerFeedbackApi(
+      customerid: customerId,
+      feedback: feedback,
+      isLoading: false,
+    );
+    Utility.closeLoader();
+
+    if (errorMsg == null) {
+      Get.back(); // Close the bottom sheet
+      Get.snackbar(
+        'Success',
+        'Feedback submitted successfully',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.green.withValues(alpha: 0.9),
+        colorText: Colors.white,
+      );
+      feedbackCtrl.clear();
+      // Optional: you can refresh customers if feedback is shown in the list
+      fetchCustomers(isRefresh: true);
+    } else {
+      Get.snackbar(
+        'Error',
+        errorMsg,
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red.withValues(alpha: 0.9),
+        colorText: Colors.white,
+        duration: const Duration(seconds: 4),
+      );
+    }
   }
 }

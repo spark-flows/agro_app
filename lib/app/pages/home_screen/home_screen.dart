@@ -35,7 +35,7 @@ class HomeScreen extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Welcome, ${controller.roleName.isNotEmpty ? controller.roleName : 'Admin --'}',
+                            'Welcome, ${controller.roleName.isNotEmpty ? Utility.capitalizeFirst(controller.roleName) : ' - - '}',
                             style: Styles.txtBlackColorW70020,
                           ),
                           const SizedBox(height: 4),

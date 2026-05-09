@@ -1,7 +1,7 @@
 import 'package:agro_app/app/pages/distributors_screen/distributors_controller.dart';
+import 'package:agro_app/app/theme/theme.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:agro_app/app/theme/theme.dart';
 
 class DistributorsScreen extends StatefulWidget {
   const DistributorsScreen({super.key});
@@ -186,9 +186,7 @@ class _DistributorsScreenState extends State<DistributorsScreen> {
                                             ? Colors.green.withValues(
                                                 alpha: 0.1,
                                               )
-                                            : Colors.red.withValues(
-                                                alpha: 0.1,
-                                              ),
+                                            : Colors.red.withValues(alpha: 0.1),
                                         borderRadius: BorderRadius.circular(20),
                                       ),
                                       child: Text(
@@ -227,10 +225,7 @@ class _DistributorsScreenState extends State<DistributorsScreen> {
 
   // ─── Add / Edit Bottom Sheet ───────────────────────────────────────────────
 
-  void _showAddDialog(
-    BuildContext context,
-    DistributorsController controller,
-  ) {
+  void _showAddDialog(BuildContext context, DistributorsController controller) {
     Get.bottomSheet(
       Container(
         padding: EdgeInsets.only(
@@ -426,9 +421,7 @@ class _DistributorsScreenState extends State<DistributorsScreen> {
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    prefixIcon: const Icon(
-                      Icons.admin_panel_settings_outlined,
-                    ),
+                    prefixIcon: const Icon(Icons.admin_panel_settings_outlined),
                   ),
                   items: controller.roles.map((role) {
                     return DropdownMenuItem(
@@ -439,8 +432,7 @@ class _DistributorsScreenState extends State<DistributorsScreen> {
                   onChanged: (val) {
                     controller.selectedRoleId = val;
                   },
-                  validator: (v) =>
-                      v == null ? 'Please select a role' : null,
+                  validator: (v) => v == null ? 'Please select a role' : null,
                 ),
                 const SizedBox(height: 24),
 
@@ -491,10 +483,7 @@ class _DistributorsScreenState extends State<DistributorsScreen> {
           ),
         ),
         const SizedBox(width: 8),
-        Text(
-          title,
-          style: Styles.txtBlackColorW60014,
-        ),
+        Text(title, style: Styles.txtBlackColorW60014),
       ],
     );
   }
@@ -515,9 +504,7 @@ class _DistributorsScreenState extends State<DistributorsScreen> {
       obscureText: obscureText,
       decoration: InputDecoration(
         labelText: label,
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
         prefixIcon: Icon(icon),
       ),
       validator: validator,

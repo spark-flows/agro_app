@@ -1,8 +1,8 @@
 import 'package:agro_app/domain/models/get_all_roll_model.dart';
-import 'package:flutter/material.dart';
-import 'package:get/get.dart';
 import 'package:agro_app/domain/models/get_all_users_model.dart';
 import 'package:agro_app/domain/repositories/repository.dart';
+import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 
 class DistributorsController extends GetxController {
   List<Doc> users = [];
@@ -38,7 +38,8 @@ class DistributorsController extends GetxController {
   List<GetAllRolesDatum> roles = [];
 
   // Distributor role ID — fixed filter for this screen
-  static const String _distributorRoleId = 'cf4527b2-86df-4470-a14d-37288a536e37';
+  static const String _distributorRoleId =
+      'cf4527b2-86df-4470-a14d-37288a536e37';
 
   // To debounce search calls
   Worker? _searchWorker;
@@ -82,7 +83,9 @@ class DistributorsController extends GetxController {
   Future<void> fetchRoles() async {
     var response = await Get.find<Repository>().getAllRolesApi();
     if (response != null && response.isSuccess) {
-      roles = response.data;
+      // Deduplicate by ID to avoid DropdownButton assertion errors
+      final seen = <String>{};
+      roles = response.data.where((r) => seen.add(r.id)).toList();
       update();
     }
   }
@@ -176,7 +179,7 @@ class DistributorsController extends GetxController {
       mobile: phoneCtrl.text.trim(),
       password: passwordCtrl.text.trim(),
       address: addressCtrl.text.trim(),
-      roleid: selectedRoleId!,
+      roleid: 'cf4527b2-86df-4470-a14d-37288a536e37', // selectedRoleId!,
       surname: surnameCtrl.text.trim(),
       fathername: fathernameCtrl.text.trim(),
       gstnumber: gstnumberCtrl.text.trim(),
@@ -191,7 +194,9 @@ class DistributorsController extends GetxController {
       Get.back();
       Get.snackbar(
         'Success',
-        editingUserId.value.isNotEmpty ? 'Distributor updated' : 'Distributor added',
+        editingUserId.value.isNotEmpty
+            ? 'Distributor updated'
+            : 'Distributor added',
         snackPosition: SnackPosition.BOTTOM,
         backgroundColor: Colors.green.withValues(alpha: 0.9),
         colorText: Colors.white,

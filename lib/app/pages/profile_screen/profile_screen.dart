@@ -1,6 +1,7 @@
+import 'package:agro_app/app/app.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:agro_app/app/app.dart';
+
 import 'profile_controller.dart';
 
 class ProfileScreen extends StatelessWidget {
@@ -72,17 +73,13 @@ class ProfileScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 32),
 
-                  _buildInfoTile(
-                    Icons.phone,
-                    'Phone',
-                    user.mobile,
-                  ),
+                  _buildInfoTile(Icons.phone, 'Phone', user.mobile),
                   // _buildInfoTile(Icons.info_outline, 'Address', user.data?. ? user.address : 'N/A'),
-                  _buildInfoTile(
-                    Icons.badge_outlined,
-                    'Distributor ID',
-                    user.id,
-                  ),
+                  // _buildInfoTile(
+                  //   Icons.badge_outlined,
+                  //   'Distributor ID',
+                  //   user.id,
+                  // ),
                   _buildInfoTile(
                     Icons.verified_user_outlined,
                     'Status',

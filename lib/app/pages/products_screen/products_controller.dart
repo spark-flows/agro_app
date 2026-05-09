@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:agro_app/domain/models/get_all_product_model.dart';
 import 'package:agro_app/domain/models/get_all_category_model.dart';
+import 'package:agro_app/domain/models/get_all_unit_model.dart';
 import 'package:agro_app/domain/repositories/repository.dart';
 
 class ProductsController extends GetxController {
@@ -21,14 +22,16 @@ class ProductsController extends GetxController {
   // ── Form state ─────────────────────────────────────────────────────────────
   final formKey = GlobalKey<FormState>();
   final nameCtrl = TextEditingController();
-  final unitCtrl = TextEditingController();
   final priceCtrl = TextEditingController();
+  final qtyCtrl = TextEditingController();
   final descriptionCtrl = TextEditingController();
   final imageCtrl = TextEditingController();
 
   String editingProductId = '';
   String? selectedCategoryId;
+  String? selectedUnitId;
   List<GetAllCategoryDoc> categories = <GetAllCategoryDoc>[];
+  List<GetAllUnitDatum> units = <GetAllUnitDatum>[];
 
   Timer? _searchTimer;
 
@@ -37,14 +40,15 @@ class ProductsController extends GetxController {
     super.onInit();
     fetchProducts();
     fetchCategories();
+    fetchUnits();
   }
 
   @override
   void onClose() {
     _searchTimer?.cancel();
     nameCtrl.dispose();
-    unitCtrl.dispose();
     priceCtrl.dispose();
+    qtyCtrl.dispose();
     descriptionCtrl.dispose();
     imageCtrl.dispose();
     super.onClose();
@@ -73,6 +77,23 @@ class ProductsController extends GetxController {
       }
     } catch (e, st) {
       debugPrint('[Products] fetchCategories error: $e\n$st');
+    }
+  }
+
+  // ── Fetch Units ────────────────────────────────────────────────────────────
+  Future<void> fetchUnits() async {
+    try {
+      debugPrint('[Products] fetchUnits: calling API...');
+      final response = await Get.find<Repository>().getUnitListApi();
+      if (response != null && response.data != null && response.data!.isNotEmpty) {
+        units = response.data!;
+        update();
+        debugPrint('[Products] fetchUnits: loaded ${units.length} units');
+      } else {
+        debugPrint('[Products] fetchUnits: no units returned');
+      }
+    } catch (e, st) {
+      debugPrint('[Products] fetchUnits error: $e\n$st');
     }
   }
 
@@ -115,8 +136,9 @@ class ProductsController extends GetxController {
   void clearForm() {
     editingProductId = '';
     nameCtrl.clear();
-    unitCtrl.clear();
+    selectedUnitId = null;
     priceCtrl.clear();
+    qtyCtrl.clear();
     descriptionCtrl.clear();
     imageCtrl.clear();
     selectedCategoryId = null;
@@ -126,8 +148,14 @@ class ProductsController extends GetxController {
   void setupEdit(GetAllProductDoc product) {
     editingProductId = product.id ?? '';
     nameCtrl.text = product.name ?? '';
-    unitCtrl.text = product.unit ?? '';
+    // Match the unit name to its id from the loaded units list
+    final unitName = product.unit ?? '';
+    selectedUnitId = units
+        .where((u) => u.name == unitName)
+        .map((u) => u.id)
+        .firstOrNull;
     priceCtrl.text = product.price?.toString() ?? '';
+    qtyCtrl.text = product.qty?.toString() ?? '';
     descriptionCtrl.text = product.description ?? '';
     imageCtrl.text = product.image ?? '';
     selectedCategoryId = product.categoryid?.id;
@@ -144,37 +172,48 @@ class ProductsController extends GetxController {
       );
       return;
     }
+    if (selectedUnitId == null) {
+      Get.snackbar(
+        'Error',
+        'Please select a unit',
+        snackPosition: SnackPosition.BOTTOM,
+      );
+      return;
+    }
 
     final price = int.tryParse(priceCtrl.text.trim()) ?? 0;
+    final qty = int.tryParse(qtyCtrl.text.trim()) ?? 0;
 
-    final success = await Get.find<Repository>().createProductApi(
-      productid: editingProductId.isNotEmpty
-          ? editingProductId
-          : null,
+    final errorMsg = await Get.find<Repository>().createProductApi(
+      productid: editingProductId.isNotEmpty ? editingProductId : null,
       name: nameCtrl.text.trim(),
-      unit: unitCtrl.text.trim(),
+      unit: selectedUnitId!,
       price: price,
+      qty: qty,
       description: descriptionCtrl.text.trim(),
       image: imageCtrl.text.trim(),
       categoryid: selectedCategoryId!,
       isLoading: true,
     );
 
-    if (success) {
+    if (errorMsg == null) {
       Get.back();
       Get.snackbar(
         'Success',
-        editingProductId.isNotEmpty
-            ? 'Product updated'
-            : 'Product added',
+        editingProductId.isNotEmpty ? 'Product updated' : 'Product added',
         snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.green.withValues(alpha: 0.9),
+        colorText: Colors.white,
       );
       fetchProducts(isRefresh: true);
     } else {
       Get.snackbar(
         'Error',
-        'Failed to save product',
+        errorMsg,
         snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red.withValues(alpha: 0.9),
+        colorText: Colors.white,
+        duration: const Duration(seconds: 4),
       );
     }
   }

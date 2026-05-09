@@ -1,7 +1,7 @@
 import 'package:agro_app/app/pages/distributors_screen/distributors_controller.dart';
+import 'package:agro_app/app/theme/theme.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:agro_app/app/theme/theme.dart';
 
 /// Standalone Add/Edit page for a Distributor (opened as a full route).
 class DistributorFormPage extends StatelessWidget {
@@ -77,9 +77,8 @@ class DistributorFormPage extends StatelessWidget {
                   icon: Icons.phone_outlined,
                   keyboardType: TextInputType.phone,
                   action: TextInputAction.next,
-                  validator: (v) => v!.trim().isEmpty
-                      ? 'Please enter a phone number'
-                      : null,
+                  validator: (v) =>
+                      v!.trim().isEmpty ? 'Please enter a phone number' : null,
                 ),
                 const SizedBox(height: 12),
                 Obx(
@@ -101,15 +100,15 @@ class DistributorFormPage extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 12),
-                _buildField(
-                  controller: controller.addressCtrl,
-                  label: 'Address *',
-                  icon: Icons.home_outlined,
-                  action: TextInputAction.next,
-                  validator: (v) =>
-                      v!.trim().isEmpty ? 'Please enter an address' : null,
-                ),
-                const SizedBox(height: 24),
+                // _buildField(
+                //   controller: controller.addressCtrl,
+                //   label: 'Address *',
+                //   icon: Icons.home_outlined,
+                //   action: TextInputAction.next,
+                //   // validator: (v) =>
+                //   //     v!.trim().isEmpty ? 'Please enter an address' : null,
+                // ),
+                // const SizedBox(height: 24),
 
                 // ── Business Information ───────────────────────────────────
                 _sectionHeader('Business Information'),
@@ -156,30 +155,31 @@ class DistributorFormPage extends StatelessWidget {
                 const SizedBox(height: 24),
 
                 // ── Role ──────────────────────────────────────────────────
-                _sectionHeader('Role'),
-                const SizedBox(height: 12),
-                DropdownButtonFormField<String>(
-                  value: controller.selectedRoleId,
-                  decoration: InputDecoration(
-                    labelText: 'Role *',
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    prefixIcon: const Icon(
-                      Icons.admin_panel_settings_outlined,
-                    ),
-                  ),
-                  items: controller.roles.map((role) {
-                    return DropdownMenuItem(
-                      value: role.id,
-                      child: Text(role.rolename),
-                    );
-                  }).toList(),
-                  onChanged: (val) => controller.selectedRoleId = val,
-                  validator: (v) =>
-                      v == null ? 'Please select a role' : null,
-                ),
-                const SizedBox(height: 32),
+                // _sectionHeader('Role'),
+                // const SizedBox(height: 12),
+                // DropdownButtonFormField<String>(
+                //   value: controller.roles.any(
+                //     (r) => r.id == controller.selectedRoleId,
+                //   )
+                //       ? controller.selectedRoleId
+                //       : null,
+                //   decoration: InputDecoration(
+                //     labelText: 'Role *',
+                //     border: OutlineInputBorder(
+                //       borderRadius: BorderRadius.circular(12),
+                //     ),
+                //     prefixIcon: const Icon(Icons.admin_panel_settings_outlined),
+                //   ),
+                //   items: controller.roles.map((role) {
+                //     return DropdownMenuItem(
+                //       value: role.id,
+                //       child: Text(role.rolename),
+                //     );
+                //   }).toList(),
+                //   onChanged: (val) => controller.selectedRoleId = val,
+                //   validator: (v) => v == null ? 'Please select a role' : null,
+                // ),
+                // const SizedBox(height: 32),
 
                 // ── Save Button ────────────────────────────────────────────
                 ElevatedButton(

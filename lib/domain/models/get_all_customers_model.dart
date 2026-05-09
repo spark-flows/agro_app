@@ -102,6 +102,7 @@ class GetAllCustomerDoc {
   String? countrycode;
   String? mobile;
   String? feedback;
+  String? village;
   bool? isDeleted;
   String? createdAt;
   GetAllCustomerDistributorid? distributorid;
@@ -113,6 +114,7 @@ class GetAllCustomerDoc {
     this.countrycode,
     this.mobile,
     this.feedback,
+    this.village,
     this.isDeleted,
     this.createdAt,
     this.distributorid,
@@ -126,6 +128,7 @@ class GetAllCustomerDoc {
         countrycode: json["countrycode"],
         mobile: json["mobile"],
         feedback: json["feedback"],
+        village: json["village"],
         isDeleted: json["isDeleted"],
         createdAt: json["createdAt"],
         distributorid: json["distributorid"] == null
@@ -140,6 +143,7 @@ class GetAllCustomerDoc {
     "countrycode": countrycode,
     "mobile": mobile,
     "feedback": feedback,
+    "village": village,
     "isDeleted": isDeleted,
     "createdAt": createdAt,
     "distributorid": distributorid?.toJson(),

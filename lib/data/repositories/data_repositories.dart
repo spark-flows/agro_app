@@ -36,31 +36,26 @@ class DataRepository extends DomainRepository {
   @override
   bool getBoolValue(String key) => throw UnimplementedError();
 
-  /// Get data from secure storage
   @override
   Future<String> getSecuredValue(String key) async {
     throw UnimplementedError();
   }
 
-  /// Save data in secure storage
   @override
   void saveValueSecurely(String key, String value) {
     throw UnimplementedError();
   }
 
-  /// Delete data from secure storage
   @override
   void deleteSecuredValue(String key) {
     throw UnimplementedError();
   }
 
-  /// Delete all data from secure storage
   @override
   void deleteAllSecuredValues() {
     throw UnimplementedError();
   }
 
-  /// API to get the IP of the user
   @override
   Future<String> getIp() async => await connectHelper.getIp();
 
@@ -91,6 +86,9 @@ class DataRepository extends DomainRepository {
   Future<ResponseModel> getCategoryListApi({bool isLoading = false}) async =>
       connectHelper.getCategoryListApi(isLoading: isLoading);
 
+  Future<ResponseModel> getUnitListApi({bool isLoading = false}) async =>
+      connectHelper.getUnitListApi(isLoading: isLoading);
+
   Future<ResponseModel> createProductApi({
     String? productid,
     required String name,
@@ -99,6 +97,7 @@ class DataRepository extends DomainRepository {
     required String description,
     required String image,
     required String categoryid,
+    required int qty,
     bool isLoading = false,
   }) async => connectHelper.createProductApi(
     productid: productid,
@@ -108,6 +107,7 @@ class DataRepository extends DomainRepository {
     description: description,
     image: image,
     categoryid: categoryid,
+    qty: qty,
     isLoading: isLoading,
   );
 
@@ -116,13 +116,12 @@ class DataRepository extends DomainRepository {
     int limit = 100,
     String search = "",
     bool isLoading = false,
-  }) async =>
-      connectHelper.getCustomerListApi(
-        page: page,
-        limit: limit,
-        search: search,
-        isLoading: isLoading,
-      );
+  }) async => connectHelper.getCustomerListApi(
+    page: page,
+    limit: limit,
+    search: search,
+    isLoading: isLoading,
+  );
 
   Future<ResponseModel> createCustomerApi({
     String? customerid,
@@ -131,6 +130,7 @@ class DataRepository extends DomainRepository {
     required String countrycode,
     required String mobile,
     required String feedback,
+    required String village,
     bool isLoading = false,
   }) async => connectHelper.createCustomerApi(
     customerid: customerid,
@@ -138,6 +138,25 @@ class DataRepository extends DomainRepository {
     email: email,
     countrycode: countrycode,
     mobile: mobile,
+    feedback: feedback,
+    village: village,
+    isLoading: isLoading,
+  );
+
+  Future<ResponseModel> deleteCustomerApi({
+    required String customerid,
+    bool isLoading = false,
+  }) async => connectHelper.deleteCustomerApi(
+    customerid: customerid,
+    isLoading: isLoading,
+  );
+
+  Future<ResponseModel> customerFeedbackApi({
+    required String customerid,
+    required String feedback,
+    bool isLoading = false,
+  }) async => connectHelper.customerFeedbackApi(
+    customerid: customerid,
     feedback: feedback,
     isLoading: isLoading,
   );
@@ -186,8 +205,10 @@ class DataRepository extends DomainRepository {
   Future<ResponseModel> deleteProductApi({
     required String productid,
     bool isLoading = false,
-  }) async =>
-      connectHelper.deleteProductApi(productid: productid, isLoading: isLoading);
+  }) async => connectHelper.deleteProductApi(
+    productid: productid,
+    isLoading: isLoading,
+  );
 
   Future<ResponseModel> deleteUsersApi({
     required String userid,

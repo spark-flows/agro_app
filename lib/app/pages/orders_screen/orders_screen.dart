@@ -48,6 +48,16 @@ class _OrdersScreenState extends State<OrdersScreen> {
                       Icons.person_outline,
                       color: ColorsValue.primary,
                     ),
+                    suffixIcon: controller.historyCustomerId != null
+                        ? IconButton(
+                            icon: const Icon(Icons.clear, color: Colors.grey),
+                            onPressed: () {
+                              controller.historyCustomerId = null;
+                              controller.update();
+                              controller.fetchAllOrders();
+                            },
+                          )
+                        : null,
                   ),
                   value: controller.historyCustomerId,
                   items: controller.customers.map((c) {
@@ -59,12 +69,16 @@ class _OrdersScreenState extends State<OrdersScreen> {
                   onChanged: (val) {
                     controller.historyCustomerId = val;
                     controller.update();
-                    if (val != null) controller.fetchOrderHistory(val);
+                    if (val != null) {
+                      controller.fetchOrderHistory(val);
+                    } else {
+                      controller.fetchAllOrders();
+                    }
                   },
                 ),
                 const SizedBox(height: 10),
 
-                /// Order History List
+                /// Order List
                 Expanded(
                   child: controller.isFetchingOrders
                       ? const Center(child: CircularProgressIndicator())
@@ -80,9 +94,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
                               ),
                               const SizedBox(height: 16),
                               Text(
-                                controller.historyCustomerId == null
-                                    ? 'Select a customer to view history'
-                                    : 'No orders found for this customer.',
+                                'No orders found.',
                                 style: Styles.txtGreyColorW40014,
                               ),
                             ],
@@ -542,7 +554,7 @@ void _showOrderDetailsDialog(
               ),
               const SizedBox(height: 4),
               Text(
-                'Delivery Date: ${details.deliverydate ?? "N/A"}',
+                'Delivery Date: ${details.deliverydate?.split('T').first ?? "N/A"}',
                 style: Styles.txtGreyColorW40012,
               ),
               const SizedBox(height: 4),

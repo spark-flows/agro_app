@@ -44,7 +44,7 @@ class ProfileController extends GetxController {
       );
       Get.find<Repository>().saveSecureValue(
         LocalKeys.roleName,
-        userData!.rolename,
+        userData?.roleid.rolename ?? '',
       );
     }
     isLoading.value = false;

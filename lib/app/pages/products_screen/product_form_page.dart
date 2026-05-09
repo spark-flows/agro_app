@@ -1,13 +1,15 @@
 import 'dart:io';
+
 import 'package:agro_app/app/pages/products_screen/products_controller.dart';
+import 'package:agro_app/app/theme/theme.dart';
 import 'package:agro_app/app/utils/utility.dart';
 import 'package:agro_app/data/helpers/end_points.dart';
 import 'package:agro_app/domain/models/get_all_category_model.dart';
+import 'package:agro_app/domain/models/get_all_unit_model.dart';
 import 'package:agro_app/domain/repositories/repository.dart';
 import 'package:dio/dio.dart' as dio;
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:agro_app/app/theme/theme.dart';
 import 'package:image_picker/image_picker.dart';
 
 class ProductFormPage extends StatefulWidget {
@@ -23,6 +25,11 @@ class _ProductFormPageState extends State<ProductFormPage> {
   bool _loadingCategories = true;
   String? _selectedCategoryId;
 
+  // ── Unit state ────────────────────────────────────────────────────────────
+  List<GetAllUnitDatum> _units = [];
+  bool _loadingUnits = true;
+  String? _selectedUnitId;
+
   // ── Image state ───────────────────────────────────────────────────────────
   File? _pickedImage;
   bool _uploadingImage = false;
@@ -30,8 +37,14 @@ class _ProductFormPageState extends State<ProductFormPage> {
   @override
   void initState() {
     super.initState();
-    _selectedCategoryId = Get.find<ProductsController>().selectedCategoryId;
+    final ctrl = Get.find<ProductsController>();
+    _selectedCategoryId = ctrl.selectedCategoryId;
+    _selectedUnitId = ctrl.selectedUnitId;
+    // Pre-populate unit list from controller if already loaded
+    _units = ctrl.units;
+    if (_units.isNotEmpty) _loadingUnits = false;
     _loadCategories();
+    _loadUnits();
   }
 
   // ── Load categories via repository ────────────────────────────────────────
@@ -48,6 +61,27 @@ class _ProductFormPageState extends State<ProductFormPage> {
     } catch (e) {
       debugPrint('[ProductForm] _loadCategories error: $e');
       if (mounted) setState(() => _loadingCategories = false);
+    }
+  }
+
+  // ── Load units via repository ─────────────────────────────────────────────
+  Future<void> _loadUnits() async {
+    if (_units.isNotEmpty) {
+      if (mounted) setState(() => _loadingUnits = false);
+      return;
+    }
+    setState(() => _loadingUnits = true);
+    try {
+      final response = await Get.find<Repository>().getUnitListApi();
+      if (mounted) {
+        setState(() {
+          _units = response?.data ?? [];
+          _loadingUnits = false;
+        });
+      }
+    } catch (e) {
+      debugPrint('[ProductForm] _loadUnits error: $e');
+      if (mounted) setState(() => _loadingUnits = false);
     }
   }
 
@@ -173,12 +207,52 @@ class _ProductFormPageState extends State<ProductFormPage> {
                 ),
                 const SizedBox(height: 12),
 
-                _buildField(
-                  fieldController: controller.unitCtrl,
-                  label: 'Unit (e.g. kg, litre, pcs)',
-                  icon: Icons.scale_outlined,
-                  action: TextInputAction.next,
-                ),
+                // ── Unit Dropdown ───────────────────────────────────────────
+                if (_loadingUnits)
+                  const SizedBox(
+                    height: 56,
+                    child: Center(child: CircularProgressIndicator()),
+                  )
+                else if (_units.isEmpty)
+                  OutlinedButton.icon(
+                    onPressed: _loadUnits,
+                    icon: const Icon(Icons.refresh, color: ColorsValue.primary),
+                    label: const Text(
+                      'Tap to retry loading units',
+                      style: TextStyle(color: ColorsValue.primary),
+                    ),
+                    style: OutlinedButton.styleFrom(
+                      minimumSize: const Size.fromHeight(56),
+                      side: const BorderSide(color: ColorsValue.primary),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                  )
+                else
+                  DropdownButtonFormField<String>(
+                    value: _selectedUnitId,
+                    decoration: InputDecoration(
+                      labelText: 'Unit *',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      prefixIcon: const Icon(Icons.scale_outlined),
+                    ),
+                    items: _units
+                        .map(
+                          (unit) => DropdownMenuItem<String>(
+                            value: unit.id,
+                            child: Text(unit.name ?? ''),
+                          ),
+                        )
+                        .toList(),
+                    onChanged: (val) {
+                      setState(() => _selectedUnitId = val);
+                      controller.selectedUnitId = val;
+                    },
+                    validator: (v) => v == null ? 'Please select a unit' : null,
+                  ),
                 const SizedBox(height: 12),
 
                 _buildField(
@@ -189,6 +263,17 @@ class _ProductFormPageState extends State<ProductFormPage> {
                   action: TextInputAction.next,
                   validator: (v) =>
                       v!.trim().isEmpty ? 'Please enter a price' : null,
+                ),
+                const SizedBox(height: 12),
+                
+                _buildField(
+                  fieldController: controller.qtyCtrl,
+                  label: 'Quantity *',
+                  icon: Icons.numbers_outlined,
+                  keyboardType: TextInputType.number,
+                  action: TextInputAction.next,
+                  validator: (v) =>
+                      v!.trim().isEmpty ? 'Please enter quantity' : null,
                 ),
                 const SizedBox(height: 12),
 

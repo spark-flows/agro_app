@@ -1,28 +1,23 @@
+import 'package:agro_app/app/app.dart';
+import 'package:agro_app/data/data.dart';
+import 'package:agro_app/device/device.dart';
+import 'package:agro_app/domain/domain.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:hive_flutter/hive_flutter.dart';
-import 'package:agro_app/app/app.dart';
-import 'package:agro_app/data/data.dart';
-import 'package:agro_app/device/device.dart';
-import 'package:agro_app/domain/domain.dart';
 import 'package:upgrader/upgrader.dart';
-
 import 'firebase_options.dart';
 
+// Admin
 // admin@agro.com
 // PY@002025
 
-/// also i want to add one more thing for the users And also same
-///for the distributor like i want to add edit and delete option
-///can you pelase add that both and also foe the edit option when
-///i am click on the edit button then i want to call the add customer
-/// for the edit but make sure you need to add user id and also i want
-/// to add one more thing in this App like delete api which is as you
-/// can see in this image i want to call this api for the delete
-/// product for now i want to do this only for the product
+// Raj
+// rajkalsariya1994@gmail.com
+// Raj@321
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();

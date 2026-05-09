@@ -87,7 +87,7 @@ class AuthController extends GetxController {
 
         Get.find<Repository>().saveSecureValue(
           LocalKeys.roleName,
-          profileData.rolename,
+          profileData.roleid.rolename,
         );
       }
 

@@ -1,7 +1,7 @@
+import 'package:agro_app/app/app.dart';
 import 'package:agro_app/domain/services/enum.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:agro_app/app/app.dart';
 
 class CustomersScreen extends StatelessWidget {
   const CustomersScreen({super.key});
@@ -71,6 +71,17 @@ class CustomersScreen extends StatelessWidget {
                         child: Column(
                           children: [
                             ListTile(
+                              onTap: () {
+                                if (RoleUtils.isAdmin(
+                                  homeController.roleName,
+                                )) {
+                                  _showFeedbackDialog(
+                                    context,
+                                    controller,
+                                    customer,
+                                  );
+                                }
+                              },
                               contentPadding: const EdgeInsets.only(
                                 left: 16,
                                 right: 16,
@@ -135,6 +146,53 @@ class CustomersScreen extends StatelessWidget {
                                     ],
                                   ),
                                   const SizedBox(height: 6),
+                                  if (customer.village != 'N/A' && customer.village.isNotEmpty)
+                                    Padding(
+                                      padding: const EdgeInsets.only(bottom: 6.0),
+                                      child: Row(
+                                        children: [
+                                          const Icon(
+                                            Icons.home_outlined,
+                                            size: 14,
+                                            color: Colors.grey,
+                                          ),
+                                          const SizedBox(width: 4),
+                                          Text(
+                                            customer.village,
+                                            style: Styles.txtGreyColorW40014,
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  if (RoleUtils.isAdmin(
+                                        homeController.roleName,
+                                      ) &&
+                                      customer.feedback != 'N/A' &&
+                                      customer.feedback.isNotEmpty)
+                                    Padding(
+                                      padding: const EdgeInsets.only(top: 4.0),
+                                      child: RichText(
+                                        text: TextSpan(
+                                          children: [
+                                            const TextSpan(
+                                              text: 'Feedback: ',
+                                              style: TextStyle(
+                                                color: Colors.green,
+                                                fontWeight: FontWeight.bold,
+                                                fontSize: 14,
+                                              ),
+                                            ),
+                                            TextSpan(
+                                              text: customer.feedback,
+                                              style: TextStyle(
+                                                color: Colors.green,
+                                                fontSize: 14,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
                                 ],
                               ),
                             ),
@@ -181,9 +239,12 @@ class CustomersScreen extends StatelessWidget {
                                         onPressed: () {
                                           Utility.showDeleteDialog(
                                             title: 'Delete Customer',
-                                            message: 'Are you sure you want to delete ${customer.name}? This action cannot be undone.',
+                                            message:
+                                                'Are you sure you want to delete ${customer.name}? This action cannot be undone.',
                                             onConfirm: () {
-                                              controller.deleteCustomer(customer.id);
+                                              controller.deleteCustomer(
+                                                customer.id,
+                                              );
                                             },
                                           );
                                         },
@@ -244,7 +305,7 @@ class CustomersScreen extends StatelessWidget {
             left: 24,
             right: 24,
             top: 24,
-            bottom: MediaQuery.of(context).viewInsets.bottom + 24,
+            bottom: MediaQuery.of(Get.context!).viewInsets.bottom + 24,
           ),
           decoration: const BoxDecoration(
             color: Colors.white,
@@ -319,15 +380,16 @@ class CustomersScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 16),
                   TextFormField(
-                    controller: controller.gstCtrl,
+                    controller: controller.villageCtrl,
                     textInputAction: TextInputAction.done,
                     decoration: InputDecoration(
-                      labelText: 'Feedback (Optional)',
+                      labelText: 'Village',
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
-                      prefixIcon: const Icon(Icons.feedback_outlined),
+                      prefixIcon: const Icon(Icons.home_outlined),
                     ),
+                    validator: (v) => v!.isEmpty ? 'Please enter a village' : null,
                   ),
                   const SizedBox(height: 24),
                   ElevatedButton(
@@ -354,6 +416,95 @@ class CustomersScreen extends StatelessWidget {
                   ),
                 ],
               ),
+            ),
+          ),
+        ),
+      ),
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+    );
+  }
+
+  void _showFeedbackDialog(
+    BuildContext context,
+    CustomersController controller,
+    CustomerItem customer,
+  ) {
+    controller.feedbackCtrl.text = customer.feedback != 'N/A'
+        ? customer.feedback
+        : '';
+    Get.bottomSheet(
+      GetBuilder<CustomersController>(
+        builder: (controller) => Container(
+          padding: EdgeInsets.only(
+            left: 24,
+            right: 24,
+            top: 24,
+            bottom: MediaQuery.of(context).viewInsets.bottom + 24,
+          ),
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+          ),
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Center(
+                  child: Container(
+                    width: 40,
+                    height: 5,
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade300,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 24),
+                Text(
+                  'Add Feedback for ${customer.name}',
+                  style: Styles.txtBlackColorW70020,
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 24),
+                TextField(
+                  controller: controller.feedbackCtrl,
+                  maxLines: 3,
+                  decoration: InputDecoration(
+                    labelText: 'Feedback',
+                    alignLabelWithHint: true,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    prefixIcon: const Padding(
+                      padding: EdgeInsets.only(bottom: 32.0),
+                      child: Icon(Icons.feedback_outlined),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 24),
+                ElevatedButton(
+                  onPressed: () {
+                    controller.submitFeedback(customer.id);
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: ColorsValue.primary,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  child: const Text(
+                    'Submit Feedback',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
         ),

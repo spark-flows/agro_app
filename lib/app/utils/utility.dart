@@ -3,6 +3,9 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
 
+import 'package:agro_app/app/app.dart';
+import 'package:agro_app/data/data.dart';
+import 'package:agro_app/domain/domain.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:dio/dio.dart';
@@ -12,9 +15,6 @@ import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
-import 'package:agro_app/app/app.dart';
-import 'package:agro_app/data/data.dart';
-import 'package:agro_app/domain/domain.dart';
 import 'package:open_filex/open_filex.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -50,10 +50,10 @@ abstract class Utility {
   }) async {
     var header = <String, String>{'Content-Type': 'application/json'};
     if (isDefaultAuthorizationKeyAdd) {
-      String token = await Get.find<Repository>().getSecureValue(LocalKeys.authToken);
-      header.addAll({
-        'Authorization': 'Bearer $token',
-      });
+      String token = await Get.find<Repository>().getSecureValue(
+        LocalKeys.authToken,
+      );
+      header.addAll({'Authorization': 'Bearer $token'});
     }
     if (otherHeader != null) {
       header.addAll(otherHeader);
@@ -208,6 +208,11 @@ abstract class Utility {
     if (Get.isDialogOpen == true) {
       Get.back<void>();
     }
+  }
+
+  static String capitalizeFirst(String text) {
+    if (text.isEmpty) return text;
+    return text[0].toUpperCase() + text.substring(1);
   }
 
   /// Close any open snackbar
@@ -1487,9 +1492,7 @@ abstract class Utility {
   }) {
     Get.dialog(
       Dialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(24),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
         child: Padding(
           padding: const EdgeInsets.all(24.0),
           child: Column(
