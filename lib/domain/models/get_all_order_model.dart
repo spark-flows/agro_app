@@ -22,10 +22,10 @@ class GetAllOrderModel {
     });
 
     factory GetAllOrderModel.fromJson(Map<String, dynamic> json) => GetAllOrderModel(
-        message: json["Message"],
-        data: json["Data"] == null ? null : GetAllOrderData.fromJson(json["Data"]),
-        status: json["Status"],
-        isSuccess: json["IsSuccess"],
+        message: json["Message"] ?? json["message"],
+        data: (json["Data"] ?? json["data"]) == null ? null : GetAllOrderData.fromJson(json["Data"] ?? json["data"]),
+        status: json["Status"] ?? json["status"],
+        isSuccess: json["IsSuccess"] ?? json["isSuccess"] ?? json["issuccess"],
     );
 
     Map<String, dynamic> toJson() => {
@@ -114,13 +114,13 @@ class GetAllOrderDoc {
     });
 
     factory GetAllOrderDoc.fromJson(Map<String, dynamic> json) => GetAllOrderDoc(
-        id: json["_id"],
-        orderno: json["orderno"],
+        id: json["_id"]?.toString(),
+        orderno: json["orderno"]?.toString(),
         deliverydate: json["deliverydate"],
         totalamount: json["totalamount"],
-        feedback: json["feedback"],
+        feedback: json["feedback"]?.toString(),
         isDeleted: json["isDeleted"],
-        createdAt: json["createdAt"],
+        createdAt: json["createdAt"]?.toString(),
         distributorid: json["distributorid"] == null ? null : GetAllOrderRid.fromJson(json["distributorid"]),
         customerid: json["customerid"] == null ? null : GetAllOrderRid.fromJson(json["customerid"]),
         items: json["items"] == null ? [] : List<GetAllOrderItem>.from(json["items"]!.map((x) => GetAllOrderItem.fromJson(x))),

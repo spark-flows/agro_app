@@ -8,6 +8,7 @@ import 'package:agro_app/domain/domain.dart';
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:dio/dio.dart';
 import 'package:get/get.dart';
+import 'package:http/http.dart' as http;
 
 /// The helper class which will connect to the world to get the data.
 class ConnectHelper {
@@ -405,22 +406,18 @@ class ConnectHelper {
 
   Future<ResponseModel> createOrderApi({
     String? orderid,
-    required String customerid,
     required List<Map<String, dynamic>> items,
     required num totalamount,
     String? deliverydate,
-    String? feedback,
     bool isLoading = false,
   }) async {
     var distributorId = await Utility.getSecureValue(LocalKeys.distributorId);
     var data = {
       "orderid": orderid ?? "",
       "distributorid": distributorId,
-      "customerid": customerid,
       "items": items,
       "deliverydate": deliverydate ?? "",
       "totalamount": totalamount.toString(),
-      "feedback": feedback ?? "",
     };
     var response = await apiWrapper.makeRequest(
       EndPoints.createOrderApi,
@@ -460,6 +457,134 @@ class ConnectHelper {
       await Utility.commonHeader(),
     );
     return response;
+  }
+
+  Future<ResponseModel> getCustomerOrderListApi({
+    String? customerid,
+    bool isLoading = false,
+  }) async {
+    var distributorId = await Utility.getSecureValue(LocalKeys.distributorId);
+    var data = {
+      "page": 1,
+      "limit": 100,
+      "search": {},
+      "distributorid": distributorId.isNotEmpty ? [distributorId] : [],
+      "customerid": customerid != null && customerid.isNotEmpty ? [customerid] : [],
+      "orderno": [],
+      "sortfield": "orderno",
+      "sortoption": -1,
+    };
+    var response = await apiWrapper.makeRequest(
+      EndPoints.customerOrderListApi,
+      Request.post,
+      data,
+      isLoading,
+      await Utility.commonHeader(),
+    );
+    return response;
+  }
+
+  Future<ResponseModel> createCustomerOrderApi({
+    String? customerorderid,
+    required String customerid,
+    required String image,
+    required String remark1,
+    required String remark2,
+    required String remark3,
+    bool isLoading = false,
+  }) async {
+    var distributorId = await Utility.getSecureValue(LocalKeys.distributorId);
+    var data = {
+      "customerorderid": customerorderid ?? "",
+      "distributorid": distributorId,
+      "customerid": customerid,
+      "image": image,
+      "remark1": remark1,
+      "remark2": remark2,
+      "remark3": remark3,
+    };
+    var response = await apiWrapper.makeRequest(
+      EndPoints.createCustomerOrderApi,
+      Request.post,
+      data,
+      isLoading,
+      await Utility.commonHeader(),
+    );
+    return response;
+  }
+
+  Future<ResponseModel> getOneCustomerOrderApi({
+    required String customerorderid,
+    bool isLoading = false,
+  }) async {
+    var data = {"customerorderid": customerorderid};
+    var response = await apiWrapper.makeRequest(
+      EndPoints.getOneCustomerOrderApi,
+      Request.post,
+      data,
+      isLoading,
+      await Utility.commonHeader(),
+    );
+    return response;
+  }
+
+  Future<ResponseModel> deleteCustomerOrderApi({
+    required String customerorderid,
+    bool isLoading = false,
+  }) async {
+    var data = {"customerorderid": customerorderid};
+    var response = await apiWrapper.makeRequest(
+      EndPoints.deleteCustomerOrderApi,
+      Request.post,
+      data,
+      isLoading,
+      await Utility.commonHeader(),
+    );
+    return response;
+  }
+
+  Future<ResponseModel> uploadCustomerOrderApi(
+    File image, {
+    bool isLoading = false,
+  }) async {
+    try {
+      if (isLoading) {
+        if (Get.isSnackbarOpen) {
+          await Get.closeCurrentSnackbar();
+        }
+        Utility.showLoader();
+      }
+      
+      var uri = ApiWrapper.baseUrl + EndPoints.uploadCustomerOrderApi;
+      var request = http.MultipartRequest('POST', Uri.parse(uri));
+      
+      request.files.add(
+        await http.MultipartFile.fromPath(
+          'image',
+          image.path,
+        ),
+      );
+      
+      request.headers.addAll(await Utility.commonHeader());
+      
+      var response = await request.send().timeout(const Duration(seconds: 120));
+      
+      if (isLoading) Utility.closeDialog();
+      
+      var bytesToString = await response.stream.bytesToString();
+      var hasError = response.statusCode < 200 || response.statusCode >= 300;
+      return ResponseModel(
+        data: bytesToString,
+        hasError: hasError,
+        statusCode: response.statusCode,
+      );
+    } catch (e) {
+      if (isLoading) Utility.closeDialog();
+      return ResponseModel(
+        data: '{"message":"Request failed"}',
+        hasError: true,
+      );
+    }
   }
 
   Future<ResponseModel> deleteProductApi({

@@ -22,7 +22,10 @@ class _OrdersScreenState extends State<OrdersScreen> {
             backgroundColor: Colors.white,
             elevation: 0,
             iconTheme: const IconThemeData(color: Colors.black87),
-            title: Text('Orders History', style: Styles.txtBlackColorW70020),
+            title: Text(
+              'Distributor Orders History',
+              style: Styles.txtBlackColorW70020,
+            ),
           ),
           body: Padding(
             padding: const EdgeInsets.all(16.0),
@@ -178,7 +181,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
                   backgroundColor: ColorsValue.primary,
                   icon: const Icon(Icons.add, color: Colors.white),
                   label: const Text(
-                    'New Order',
+                    'New Distributor Order',
                     style: TextStyle(
                       color: Colors.white,
                       fontWeight: FontWeight.bold,
@@ -209,7 +212,10 @@ class NewOrderScreen extends StatelessWidget {
             backgroundColor: Colors.white,
             elevation: 0,
             iconTheme: const IconThemeData(color: Colors.black87),
-            title: Text('Place New Order', style: Styles.txtBlackColorW70020),
+            title: Text(
+              'Place Distributor Order',
+              style: Styles.txtBlackColorW70020,
+            ),
           ),
           body: Column(
             children: [
@@ -391,29 +397,7 @@ void _showCartBottomSheet(BuildContext context, OrdersController controller) {
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 16),
-                if (controller.historyCustomerId == null) ...[
-                  DropdownButtonFormField<String>(
-                    decoration: InputDecoration(
-                      labelText: 'Select Customer',
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                    value: controller.selectedCustomerId.isEmpty
-                        ? null
-                        : controller.selectedCustomerId,
-                    items: controller.customers.map((c) {
-                      return DropdownMenuItem<String>(
-                        value: c.id,
-                        child: Text('${c.name} (${c.mobile ?? ''})'),
-                      );
-                    }).toList(),
-                    onChanged: (val) {
-                      if (val != null) controller.setSelectedCustomerId(val);
-                    },
-                  ),
-                  const SizedBox(height: 16),
-                ],
+                const SizedBox(height: 16),
                 TextField(
                   controller: controller.titleController,
                   decoration: InputDecoration(
@@ -449,16 +433,6 @@ void _showCartBottomSheet(BuildContext context, OrdersController controller) {
                   },
                 ),
                 const SizedBox(height: 16),
-                TextField(
-                  controller: controller.feedbackController,
-                  decoration: InputDecoration(
-                    labelText: 'Feedback / Notes',
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  maxLines: 2,
-                ),
                 const SizedBox(height: 16),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -558,10 +532,6 @@ void _showOrderDetailsDialog(
                 style: Styles.txtGreyColorW40012,
               ),
               const SizedBox(height: 4),
-              Text(
-                'Feedback: ${details.feedback ?? "N/A"}',
-                style: Styles.txtGreyColorW40012,
-              ),
               const Divider(height: 32),
               Text('Items:', style: Styles.txtBlackColorW60014),
               const SizedBox(height: 8),
@@ -693,16 +663,10 @@ void _showOrderDetailsDialog(
                     Expanded(
                       child: ElevatedButton.icon(
                         onPressed: () {
-                          Get.defaultDialog(
+                          Utility.showDeleteDialog(
                             title: 'Confirm Delete',
-                            middleText:
-                                'Are you sure you want to delete this order?',
-                            textConfirm: 'Delete',
-                            textCancel: 'Cancel',
-                            confirmTextColor: Colors.white,
-                            buttonColor: Colors.red,
+                            message: 'Are you sure you want to delete this order?',
                             onConfirm: () {
-                              Get.back(); // Close dialog
                               if (details.id != null) {
                                 controller.deleteOrder(details.id!);
                               }

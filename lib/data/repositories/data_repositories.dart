@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:agro_app/data/data.dart';
 import 'package:agro_app/domain/domain.dart';
 
@@ -174,19 +176,15 @@ class DataRepository extends DomainRepository {
 
   Future<ResponseModel> createOrderApi({
     String? orderid,
-    required String customerid,
     required List<Map<String, dynamic>> items,
     required num totalamount,
     String? deliverydate,
-    String? feedback,
     bool isLoading = false,
   }) async => connectHelper.createOrderApi(
     orderid: orderid,
-    customerid: customerid,
     items: items,
     totalamount: totalamount,
     deliverydate: deliverydate,
-    feedback: feedback,
     isLoading: isLoading,
   );
 
@@ -199,8 +197,72 @@ class DataRepository extends DomainRepository {
   Future<ResponseModel> deleteOrderApi({
     required String orderid,
     bool isLoading = false,
-  }) async =>
-      connectHelper.deleteOrderApi(orderid: orderid, isLoading: isLoading);
+  }) async {
+    return await connectHelper.deleteOrderApi(
+      orderid: orderid,
+      isLoading: isLoading,
+    );
+  }
+
+  Future<ResponseModel> getCustomerOrderListApi({
+    String? customerid,
+    bool isLoading = false,
+  }) async {
+    return await connectHelper.getCustomerOrderListApi(
+      customerid: customerid,
+      isLoading: isLoading,
+    );
+  }
+
+  Future<ResponseModel> createCustomerOrderApi({
+    String? customerorderid,
+    required String customerid,
+    required String image,
+    required String remark1,
+    required String remark2,
+    required String remark3,
+    bool isLoading = false,
+  }) async {
+    return await connectHelper.createCustomerOrderApi(
+      customerorderid: customerorderid,
+      customerid: customerid,
+      image: image,
+      remark1: remark1,
+      remark2: remark2,
+      remark3: remark3,
+      isLoading: isLoading,
+    );
+  }
+
+  Future<ResponseModel> getOneCustomerOrderApi({
+    required String customerorderid,
+    bool isLoading = false,
+  }) async {
+    return await connectHelper.getOneCustomerOrderApi(
+      customerorderid: customerorderid,
+      isLoading: isLoading,
+    );
+  }
+
+  Future<ResponseModel> deleteCustomerOrderApi({
+    required String customerorderid,
+    bool isLoading = false,
+  }) async {
+    return await connectHelper.deleteCustomerOrderApi(
+      customerorderid: customerorderid,
+      isLoading: isLoading,
+    );
+  }
+
+  Future<ResponseModel> uploadCustomerOrderApi(
+    File image, {
+    bool isLoading = false,
+  }) async {
+    return await connectHelper.uploadCustomerOrderApi(
+      image,
+      isLoading: isLoading,
+    );
+  }
 
   Future<ResponseModel> deleteProductApi({
     required String productid,

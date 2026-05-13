@@ -68,6 +68,7 @@ class HomeController extends GetxController {
   void goToCustomers() => RouteManagement.goToCustomersScreen();
   void goToDistributors() => RouteManagement.goToDistributorsScreen();
   void goToOrders() => RouteManagement.goToOrdersScreen();
+  void goToCustomerOrders() => RouteManagement.goToCustomerOrdersScreen();
   void goToProducts() => RouteManagement.goToProductsScreen();
   void goToProfile() => RouteManagement.goToProfileScreen();
   void goToUsers() => RouteManagement.goToUserListScreen();

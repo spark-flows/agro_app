@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:agro_app/app/utils/utility.dart';
 import 'package:agro_app/data/data.dart';
@@ -8,6 +9,7 @@ import 'package:agro_app/domain/entities/enums.dart';
 import 'package:agro_app/domain/models/auth_model.dart';
 import 'package:agro_app/domain/models/create_customer_model.dart';
 import 'package:agro_app/domain/models/create_order_model.dart';
+import 'package:agro_app/domain/models/customer_order_model.dart';
 import 'package:agro_app/domain/models/get_all_category_model.dart';
 import 'package:agro_app/domain/models/get_all_customers_model.dart';
 import 'package:agro_app/domain/models/get_all_order_model.dart';
@@ -144,6 +146,178 @@ class Repository {
     } catch (e) {
       Utility.closeDialog();
       UnimplementedError();
+      return null;
+    }
+  }
+
+  Future<CustomerOrderListResponse?> getCustomerOrderListApi({
+    String? customerid,
+    bool isLoading = false,
+  }) async {
+    try {
+      var response = await _dataRepository.getCustomerOrderListApi(
+        customerid: customerid,
+        isLoading: isLoading,
+      );
+      if (response.hasError) {
+        final msg = _parseErrorMessage(
+          response.data,
+          'Failed to load customer orders',
+        );
+        Utility.showMessage(msg, MessageType.error, null, '');
+        return null;
+      }
+      if (response.data.isNotEmpty) {
+        return CustomerOrderListResponse.fromJson(json.decode(response.data));
+      }
+      return null;
+    } catch (e) {
+      print('getCustomerOrderListApi error: $e');
+      Utility.closeDialog();
+      Utility.showMessage(
+        'Failed to load customer orders',
+        MessageType.error,
+        null,
+        '',
+      );
+      return null;
+    }
+  }
+
+  Future<CustomerOrderCreateResponse?> createCustomerOrderApi({
+    String? customerorderid,
+    required String customerid,
+    required String image,
+    required String remark1,
+    required String remark2,
+    required String remark3,
+    bool isLoading = false,
+  }) async {
+    try {
+      var response = await _dataRepository.createCustomerOrderApi(
+        customerorderid: customerorderid,
+        customerid: customerid,
+        image: image,
+        remark1: remark1,
+        remark2: remark2,
+        remark3: remark3,
+        isLoading: isLoading,
+      );
+      if (response.hasError) {
+        final msg = _parseErrorMessage(
+          response.data,
+          'Failed to save customer order',
+        );
+        Utility.showMessage(msg, MessageType.error, null, '');
+        return null;
+      }
+      if (response.data.isNotEmpty) {
+        return CustomerOrderCreateResponse.fromJson(json.decode(response.data));
+      }
+      return null;
+    } catch (e) {
+      print('createCustomerOrderApi error: $e');
+      Utility.closeDialog();
+      Utility.showMessage(
+        'Failed to save customer order',
+        MessageType.error,
+        null,
+        '',
+      );
+      return null;
+    }
+  }
+
+  Future<CustomerOrderDoc?> getOneCustomerOrderApi({
+    required String customerorderid,
+    bool isLoading = false,
+  }) async {
+    try {
+      var response = await _dataRepository.getOneCustomerOrderApi(
+        customerorderid: customerorderid,
+        isLoading: isLoading,
+      );
+      if (response.hasError) {
+        final msg = _parseErrorMessage(response.data, 'Failed to load details');
+        Utility.showMessage(msg, MessageType.error, null, '');
+        return null;
+      }
+      if (response.data.isNotEmpty) {
+        final Map<String, dynamic> parsed = json.decode(response.data);
+        final data = parsed['Data'] ?? parsed['data'];
+        if (data != null) {
+          return CustomerOrderDoc.fromJson(data);
+        }
+      }
+      return null;
+    } catch (e) {
+      print('getOneCustomerOrderApi error: $e');
+      Utility.closeDialog();
+      Utility.showMessage(
+        'Failed to load details',
+        MessageType.error,
+        null,
+        '',
+      );
+      return null;
+    }
+  }
+
+  Future<bool> deleteCustomerOrderApi({
+    required String customerorderid,
+    bool isLoading = false,
+  }) async {
+    try {
+      var response = await _dataRepository.deleteCustomerOrderApi(
+        customerorderid: customerorderid,
+        isLoading: isLoading,
+      );
+      if (response.hasError) {
+        final msg = _parseErrorMessage(response.data, 'Failed to delete order');
+        Utility.showMessage(msg, MessageType.error, null, '');
+        return false;
+      }
+      return true;
+    } catch (e) {
+      print('deleteCustomerOrderApi error: $e');
+      Utility.closeDialog();
+      Utility.showMessage(
+        'Failed to delete order',
+        MessageType.error,
+        null,
+        '',
+      );
+      return false;
+    }
+  }
+
+  Future<UploadImageResponse?> uploadCustomerOrderApi(
+    File image, {
+    bool isLoading = false,
+  }) async {
+    try {
+      var response = await _dataRepository.uploadCustomerOrderApi(
+        image,
+        isLoading: isLoading,
+      );
+      if (response.hasError) {
+        final msg = _parseErrorMessage(response.data, 'Failed to upload image');
+        Utility.showMessage(msg, MessageType.error, null, '');
+        return null;
+      }
+      if (response.data.isNotEmpty) {
+        return UploadImageResponse.fromJson(json.decode(response.data));
+      }
+      return null;
+    } catch (e) {
+      print('uploadCustomerOrderApi error: $e');
+      Utility.closeDialog();
+      Utility.showMessage(
+        'Failed to upload image',
+        MessageType.error,
+        null,
+        '',
+      );
       return null;
     }
   }
@@ -452,21 +626,17 @@ class Repository {
 
   Future<CreateorderModel?> createOrderApi({
     String? orderid,
-    required String customerid,
     required List<Map<String, dynamic>> items,
     required num totalamount,
     String? deliverydate,
-    String? feedback,
     bool isLoading = false,
   }) async {
     try {
       var response = await _dataRepository.createOrderApi(
         orderid: orderid,
-        customerid: customerid,
         items: items,
         totalamount: totalamount,
         deliverydate: deliverydate,
-        feedback: feedback,
         isLoading: isLoading,
       );
       if (response.hasError) {

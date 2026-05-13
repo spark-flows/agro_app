@@ -20,12 +20,12 @@ class GetAllProductModel {
 
   factory GetAllProductModel.fromJson(Map<String, dynamic> json) =>
       GetAllProductModel(
-        message: json["Message"],
-        data: json["Data"] == null
+        message: json["Message"] ?? json["message"],
+        data: (json["Data"] ?? json["data"]) == null
             ? null
-            : GetAllProductData.fromJson(json["Data"]),
-        status: json["Status"],
-        isSuccess: json["IsSuccess"],
+            : GetAllProductData.fromJson(json["Data"] ?? json["data"]),
+        status: json["Status"] ?? json["status"],
+        isSuccess: json["IsSuccess"] ?? json["isSuccess"] ?? json["issuccess"],
       );
 
   Map<String, dynamic> toJson() => {

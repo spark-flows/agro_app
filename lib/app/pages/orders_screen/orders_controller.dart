@@ -53,7 +53,6 @@ class OrdersController extends GetxController {
 
   final TextEditingController titleController = TextEditingController();
   final TextEditingController deliveryDateController = TextEditingController();
-  final TextEditingController feedbackController = TextEditingController();
 
   @override
   void onInit() {
@@ -210,7 +209,6 @@ class OrdersController extends GetxController {
     editingOrderId = null; // Clear edit mode
     titleController.clear();
     deliveryDateController.clear();
-    feedbackController.clear();
     update();
   }
 
@@ -229,7 +227,6 @@ class OrdersController extends GetxController {
 
     titleController.text = details.orderno ?? '';
     deliveryDateController.text = details.deliverydate?.split('T').first ?? '';
-    feedbackController.text = details.feedback ?? '';
 
     if (details.items != null) {
       for (var item in details.items!) {
@@ -251,11 +248,6 @@ class OrdersController extends GetxController {
   }
 
   Future<void> placeOrder() async {
-    if (selectedCustomerId.isEmpty) {
-      Utility.errorMessage('Please select a customer first');
-      return;
-    }
-
     final cartItems = allProducts.where((p) => p.quantity > 0).toList();
     if (cartItems.isEmpty) {
       Utility.errorMessage('Your cart is empty');
@@ -276,11 +268,9 @@ class OrdersController extends GetxController {
     update();
     var response = await Get.find<Repository>().createOrderApi(
       orderid: editingOrderId, // Use the database ID if editing
-      customerid: selectedCustomerId,
       items: itemsPayload,
       totalamount: cartTotal,
       deliverydate: deliveryDateController.text.trim(),
-      feedback: feedbackController.text.trim(),
       isLoading: true,
     );
     isPlacingOrder = false;
@@ -291,13 +281,16 @@ class OrdersController extends GetxController {
       for (var p in allProducts) {
         p.quantity = 0;
       }
-      historyCustomerId = selectedCustomerId;
-      fetchOrderHistory(historyCustomerId!);
+      historyCustomerId = selectedCustomerId.isNotEmpty ? selectedCustomerId : null;
+      if (historyCustomerId != null) {
+        fetchOrderHistory(historyCustomerId!);
+      } else {
+        fetchAllOrders();
+      }
       selectedCustomerId = '';
       editingOrderId = null; // Clear edit mode after success
       titleController.clear();
       deliveryDateController.clear();
-      feedbackController.clear();
       update();
       Get.back();
       Get.back();
@@ -320,8 +313,10 @@ class OrdersController extends GetxController {
 
     if (success) {
       Get.back(); // Close details dialog
-      if (historyCustomerId != null) {
+      if (historyCustomerId != null && historyCustomerId!.isNotEmpty) {
         fetchOrderHistory(historyCustomerId!);
+      } else {
+        fetchAllOrders();
       }
       Get.snackbar(
         'Deleted',

@@ -22,10 +22,10 @@ class CreateorderModel {
     });
 
     factory CreateorderModel.fromJson(Map<String, dynamic> json) => CreateorderModel(
-        message: json["Message"],
-        data: json["Data"] == null ? null : CreateorderData.fromJson(json["Data"]),
-        status: json["Status"],
-        isSuccess: json["IsSuccess"],
+        message: json["Message"] ?? json["message"],
+        data: (json["Data"] ?? json["data"]) == null ? null : CreateorderData.fromJson(json["Data"] ?? json["data"]),
+        status: json["Status"] ?? json["status"],
+        isSuccess: json["IsSuccess"] ?? json["isSuccess"] ?? json["issuccess"],
     );
 
     Map<String, dynamic> toJson() => {
@@ -74,21 +74,21 @@ class CreateorderData {
     });
 
     factory CreateorderData.fromJson(Map<String, dynamic> json) => CreateorderData(
-        orderno: json["orderno"],
-        distributorid: json["distributorid"],
-        customerid: json["customerid"],
+        orderno: json["orderno"]?.toString(),
+        distributorid: json["distributorid"]?.toString(),
+        customerid: json["customerid"]?.toString(),
         items: json["items"] == null ? [] : List<CreateorderItem>.from(json["items"]!.map((x) => CreateorderItem.fromJson(x))),
         deliverydate: json["deliverydate"],
         totalamount: json["totalamount"],
-        status: json["status"],
-        feedback: json["feedback"],
+        status: json["status"]?.toString(),
+        feedback: json["feedback"]?.toString(),
         isDeleted: json["isDeleted"],
-        deletedBy: json["deletedBy"],
-        createdBy: json["createdBy"],
-        updatedBy: json["updatedBy"],
-        id: json["_id"],
-        createdAt: json["createdAt"],
-        updatedAt: json["updatedAt"],
+        deletedBy: json["deletedBy"]?.toString(),
+        createdBy: json["createdBy"]?.toString(),
+        updatedBy: json["updatedBy"]?.toString(),
+        id: json["_id"]?.toString(),
+        createdAt: json["createdAt"]?.toString(),
+        updatedAt: json["updatedAt"]?.toString(),
         v: json["__v"],
     );
 

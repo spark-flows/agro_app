@@ -13,6 +13,7 @@ abstract class Routes {
   static const productsScreen = _Paths.productsScreen;
   static const productForm = _Paths.productForm;
   static const ordersScreen = _Paths.ordersScreen;
+  static const customerOrdersScreen = _Paths.customerOrdersScreen;
   static const profileScreen = _Paths.profileScreen;
   static const createGroupScreen = _Paths.createGroupScreen;
   static const createGroupTitleScreen = _Paths.createGroupTitleScreen;
@@ -34,6 +35,7 @@ abstract class _Paths {
   static const productsScreen = '/productsScreen';
   static const productForm = '/productForm';
   static const ordersScreen = '/ordersScreen';
+  static const customerOrdersScreen = '/customerOrdersScreen';
   static const profileScreen = '/profileScreen';
   static const createGroupScreen = '/createGroupScreen';
   static const createGroupTitleScreen = '/createGroupTitleScreen';

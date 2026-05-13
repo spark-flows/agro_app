@@ -16,10 +16,12 @@ class GetOneOrderModel {
 
   factory GetOneOrderModel.fromJson(Map<String, dynamic> json) =>
       GetOneOrderModel(
-        message: json["Message"],
-        data: json["Data"] == null ? null : GetOneOrderData.fromJson(json["Data"]),
-        status: json["Status"],
-        isSuccess: json["IsSuccess"],
+        message: json["Message"] ?? json["message"],
+        data: (json["Data"] ?? json["data"]) == null
+            ? null
+            : GetOneOrderData.fromJson(json["Data"] ?? json["data"]),
+        status: json["Status"] ?? json["status"],
+        isSuccess: json["IsSuccess"] ?? json["isSuccess"] ?? json["issuccess"],
       );
 
   Map<String, dynamic> toJson() => {
@@ -65,25 +67,28 @@ class GetOneOrderData {
     this.updatedAt,
   });
 
-  factory GetOneOrderData.fromJson(Map<String, dynamic> json) => GetOneOrderData(
-    id: json["_id"],
-    orderno: json["orderno"],
-    distributorid: json["distributorid"],
-    customerid: json["customerid"],
-    items: json["items"] == null
-        ? []
-        : List<GetOneOrderItem>.from(json["items"]!.map((x) => GetOneOrderItem.fromJson(x))),
-    deliverydate: json["deliverydate"],
-    totalamount: json["totalamount"],
-    status: json["status"],
-    feedback: json["feedback"],
-    isDeleted: json["isDeleted"],
-    deletedBy: json["deletedBy"],
-    createdBy: json["createdBy"],
-    updatedBy: json["updatedBy"],
-    createdAt: json["createdAt"],
-    updatedAt: json["updatedAt"],
-  );
+  factory GetOneOrderData.fromJson(Map<String, dynamic> json) =>
+      GetOneOrderData(
+        id: json["_id"]?.toString(),
+        orderno: json["orderno"]?.toString(),
+        distributorid: json["distributorid"],
+        customerid: json["customerid"],
+        items: json["items"] == null
+            ? []
+            : List<GetOneOrderItem>.from(
+                json["items"]!.map((x) => GetOneOrderItem.fromJson(x)),
+              ),
+        deliverydate: json["deliverydate"],
+        totalamount: json["totalamount"],
+        status: json["status"]?.toString(),
+        feedback: json["feedback"]?.toString(),
+        isDeleted: json["isDeleted"],
+        deletedBy: json["deletedBy"]?.toString(),
+        createdBy: json["createdBy"]?.toString(),
+        updatedBy: json["updatedBy"]?.toString(),
+        createdAt: json["createdAt"]?.toString(),
+        updatedAt: json["updatedAt"]?.toString(),
+      );
 
   Map<String, dynamic> toJson() => {
     "_id": id,
@@ -114,12 +119,13 @@ class GetOneOrderItem {
 
   GetOneOrderItem({this.productid, this.quantity, this.price, this.id});
 
-  factory GetOneOrderItem.fromJson(Map<String, dynamic> json) => GetOneOrderItem(
-    productid: json["productid"],
-    quantity: json["quantity"],
-    price: json["price"],
-    id: json["_id"],
-  );
+  factory GetOneOrderItem.fromJson(Map<String, dynamic> json) =>
+      GetOneOrderItem(
+        productid: json["productid"],
+        quantity: json["quantity"],
+        price: json["price"],
+        id: json["_id"],
+      );
 
   Map<String, dynamic> toJson() => {
     "productid": productid,

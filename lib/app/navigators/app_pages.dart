@@ -88,6 +88,13 @@ class AppPages {
       binding: OrdersBinding(),
       transition: Transition.rightToLeft,
     ),
+    GetPage<CustomerOrdersScreen>(
+      name: _Paths.customerOrdersScreen,
+      transitionDuration: transitionDuration,
+      page: CustomerOrdersScreen.new,
+      binding: CustomerOrdersBinding(),
+      transition: Transition.rightToLeft,
+    ),
     GetPage<UsersScreen>(
       name: _Paths.userListScreen,
       transitionDuration: transitionDuration,

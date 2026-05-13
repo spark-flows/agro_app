@@ -5,4 +5,7 @@ export 'home_screen/home_page.dart';
 export 'orders_screen/orders_page.dart';
 export 'products_screen/products_page.dart';
 export 'splashScreen/splash_page.dart';
-export 'users_screen/users_page.dart';
+export 'users_screen/users_binding.dart';
+export 'users_screen/users_screen.dart';
+export 'customer_orders_screen/customer_orders_screen.dart';
+export 'customer_orders_screen/customer_orders_binding.dart';
