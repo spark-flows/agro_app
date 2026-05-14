@@ -1,10 +1,10 @@
-import 'package:flutter/material.dart';
-import 'package:get/get.dart';
 import 'package:agro_app/app/app.dart';
 import 'package:agro_app/domain/domain.dart';
-import 'package:intl/intl.dart';
-import 'package:agro_app/data/helpers/api_wrapper.dart';
 import 'package:agro_app/domain/services/enum.dart';
+import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:intl/intl.dart';
+
 import 'customer_orders_controller.dart';
 
 class CustomerOrdersScreen extends StatelessWidget {
@@ -24,10 +24,7 @@ class CustomerOrdersScreen extends StatelessWidget {
               icon: const Icon(Icons.arrow_back, color: Colors.black87),
               onPressed: () => Get.back(),
             ),
-            title: Text(
-              'Customer Orders',
-              style: Styles.txtBlackColorW70020,
-            ),
+            title: Text('Customer Orders', style: Styles.txtBlackColorW70020),
           ),
           body: Column(
             children: [
@@ -36,14 +33,18 @@ class CustomerOrdersScreen extends StatelessWidget {
                 child: controller.isLoading
                     ? const Center(child: CircularProgressIndicator())
                     : controller.ordersList.isEmpty
-                        ? _buildEmptyState()
-                        : _buildOrdersList(controller),
+                    ? _buildEmptyState()
+                    : _buildOrdersList(controller),
               ),
             ],
           ),
           floatingActionButton: !RoleUtils.isAdmin(homeController.roleName)
               ? FloatingActionButton.extended(
-                  onPressed: () => _showCreateOrderBottomSheet(context, controller, isEdit: false),
+                  onPressed: () => _showCreateOrderBottomSheet(
+                    context,
+                    controller,
+                    isEdit: false,
+                  ),
                   backgroundColor: ColorsValue.primary,
                   icon: const Icon(Icons.add, color: Colors.white),
                   label: const Text(
@@ -60,7 +61,10 @@ class CustomerOrdersScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildTopBar(BuildContext context, CustomerOrdersController controller) {
+  Widget _buildTopBar(
+    BuildContext context,
+    CustomerOrdersController controller,
+  ) {
     return Container(
       color: Colors.white,
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
@@ -146,10 +150,7 @@ class CustomerOrdersScreen extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 24),
-          Text(
-            'No Customer Orders Found',
-            style: Styles.txtBlackColorW70020,
-          ),
+          Text('No Customer Orders Found', style: Styles.txtBlackColorW70020),
           const SizedBox(height: 8),
           Text(
             'Create a new order to get started.',
@@ -164,7 +165,9 @@ class CustomerOrdersScreen extends StatelessWidget {
     return RefreshIndicator(
       onRefresh: () async {
         if (controller.selectedCustomerId.isNotEmpty) {
-          await controller.fetchCustomerOrdersByCustomer(controller.selectedCustomerId);
+          await controller.fetchCustomerOrdersByCustomer(
+            controller.selectedCustomerId,
+          );
         } else {
           await controller.fetchAllCustomerOrders();
         }
@@ -175,16 +178,18 @@ class CustomerOrdersScreen extends StatelessWidget {
         itemBuilder: (context, index) {
           final order = controller.ordersList[index];
           String customerName = 'Unknown Customer';
-          if (order.customerid != null && order.customerid is Map) {
-             customerName = order.customerid['firstname'] ?? order.customerid['name'] ?? 'Unknown Customer';
+          if (order.customerid != null) {
+            customerName = order.customerid?.name ?? ' 0--0 ';
           }
-          
+
           String dateStr = '';
           if (order.createdAt != null) {
             try {
-               dateStr = DateFormat('dd MMM yyyy').format(DateTime.parse(order.createdAt!));
+              dateStr = DateFormat(
+                'dd MMM yyyy',
+              ).format(DateTime.parse(order.createdAt!));
             } catch (e) {
-               dateStr = order.createdAt!;
+              dateStr = order.createdAt!;
             }
           }
 
@@ -206,7 +211,7 @@ class CustomerOrdersScreen extends StatelessWidget {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text(
-                          'Order #${order.customerorderid ?? '---'}',
+                          'Order # ${order.orderno ?? '---'}',
                           style: Styles.txtBlackColorW70016,
                         ),
                         Container(
@@ -272,7 +277,11 @@ class CustomerOrdersScreen extends StatelessWidget {
     );
   }
 
-  void _showOrderDetails(BuildContext context, CustomerOrderDoc order, CustomerOrdersController controller) {
+  void _showOrderDetails(
+    BuildContext context,
+    CustomerOrderDoc order,
+    CustomerOrdersController controller,
+  ) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -289,7 +298,9 @@ class CustomerOrdersScreen extends StatelessWidget {
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
                 color: Colors.white,
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(24),
+                ),
                 boxShadow: [
                   BoxShadow(
                     color: Colors.black.withValues(alpha: 0.05),
@@ -310,7 +321,7 @@ class CustomerOrdersScreen extends StatelessWidget {
                           style: Styles.txtBlackColorW70020,
                         ),
                         Text(
-                          '#${order.customerorderid ?? '---'}',
+                          order.customerid?.name ?? '---',
                           style: Styles.txtGreyColorW40014,
                         ),
                       ],
@@ -345,10 +356,14 @@ class CustomerOrdersScreen extends StatelessWidget {
                       child: ClipRRect(
                         borderRadius: BorderRadius.circular(16),
                         child: Image.network(
-                          ApiWrapper.imageUrl + order.image!,
+                          order.image ?? '',
                           fit: BoxFit.cover,
                           errorBuilder: (_, _, _) => const Center(
-                            child: Icon(Icons.image_not_supported, size: 40, color: Colors.grey),
+                            child: Icon(
+                              Icons.image_not_supported,
+                              size: 40,
+                              color: Colors.grey,
+                            ),
                           ),
                         ),
                       ),
@@ -380,12 +395,23 @@ class CustomerOrdersScreen extends StatelessWidget {
                       onPressed: () {
                         Get.back(); // close modal
                         controller.editOrder(order);
-                        _showCreateOrderBottomSheet(context, controller, isEdit: true);
+                        _showCreateOrderBottomSheet(
+                          context,
+                          controller,
+                          isEdit: true,
+                        );
                       },
-                      icon: const Icon(Icons.edit_outlined, color: Colors.white, size: 18),
+                      icon: const Icon(
+                        Icons.edit_outlined,
+                        color: Colors.white,
+                        size: 18,
+                      ),
                       label: const Text(
                         'Edit',
-                        style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.blue,
@@ -403,7 +429,8 @@ class CustomerOrdersScreen extends StatelessWidget {
                       onPressed: () {
                         Utility.showDeleteDialog(
                           title: 'Confirm Delete',
-                          message: 'Are you sure you want to delete this customer order?',
+                          message:
+                              'Are you sure you want to delete this customer order?',
                           onConfirm: () {
                             Get.back(); // close modal sheet
                             if (order.id != null) {
@@ -412,10 +439,17 @@ class CustomerOrdersScreen extends StatelessWidget {
                           },
                         );
                       },
-                      icon: const Icon(Icons.delete_outline, color: Colors.white, size: 18),
+                      icon: const Icon(
+                        Icons.delete_outline,
+                        color: Colors.white,
+                        size: 18,
+                      ),
                       label: const Text(
                         'Delete',
-                        style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.red,
@@ -455,7 +489,11 @@ class CustomerOrdersScreen extends StatelessWidget {
     );
   }
 
-  void _showCreateOrderBottomSheet(BuildContext context, CustomerOrdersController controller, {bool isEdit = false}) {
+  void _showCreateOrderBottomSheet(
+    BuildContext context,
+    CustomerOrdersController controller, {
+    bool isEdit = false,
+  }) {
     if (!isEdit) {
       controller.resetForm();
     }
@@ -466,6 +504,9 @@ class CustomerOrdersScreen extends StatelessWidget {
       builder: (context) => GetBuilder<CustomerOrdersController>(
         builder: (ctrl) => Container(
           height: MediaQuery.of(context).size.height * 0.9,
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(context).viewInsets.bottom,
+          ),
           decoration: const BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
@@ -476,7 +517,9 @@ class CustomerOrdersScreen extends StatelessWidget {
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
                   color: Colors.white,
-                  borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+                  borderRadius: const BorderRadius.vertical(
+                    top: Radius.circular(24),
+                  ),
                   boxShadow: [
                     BoxShadow(
                       color: Colors.black.withValues(alpha: 0.05),
@@ -489,7 +532,9 @@ class CustomerOrdersScreen extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      ctrl.editingCustomerOrderId != null ? 'Edit Customer Order' : 'Create Customer Order',
+                      ctrl.editingCustomerOrderId != null
+                          ? 'Edit Customer Order'
+                          : 'Create Customer Order',
                       style: Styles.txtBlackColorW70020,
                     ),
                     IconButton(
@@ -511,7 +556,10 @@ class CustomerOrdersScreen extends StatelessWidget {
                   padding: const EdgeInsets.all(20),
                   children: [
                     // Customer Dropdown
-                    Text('Select Customer *', style: Styles.txtBlackColorW60014),
+                    Text(
+                      'Select Customer *',
+                      style: Styles.txtBlackColorW60014,
+                    ),
                     const SizedBox(height: 8),
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -523,11 +571,17 @@ class CustomerOrdersScreen extends StatelessWidget {
                         child: DropdownButton<String>(
                           isExpanded: true,
                           hint: const Text('Choose a customer'),
-                          value: ctrl.selectedCustomerId.isNotEmpty ? ctrl.selectedCustomerId : null,
-                          items: ctrl.customersList.map((c) => DropdownMenuItem(
-                            value: c.id,
-                            child: Text('${c.name} (${c.mobile ?? ''})'),
-                          )).toList(),
+                          value: ctrl.selectedCustomerId.isNotEmpty
+                              ? ctrl.selectedCustomerId
+                              : null,
+                          items: ctrl.customersList
+                              .map(
+                                (c) => DropdownMenuItem(
+                                  value: c.id,
+                                  child: Text('${c.name} (${c.mobile ?? ''})'),
+                                ),
+                              )
+                              .toList(),
                           onChanged: (val) {
                             if (val != null) {
                               ctrl.selectedCustomerId = val;
@@ -538,7 +592,7 @@ class CustomerOrdersScreen extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 20),
-                    
+
                     // Image Picker
                     Text('Order Image *', style: Styles.txtBlackColorW60014),
                     const SizedBox(height: 8),
@@ -557,27 +611,41 @@ class CustomerOrdersScreen extends StatelessWidget {
                         child: ctrl.selectedImage != null
                             ? ClipRRect(
                                 borderRadius: BorderRadius.circular(12),
-                                child: Image.file(ctrl.selectedImage!, fit: BoxFit.cover),
+                                child: Image.file(
+                                  ctrl.selectedImage!,
+                                  fit: BoxFit.cover,
+                                ),
                               )
                             : ctrl.existingImageUrl != null
-                                ? ClipRRect(
-                                    borderRadius: BorderRadius.circular(12),
-                                    child: Image.network(
-                                      ApiWrapper.imageUrl + ctrl.existingImageUrl!,
-                                      fit: BoxFit.cover,
-                                      errorBuilder: (_, __, ___) => const Center(
-                                        child: Icon(Icons.image_not_supported, size: 40, color: Colors.grey),
-                                      ),
+                            ? ClipRRect(
+                                borderRadius: BorderRadius.circular(12),
+                                child: Image.network(
+                                  ctrl.existingImageUrl ?? '',
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (_, __, ___) => const Center(
+                                    child: Icon(
+                                      Icons.image_not_supported,
+                                      size: 40,
+                                      color: Colors.grey,
                                     ),
-                                  )
-                                : Column(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      Icon(Icons.add_a_photo, size: 40, color: Colors.grey.shade400),
-                                      const SizedBox(height: 8),
-                                      Text('Tap to upload image', style: Styles.txtGreyColorW40014),
-                                    ],
                                   ),
+                                ),
+                              )
+                            : Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    Icons.add_a_photo,
+                                    size: 40,
+                                    color: Colors.grey.shade400,
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Text(
+                                    'Tap to upload image',
+                                    style: Styles.txtGreyColorW40014,
+                                  ),
+                                ],
+                              ),
                       ),
                     ),
                     const SizedBox(height: 20),
@@ -615,8 +683,14 @@ class CustomerOrdersScreen extends StatelessWidget {
                     ),
                   ),
                   child: Text(
-                    ctrl.editingCustomerOrderId != null ? 'Update Order' : 'Create Order',
-                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+                    ctrl.editingCustomerOrderId != null
+                        ? 'Update Order'
+                        : 'Create Order',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                    ),
                   ),
                 ),
               ),
@@ -650,7 +724,10 @@ class CustomerOrdersScreen extends StatelessWidget {
               borderRadius: BorderRadius.circular(12),
               borderSide: const BorderSide(color: ColorsValue.primary),
             ),
-            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 14,
+            ),
           ),
         ),
       ],

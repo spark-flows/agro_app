@@ -166,14 +166,14 @@ class _DistributorsScreenState extends State<DistributorsScreen> {
                                           user.email,
                                           style: Styles.txtGreyColorW40012,
                                         ),
-                                        const SizedBox(height: 2),
-                                        Text(
-                                          'Role: ${user.roleid.rolename ?? "N/A"}',
-                                          style: Styles.txtGreyColorW40012
-                                              .copyWith(
-                                                color: ColorsValue.primary,
-                                              ),
-                                        ),
+                                        // const SizedBox(height: 2),
+                                        // Text(
+                                        //   'Role: ${user.roleid.rolename ?? "N/A"}',
+                                        //   style: Styles.txtGreyColorW40012
+                                        //       .copyWith(
+                                        //         color: ColorsValue.primary,
+                                        //       ),
+                                        // ),
                                       ],
                                     ),
                                     trailing: Container(

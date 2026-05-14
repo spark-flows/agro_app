@@ -18,7 +18,6 @@ class EndPoints {
   static String uploadCustomerOrderApi = 'api/customerorder/upload';
   static String usersApi = 'api/users';
 
-  static String users = 'api/users';
   static String rolesApi = 'api/role';
   static String createUsersApi = 'api/users/create';
   static String productUploadApi = 'api/product/upload';

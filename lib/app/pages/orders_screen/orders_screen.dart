@@ -33,53 +33,53 @@ class _OrdersScreenState extends State<OrdersScreen> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 /// Customer Selection Dropdown for History
-                DropdownButtonFormField<String>(
-                  decoration: InputDecoration(
-                    labelText: 'Select Customer',
-                    labelStyle: Styles.txtGreyColorW40014,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(color: Colors.grey.shade300),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(color: Colors.grey.shade300),
-                    ),
-                    filled: true,
-                    fillColor: Colors.white,
-                    prefixIcon: const Icon(
-                      Icons.person_outline,
-                      color: ColorsValue.primary,
-                    ),
-                    suffixIcon: controller.historyCustomerId != null
-                        ? IconButton(
-                            icon: const Icon(Icons.clear, color: Colors.grey),
-                            onPressed: () {
-                              controller.historyCustomerId = null;
-                              controller.update();
-                              controller.fetchAllOrders();
-                            },
-                          )
-                        : null,
-                  ),
-                  value: controller.historyCustomerId,
-                  items: controller.customers.map((c) {
-                    return DropdownMenuItem<String>(
-                      value: c.id,
-                      child: Text('${c.name} (${c.mobile ?? ''})'),
-                    );
-                  }).toList(),
-                  onChanged: (val) {
-                    controller.historyCustomerId = val;
-                    controller.update();
-                    if (val != null) {
-                      controller.fetchOrderHistory(val);
-                    } else {
-                      controller.fetchAllOrders();
-                    }
-                  },
-                ),
-                const SizedBox(height: 10),
+                // DropdownButtonFormField<String>(
+                //   decoration: InputDecoration(
+                //     labelText: 'Select Customer',
+                //     labelStyle: Styles.txtGreyColorW40014,
+                //     border: OutlineInputBorder(
+                //       borderRadius: BorderRadius.circular(12),
+                //       borderSide: BorderSide(color: Colors.grey.shade300),
+                //     ),
+                //     enabledBorder: OutlineInputBorder(
+                //       borderRadius: BorderRadius.circular(12),
+                //       borderSide: BorderSide(color: Colors.grey.shade300),
+                //     ),
+                //     filled: true,
+                //     fillColor: Colors.white,
+                //     prefixIcon: const Icon(
+                //       Icons.person_outline,
+                //       color: ColorsValue.primary,
+                //     ),
+                //     suffixIcon: controller.historyCustomerId != null
+                //         ? IconButton(
+                //             icon: const Icon(Icons.clear, color: Colors.grey),
+                //             onPressed: () {
+                //               controller.historyCustomerId = null;
+                //               controller.update();
+                //               controller.fetchAllOrders();
+                //             },
+                //           )
+                //         : null,
+                //   ),
+                //   value: controller.historyCustomerId,
+                //   items: controller.customers.map((c) {
+                //     return DropdownMenuItem<String>(
+                //       value: c.id,
+                //       child: Text('${c.name} (${c.mobile ?? ''})'),
+                //     );
+                //   }).toList(),
+                //   onChanged: (val) {
+                //     controller.historyCustomerId = val;
+                //     controller.update();
+                //     if (val != null) {
+                //       controller.fetchOrderHistory(val);
+                //     } else {
+                //       controller.fetchAllOrders();
+                //     }
+                //   },
+                // ),
+                // const SizedBox(height: 10),
 
                 /// Order List
                 Expanded(
@@ -665,7 +665,8 @@ void _showOrderDetailsDialog(
                         onPressed: () {
                           Utility.showDeleteDialog(
                             title: 'Confirm Delete',
-                            message: 'Are you sure you want to delete this order?',
+                            message:
+                                'Are you sure you want to delete this order?',
                             onConfirm: () {
                               if (details.id != null) {
                                 controller.deleteOrder(details.id!);

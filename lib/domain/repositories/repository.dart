@@ -778,6 +778,7 @@ class Repository {
     String sortfield = "_id",
     int sortoption = -1,
     String roleid = "",
+    String type = "",
     bool isLoading = false,
   }) async {
     try {
@@ -788,6 +789,7 @@ class Repository {
         sortfield: sortfield,
         sortoption: sortoption,
         roleid: roleid,
+        type: type,
         isLoading: isLoading,
       );
       if (response.hasError) {

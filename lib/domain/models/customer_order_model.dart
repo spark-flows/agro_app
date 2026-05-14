@@ -1,5 +1,3 @@
-import 'dart:convert';
-
 class CustomerOrderListResponse {
   String? message;
   int? status;
@@ -10,7 +8,9 @@ class CustomerOrderListResponse {
     message = json['Message'] ?? json['message'];
     status = json['Status'] ?? json['status'];
     isSuccess = json['IsSuccess'] ?? json['isSuccess'] ?? json['issuccess'];
-    data = (json['Data'] ?? json['data']) != null ? CustomerOrderListData.fromJson(json['Data'] ?? json['data']) : null;
+    data = (json['Data'] ?? json['data']) != null
+        ? CustomerOrderListData.fromJson(json['Data'] ?? json['data'])
+        : null;
   }
 }
 
@@ -48,8 +48,9 @@ class CustomerOrderListData {
 class CustomerOrderDoc {
   String? id;
   String? customerorderid;
+  String? orderno;
   dynamic distributorid;
-  dynamic customerid;
+  CustomerIdModel? customerid;
   String? image;
   String? remark1;
   String? remark2;
@@ -60,7 +61,10 @@ class CustomerOrderDoc {
     id = json['_id']?.toString();
     customerorderid = json['customerorderid']?.toString();
     distributorid = json['distributorid'];
-    customerid = json['customerid'];
+    orderno = json['orderno']?.toString();
+    customerid = json['customerid'] != null
+        ? CustomerIdModel.fromJson(json['customerid'])
+        : CustomerIdModel();
     image = json['image']?.toString();
     remark1 = json['remark1']?.toString();
     remark2 = json['remark2']?.toString();
@@ -112,5 +116,17 @@ class UploadImageData {
 
   UploadImageData.fromJson(Map<String, dynamic> json) {
     url = json['url']?.toString() ?? json['image']?.toString();
+  }
+}
+
+class CustomerIdModel {
+  String? id;
+  String? name;
+
+  CustomerIdModel();
+
+  CustomerIdModel.fromJson(Map<String, dynamic> json) {
+    id = json['_id']?.toString() ?? json['_id']?.toString();
+    name = json['name']?.toString() ?? json['name']?.toString();
   }
 }

@@ -624,10 +624,12 @@ class ConnectHelper {
     String sortfield = "_id",
     int sortoption = -1,
     String roleid = "",
+    String type = "",
     bool isLoading = false,
   }) async {
     var data = {
       "page": page,
+      "type": type,
       "limit": limit,
       "search": search.isNotEmpty ? {"name": search} : {},
       "sortfield": sortfield,

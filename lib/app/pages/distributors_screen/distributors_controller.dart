@@ -107,6 +107,7 @@ class DistributorsController extends GetxController {
       limit: limit,
       search: searchQuery,
       roleid: _distributorRoleId,
+      type: 'dealer',
       isLoading: isRefresh,
     );
 

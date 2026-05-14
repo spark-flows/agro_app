@@ -82,6 +82,7 @@ class UsersController extends GetxController {
       page: currentPage,
       limit: limit,
       search: searchQuery,
+      type: 'user',
       isLoading: isRefresh,
     );
 

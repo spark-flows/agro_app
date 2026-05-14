@@ -1,16 +1,17 @@
 import 'dart:io';
+
+import 'package:agro_app/app/app.dart';
+import 'package:agro_app/domain/domain.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:agro_app/app/app.dart';
-import 'package:agro_app/domain/domain.dart';
 
 class CustomerOrdersController extends GetxController {
   final Repository _repository = Get.find<Repository>();
-  
+
   List<CustomerOrderDoc> ordersList = [];
   bool isLoading = false;
-  
+
   List<GetAllCustomerDoc> customersList = [];
   String selectedCustomerId = '';
 
@@ -54,8 +55,8 @@ class CustomerOrdersController extends GetxController {
     isLoading = true;
     update();
     final res = await _repository.getCustomerOrderListApi(
-      customerid: customerId, 
-      isLoading: false
+      customerid: customerId,
+      isLoading: false,
     );
     if (res != null && res.data != null && res.data!.docs != null) {
       ordersList = res.data!.docs!;
@@ -90,14 +91,14 @@ class CustomerOrdersController extends GetxController {
     editingCustomerOrderId = order.id;
     if (order.customerid != null) {
       if (order.customerid is Map) {
-        selectedCustomerId = order.customerid['_id'] ?? order.customerid['id'] ?? '';
+        selectedCustomerId = order.customerid?.id ?? order.customerid?.id ?? '';
       } else {
         selectedCustomerId = order.customerid.toString();
       }
     } else {
       selectedCustomerId = '';
     }
-    
+
     remark1Controller.text = order.remark1 ?? '';
     remark2Controller.text = order.remark2 ?? '';
     remark3Controller.text = order.remark3 ?? '';
@@ -121,8 +122,13 @@ class CustomerOrdersController extends GetxController {
     // 1. Upload the image if a new one is selected
     String imageUrl = existingImageUrl ?? '';
     if (selectedImage != null) {
-      final uploadRes = await _repository.uploadCustomerOrderApi(selectedImage!, isLoading: false);
-      if (uploadRes != null && uploadRes.data != null && uploadRes.data!.url != null) {
+      final uploadRes = await _repository.uploadCustomerOrderApi(
+        selectedImage!,
+        isLoading: false,
+      );
+      if (uploadRes != null &&
+          uploadRes.data != null &&
+          uploadRes.data!.url != null) {
         imageUrl = uploadRes.data!.url!;
       } else {
         Utility.closeDialog();
@@ -147,8 +153,10 @@ class CustomerOrdersController extends GetxController {
     if (createRes != null && createRes.isSuccess == true) {
       Get.back(); // Close bottom sheet
       Get.snackbar(
-        'Success', 
-        editingCustomerOrderId == null ? 'Customer order created successfully!' : 'Customer order updated successfully!',
+        'Success',
+        editingCustomerOrderId == null
+            ? 'Customer order created successfully!'
+            : 'Customer order updated successfully!',
         backgroundColor: Colors.green,
         colorText: Colors.white,
       );

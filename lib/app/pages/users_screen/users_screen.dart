@@ -1,7 +1,8 @@
+import 'package:agro_app/app/theme/theme.dart';
 import 'package:agro_app/app/utils/utility.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:agro_app/app/theme/theme.dart';
+
 import 'users_controller.dart';
 
 class UsersScreen extends StatefulWidget {
@@ -164,14 +165,14 @@ class _UsersScreenState extends State<UsersScreen> {
                                           user.email ?? '-',
                                           style: Styles.txtGreyColorW40012,
                                         ),
-                                        const SizedBox(height: 2),
-                                        Text(
-                                          'Role: ${user.roleid.rolename ?? "N/A"}',
-                                          style: Styles.txtGreyColorW40012
-                                              .copyWith(
-                                                color: ColorsValue.primary,
-                                              ),
-                                        ),
+                                        // const SizedBox(height: 2),
+                                        // Text(
+                                        //   'Role: ${user.roleid.rolename ?? "N/A"}',
+                                        //   style: Styles.txtGreyColorW40012
+                                        //       .copyWith(
+                                        //         color: ColorsValue.primary,
+                                        //       ),
+                                        // ),
                                       ],
                                     ),
                                     trailing: Row(
