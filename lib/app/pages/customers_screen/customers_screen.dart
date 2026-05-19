@@ -1,6 +1,7 @@
 import 'package:agro_app/app/app.dart';
 import 'package:agro_app/domain/services/enum.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 
 class CustomersScreen extends StatelessWidget {
@@ -146,9 +147,12 @@ class CustomersScreen extends StatelessWidget {
                                     ],
                                   ),
                                   const SizedBox(height: 6),
-                                  if (customer.village != 'N/A' && customer.village.isNotEmpty)
+                                  if (customer.village != 'N/A' &&
+                                      customer.village.isNotEmpty)
                                     Padding(
-                                      padding: const EdgeInsets.only(bottom: 6.0),
+                                      padding: const EdgeInsets.only(
+                                        bottom: 6.0,
+                                      ),
                                       child: Row(
                                         children: [
                                           const Icon(
@@ -354,6 +358,11 @@ class CustomersScreen extends StatelessWidget {
                     controller: controller.phoneCtrl,
                     keyboardType: TextInputType.phone,
                     textInputAction: TextInputAction.next,
+                    inputFormatters: [
+                      FilteringTextInputFormatter.digitsOnly,
+                      LengthLimitingTextInputFormatter(10),
+                    ],
+                    maxLength: 10,
                     decoration: InputDecoration(
                       labelText: 'Phone Number',
                       border: OutlineInputBorder(
@@ -389,7 +398,8 @@ class CustomersScreen extends StatelessWidget {
                       ),
                       prefixIcon: const Icon(Icons.home_outlined),
                     ),
-                    validator: (v) => v!.isEmpty ? 'Please enter a village' : null,
+                    validator: (v) =>
+                        v!.isEmpty ? 'Please enter a village' : null,
                   ),
                   const SizedBox(height: 24),
                   ElevatedButton(
