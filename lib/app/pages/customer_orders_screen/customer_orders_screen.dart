@@ -571,7 +571,9 @@ class CustomerOrdersScreen extends StatelessWidget {
                         child: DropdownButton<String>(
                           isExpanded: true,
                           hint: const Text('Choose a customer'),
-                          value: ctrl.selectedCustomerId.isNotEmpty
+                          value: ctrl.selectedCustomerId.isNotEmpty &&
+                                  ctrl.customersList
+                                      .any((c) => c.id == ctrl.selectedCustomerId)
                               ? ctrl.selectedCustomerId
                               : null,
                           items: ctrl.customersList
@@ -596,57 +598,137 @@ class CustomerOrdersScreen extends StatelessWidget {
                     // Image Picker
                     Text('Order Image *', style: Styles.txtBlackColorW60014),
                     const SizedBox(height: 8),
-                    GestureDetector(
-                      onTap: ctrl.pickImage,
-                      child: Container(
-                        height: 150,
-                        decoration: BoxDecoration(
-                          color: Colors.grey.shade50,
-                          border: Border.all(
-                            color: Colors.grey.shade300,
-                            style: BorderStyle.solid,
-                          ),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: ctrl.selectedImage != null
-                            ? ClipRRect(
-                                borderRadius: BorderRadius.circular(12),
-                                child: Image.file(
-                                  ctrl.selectedImage!,
-                                  fit: BoxFit.cover,
-                                ),
-                              )
-                            : ctrl.existingImageUrl != null
-                            ? ClipRRect(
-                                borderRadius: BorderRadius.circular(12),
-                                child: Image.network(
-                                  ctrl.existingImageUrl ?? '',
-                                  fit: BoxFit.cover,
-                                  errorBuilder: (_, __, ___) => const Center(
-                                    child: Icon(
-                                      Icons.image_not_supported,
-                                      size: 40,
-                                      color: Colors.grey,
-                                    ),
-                                  ),
-                                ),
-                              )
-                            : Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Icon(
-                                    Icons.add_a_photo,
-                                    size: 40,
-                                    color: Colors.grey.shade400,
-                                  ),
-                                  const SizedBox(height: 8),
-                                  Text(
-                                    'Tap to upload image',
-                                    style: Styles.txtGreyColorW40014,
-                                  ),
-                                ],
+                    Stack(
+                      children: [
+                        GestureDetector(
+                          onTap: ctrl.pickImage,
+                          child: Container(
+                            height: 150,
+                            width: double.infinity,
+                            decoration: BoxDecoration(
+                              color: Colors.grey.shade50,
+                              border: Border.all(
+                                color: ctrl.selectedImage != null ||
+                                        ctrl.existingImageUrl != null
+                                    ? ColorsValue.primary
+                                    : Colors.grey.shade300,
                               ),
-                      ),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: ctrl.selectedImage != null
+                                ? ClipRRect(
+                                    borderRadius: BorderRadius.circular(12),
+                                    child: Stack(
+                                      fit: StackFit.expand,
+                                      children: [
+                                        Image.file(
+                                          ctrl.selectedImage!,
+                                          fit: BoxFit.cover,
+                                        ),
+                                        // "Tap to change" label at bottom
+                                        Positioned(
+                                          bottom: 0,
+                                          left: 0,
+                                          right: 0,
+                                          child: Container(
+                                            padding: const EdgeInsets.symmetric(
+                                              vertical: 6,
+                                            ),
+                                            color: Colors.black54,
+                                            child: const Text(
+                                              'Tap to change',
+                                              textAlign: TextAlign.center,
+                                              style: TextStyle(
+                                                color: Colors.white,
+                                                fontSize: 12,
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  )
+                                : ctrl.existingImageUrl != null
+                                ? ClipRRect(
+                                    borderRadius: BorderRadius.circular(12),
+                                    child: Stack(
+                                      fit: StackFit.expand,
+                                      children: [
+                                        Image.network(
+                                          ctrl.existingImageUrl ?? '',
+                                          fit: BoxFit.cover,
+                                          errorBuilder:
+                                              (_, __, ___) => const Center(
+                                                child: Icon(
+                                                  Icons.image_not_supported,
+                                                  size: 40,
+                                                  color: Colors.grey,
+                                                ),
+                                              ),
+                                        ),
+                                        // "Tap to change" label at bottom
+                                        Positioned(
+                                          bottom: 0,
+                                          left: 0,
+                                          right: 0,
+                                          child: Container(
+                                            padding: const EdgeInsets.symmetric(
+                                              vertical: 6,
+                                            ),
+                                            color: Colors.black54,
+                                            child: const Text(
+                                              'Tap to change',
+                                              textAlign: TextAlign.center,
+                                              style: TextStyle(
+                                                color: Colors.white,
+                                                fontSize: 12,
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  )
+                                : Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Icon(
+                                        Icons.add_a_photo,
+                                        size: 40,
+                                        color: Colors.grey.shade400,
+                                      ),
+                                      const SizedBox(height: 8),
+                                      Text(
+                                        'Tap to upload image',
+                                        style: Styles.txtGreyColorW40014,
+                                      ),
+                                    ],
+                                  ),
+                          ),
+                        ),
+                        // ✕ Remove button — shown only when an image is present
+                        if (ctrl.selectedImage != null ||
+                            ctrl.existingImageUrl != null)
+                          Positioned(
+                            top: 8,
+                            right: 8,
+                            child: GestureDetector(
+                              onTap: ctrl.removeImage,
+                              child: Container(
+                                padding: const EdgeInsets.all(4),
+                                decoration: const BoxDecoration(
+                                  color: Colors.red,
+                                  shape: BoxShape.circle,
+                                ),
+                                child: const Icon(
+                                  Icons.close,
+                                  color: Colors.white,
+                                  size: 16,
+                                ),
+                              ),
+                            ),
+                          ),
+                      ],
                     ),
                     const SizedBox(height: 20),
 

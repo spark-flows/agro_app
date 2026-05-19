@@ -173,7 +173,8 @@ class _OrdersScreenState extends State<OrdersScreen> {
           ),
           floatingActionButton: !RoleUtils.isAdmin(homeController.roleName)
               ? FloatingActionButton.extended(
-                  onPressed: () {
+                  onPressed: () async {
+                    if (Get.isSnackbarOpen) await Get.closeCurrentSnackbar();
                     // Reset order state (clear cart/fields) and pre-select customer
                     controller.resetOrderFlow();
                     Get.to(() => NewOrderScreen(controller: controller));
@@ -285,98 +286,135 @@ class NewOrderScreen extends StatelessWidget {
 /// --- Shared Helper Widgets & Dialogs ---
 
 Widget _buildProductCard(OrdersController controller, ProductItem item) {
+  final bool isOutOfStock = item.qty == null || (item.qty ?? 0) <= 0;
+
   return Card(
     elevation: 1,
     margin: const EdgeInsets.only(bottom: 12),
     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-    child: Padding(
-      padding: const EdgeInsets.all(12.0),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          /// Icon Placeholder
-          Container(
-            width: 60,
-            height: 60,
-            decoration: BoxDecoration(
-              color: Colors.grey.shade100,
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Center(
-              child: Text(item.emoji, style: const TextStyle(fontSize: 30)),
-            ),
-          ),
-          const SizedBox(width: 12),
-
-          /// Details
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(item.name, style: Styles.txtBlackColorW60014),
-                const SizedBox(height: 4),
-                Text(item.category, style: Styles.txtGreyColorW40012),
-                const SizedBox(height: 4),
-                Text(
-                  item.description,
-                  style: Styles.txtGreyColorW40012,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
+    child: Stack(
+      children: [
+        Padding(
+          padding: const EdgeInsets.all(12.0),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              /// Icon Placeholder
+              Container(
+                width: 60,
+                height: 60,
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade100,
+                  borderRadius: BorderRadius.circular(8),
                 ),
-                const SizedBox(height: 8),
-                Text(
-                  '${item.price} ${item.unit}',
-                  style: Styles.txtBlackColorW70014.copyWith(
-                    color: ColorsValue.primary,
-                  ),
+                child: Center(
+                  child: Text(item.emoji, style: const TextStyle(fontSize: 30)),
                 ),
-              ],
-            ),
-          ),
+              ),
+              const SizedBox(width: 12),
 
-          /// Action
-          Align(
-            alignment: Alignment.centerRight,
-            child: item.quantity == 0
-                ? IconButton(
-                    icon: Icon(
-                      Icons.add_circle_outline,
-                      color: ColorsValue.primary,
-                      size: 30,
+              /// Details
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(item.name, style: Styles.txtBlackColorW60014),
+                    const SizedBox(height: 4),
+                    Text(item.category, style: Styles.txtGreyColorW40012),
+                    const SizedBox(height: 4),
+                    Text(
+                      item.description,
+                      style: Styles.txtGreyColorW40012,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
                     ),
-                    onPressed: () => controller.incrementQuantity(item.id),
-                  )
-                : Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      IconButton(
-                        icon: const Icon(
-                          Icons.remove_circle_outline,
-                          color: Colors.red,
+                    // const SizedBox(height: 8),
+                    // Text(
+                    //   '${item.price} ${item.unit}',
+                    //   style: Styles.txtBlackColorW70014.copyWith(
+                    //     color: ColorsValue.primary,
+                    //   ),
+                    // ),
+                  ],
+                ),
+              ),
+
+              /// Action
+              if (!isOutOfStock)
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: item.quantity == 0
+                      ? IconButton(
+                          icon: Icon(
+                            Icons.add_circle_outline,
+                            color: ColorsValue.primary,
+                            size: 30,
+                          ),
+                          onPressed: () =>
+                              controller.incrementQuantity(item.id),
+                        )
+                      : Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            IconButton(
+                              icon: const Icon(
+                                Icons.remove_circle_outline,
+                                color: Colors.red,
+                              ),
+                              onPressed: () =>
+                                  controller.decrementQuantity(item.id),
+                            ),
+                            Text(
+                              '${item.quantity}',
+                              style: Styles.txtBlackColorW70016,
+                            ),
+                            IconButton(
+                              icon: Icon(
+                                Icons.add_circle_outline,
+                                color: ColorsValue.primary,
+                              ),
+                              onPressed: () =>
+                                  controller.incrementQuantity(item.id),
+                            ),
+                          ],
                         ),
-                        onPressed: () => controller.decrementQuantity(item.id),
-                      ),
-                      Text(
-                        '${item.quantity}',
-                        style: Styles.txtBlackColorW70016,
-                      ),
-                      IconButton(
-                        icon: Icon(
-                          Icons.add_circle_outline,
-                          color: ColorsValue.primary,
-                        ),
-                        onPressed: () => controller.incrementQuantity(item.id),
-                      ),
-                    ],
-                  ),
+                ),
+            ],
           ),
-        ],
-      ),
+        ),
+        if (isOutOfStock)
+          Positioned(
+            top: 12,
+            left: 0,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: const BoxDecoration(
+                color: Colors.red,
+                borderRadius: BorderRadius.only(
+                  topRight: Radius.circular(2),
+                  bottomRight: Radius.circular(2),
+                ),
+              ),
+              child: const Text(
+                'Out of Stock',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 8,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ),
+      ],
     ),
   );
 }
 
-void _showCartBottomSheet(BuildContext context, OrdersController controller) {
+void _showCartBottomSheet(
+  BuildContext context,
+  OrdersController controller,
+) async {
+  if (Get.isSnackbarOpen) await Get.closeCurrentSnackbar();
   Get.bottomSheet(
     Container(
       padding: const EdgeInsets.all(24),
@@ -397,17 +435,17 @@ void _showCartBottomSheet(BuildContext context, OrdersController controller) {
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 16),
-                const SizedBox(height: 16),
-                TextField(
-                  controller: controller.titleController,
-                  decoration: InputDecoration(
-                    labelText: 'Order Title / ID',
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 16),
+                // const SizedBox(height: 16),
+                // TextField(
+                //   controller: controller.titleController,
+                //   decoration: InputDecoration(
+                //     labelText: 'Order Title / ID',
+                //     border: OutlineInputBorder(
+                //       borderRadius: BorderRadius.circular(12),
+                //     ),
+                //   ),
+                // ),
+                // const SizedBox(height: 16),
                 TextField(
                   controller: controller.deliveryDateController,
                   decoration: InputDecoration(
@@ -485,7 +523,8 @@ void _showOrderDetailsDialog(
   BuildContext context,
   OrdersController controller,
   HomeController homeController,
-) {
+) async {
+  if (Get.isSnackbarOpen) await Get.closeCurrentSnackbar();
   Get.bottomSheet(
     Container(
       height: Get.height * 0.7,

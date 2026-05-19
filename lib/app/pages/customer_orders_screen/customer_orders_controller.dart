@@ -89,21 +89,24 @@ class CustomerOrdersController extends GetxController {
 
   void editOrder(CustomerOrderDoc order) {
     editingCustomerOrderId = order.id;
-    if (order.customerid != null) {
-      if (order.customerid is Map) {
-        selectedCustomerId = order.customerid?.id ?? order.customerid?.id ?? '';
-      } else {
-        selectedCustomerId = order.customerid.toString();
-      }
-    } else {
-      selectedCustomerId = '';
-    }
+
+    // order.customerid is a populated model object — extract .id directly
+    final custId = order.customerid?.id ?? '';
+    // Validate that this ID actually exists in the loaded customers list
+    final exists = customersList.any((c) => c.id == custId);
+    selectedCustomerId = exists ? custId : '';
 
     remark1Controller.text = order.remark1 ?? '';
     remark2Controller.text = order.remark2 ?? '';
     remark3Controller.text = order.remark3 ?? '';
     existingImageUrl = order.image;
     selectedImage = null;
+    update();
+  }
+
+  void removeImage() {
+    selectedImage = null;
+    existingImageUrl = null;
     update();
   }
 

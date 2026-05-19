@@ -365,6 +365,7 @@ class CustomersScreen extends StatelessWidget {
                     maxLength: 10,
                     decoration: InputDecoration(
                       labelText: 'Phone Number',
+                      counterText: "",
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),

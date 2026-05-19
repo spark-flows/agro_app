@@ -174,11 +174,13 @@ class OrdersController extends GetxController {
         product.quantity++;
         update();
       } else {
-        Get.snackbar(
-          'Limit Reached',
-          'Only ${product.qty} items available in stock',
-          snackPosition: SnackPosition.BOTTOM,
-        );
+        if (!Get.isSnackbarOpen) {
+          Get.snackbar(
+            'Limit Reached',
+            'Only ${product.qty} items available in stock',
+            snackPosition: SnackPosition.BOTTOM,
+          );
+        }
       }
     }
   }
@@ -281,7 +283,9 @@ class OrdersController extends GetxController {
       for (var p in allProducts) {
         p.quantity = 0;
       }
-      historyCustomerId = selectedCustomerId.isNotEmpty ? selectedCustomerId : null;
+      historyCustomerId = selectedCustomerId.isNotEmpty
+          ? selectedCustomerId
+          : null;
       if (historyCustomerId != null) {
         fetchOrderHistory(historyCustomerId!);
       } else {
@@ -292,6 +296,7 @@ class OrdersController extends GetxController {
       titleController.clear();
       deliveryDateController.clear();
       update();
+      if (Get.isSnackbarOpen) await Get.closeCurrentSnackbar();
       Get.back();
       Get.back();
       Get.snackbar(
@@ -312,6 +317,7 @@ class OrdersController extends GetxController {
     );
 
     if (success) {
+      if (Get.isSnackbarOpen) await Get.closeCurrentSnackbar();
       Get.back(); // Close details dialog
       if (historyCustomerId != null && historyCustomerId!.isNotEmpty) {
         fetchOrderHistory(historyCustomerId!);
