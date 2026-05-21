@@ -185,14 +185,14 @@ class _ProductsScreenState extends State<ProductsScreen> {
                                             'Category: ${product.categoryid!.name}',
                                             style: Styles.txtGreyColorW40012,
                                           ),
-                                        Text(
-                                          [
-                                            if (product.unit != null)
-                                              'Unit: ${product.unit?.name}',
-                                            'Price: ₹${product.price ?? 0}',
-                                          ].join(' | '),
-                                          style: Styles.txtGreyColorW40012,
-                                        ),
+                                        // Text(
+                                        //   [
+                                        //     if (product.unit != null)
+                                        //       'Unit: ${product.unit?.name}',
+                                        //     'Price: ₹${product.price ?? 0}',
+                                        //   ].join(' | '),
+                                        //   style: Styles.txtGreyColorW40012,
+                                        // ),
                                       ],
                                     ),
                                     trailing: Row(

@@ -207,93 +207,91 @@ class _ProductFormPageState extends State<ProductFormPage> {
                 ),
                 const SizedBox(height: 12),
 
-                // ── Unit Dropdown ───────────────────────────────────────────
-                if (_loadingUnits)
-                  const SizedBox(
-                    height: 56,
-                    child: Center(child: CircularProgressIndicator()),
-                  )
-                else if (_units.isEmpty)
-                  OutlinedButton.icon(
-                    onPressed: _loadUnits,
-                    icon: const Icon(Icons.refresh, color: ColorsValue.primary),
-                    label: const Text(
-                      'Tap to retry loading units',
-                      style: TextStyle(color: ColorsValue.primary),
-                    ),
-                    style: OutlinedButton.styleFrom(
-                      minimumSize: const Size.fromHeight(56),
-                      side: const BorderSide(color: ColorsValue.primary),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                  )
-                else
-                  DropdownButtonFormField<String>(
-                    value: _selectedUnitId,
-                    decoration: InputDecoration(
-                      labelText: 'Unit *',
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      prefixIcon: const Icon(Icons.scale_outlined),
-                    ),
-                    items: _units
-                        .map(
-                          (unit) => DropdownMenuItem<String>(
-                            value: unit.id,
-                            child: Text(unit.name ?? ''),
-                          ),
-                        )
-                        .toList(),
-                    onChanged: (val) {
-                      setState(() => _selectedUnitId = val);
-                      controller.selectedUnitId = val;
-                    },
-                    validator: (v) => v == null ? 'Please select a unit' : null,
-                  ),
-                const SizedBox(height: 12),
+                // // ── Unit Dropdown ───────────────────────────────────────────
+                // if (_loadingUnits)
+                //   const SizedBox(
+                //     height: 56,
+                //     child: Center(child: CircularProgressIndicator()),
+                //   )
+                // else if (_units.isEmpty)
+                //   OutlinedButton.icon(
+                //     onPressed: _loadUnits,
+                //     icon: const Icon(Icons.refresh, color: ColorsValue.primary),
+                //     label: const Text(
+                //       'Tap to retry loading units',
+                //       style: TextStyle(color: ColorsValue.primary),
+                //     ),
+                //     style: OutlinedButton.styleFrom(
+                //       minimumSize: const Size.fromHeight(56),
+                //       side: const BorderSide(color: ColorsValue.primary),
+                //       shape: RoundedRectangleBorder(
+                //         borderRadius: BorderRadius.circular(12),
+                //       ),
+                //     ),
+                //   )
+                // else
+                //   DropdownButtonFormField<String>(
+                //     value: _selectedUnitId,
+                //     decoration: InputDecoration(
+                //       labelText: 'Unit *',
+                //       border: OutlineInputBorder(
+                //         borderRadius: BorderRadius.circular(12),
+                //       ),
+                //       prefixIcon: const Icon(Icons.scale_outlined),
+                //     ),
+                //     items: _units
+                //         .map(
+                //           (unit) => DropdownMenuItem<String>(
+                //             value: unit.id,
+                //             child: Text(unit.name ?? ''),
+                //           ),
+                //         )
+                //         .toList(),
+                //     onChanged: (val) {
+                //       setState(() => _selectedUnitId = val);
+                //       controller.selectedUnitId = val;
+                //     },
+                //     validator: (v) => v == null ? 'Please select a unit' : null,
+                //   ),
+                // const SizedBox(height: 12),
 
-                _buildField(
-                  fieldController: controller.priceCtrl,
-                  label: 'Price (₹) *',
-                  icon: Icons.currency_rupee_outlined,
-                  keyboardType: TextInputType.number,
-                  action: TextInputAction.next,
-                  validator: (v) =>
-                      v!.trim().isEmpty ? 'Please enter a price' : null,
-                ),
-                const SizedBox(height: 12),
-                
-                _buildField(
-                  fieldController: controller.qtyCtrl,
-                  label: 'Quantity *',
-                  icon: Icons.numbers_outlined,
-                  keyboardType: TextInputType.number,
-                  action: TextInputAction.next,
-                  validator: (v) =>
-                      v!.trim().isEmpty ? 'Please enter quantity' : null,
-                ),
-                const SizedBox(height: 12),
-
-                TextFormField(
-                  controller: controller.descriptionCtrl,
-                  maxLines: 3,
-                  textInputAction: TextInputAction.next,
-                  decoration: InputDecoration(
-                    labelText: 'Description',
-                    alignLabelWithHint: true,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    prefixIcon: const Padding(
-                      padding: EdgeInsets.only(bottom: 48),
-                      child: Icon(Icons.description_outlined),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 24),
+                // _buildField(
+                //   fieldController: controller.priceCtrl,
+                //   label: 'Price (₹) *',
+                //   icon: Icons.currency_rupee_outlined,
+                //   keyboardType: TextInputType.number,
+                //   action: TextInputAction.next,
+                //   validator: (v) =>
+                //       v!.trim().isEmpty ? 'Please enter a price' : null,
+                // ),
+                // const SizedBox(height: 12),
+                // _buildField(
+                //   fieldController: controller.qtyCtrl,
+                //   label: 'Quantity *',
+                //   icon: Icons.numbers_outlined,
+                //   keyboardType: TextInputType.number,
+                //   action: TextInputAction.next,
+                //   validator: (v) =>
+                //       v!.trim().isEmpty ? 'Please enter quantity' : null,
+                // ),
+                // const SizedBox(height: 12),
+                // TextFormField(
+                //   controller: controller.descriptionCtrl,
+                //   maxLines: 3,
+                //   textInputAction: TextInputAction.next,
+                //   decoration: InputDecoration(
+                //     labelText: 'Description',
+                //     alignLabelWithHint: true,
+                //     border: OutlineInputBorder(
+                //       borderRadius: BorderRadius.circular(12),
+                //     ),
+                //     prefixIcon: const Padding(
+                //       padding: EdgeInsets.only(bottom: 48),
+                //       child: Icon(Icons.description_outlined),
+                //     ),
+                //   ),
+                // ),
+                // const SizedBox(height: 24),
 
                 // ── Product Image ──────────────────────────────────────────
                 _sectionHeader('Product Image'),

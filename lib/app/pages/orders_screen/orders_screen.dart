@@ -147,21 +147,10 @@ class _OrdersScreenState extends State<OrdersScreen> {
                                     style: Styles.txtGreyColorW40012,
                                   ),
                                 ),
-                                trailing: Column(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  crossAxisAlignment: CrossAxisAlignment.end,
-                                  children: [
-                                    Text(
-                                      '₹${order.totalamount}',
-                                      style: Styles.txtBlackColorW70016
-                                          .copyWith(color: Colors.green),
-                                    ),
-                                    const Icon(
-                                      Icons.chevron_right,
-                                      size: 20,
-                                      color: Colors.grey,
-                                    ),
-                                  ],
+                                trailing: const Icon(
+                                  Icons.chevron_right,
+                                  size: 20,
+                                  color: Colors.grey,
                                 ),
                               ),
                             );
@@ -264,7 +253,7 @@ class NewOrderScreen extends StatelessWidget {
                           const Icon(Icons.shopping_cart, color: Colors.white),
                           const SizedBox(width: 8),
                           Text(
-                            'View Cart (${controller.cartCount}) - ₹${controller.cartTotal}',
+                            'View Cart (${controller.cartCount})',
                             style: const TextStyle(
                               color: Colors.white,
                               fontSize: 16,
@@ -286,8 +275,6 @@ class NewOrderScreen extends StatelessWidget {
 /// --- Shared Helper Widgets & Dialogs ---
 
 Widget _buildProductCard(OrdersController controller, ProductItem item) {
-  final bool isOutOfStock = item.qty == null || (item.qty ?? 0) <= 0;
-
   return Card(
     elevation: 1,
     margin: const EdgeInsets.only(bottom: 12),
@@ -340,8 +327,7 @@ Widget _buildProductCard(OrdersController controller, ProductItem item) {
               ),
 
               /// Action
-              if (!isOutOfStock)
-                Align(
+              Align(
                   alignment: Alignment.centerRight,
                   child: item.quantity == 0
                       ? IconButton(
@@ -382,29 +368,7 @@ Widget _buildProductCard(OrdersController controller, ProductItem item) {
             ],
           ),
         ),
-        if (isOutOfStock)
-          Positioned(
-            top: 12,
-            left: 0,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-              decoration: const BoxDecoration(
-                color: Colors.red,
-                borderRadius: BorderRadius.only(
-                  topRight: Radius.circular(2),
-                  bottomRight: Radius.circular(2),
-                ),
-              ),
-              child: const Text(
-                'Out of Stock',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 8,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-          ),
+
       ],
     ),
   );
@@ -471,20 +435,6 @@ void _showCartBottomSheet(
                   },
                 ),
                 const SizedBox(height: 16),
-                const SizedBox(height: 16),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text('Total Amount:', style: Styles.txtBlackColorW60014),
-                    Text(
-                      '₹${controller.cartTotal}',
-                      style: Styles.txtBlackColorW70020.copyWith(
-                        color: Colors.green,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 24),
                 ElevatedButton(
                   onPressed: controller.isPlacingOrder
                       ? null
@@ -640,12 +590,6 @@ void _showOrderDetailsDialog(
                                 ],
                               ),
                             ),
-                            Text(
-                              '₹${item.price}',
-                              style: Styles.txtBlackColorW70016.copyWith(
-                                color: Colors.green,
-                              ),
-                            ),
                           ],
                         ),
                       ),
@@ -653,19 +597,7 @@ void _showOrderDetailsDialog(
                   },
                 ),
               ),
-              const Divider(height: 32),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text('Total Amount:', style: Styles.txtBlackColorW70016),
-                  Text(
-                    '₹${details.totalamount}',
-                    style: Styles.txtBlackColorW70020.copyWith(
-                      color: Colors.green,
-                    ),
-                  ),
-                ],
-              ),
+
               const SizedBox(height: 24),
               if (!RoleUtils.isAdmin(homeController.roleName))
                 Row(

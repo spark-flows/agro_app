@@ -176,22 +176,22 @@ class ConnectHelper {
   Future<ResponseModel> createProductApi({
     String? productid,
     required String name,
-    required String unit,
-    required int price,
-    required String description,
+    // required String unit,
+    // required int price,
+    // required String description,
     required String image,
     required String categoryid,
-    required int qty,
+    // required int qty,
     bool isLoading = false,
   }) async {
     var data = {
       'productid': productid ?? '',
       'name': name,
-      'unit': unit,
-      'price': price,
-      'description': description,
+      // 'unit': unit,
+      // 'price': price,
+      // 'description': description,
       'image': image,
-      'qty': qty,
+      // 'qty': qty,
       'categoryid': categoryid,
     };
     var response = await apiWrapper.makeRequest(
@@ -469,7 +469,9 @@ class ConnectHelper {
       "limit": 100,
       "search": {},
       "distributorid": distributorId.isNotEmpty ? [distributorId] : [],
-      "customerid": customerid != null && customerid.isNotEmpty ? [customerid] : [],
+      "customerid": customerid != null && customerid.isNotEmpty
+          ? [customerid]
+          : [],
       "orderno": [],
       "sortfield": "orderno",
       "sortoption": -1,
@@ -554,23 +556,18 @@ class ConnectHelper {
         }
         Utility.showLoader();
       }
-      
+
       var uri = ApiWrapper.baseUrl + EndPoints.uploadCustomerOrderApi;
       var request = http.MultipartRequest('POST', Uri.parse(uri));
-      
-      request.files.add(
-        await http.MultipartFile.fromPath(
-          'image',
-          image.path,
-        ),
-      );
-      
+
+      request.files.add(await http.MultipartFile.fromPath('image', image.path));
+
       request.headers.addAll(await Utility.commonHeader());
-      
+
       var response = await request.send().timeout(const Duration(seconds: 120));
-      
+
       if (isLoading) Utility.closeDialog();
-      
+
       var bytesToString = await response.stream.bytesToString();
       var hasError = response.statusCode < 200 || response.statusCode >= 300;
       return ResponseModel(

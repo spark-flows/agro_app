@@ -67,11 +67,15 @@ class ProductsController extends GetxController {
     try {
       debugPrint('[Products] fetchCategories: calling API...');
       final response = await Get.find<Repository>().getCategoryListApi();
-      debugPrint('[Products] fetchCategories: response=$response, docs=${response?.data.docs.length}');
+      debugPrint(
+        '[Products] fetchCategories: response=$response, docs=${response?.data.docs.length}',
+      );
       if (response != null && response.data.docs.isNotEmpty) {
         categories = response.data.docs;
         update();
-        debugPrint('[Products] fetchCategories: loaded ${categories.length} categories');
+        debugPrint(
+          '[Products] fetchCategories: loaded ${categories.length} categories',
+        );
       } else {
         debugPrint('[Products] fetchCategories: no categories returned');
       }
@@ -85,7 +89,9 @@ class ProductsController extends GetxController {
     try {
       debugPrint('[Products] fetchUnits: calling API...');
       final response = await Get.find<Repository>().getUnitListApi();
-      if (response != null && response.data != null && response.data!.isNotEmpty) {
+      if (response != null &&
+          response.data != null &&
+          response.data!.isNotEmpty) {
         units = response.data!;
         update();
         debugPrint('[Products] fetchUnits: loaded ${units.length} units');
@@ -181,16 +187,16 @@ class ProductsController extends GetxController {
       return;
     }
 
-    final price = int.tryParse(priceCtrl.text.trim()) ?? 0;
-    final qty = int.tryParse(qtyCtrl.text.trim()) ?? 0;
+    // final price = int.tryParse(priceCtrl.text.trim()) ?? 0;
+    // final qty = int.tryParse(qtyCtrl.text.trim()) ?? 0;
 
     final errorMsg = await Get.find<Repository>().createProductApi(
       productid: editingProductId.isNotEmpty ? editingProductId : null,
       name: nameCtrl.text.trim(),
-      unit: selectedUnitId!,
-      price: price,
-      qty: qty,
-      description: descriptionCtrl.text.trim(),
+      // unit: selectedUnitId!,
+      // price: price,
+      // qty: qty,
+      // description: descriptionCtrl.text.trim(),
       image: imageCtrl.text.trim(),
       categoryid: selectedCategoryId!,
       isLoading: true,

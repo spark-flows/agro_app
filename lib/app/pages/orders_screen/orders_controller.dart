@@ -169,19 +169,8 @@ class OrdersController extends GetxController {
   void incrementQuantity(String id) {
     final idx = allProducts.indexWhere((p) => p.id == id);
     if (idx != -1) {
-      final product = allProducts[idx];
-      if (product.qty == null || product.quantity < product.qty!) {
-        product.quantity++;
-        update();
-      } else {
-        if (!Get.isSnackbarOpen) {
-          Get.snackbar(
-            'Limit Reached',
-            'Only ${product.qty} items available in stock',
-            snackPosition: SnackPosition.BOTTOM,
-          );
-        }
-      }
+      allProducts[idx].quantity++;
+      update();
     }
   }
 
