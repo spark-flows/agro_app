@@ -201,7 +201,7 @@ class CustomersScreen extends StatelessWidget {
                               ),
                             ),
                             Divider(height: 1, color: Colors.grey.shade200),
-                            if (!RoleUtils.isAdmin(homeController.roleName))
+                            if (true)
                               IntrinsicHeight(
                                 child: Row(
                                   children: [
@@ -286,16 +286,14 @@ class CustomersScreen extends StatelessWidget {
               ),
             ],
           ),
-          floatingActionButton: !RoleUtils.isAdmin(homeController.roleName)
-              ? FloatingActionButton(
-                  backgroundColor: ColorsValue.primary,
-                  onPressed: () {
-                    controller.clearAddForm();
-                    _showAddDialog(context, controller);
-                  },
-                  child: const Icon(Icons.add),
-                )
-              : null,
+          floatingActionButton: FloatingActionButton(
+              backgroundColor: ColorsValue.primary,
+              onPressed: () {
+                controller.clearAddForm();
+                _showAddDialog(context, controller);
+              },
+              child: const Icon(Icons.add),
+            ),
         );
       },
     );
@@ -341,6 +339,43 @@ class CustomersScreen extends StatelessWidget {
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 24),
+
+                  // ── Distributor dropdown (admin only) ────────────────
+                  if (controller.isAdminView) ...[
+                    DropdownButtonFormField<String>(
+                      value: controller.selectedDistributorId,
+                      decoration: InputDecoration(
+                        labelText: 'Select Distributor',
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        prefixIcon: const Icon(Icons.store_outlined),
+                      ),
+                      hint: const Text('Select Distributor'),
+                      items: controller.distributors
+                          .map(
+                            (d) => DropdownMenuItem(
+                              value: d.id,
+                              child: Text(
+                                d.name,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          )
+                          .toList(),
+                      onChanged: (val) {
+                        controller.selectedDistributorId = val;
+                        controller.update();
+                      },
+                      validator: (_) =>
+                          (controller.selectedDistributorId == null ||
+                                  controller.selectedDistributorId!.isEmpty)
+                              ? 'Please select a distributor'
+                              : null,
+                    ),
+                    const SizedBox(height: 16),
+                  ],
+
                   TextFormField(
                     controller: controller.nameCtrl,
                     textInputAction: TextInputAction.next,

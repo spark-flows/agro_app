@@ -133,6 +133,7 @@ class DataRepository extends DomainRepository {
     required String mobile,
     required String feedback,
     required String village,
+    String? distributorid,
     bool isLoading = false,
   }) async => connectHelper.createCustomerApi(
     customerid: customerid,
@@ -142,6 +143,7 @@ class DataRepository extends DomainRepository {
     mobile: mobile,
     feedback: feedback,
     village: village,
+    distributorid: distributorid,
     isLoading: isLoading,
   );
 

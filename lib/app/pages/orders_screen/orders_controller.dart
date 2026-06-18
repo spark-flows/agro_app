@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:agro_app/app/utils/utility.dart';
 import 'package:agro_app/domain/domain.dart';
 import 'package:flutter/material.dart';
@@ -50,6 +51,17 @@ class OrdersController extends GetxController {
   bool isFetchingOrderDetails = false;
 
   String? historyCustomerId;
+
+  // Search
+  String searchQuery = '';
+  final TextEditingController searchController = TextEditingController();
+  Timer? _searchDebounce;
+
+  // Pagination state
+  int _currentPage = 1;
+  bool _hasMoreProducts = true;
+  bool isLoadingMore = false;
+  static const int _pageSize = 10;
 
   final TextEditingController titleController = TextEditingController();
   final TextEditingController deliveryDateController = TextEditingController();
@@ -119,32 +131,61 @@ class OrdersController extends GetxController {
     update();
   }
 
+  /// Loads the first page (10 items). Call on screen open.
   Future<void> fetchProducts() async {
     isLoading = true;
+    allProducts = [];
+    _currentPage = 1;
+    _hasMoreProducts = true;
     update();
-    GetAllProductModel? response = await Get.find<Repository>()
-        .getProductListApi(isLoading: false);
-    if (response != null && (response.data?.docs?.isNotEmpty ?? false)) {
-      allProducts = response.data!.docs!
-          .map(
-            (doc) => ProductItem(
-              id: doc.id ?? '',
-              name: doc.name ?? '',
-              description: doc.description ?? '',
-              price: '₹${doc.price ?? 0}',
-              rawPrice: (doc.price ?? 0).toDouble(),
-              unit: 'per ${doc.unit?.name ?? "-"}',
-              category: doc.categoryid?.name ?? 'Others',
-              emoji: '📦',
-              gradStart: const Color(0xFF16A34A),
-              gradEnd: const Color(0xFF4ADE80),
-              qty: doc.qty,
-            ),
-          )
-          .toList();
-    }
+    await _loadPage();
     isLoading = false;
     update();
+  }
+
+  /// Loads the next page. Called when the user scrolls to the bottom.
+  Future<void> loadMoreProducts() async {
+    if (isLoadingMore || !_hasMoreProducts) return;
+    isLoadingMore = true;
+    update();
+    await _loadPage();
+    isLoadingMore = false;
+    update();
+  }
+
+  Future<void> _loadPage() async {
+    final response = await Get.find<Repository>().getProductListApi(
+      page: _currentPage,
+      limit: _pageSize,
+      search: searchQuery,
+      isLoading: false,
+    );
+    if (response == null || response.data == null) {
+      _hasMoreProducts = false;
+      return;
+    }
+    final docs = response.data!.docs ?? [];
+    for (var doc in docs) {
+      allProducts.add(_buildProductItem(doc));
+    }
+    _hasMoreProducts = response.data!.hasNextPage == true;
+    _currentPage++;
+  }
+
+  ProductItem _buildProductItem(GetAllProductDoc doc) {
+    return ProductItem(
+      id: doc.id ?? '',
+      name: doc.name ?? '',
+      description: doc.description ?? '',
+      price: '₹${doc.price ?? 0}',
+      rawPrice: (doc.price ?? 0).toDouble(),
+      unit: 'per ${doc.unit?.name ?? "-"}',
+      category: doc.categoryid?.name ?? 'Others',
+      emoji: '📦',
+      gradStart: const Color(0xFF16A34A),
+      gradEnd: const Color(0xFF4ADE80),
+      qty: doc.qty,
+    );
   }
 
   final List<String> categories = [
@@ -157,8 +198,18 @@ class OrdersController extends GetxController {
   ];
 
   List<ProductItem> get displayProducts {
+    // Search is server-side; only apply category filter client-side
     if (selectedCategory == 'All') return allProducts;
     return allProducts.where((p) => p.category == selectedCategory).toList();
+  }
+
+  /// Debounced search: waits 400ms after typing stops, then re-fetches from page 1.
+  void onSearchChanged(String query) {
+    _searchDebounce?.cancel();
+    _searchDebounce = Timer(const Duration(milliseconds: 400), () {
+      searchQuery = query;
+      fetchProducts(); // re-fetch from page 1 with new search term
+    });
   }
 
   void selectCategory(String cat) {
@@ -198,6 +249,8 @@ class OrdersController extends GetxController {
     }
     selectedCustomerId = historyCustomerId ?? '';
     editingOrderId = null; // Clear edit mode
+    searchQuery = '';
+    searchController.clear();
     titleController.clear();
     deliveryDateController.clear();
     update();

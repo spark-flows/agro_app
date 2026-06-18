@@ -3,6 +3,9 @@ import 'package:get/get.dart';
 import 'package:flutter/material.dart';
 import 'package:agro_app/domain/domain.dart';
 import 'package:agro_app/app/utils/utility.dart';
+import 'package:agro_app/domain/models/get_all_users_model.dart';
+import 'package:agro_app/domain/services/enum.dart';
+import 'package:agro_app/app/pages/home_screen/home_controller.dart';
 
 class CustomerItem {
   final String id;
@@ -12,6 +15,7 @@ class CustomerItem {
   final String feedback;
   final String village;
   final bool isActive;
+  final String distributorId;
 
   CustomerItem({
     required this.id,
@@ -21,6 +25,7 @@ class CustomerItem {
     required this.feedback,
     required this.village,
     this.isActive = true,
+    this.distributorId = '',
   });
 }
 
@@ -43,10 +48,21 @@ class CustomersController extends GetxController {
   Timer? _searchTimer;
   String editingCustomerId = '';
 
+  // ── Distributor dropdown (admin only) ──────────────────────────────────────
+  List<Doc> distributors = [];
+  String? selectedDistributorId;
+  bool isAdminView = false;
+
   @override
   void onInit() {
     super.onInit();
     fetchCustomers();
+    // Detect role and load distributors if admin
+    final homeController = Get.find<HomeController>();
+    isAdminView = RoleUtils.isAdmin(homeController.roleName);
+    if (isAdminView) {
+      fetchDistributors();
+    }
   }
 
   Future<void> fetchCustomers({bool isRefresh = true}) async {
@@ -70,20 +86,29 @@ class CustomersController extends GetxController {
         
         final docs = customerModel.data!.docs!
             .map(
-              (doc) => CustomerItem(
-                id: doc.id ?? '',
-                name: doc.name ?? '',
-                phone: '${doc.countrycode ?? ''} ${doc.mobile ?? ''}',
-                location: (doc.email?.isNotEmpty ?? false)
-                    ? doc.email!
-                    : 'N/A',
-                feedback: (doc.feedback?.isNotEmpty ?? false)
-                    ? doc.feedback!
-                    : 'N/A',
-                village: (doc.village?.isNotEmpty ?? false)
-                    ? doc.village!
-                    : 'N/A',
-              ),
+              (doc) {
+                String distId = '';
+                if (doc.distributorid is Map) {
+                  distId = doc.distributorid["_id"]?.toString() ?? '';
+                } else {
+                  distId = doc.distributorid?.toString() ?? '';
+                }
+                return CustomerItem(
+                  id: doc.id ?? '',
+                  name: doc.name ?? '',
+                  phone: '${doc.countrycode ?? ''} ${doc.mobile ?? ''}',
+                  location: (doc.email?.isNotEmpty ?? false)
+                      ? doc.email!
+                      : 'N/A',
+                  feedback: (doc.feedback?.isNotEmpty ?? false)
+                      ? doc.feedback!
+                      : 'N/A',
+                  village: (doc.village?.isNotEmpty ?? false)
+                      ? doc.village!
+                      : 'N/A',
+                  distributorId: distId,
+                );
+              },
             )
             .toList();
             
@@ -110,7 +135,27 @@ class CustomersController extends GetxController {
     locationCtrl.dispose();
     gstCtrl.dispose();
     villageCtrl.dispose();
+    feedbackCtrl.dispose();
     super.onClose();
+  }
+
+  /// Fetches all distributors (dealers) for the admin dropdown.
+  Future<void> fetchDistributors() async {
+    try {
+      final response = await Get.find<Repository>().getUsersListApi(
+        page: 1,
+        limit: 200,
+        search: '',
+        type: 'dealer',
+        isLoading: false,
+      );
+      if (response != null && response.isSuccess) {
+        distributors = response.data.docs;
+        update();
+      }
+    } catch (e) {
+      debugPrint('fetchDistributors error: $e');
+    }
   }
 
   void onSearchChanged(String query) {
@@ -124,17 +169,28 @@ class CustomersController extends GetxController {
   void addCustomer() async {
     if (!addFormKey.currentState!.validate()) return;
 
+    // Admin must select a distributor
+    if (isAdminView && (selectedDistributorId == null || selectedDistributorId!.isEmpty)) {
+      Utility.errorMessage('Please select a distributor.');
+      return;
+    }
+
     Utility.showLoader();
+
+    // For admin: use selected distributor. For dealer: connect_helper
+    // reads the logged-in dealer's ID from secure storage automatically.
+    String? overrideDistributorId =
+        isAdminView ? selectedDistributorId : null;
+
     var response = await Get.find<Repository>().createCustomerApi(
-      customerid: editingCustomerId.isEmpty
-          ? null
-          : editingCustomerId,
+      customerid: editingCustomerId.isEmpty ? null : editingCustomerId,
       name: nameCtrl.text.trim(),
       email: locationCtrl.text.trim(),
       countrycode: '+91',
       mobile: phoneCtrl.text.trim(),
       feedback: gstCtrl.text.trim(),
       village: villageCtrl.text.trim(),
+      distributorid: overrideDistributorId,
       isLoading: false,
     );
     Utility.closeLoader();
@@ -155,6 +211,10 @@ class CustomersController extends GetxController {
     locationCtrl.text = customer.location == 'N/A' ? '' : customer.location;
     gstCtrl.text = customer.feedback == 'N/A' ? '' : customer.feedback;
     villageCtrl.text = customer.village == 'N/A' ? '' : customer.village;
+    if (isAdminView) {
+      selectedDistributorId =
+          customer.distributorId.isNotEmpty ? customer.distributorId : null;
+    }
     update();
   }
 
@@ -186,6 +246,7 @@ class CustomersController extends GetxController {
 
   void clearAddForm() {
     editingCustomerId = '';
+    selectedDistributorId = null;
     nameCtrl.clear();
     phoneCtrl.clear();
     locationCtrl.clear();

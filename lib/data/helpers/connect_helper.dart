@@ -311,12 +311,15 @@ class ConnectHelper {
     required String mobile,
     required String feedback,
     required String village,
+    String? distributorid, // optional override for admin flow
     bool isLoading = false,
   }) async {
-    var distributorId = await Utility.getSecureValue(LocalKeys.distributorId);
+    // Use provided distributorid (admin) or fall back to logged-in dealer's ID
+    final resolvedDistributorId = distributorid ??
+        await Utility.getSecureValue(LocalKeys.distributorId);
     var data = {
       "customerid": customerid ?? "",
-      "distributorid": distributorId,
+      "distributorid": resolvedDistributorId,
       "name": name,
       "email": email,
       "countrycode": countrycode,

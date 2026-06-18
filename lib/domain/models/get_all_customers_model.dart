@@ -105,7 +105,7 @@ class GetAllCustomerDoc {
   String? village;
   bool? isDeleted;
   String? createdAt;
-  GetAllCustomerDistributorid? distributorid;
+  dynamic distributorid;
 
   GetAllCustomerDoc({
     this.id,
@@ -131,9 +131,7 @@ class GetAllCustomerDoc {
         village: json["village"],
         isDeleted: json["isDeleted"],
         createdAt: json["createdAt"],
-        distributorid: json["distributorid"] == null
-            ? null
-            : GetAllCustomerDistributorid.fromJson(json["distributorid"]),
+        distributorid: json["distributorid"],
       );
 
   Map<String, dynamic> toJson() => {
@@ -146,7 +144,7 @@ class GetAllCustomerDoc {
     "village": village,
     "isDeleted": isDeleted,
     "createdAt": createdAt,
-    "distributorid": distributorid?.toJson(),
+    "distributorid": distributorid,
   };
 }
 

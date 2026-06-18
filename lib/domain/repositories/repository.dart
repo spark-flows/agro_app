@@ -494,6 +494,7 @@ class Repository {
     required String mobile,
     required String feedback,
     required String village,
+    String? distributorid, // optional override for admin flow
     bool isLoading = false,
   }) async {
     try {
@@ -505,6 +506,7 @@ class Repository {
         mobile: mobile,
         feedback: feedback,
         village: village,
+        distributorid: distributorid,
         isLoading: isLoading,
       );
       if (response.hasError) {

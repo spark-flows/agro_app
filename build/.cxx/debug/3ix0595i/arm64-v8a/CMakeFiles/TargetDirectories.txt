@@ -1,2 +1,0 @@
-/Users/parthivdungarani/Documents/Harshil/agro_app/build/.cxx/debug/3ix0595i/arm64-v8a/CMakeFiles/edit_cache.dir
-/Users/parthivdungarani/Documents/Harshil/agro_app/build/.cxx/debug/3ix0595i/arm64-v8a/CMakeFiles/rebuild_cache.dir

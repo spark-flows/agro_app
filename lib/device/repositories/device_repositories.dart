@@ -9,7 +9,11 @@ import 'package:agro_app/domain/domain.dart';
 /// Repositories that communicate with the platform e.g. GPS
 class DeviceRepository extends DomainRepository {
   /// initialize flutter secure storage
-  final _flutterSecureStorage = const FlutterSecureStorage();
+  final _flutterSecureStorage = const FlutterSecureStorage(
+    aOptions: AndroidOptions(
+      encryptedSharedPreferences: true,
+    ),
+  );
 
   /// initialize the hive box
   Future<void> init({bool isTest = false}) async {

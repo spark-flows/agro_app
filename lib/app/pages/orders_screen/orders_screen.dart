@@ -140,12 +140,25 @@ class _OrdersScreenState extends State<OrdersScreen> {
                                   'Order: ${order.orderno}',
                                   style: Styles.txtBlackColorW60014,
                                 ),
-                                subtitle: Padding(
-                                  padding: const EdgeInsets.only(top: 4.0),
-                                  child: Text(
-                                    'Date: ${order.createdAt?.split('T').first ?? ''}',
-                                    style: Styles.txtGreyColorW40012,
-                                  ),
+                                subtitle: Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Padding(
+                                      padding: const EdgeInsets.only(top: 4.0),
+                                      child: Text(
+                                        'Date: ${order.createdAt?.split('T').first ?? ''}',
+                                        style: Styles.txtGreyColorW40012,
+                                      ),
+                                    ),
+                                    Padding(
+                                      padding: const EdgeInsets.only(top: 4.0),
+                                      child: Text(
+                                        'Status: ${order.status ?? ''}',
+                                        style: Styles.txtGreyColorW40012,
+                                      ),
+                                    ),
+                                  ],
                                 ),
                                 trailing: const Icon(
                                   Icons.chevron_right,
@@ -187,14 +200,43 @@ class _OrdersScreenState extends State<OrdersScreen> {
 
 /// --- New Order Placement Flow ---
 
-class NewOrderScreen extends StatelessWidget {
+class NewOrderScreen extends StatefulWidget {
   final OrdersController controller;
   const NewOrderScreen({super.key, required this.controller});
 
   @override
+  State<NewOrderScreen> createState() => _NewOrderScreenState();
+}
+
+class _NewOrderScreenState extends State<NewOrderScreen> {
+  late final ScrollController _scrollController;
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController = ScrollController();
+    _scrollController.addListener(_onScroll);
+  }
+
+  void _onScroll() {
+    // Trigger load when within 200px of the bottom
+    if (_scrollController.position.pixels >=
+        _scrollController.position.maxScrollExtent - 200) {
+      widget.controller.loadMoreProducts();
+    }
+  }
+
+  @override
+  void dispose() {
+    _scrollController.removeListener(_onScroll);
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return GetBuilder<OrdersController>(
-      init: controller,
+      init: widget.controller,
       builder: (controller) {
         return Scaffold(
           backgroundColor: ColorsValue.bgMain,
@@ -209,6 +251,58 @@ class NewOrderScreen extends StatelessWidget {
           ),
           body: Column(
             children: [
+              // ── Search Bar ──────────────────────────────────────────────
+              Container(
+                color: Colors.white,
+                padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
+                child: TextField(
+                  controller: controller.searchController,
+                  onChanged: controller.onSearchChanged,
+                  decoration: InputDecoration(
+                    hintText: 'Search products by name, category...',
+                    hintStyle: const TextStyle(
+                      color: Colors.grey,
+                      fontSize: 14,
+                    ),
+                    prefixIcon: const Icon(
+                      Icons.search,
+                      color: ColorsValue.primary,
+                    ),
+                    suffixIcon: controller.searchQuery.isNotEmpty
+                        ? IconButton(
+                            icon: const Icon(Icons.clear, color: Colors.grey),
+                            onPressed: () {
+                              controller.searchController.clear();
+                              controller.onSearchChanged('');
+                            },
+                          )
+                        : null,
+                    filled: true,
+                    fillColor: Colors.grey.shade100,
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 12,
+                    ),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide.none,
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(color: Colors.grey.shade200),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(
+                        color: ColorsValue.primary,
+                        width: 1.5,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+
+              // ── Product List ─────────────────────────────────────────────
               Expanded(
                 child: Builder(
                   builder: (context) {
@@ -218,14 +312,48 @@ class NewOrderScreen extends StatelessWidget {
 
                     final products = controller.displayProducts;
                     if (products.isEmpty) {
-                      return const Center(child: Text('No products found.'));
+                      return Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.search_off_rounded,
+                              size: 64,
+                              color: Colors.grey.shade300,
+                            ),
+                            const SizedBox(height: 16),
+                            Text(
+                              controller.searchQuery.isNotEmpty
+                                  ? 'No products match "${controller.searchQuery}"'
+                                  : 'No products found.',
+                              style: const TextStyle(
+                                color: Colors.grey,
+                                fontSize: 14,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                          ],
+                        ),
+                      );
                     }
+
+                    // +1 for bottom loader row
+                    final itemCount =
+                        products.length + (controller.isLoadingMore ? 1 : 0);
+
                     return ListView.builder(
+                      controller: _scrollController,
                       padding: const EdgeInsets.all(12),
-                      itemCount: products.length,
+                      itemCount: itemCount,
                       itemBuilder: (context, index) {
-                        final item = products[index];
-                        return _buildProductCard(controller, item);
+                        // Last item = loading spinner
+                        if (index == products.length) {
+                          return const Padding(
+                            padding: EdgeInsets.symmetric(vertical: 16),
+                            child: Center(child: CircularProgressIndicator()),
+                          );
+                        }
+                        return _buildProductCard(controller, products[index]);
                       },
                     );
                   },
@@ -328,47 +456,45 @@ Widget _buildProductCard(OrdersController controller, ProductItem item) {
 
               /// Action
               Align(
-                  alignment: Alignment.centerRight,
-                  child: item.quantity == 0
-                      ? IconButton(
-                          icon: Icon(
-                            Icons.add_circle_outline,
-                            color: ColorsValue.primary,
-                            size: 30,
-                          ),
-                          onPressed: () =>
-                              controller.incrementQuantity(item.id),
-                        )
-                      : Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            IconButton(
-                              icon: const Icon(
-                                Icons.remove_circle_outline,
-                                color: Colors.red,
-                              ),
-                              onPressed: () =>
-                                  controller.decrementQuantity(item.id),
-                            ),
-                            Text(
-                              '${item.quantity}',
-                              style: Styles.txtBlackColorW70016,
-                            ),
-                            IconButton(
-                              icon: Icon(
-                                Icons.add_circle_outline,
-                                color: ColorsValue.primary,
-                              ),
-                              onPressed: () =>
-                                  controller.incrementQuantity(item.id),
-                            ),
-                          ],
+                alignment: Alignment.centerRight,
+                child: item.quantity == 0
+                    ? IconButton(
+                        icon: Icon(
+                          Icons.add_circle_outline,
+                          color: ColorsValue.primary,
+                          size: 30,
                         ),
-                ),
+                        onPressed: () => controller.incrementQuantity(item.id),
+                      )
+                    : Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          IconButton(
+                            icon: const Icon(
+                              Icons.remove_circle_outline,
+                              color: Colors.red,
+                            ),
+                            onPressed: () =>
+                                controller.decrementQuantity(item.id),
+                          ),
+                          Text(
+                            '${item.quantity}',
+                            style: Styles.txtBlackColorW70016,
+                          ),
+                          IconButton(
+                            icon: Icon(
+                              Icons.add_circle_outline,
+                              color: ColorsValue.primary,
+                            ),
+                            onPressed: () =>
+                                controller.incrementQuantity(item.id),
+                          ),
+                        ],
+                      ),
+              ),
             ],
           ),
         ),
-
       ],
     ),
   );
