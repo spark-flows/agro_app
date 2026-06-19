@@ -5,6 +5,7 @@ import 'dart:io';
 import 'package:agro_app/app/app.dart';
 import 'package:agro_app/data/data.dart';
 import 'package:agro_app/domain/domain.dart';
+import 'package:agro_app/domain/services/enum.dart';
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:dio/dio.dart';
 import 'package:get/get.dart';
@@ -162,17 +163,6 @@ class ConnectHelper {
     return response;
   }
 
-  Future<ResponseModel> getUnitListApi({bool isLoading = false}) async {
-    var response = await apiWrapper.makeRequest(
-      '${EndPoints.unitApi}?search=',
-      Request.get,
-      null,
-      isLoading,
-      await Utility.commonHeader(),
-    );
-    return response;
-  }
-
   Future<ResponseModel> createProductApi({
     String? productid,
     required String name,
@@ -315,8 +305,8 @@ class ConnectHelper {
     bool isLoading = false,
   }) async {
     // Use provided distributorid (admin) or fall back to logged-in dealer's ID
-    final resolvedDistributorId = distributorid ??
-        await Utility.getSecureValue(LocalKeys.distributorId);
+    final resolvedDistributorId =
+        distributorid ?? await Utility.getSecureValue(LocalKeys.distributorId);
     var data = {
       "customerid": customerid ?? "",
       "distributorid": resolvedDistributorId,
@@ -383,12 +373,34 @@ class ConnectHelper {
     String? customerid,
     bool isLoading = false,
   }) async {
+    String role = await Utility.getSecureValue(LocalKeys.roleName);
+    if (role.isEmpty) {
+      final profileJson = await Utility.getSecureValue(LocalKeys.profileData);
+      if (profileJson.isNotEmpty) {
+        try {
+          final decoded = json.decode(profileJson);
+          role =
+              decoded['roleid']?['rolename']?.toString() ??
+              decoded['rolename']?.toString() ??
+              '';
+        } catch (_) {}
+      }
+    }
+
+    final String normalizedRole = role.toLowerCase().trim();
+    final bool isDealer = normalizedRole == 'dealer' || normalizedRole == 'distributor';
     var distributorId = await Utility.getSecureValue(LocalKeys.distributorId);
+
+    dynamic distributorVal = [];
+    if (isDealer && distributorId.isNotEmpty) {
+      distributorVal = [distributorId];
+    }
+
     var data = {
       "page": 1,
       "limit": 100,
       "search": {},
-      "distributorid": distributorId.isNotEmpty ? [distributorId] : [],
+      "distributorid": distributorVal,
       "customerid": customerid != null && customerid.isNotEmpty
           ? [customerid]
           : [],
@@ -466,12 +478,34 @@ class ConnectHelper {
     String? customerid,
     bool isLoading = false,
   }) async {
+    String role = await Utility.getSecureValue(LocalKeys.roleName);
+    if (role.isEmpty) {
+      final profileJson = await Utility.getSecureValue(LocalKeys.profileData);
+      if (profileJson.isNotEmpty) {
+        try {
+          final decoded = json.decode(profileJson);
+          role =
+              decoded['roleid']?['rolename']?.toString() ??
+              decoded['rolename']?.toString() ??
+              '';
+        } catch (_) {}
+      }
+    }
+
+    final String normalizedRole = role.toLowerCase().trim();
+    final bool isDealer = normalizedRole == 'dealer' || normalizedRole == 'distributor';
     var distributorId = await Utility.getSecureValue(LocalKeys.distributorId);
+
+    dynamic distributorVal = [];
+    if (isDealer && distributorId.isNotEmpty) {
+      distributorVal = [distributorId];
+    }
+
     var data = {
       "page": 1,
       "limit": 100,
       "search": {},
-      "distributorid": distributorId.isNotEmpty ? [distributorId] : [],
+      "distributorid": distributorVal,
       "customerid": customerid != null && customerid.isNotEmpty
           ? [customerid]
           : [],
@@ -609,6 +643,21 @@ class ConnectHelper {
     var data = {"userid": userid};
     var response = await apiWrapper.makeRequest(
       EndPoints.deleteUsersApi,
+      Request.post,
+      data,
+      isLoading,
+      await Utility.commonHeader(),
+    );
+    return response;
+  }
+
+  Future<ResponseModel> getOneUserApi({
+    required String userid,
+    bool isLoading = false,
+  }) async {
+    var data = {"userid": userid};
+    var response = await apiWrapper.makeRequest(
+      EndPoints.getOneUserApi,
       Request.post,
       data,
       isLoading,

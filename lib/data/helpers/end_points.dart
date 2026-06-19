@@ -17,12 +17,12 @@ class EndPoints {
   static String deleteCustomerOrderApi = 'api/customerorder/delete';
   static String uploadCustomerOrderApi = 'api/customerorder/upload';
   static String usersApi = 'api/users';
+  static String getOneUserApi = 'api/users/getone';
 
   static String rolesApi = 'api/role';
   static String createUsersApi = 'api/users/create';
   static String productUploadApi = 'api/product/upload';
   static String deleteProductApi = 'api/product/delete';
   static String deleteUsersApi = 'api/users/delete';
-  static String unitApi = 'api/unit';
   static String customerFeedbackApi = 'api/customer/feedback';
 }

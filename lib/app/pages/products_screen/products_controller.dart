@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:agro_app/domain/models/get_all_product_model.dart';
 import 'package:agro_app/domain/models/get_all_category_model.dart';
-import 'package:agro_app/domain/models/get_all_unit_model.dart';
 import 'package:agro_app/domain/repositories/repository.dart';
 
 class ProductsController extends GetxController {
@@ -29,9 +28,7 @@ class ProductsController extends GetxController {
 
   String editingProductId = '';
   String? selectedCategoryId;
-  String? selectedUnitId;
   List<GetAllCategoryDoc> categories = <GetAllCategoryDoc>[];
-  List<GetAllUnitDatum> units = <GetAllUnitDatum>[];
 
   Timer? _searchTimer;
 
@@ -40,7 +37,6 @@ class ProductsController extends GetxController {
     super.onInit();
     fetchProducts();
     fetchCategories();
-    fetchUnits();
   }
 
   @override
@@ -84,25 +80,6 @@ class ProductsController extends GetxController {
     }
   }
 
-  // ── Fetch Units ────────────────────────────────────────────────────────────
-  Future<void> fetchUnits() async {
-    try {
-      debugPrint('[Products] fetchUnits: calling API...');
-      final response = await Get.find<Repository>().getUnitListApi();
-      if (response != null &&
-          response.data != null &&
-          response.data!.isNotEmpty) {
-        units = response.data!;
-        update();
-        debugPrint('[Products] fetchUnits: loaded ${units.length} units');
-      } else {
-        debugPrint('[Products] fetchUnits: no units returned');
-      }
-    } catch (e, st) {
-      debugPrint('[Products] fetchUnits error: $e\n$st');
-    }
-  }
-
   // ── Fetch Products ─────────────────────────────────────────────────────────
   Future<void> fetchProducts({bool isRefresh = true}) async {
     if (isRefresh) {
@@ -142,7 +119,6 @@ class ProductsController extends GetxController {
   void clearForm() {
     editingProductId = '';
     nameCtrl.clear();
-    selectedUnitId = null;
     priceCtrl.clear();
     qtyCtrl.clear();
     descriptionCtrl.clear();
@@ -154,12 +130,6 @@ class ProductsController extends GetxController {
   void setupEdit(GetAllProductDoc product) {
     editingProductId = product.id ?? '';
     nameCtrl.text = product.name ?? '';
-    // Match the unit name to its id from the loaded units list
-    final unitName = product.unit ?? '';
-    selectedUnitId = units
-        .where((u) => u.name == unitName)
-        .map((u) => u.id)
-        .firstOrNull;
     priceCtrl.text = product.price?.toString() ?? '';
     qtyCtrl.text = product.qty?.toString() ?? '';
     descriptionCtrl.text = product.description ?? '';
@@ -174,14 +144,6 @@ class ProductsController extends GetxController {
       Get.snackbar(
         'Error',
         'Please select a category',
-        snackPosition: SnackPosition.BOTTOM,
-      );
-      return;
-    }
-    if (selectedUnitId == null) {
-      Get.snackbar(
-        'Error',
-        'Please select a unit',
         snackPosition: SnackPosition.BOTTOM,
       );
       return;

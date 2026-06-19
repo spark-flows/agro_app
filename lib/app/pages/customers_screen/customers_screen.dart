@@ -73,7 +73,7 @@ class CustomersScreen extends StatelessWidget {
                           children: [
                             ListTile(
                               onTap: () {
-                                if (RoleUtils.isAdmin(
+                                if (!RoleUtils.isAdmin(
                                   homeController.roleName,
                                 )) {
                                   _showFeedbackDialog(
@@ -287,13 +287,13 @@ class CustomersScreen extends StatelessWidget {
             ],
           ),
           floatingActionButton: FloatingActionButton(
-              backgroundColor: ColorsValue.primary,
-              onPressed: () {
-                controller.clearAddForm();
-                _showAddDialog(context, controller);
-              },
-              child: const Icon(Icons.add),
-            ),
+            backgroundColor: ColorsValue.primary,
+            onPressed: () {
+              controller.clearAddForm();
+              _showAddDialog(context, controller);
+            },
+            child: const Icon(Icons.add),
+          ),
         );
       },
     );
@@ -369,9 +369,9 @@ class CustomersScreen extends StatelessWidget {
                       },
                       validator: (_) =>
                           (controller.selectedDistributorId == null ||
-                                  controller.selectedDistributorId!.isEmpty)
-                              ? 'Please select a distributor'
-                              : null,
+                              controller.selectedDistributorId!.isEmpty)
+                          ? 'Please select a distributor'
+                          : null,
                     ),
                     const SizedBox(height: 16),
                   ],

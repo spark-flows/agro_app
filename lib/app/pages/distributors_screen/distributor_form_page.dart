@@ -1,6 +1,7 @@
 import 'package:agro_app/app/pages/distributors_screen/distributors_controller.dart';
 import 'package:agro_app/app/theme/theme.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 
 /// Standalone Add/Edit page for a Distributor (opened as a full route).
@@ -77,6 +78,11 @@ class DistributorFormPage extends StatelessWidget {
                   icon: Icons.phone_outlined,
                   keyboardType: TextInputType.phone,
                   action: TextInputAction.next,
+                  maxLength: 10,
+                  inputFormatters: [
+                    FilteringTextInputFormatter.digitsOnly,
+                    LengthLimitingTextInputFormatter(10),
+                  ],
                   validator: (v) =>
                       v!.trim().isEmpty ? 'Please enter a phone number' : null,
                 ),
@@ -237,6 +243,8 @@ class DistributorFormPage extends StatelessWidget {
     TextInputType keyboardType = TextInputType.text,
     TextInputAction action = TextInputAction.done,
     bool obscureText = false,
+    int? maxLength,
+    List<TextInputFormatter>? inputFormatters,
     String? Function(String?)? validator,
   }) {
     return TextFormField(
@@ -244,8 +252,11 @@ class DistributorFormPage extends StatelessWidget {
       keyboardType: keyboardType,
       textInputAction: action,
       obscureText: obscureText,
+      maxLength: maxLength,
+      inputFormatters: inputFormatters,
       decoration: InputDecoration(
         labelText: label,
+        counterText: maxLength != null ? '' : null,
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
         prefixIcon: Icon(icon),
       ),

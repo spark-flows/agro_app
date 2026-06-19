@@ -140,23 +140,37 @@ class _OrdersScreenState extends State<OrdersScreen> {
                                   'Order: ${order.orderno}',
                                   style: Styles.txtBlackColorW60014,
                                 ),
-                                subtitle: Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceBetween,
+                                subtitle: Column(
+                                  mainAxisAlignment: MainAxisAlignment.start,
+                                  crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Padding(
-                                      padding: const EdgeInsets.only(top: 4.0),
-                                      child: Text(
-                                        'Date: ${order.createdAt?.split('T').first ?? ''}',
-                                        style: Styles.txtGreyColorW40012,
-                                      ),
+                                    Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        Padding(
+                                          padding: const EdgeInsets.only(
+                                            top: 4.0,
+                                          ),
+                                          child: Text(
+                                            'Date: ${order.createdAt?.split('T').first ?? ''}',
+                                            style: Styles.txtGreyColorW40012,
+                                          ),
+                                        ),
+                                        Padding(
+                                          padding: const EdgeInsets.only(
+                                            top: 4.0,
+                                          ),
+                                          child: Text(
+                                            'Status: ${order.status ?? ''}',
+                                            style: Styles.txtGreyColorW40012,
+                                          ),
+                                        ),
+                                      ],
                                     ),
-                                    Padding(
-                                      padding: const EdgeInsets.only(top: 4.0),
-                                      child: Text(
-                                        'Status: ${order.status ?? ''}',
-                                        style: Styles.txtGreyColorW40012,
-                                      ),
+                                    Text(
+                                      'Delivery Date: ${order.deliverydate?.split('T').first ?? "N/A"}',
+                                      style: Styles.txtGreyColorW40012,
                                     ),
                                   ],
                                 ),
@@ -639,6 +653,14 @@ void _showOrderDetailsDialog(
                 'Status: ${details.status ?? "Pending"}',
                 style: Styles.txtBlackColorW60014.copyWith(
                   color: ColorsValue.primary,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Padding(
+                padding: const EdgeInsets.only(top: 4.0),
+                child: Text(
+                  'Date: ${details.createdAt?.split('T').first ?? ''}',
+                  style: Styles.txtGreyColorW40012,
                 ),
               ),
               const SizedBox(height: 4),

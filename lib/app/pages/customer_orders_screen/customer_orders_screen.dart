@@ -282,17 +282,19 @@ class CustomerOrdersScreen extends StatelessWidget {
     CustomerOrderDoc order,
     CustomerOrdersController controller,
   ) {
+    final homeController = Get.find<HomeController>();
+    final isAdmin = RoleUtils.isAdmin(homeController.roleName);
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (context) => Container(
-        height: MediaQuery.of(context).size.height * 0.85,
         decoration: const BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
         ),
         child: Column(
+          mainAxisSize: MainAxisSize.min,
           children: [
             Container(
               padding: const EdgeInsets.all(20),
@@ -341,8 +343,9 @@ class CustomerOrdersScreen extends StatelessWidget {
                 ],
               ),
             ),
-            Expanded(
+            Flexible(
               child: ListView(
+                shrinkWrap: true,
                 padding: const EdgeInsets.all(20),
                 children: [
                   if (order.image != null && order.image!.isNotEmpty)
@@ -368,11 +371,13 @@ class CustomerOrdersScreen extends StatelessWidget {
                         ),
                       ),
                     ),
-                  _buildDetailRow('Remark 1', order.remark1 ?? '-'),
-                  const SizedBox(height: 12),
-                  _buildDetailRow('Remark 2', order.remark2 ?? '-'),
-                  const SizedBox(height: 12),
-                  _buildDetailRow('Remark 3', order.remark3 ?? '-'),
+                  if (isAdmin) ...[
+                    _buildDetailRow('Remark 1', order.remark1 ?? '-'),
+                    const SizedBox(height: 12),
+                    _buildDetailRow('Remark 2', order.remark2 ?? '-'),
+                    const SizedBox(height: 12),
+                    _buildDetailRow('Remark 3', order.remark3 ?? '-'),
+                  ],
                 ],
               ),
             ),
@@ -392,14 +397,16 @@ class CustomerOrdersScreen extends StatelessWidget {
                 children: [
                   Expanded(
                     child: ElevatedButton.icon(
-                      onPressed: () {
+                      onPressed: () async {
                         Get.back(); // close modal
-                        controller.editOrder(order);
-                        _showCreateOrderBottomSheet(
-                          context,
-                          controller,
-                          isEdit: true,
-                        );
+                        await controller.editOrder(order);
+                        if (context.mounted) {
+                          _showCreateOrderBottomSheet(
+                            context,
+                            controller,
+                            isEdit: true,
+                          );
+                        }
                       },
                       icon: const Icon(
                         Icons.edit_outlined,
@@ -494,6 +501,8 @@ class CustomerOrdersScreen extends StatelessWidget {
     CustomerOrdersController controller, {
     bool isEdit = false,
   }) {
+    final homeController = Get.find<HomeController>();
+    final isAdmin = RoleUtils.isAdmin(homeController.roleName);
     if (!isEdit) {
       controller.resetForm();
     }
@@ -571,9 +580,11 @@ class CustomerOrdersScreen extends StatelessWidget {
                         child: DropdownButton<String>(
                           isExpanded: true,
                           hint: const Text('Choose a customer'),
-                          value: ctrl.selectedCustomerId.isNotEmpty &&
-                                  ctrl.customersList
-                                      .any((c) => c.id == ctrl.selectedCustomerId)
+                          value:
+                              ctrl.selectedCustomerId.isNotEmpty &&
+                                  ctrl.customersList.any(
+                                    (c) => c.id == ctrl.selectedCustomerId,
+                                  )
                               ? ctrl.selectedCustomerId
                               : null,
                           items: ctrl.customersList
@@ -608,7 +619,8 @@ class CustomerOrdersScreen extends StatelessWidget {
                             decoration: BoxDecoration(
                               color: Colors.grey.shade50,
                               border: Border.all(
-                                color: ctrl.selectedImage != null ||
+                                color:
+                                    ctrl.selectedImage != null ||
                                         ctrl.existingImageUrl != null
                                     ? ColorsValue.primary
                                     : Colors.grey.shade300,
@@ -657,8 +669,8 @@ class CustomerOrdersScreen extends StatelessWidget {
                                         Image.network(
                                           ctrl.existingImageUrl ?? '',
                                           fit: BoxFit.cover,
-                                          errorBuilder:
-                                              (_, __, ___) => const Center(
+                                          errorBuilder: (_, __, ___) =>
+                                              const Center(
                                                 child: Icon(
                                                   Icons.image_not_supported,
                                                   size: 40,
@@ -733,11 +745,13 @@ class CustomerOrdersScreen extends StatelessWidget {
                     const SizedBox(height: 20),
 
                     // Remarks
-                    _buildTextField('Remark 1', ctrl.remark1Controller),
-                    const SizedBox(height: 16),
-                    _buildTextField('Remark 2', ctrl.remark2Controller),
-                    const SizedBox(height: 16),
-                    _buildTextField('Remark 3', ctrl.remark3Controller),
+                    if (isAdmin) ...[
+                      _buildTextField('Remark 1', ctrl.remark1Controller),
+                      const SizedBox(height: 16),
+                      _buildTextField('Remark 2', ctrl.remark2Controller),
+                      const SizedBox(height: 16),
+                      _buildTextField('Remark 3', ctrl.remark3Controller),
+                    ],
                     const SizedBox(height: 40),
                   ],
                 ),

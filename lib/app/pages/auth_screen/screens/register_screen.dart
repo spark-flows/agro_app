@@ -131,6 +131,7 @@ class RegisterScreen extends StatelessWidget {
                     isTitle: true,
                     text: 'Mobile Number '.tr,
                     hintText: 'Enter Mobile Number '.tr,
+                    maxLength: 10,
                     titleStyle: Styles.txtBlackColorW70014.copyWith(
                       fontSize: Utility.isTablet()
                           ? Dimens.twenty

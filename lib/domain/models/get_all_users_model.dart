@@ -138,7 +138,7 @@ class Doc {
     mobile: json["mobile"]?.toString() ?? '',
     status: json["status"] is bool ? json["status"] : false,
     isDeleted: json["isDeleted"] is bool ? json["isDeleted"] : false,
-    address: json["address"]?.toString(),
+    address: json["location"]?.toString(),
     createdAt: json["createdAt"] != null
         ? DateTime.tryParse(json["createdAt"].toString()) ?? DateTime.now()
         : DateTime.now(),
@@ -169,7 +169,7 @@ class Doc {
     "mobile": mobile,
     "status": status,
     "isDeleted": isDeleted,
-    "address": address,
+    "location": address,
     "createdAt": createdAt.toIso8601String(),
     "updatedAt": updatedAt.toIso8601String(),
     "roleid": roleid.toJson(),

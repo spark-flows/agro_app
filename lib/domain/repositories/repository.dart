@@ -15,9 +15,9 @@ import 'package:agro_app/domain/models/get_all_customers_model.dart';
 import 'package:agro_app/domain/models/get_all_order_model.dart';
 import 'package:agro_app/domain/models/get_all_product_model.dart';
 import 'package:agro_app/domain/models/get_all_roll_model.dart';
-import 'package:agro_app/domain/models/get_all_unit_model.dart';
 import 'package:agro_app/domain/models/get_all_users_model.dart';
 import 'package:agro_app/domain/models/get_one_order_model.dart';
+import 'package:agro_app/domain/models/get_one_user_model.dart';
 import 'package:agro_app/domain/models/get_profille_model.dart';
 
 /// The main repository which will get the data from [DeviceRepository] or the
@@ -392,26 +392,6 @@ class Repository {
     }
   }
 
-  Future<GetAllUnitModel?> getUnitListApi({bool isLoading = false}) async {
-    try {
-      var response = await _dataRepository.getUnitListApi(isLoading: isLoading);
-      if (response.hasError) {
-        final msg = _parseErrorMessage(response.data, 'Failed to load units');
-        Utility.showMessage(msg, MessageType.error, null, '');
-        return null;
-      }
-      if (response.data.isNotEmpty) {
-        return getAllUnitModelFromJson(response.data);
-      }
-      return null;
-    } catch (e, st) {
-      print('[Repo] getUnitListApi error: $e\n$st');
-      Utility.closeDialog();
-      Utility.showMessage('Failed to load units', MessageType.error, null, '');
-      return null;
-    }
-  }
-
   /// Returns null on success, or an error message string on failure.
   Future<String?> createProductApi({
     String? productid,
@@ -770,6 +750,40 @@ class Repository {
       print('deleteUsersApi error: $e');
       Utility.closeDialog();
       return false;
+    }
+  }
+
+  Future<GetOneUserModel?> getOneUserApi({
+    required String userid,
+    bool isLoading = false,
+  }) async {
+    try {
+      var response = await _dataRepository.getOneUserApi(
+        userid: userid,
+        isLoading: isLoading,
+      );
+      if (response.hasError) {
+        final msg = _parseErrorMessage(
+          response.data,
+          'Failed to load user details',
+        );
+        Utility.showMessage(msg, MessageType.error, null, '');
+        return null;
+      }
+      if (response.data.isNotEmpty) {
+        return getOneUserModelFromJson(response.data);
+      }
+      return null;
+    } catch (e) {
+      print('getOneUserApi error: $e');
+      Utility.closeDialog();
+      Utility.showMessage(
+        'Failed to load user details',
+        MessageType.error,
+        null,
+        '',
+      );
+      return null;
     }
   }
 

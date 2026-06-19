@@ -2,7 +2,9 @@ import 'package:agro_app/domain/models/get_all_roll_model.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:agro_app/domain/models/get_all_users_model.dart';
+import 'package:agro_app/domain/models/get_one_user_model.dart';
 import 'package:agro_app/domain/repositories/repository.dart';
+import 'package:agro_app/app/utils/utility.dart';
 
 class UsersController extends GetxController {
   List<Doc> users = [];
@@ -23,6 +25,7 @@ class UsersController extends GetxController {
   final addressCtrl = TextEditingController();
 
   final RxString editingUserId = "".obs;
+  final RxBool isPasswordHidden = true.obs;
   String? selectedRoleId;
   List<GetAllRolesDatum> roles = [];
 
@@ -108,18 +111,42 @@ class UsersController extends GetxController {
     passwordCtrl.clear();
     addressCtrl.clear();
     selectedRoleId = null;
+    isPasswordHidden.value = true;
     update();
   }
 
-  void setupEdit(Doc user) {
+  Future<void> setupEdit(Doc user) async {
     editingUserId.value = user.id;
     nameCtrl.text = user.name;
     emailCtrl.text = user.email;
     phoneCtrl.text = user.mobile;
-    passwordCtrl.clear(); // Usually leave empty on edit unless changing
+    passwordCtrl.text = ''; // Clear password locally initially
     addressCtrl.text = user.address ?? '';
     selectedRoleId = user.roleid.id;
+    isPasswordHidden.value = true;
     update();
+
+    Utility.showLoader();
+    try {
+      final GetOneUserModel? userModel = await Get.find<Repository>().getOneUserApi(
+        userid: user.id,
+        isLoading: false,
+      );
+      if (userModel != null && userModel.data != null) {
+        final data = userModel.data!;
+        nameCtrl.text = data.name ?? '';
+        emailCtrl.text = data.email ?? '';
+        phoneCtrl.text = data.mobile ?? '';
+        passwordCtrl.text = data.password ?? '';
+        addressCtrl.text = data.location ?? '';
+        selectedRoleId = data.roleid?.id;
+        update();
+      }
+    } catch (e) {
+      print("Error fetching user details: $e");
+    } finally {
+      Utility.closeLoader();
+    }
   }
 
   Future<void> saveUser() async {

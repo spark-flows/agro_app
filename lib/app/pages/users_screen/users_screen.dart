@@ -1,6 +1,7 @@
 import 'package:agro_app/app/theme/theme.dart';
 import 'package:agro_app/app/utils/utility.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 
 import 'users_controller.dart';
@@ -134,9 +135,11 @@ class _UsersScreenState extends State<UsersScreen> {
                                   borderRadius: BorderRadius.circular(12),
                                 ),
                                 child: InkWell(
-                                  onTap: () {
-                                    controller.setupEdit(user);
-                                    _showAddDialog(context, controller);
+                                  onTap: () async {
+                                    await controller.setupEdit(user);
+                                    if (context.mounted) {
+                                      _showAddDialog(context, controller);
+                                    }
                                   },
                                   borderRadius: BorderRadius.circular(12),
                                   child: ListTile(
@@ -321,8 +324,14 @@ class _UsersScreenState extends State<UsersScreen> {
                   controller: controller.phoneCtrl,
                   keyboardType: TextInputType.phone,
                   textInputAction: TextInputAction.next,
+                  maxLength: 10,
+                  inputFormatters: [
+                    FilteringTextInputFormatter.digitsOnly,
+                    LengthLimitingTextInputFormatter(10),
+                  ],
                   decoration: InputDecoration(
                     labelText: 'Phone Number',
+                    counterText: '',
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
@@ -332,23 +341,40 @@ class _UsersScreenState extends State<UsersScreen> {
                       v!.isEmpty ? 'Please enter a phone number' : null,
                 ),
                 const SizedBox(height: 16),
-                TextFormField(
-                  controller: controller.passwordCtrl,
-                  obscureText: true,
-                  textInputAction: TextInputAction.done,
-                  decoration: InputDecoration(
-                    labelText: 'Password',
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
+                Obx(
+                  () => TextFormField(
+                    controller: controller.passwordCtrl,
+                    obscureText: controller.isPasswordHidden.value,
+                    textInputAction: TextInputAction.done,
+                    decoration: InputDecoration(
+                      labelText: controller.editingUserId.value.isNotEmpty
+                          ? 'Password (leave blank to keep)'
+                          : 'Password',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      prefixIcon: const Icon(Icons.lock_outline),
+                      suffixIcon: IconButton(
+                        icon: Icon(
+                          controller.isPasswordHidden.value
+                              ? Icons.visibility_off
+                              : Icons.visibility,
+                          color: Colors.grey,
+                        ),
+                        onPressed: () {
+                          controller.isPasswordHidden.value =
+                              !controller.isPasswordHidden.value;
+                        },
+                      ),
                     ),
-                    prefixIcon: const Icon(Icons.lock_outline),
+                    validator: (v) {
+                      if (controller.editingUserId.value.isEmpty &&
+                          v!.isEmpty) {
+                        return 'Please enter a password';
+                      }
+                      return null;
+                    },
                   ),
-                  validator: (v) {
-                    if (controller.editingUserId.value.isEmpty && v!.isEmpty) {
-                      return 'Please enter a password';
-                    }
-                    return null;
-                  },
                 ),
                 const SizedBox(height: 16),
                 TextFormField(

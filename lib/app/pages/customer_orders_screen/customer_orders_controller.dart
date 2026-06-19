@@ -87,7 +87,7 @@ class CustomerOrdersController extends GetxController {
     update();
   }
 
-  void editOrder(CustomerOrderDoc order) {
+  Future<void> editOrder(CustomerOrderDoc order) async {
     editingCustomerOrderId = order.id;
 
     // order.customerid is a populated model object — extract .id directly
@@ -102,6 +102,25 @@ class CustomerOrdersController extends GetxController {
     existingImageUrl = order.image;
     selectedImage = null;
     update();
+
+    Utility.showLoader();
+    try {
+      final fetchedOrder = await _repository.getOneCustomerOrderApi(
+        customerorderid: order.id ?? '',
+        isLoading: false,
+      );
+      if (fetchedOrder != null) {
+        remark1Controller.text = fetchedOrder.remark1 ?? '';
+        remark2Controller.text = fetchedOrder.remark2 ?? '';
+        remark3Controller.text = fetchedOrder.remark3 ?? '';
+        existingImageUrl = fetchedOrder.image;
+        update();
+      }
+    } catch (e) {
+      debugPrint("Error fetching customer order: $e");
+    } finally {
+      Utility.closeLoader();
+    }
   }
 
   void removeImage() {

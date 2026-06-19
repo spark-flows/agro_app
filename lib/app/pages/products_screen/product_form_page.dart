@@ -5,7 +5,6 @@ import 'package:agro_app/app/theme/theme.dart';
 import 'package:agro_app/app/utils/utility.dart';
 import 'package:agro_app/data/helpers/end_points.dart';
 import 'package:agro_app/domain/models/get_all_category_model.dart';
-import 'package:agro_app/domain/models/get_all_unit_model.dart';
 import 'package:agro_app/domain/repositories/repository.dart';
 import 'package:dio/dio.dart' as dio;
 import 'package:flutter/material.dart';
@@ -25,11 +24,6 @@ class _ProductFormPageState extends State<ProductFormPage> {
   bool _loadingCategories = true;
   String? _selectedCategoryId;
 
-  // ── Unit state ────────────────────────────────────────────────────────────
-  List<GetAllUnitDatum> _units = [];
-  bool _loadingUnits = true;
-  String? _selectedUnitId;
-
   // ── Image state ───────────────────────────────────────────────────────────
   File? _pickedImage;
   bool _uploadingImage = false;
@@ -39,12 +33,7 @@ class _ProductFormPageState extends State<ProductFormPage> {
     super.initState();
     final ctrl = Get.find<ProductsController>();
     _selectedCategoryId = ctrl.selectedCategoryId;
-    _selectedUnitId = ctrl.selectedUnitId;
-    // Pre-populate unit list from controller if already loaded
-    _units = ctrl.units;
-    if (_units.isNotEmpty) _loadingUnits = false;
     _loadCategories();
-    _loadUnits();
   }
 
   // ── Load categories via repository ────────────────────────────────────────
@@ -61,27 +50,6 @@ class _ProductFormPageState extends State<ProductFormPage> {
     } catch (e) {
       debugPrint('[ProductForm] _loadCategories error: $e');
       if (mounted) setState(() => _loadingCategories = false);
-    }
-  }
-
-  // ── Load units via repository ─────────────────────────────────────────────
-  Future<void> _loadUnits() async {
-    if (_units.isNotEmpty) {
-      if (mounted) setState(() => _loadingUnits = false);
-      return;
-    }
-    setState(() => _loadingUnits = true);
-    try {
-      final response = await Get.find<Repository>().getUnitListApi();
-      if (mounted) {
-        setState(() {
-          _units = response?.data ?? [];
-          _loadingUnits = false;
-        });
-      }
-    } catch (e) {
-      debugPrint('[ProductForm] _loadUnits error: $e');
-      if (mounted) setState(() => _loadingUnits = false);
     }
   }
 
@@ -194,6 +162,59 @@ class _ProductFormPageState extends State<ProductFormPage> {
             child: ListView(
               padding: const EdgeInsets.all(20),
               children: [
+                // ── Category ──────────────────────────────────────────────
+                _sectionHeader('Category'),
+                const SizedBox(height: 12),
+
+                if (_loadingCategories)
+                  const SizedBox(
+                    height: 56,
+                    child: Center(child: CircularProgressIndicator()),
+                  )
+                else if (_categories.isEmpty)
+                  OutlinedButton.icon(
+                    onPressed: _loadCategories,
+                    icon: const Icon(Icons.refresh, color: ColorsValue.primary),
+                    label: const Text(
+                      'Tap to retry loading categories',
+                      style: TextStyle(color: ColorsValue.primary),
+                    ),
+                    style: OutlinedButton.styleFrom(
+                      minimumSize: const Size.fromHeight(56),
+                      side: const BorderSide(color: ColorsValue.primary),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                  )
+                else
+                  DropdownButtonFormField<String>(
+                    value: _selectedCategoryId,
+                    decoration: InputDecoration(
+                      labelText: 'Category *',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      prefixIcon: const Icon(Icons.category_outlined),
+                    ),
+                    items: _categories
+                        .map(
+                          (cat) => DropdownMenuItem<String>(
+                            value: cat.id,
+                            child: Text(cat.name),
+                          ),
+                        )
+                        .toList(),
+                    onChanged: (val) {
+                      setState(() => _selectedCategoryId = val);
+                      controller.selectedCategoryId = val;
+                    },
+                    validator: (v) =>
+                        v == null ? 'Please select a category' : null,
+                  ),
+
+                const SizedBox(height: 24),
+
                 _sectionHeader('Product Information'),
                 const SizedBox(height: 12),
 
@@ -205,7 +226,7 @@ class _ProductFormPageState extends State<ProductFormPage> {
                   validator: (v) =>
                       v!.trim().isEmpty ? 'Please enter product name' : null,
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 24),
 
                 // // ── Unit Dropdown ───────────────────────────────────────────
                 // if (_loadingUnits)
@@ -297,58 +318,6 @@ class _ProductFormPageState extends State<ProductFormPage> {
                 _sectionHeader('Product Image'),
                 const SizedBox(height: 12),
                 _buildImagePicker(controller),
-                const SizedBox(height: 24),
-
-                // ── Category ──────────────────────────────────────────────
-                _sectionHeader('Category'),
-                const SizedBox(height: 12),
-
-                if (_loadingCategories)
-                  const SizedBox(
-                    height: 56,
-                    child: Center(child: CircularProgressIndicator()),
-                  )
-                else if (_categories.isEmpty)
-                  OutlinedButton.icon(
-                    onPressed: _loadCategories,
-                    icon: const Icon(Icons.refresh, color: ColorsValue.primary),
-                    label: const Text(
-                      'Tap to retry loading categories',
-                      style: TextStyle(color: ColorsValue.primary),
-                    ),
-                    style: OutlinedButton.styleFrom(
-                      minimumSize: const Size.fromHeight(56),
-                      side: const BorderSide(color: ColorsValue.primary),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                  )
-                else
-                  DropdownButtonFormField<String>(
-                    value: _selectedCategoryId,
-                    decoration: InputDecoration(
-                      labelText: 'Category *',
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      prefixIcon: const Icon(Icons.category_outlined),
-                    ),
-                    items: _categories
-                        .map(
-                          (cat) => DropdownMenuItem<String>(
-                            value: cat.id,
-                            child: Text(cat.name),
-                          ),
-                        )
-                        .toList(),
-                    onChanged: (val) {
-                      setState(() => _selectedCategoryId = val);
-                      controller.selectedCategoryId = val;
-                    },
-                    validator: (v) =>
-                        v == null ? 'Please select a category' : null,
-                  ),
 
                 const SizedBox(height: 32),
 

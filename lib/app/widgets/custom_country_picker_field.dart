@@ -22,6 +22,7 @@ class CustomCountryPickerField extends StatelessWidget {
     this.titleStyle,
     this.hintStyle,
     this.fillColor,
+    this.maxLength,
   });
   bool? isTitle;
   final String text;
@@ -38,6 +39,7 @@ class CustomCountryPickerField extends StatelessWidget {
   TextStyle? titleStyle;
   TextStyle? hintStyle;
   Color? fillColor;
+  int? maxLength;
 
   @override
   Widget build(BuildContext context) => Column(
@@ -56,6 +58,7 @@ class CustomCountryPickerField extends StatelessWidget {
         autoValidateMode: AutovalidateMode.onUserInteraction,
         ignoreBlank: false,
         formatInput: false,
+        maxLength: maxLength ?? 15,
         selectorConfig: const SelectorConfig(
           selectorType: PhoneInputSelectorType.DROPDOWN,
           setSelectorButtonAsPrefixIcon: true,

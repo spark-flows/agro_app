@@ -88,9 +88,6 @@ class DataRepository extends DomainRepository {
   Future<ResponseModel> getCategoryListApi({bool isLoading = false}) async =>
       connectHelper.getCategoryListApi(isLoading: isLoading);
 
-  Future<ResponseModel> getUnitListApi({bool isLoading = false}) async =>
-      connectHelper.getUnitListApi(isLoading: isLoading);
-
   Future<ResponseModel> createProductApi({
     String? productid,
     required String name,
@@ -279,6 +276,12 @@ class DataRepository extends DomainRepository {
     bool isLoading = false,
   }) async =>
       connectHelper.deleteUsersApi(userid: userid, isLoading: isLoading);
+
+  Future<ResponseModel> getOneUserApi({
+    required String userid,
+    bool isLoading = false,
+  }) async =>
+      connectHelper.getOneUserApi(userid: userid, isLoading: isLoading);
 
   Future<ResponseModel> getUsersListApi({
     int page = 1,
