@@ -108,17 +108,17 @@ abstract class Styles {
     fontWeight: FontWeight.w400,
   );
   static TextStyle appColorW70016 = GoogleFonts.jost(
-    color: ColorsValue.appColor,
+    color: ColorsValue.primary,
     fontSize: Dimens.sixteen,
     fontWeight: FontWeight.w700,
   );
   static TextStyle appColorW70012 = GoogleFonts.jost(
-    color: ColorsValue.appColor,
+    color: ColorsValue.primary,
     fontSize: Dimens.twelve,
     fontWeight: FontWeight.w700,
   );
   static TextStyle appColorW50014 = GoogleFonts.jost(
-    color: ColorsValue.appColor,
+    color: ColorsValue.primary,
     fontSize: Dimens.fourteen,
     fontWeight: FontWeight.w500,
   );

@@ -14,7 +14,7 @@ class AuthScreen extends StatelessWidget {
           body: SafeArea(
             child: Form(
               key: controller.loginKey,
-              autovalidateMode: AutovalidateMode.disabled,
+              autovalidateMode: AutovalidateMode.onUserInteraction,
               child: SingleChildScrollView(
                 padding: EdgeInsets.all(Dimens.twenty),
                 child: Column(
@@ -44,6 +44,7 @@ class AuthScreen extends StatelessWidget {
                     Text('Username', style: Styles.txtBlackColorW60014),
                     Dimens.boxHeight8,
                     TextFormField(
+                      autovalidateMode: AutovalidateMode.onUserInteraction,
                       controller: controller.userNameController,
                       textInputAction: TextInputAction.next,
                       decoration: InputDecoration(
@@ -69,6 +70,7 @@ class AuthScreen extends StatelessWidget {
                     Text('Password', style: Styles.txtBlackColorW60014),
                     Dimens.boxHeight8,
                     TextFormField(
+                      autovalidateMode: AutovalidateMode.onUserInteraction,
                       controller: controller.passController,
                       obscureText: controller.isPasswordHidden,
                       textInputAction: TextInputAction.done,

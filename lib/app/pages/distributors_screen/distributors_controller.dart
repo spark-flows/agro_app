@@ -1,6 +1,8 @@
 import 'package:agro_app/domain/models/get_all_roll_model.dart';
 import 'package:agro_app/domain/models/get_all_users_model.dart';
+import 'package:agro_app/domain/models/get_one_user_model.dart';
 import 'package:agro_app/domain/repositories/repository.dart';
+import 'package:agro_app/app/utils/utility.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -34,6 +36,7 @@ class DistributorsController extends GetxController {
   final bankifscodeCtrl = TextEditingController();
 
   final RxString editingUserId = "".obs;
+  final RxBool isPasswordHidden = true.obs;
   String? selectedRoleId;
   List<GetAllRolesDatum> roles = [];
 
@@ -140,10 +143,11 @@ class DistributorsController extends GetxController {
     bankaccountnumberCtrl.clear();
     bankifscodeCtrl.clear();
     selectedRoleId = _distributorRoleId;
+    isPasswordHidden.value = true;
     update();
   }
 
-  void setupEdit(Doc user) {
+  Future<void> setupEdit(Doc user) async {
     editingUserId.value = user.id;
     nameCtrl.text = user.name;
     surnameCtrl.text = user.surname ?? '';
@@ -159,16 +163,40 @@ class DistributorsController extends GetxController {
     bankaccountnumberCtrl.clear();
     bankifscodeCtrl.clear();
     selectedRoleId = user.roleid.id;
+    isPasswordHidden.value = true;
     update();
+
+    Utility.showLoader();
+    try {
+      final GetOneUserModel? userModel = await Get.find<Repository>()
+          .getOneUserApi(userid: user.id, isLoading: false);
+      if (userModel != null && userModel.data != null) {
+        final data = userModel.data!;
+        nameCtrl.text = data.name ?? '';
+        surnameCtrl.text = data.surname ?? '';
+        fathernameCtrl.text = data.fathername ?? '';
+        emailCtrl.text = data.email ?? '';
+        phoneCtrl.text = data.mobile ?? '';
+        passwordCtrl.text = data.password ?? '';
+        addressCtrl.text = data.location ?? '';
+        gstnumberCtrl.text = data.gstnumber ?? '';
+        locationCtrl.text = data.location ?? '';
+        banknameCtrl.text = data.bankname ?? '';
+        bankaccountnumberCtrl.text = data.bankaccountnumber ?? '';
+        bankifscodeCtrl.text = data.bankifsscode ?? '';
+        selectedRoleId = data.roleid?.id;
+        update();
+      }
+    } catch (e) {
+      print("Error fetching distributor details: $e");
+    } finally {
+      Utility.closeLoader();
+    }
   }
 
   Future<void> saveUser() async {
     if (selectedRoleId == null) {
-      Get.snackbar(
-        'Error',
-        'Please select a role',
-        snackPosition: SnackPosition.BOTTOM,
-      );
+      Utility.errorMessage('Please select a role');
       return;
     }
 
@@ -193,25 +221,15 @@ class DistributorsController extends GetxController {
 
     if (errorMsg == null) {
       Get.back();
-      Get.snackbar(
-        'Success',
+      Utility.snacBar(
         editingUserId.value.isNotEmpty
             ? 'Distributor updated'
             : 'Distributor added',
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.green.withValues(alpha: 0.9),
-        colorText: Colors.white,
+        Colors.green,
       );
       fetchUsers(isRefresh: true);
     } else {
-      Get.snackbar(
-        'Error',
-        errorMsg,
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red.withValues(alpha: 0.9),
-        colorText: Colors.white,
-        duration: const Duration(seconds: 4),
-      );
+      Utility.errorMessage(errorMsg);
     }
   }
 }

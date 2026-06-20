@@ -189,14 +189,14 @@ abstract class Utility {
       Get.back<void>();
     }
     await Get.dialog<dynamic>(
-      const Center(child: CircularProgressIndicator()),
+      Center(child: CircularProgressIndicator(color: ColorsValue.primary)),
       barrierDismissible: false,
       barrierColor: Colors.black.withValues(alpha: 0.7),
     );
   }
 
   static Widget loaderWidget() =>
-      const Center(child: CircularProgressIndicator());
+      Center(child: CircularProgressIndicator(color: ColorsValue.primary));
 
   /// Close loader
   static void closeLoader() {
@@ -431,7 +431,7 @@ abstract class Utility {
 
   static copyText(text) {
     Clipboard.setData(ClipboardData(text: text));
-    snacBar("Copied to clipboard.", ColorsValue.appColor);
+    snacBar("Copied to clipboard.", ColorsValue.primary);
   }
 
   /// Document Type List For Every Platform

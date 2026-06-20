@@ -210,12 +210,17 @@ class UploadImageData {
 class CustomerIdModel {
   String? id;
   String? name;
+  String? email;
+  String? mobile;
+  String? village;
 
-  CustomerIdModel({this.id, this.name});
+  CustomerIdModel({this.id, this.name, this.email, this.mobile, this.village});
 
   CustomerIdModel.fromJson(Map<String, dynamic> json) {
     id = json['_id']?.toString();
-
     name = json['name']?.toString();
+    email = json['email']?.toString();
+    mobile = json['mobile']?.toString();
+    village = json['village']?.toString();
   }
 }

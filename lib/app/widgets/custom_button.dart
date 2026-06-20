@@ -39,12 +39,12 @@ class CustomButton extends StatelessWidget {
         height: heightBtn ?? Dimens.fourtyFive,
         width: widthBtn ?? double.maxFinite,
         decoration: BoxDecoration(
-          color: backgroundColor ?? ColorsValue.appColor,
+          color: backgroundColor ?? ColorsValue.primary,
           borderRadius: BorderRadius.circular(radius ?? Dimens.ten),
           border: isBorder ?? false
               ? Border.all(
                   width: Dimens.one,
-                  color: borderColor ?? ColorsValue.appColor,
+                  color: borderColor ?? ColorsValue.primary,
                 )
               : Border.all(
                   width: Dimens.one,

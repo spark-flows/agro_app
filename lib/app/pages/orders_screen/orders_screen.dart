@@ -84,7 +84,11 @@ class _OrdersScreenState extends State<OrdersScreen> {
                 /// Order List
                 Expanded(
                   child: controller.isFetchingOrders
-                      ? const Center(child: CircularProgressIndicator())
+                      ? const Center(
+                          child: CircularProgressIndicator(
+                            color: ColorsValue.primary,
+                          ),
+                        )
                       : controller.customerOrders.isEmpty
                       ? Center(
                           child: Column(
@@ -321,7 +325,11 @@ class _NewOrderScreenState extends State<NewOrderScreen> {
                 child: Builder(
                   builder: (context) {
                     if (controller.isLoading) {
-                      return const Center(child: CircularProgressIndicator());
+                      return const Center(
+                        child: CircularProgressIndicator(
+                          color: ColorsValue.primary,
+                        ),
+                      );
                     }
 
                     final products = controller.displayProducts;
@@ -364,7 +372,11 @@ class _NewOrderScreenState extends State<NewOrderScreen> {
                         if (index == products.length) {
                           return const Padding(
                             padding: EdgeInsets.symmetric(vertical: 16),
-                            child: Center(child: CircularProgressIndicator()),
+                            child: Center(
+                              child: CircularProgressIndicator(
+                                color: ColorsValue.primary,
+                              ),
+                            ),
                           );
                         }
                         return _buildProductCard(controller, products[index]);
@@ -609,6 +621,31 @@ void _showCartBottomSheet(
   );
 }
 
+Widget _buildDistributorRow(IconData icon, String label, String value) {
+  return Row(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Icon(icon, size: 14, color: Colors.grey.shade600),
+      const SizedBox(width: 6),
+      Text(
+        '$label: ',
+        style: TextStyle(
+          fontSize: 13,
+          fontWeight: FontWeight.w500,
+          color: Colors.grey.shade700,
+        ),
+      ),
+      Expanded(
+        child: Text(
+          value,
+          style: const TextStyle(fontSize: 13, color: Colors.black87),
+          overflow: TextOverflow.ellipsis,
+        ),
+      ),
+    ],
+  );
+}
+
 void _showOrderDetailsDialog(
   BuildContext context,
   OrdersController controller,
@@ -616,209 +653,289 @@ void _showOrderDetailsDialog(
 ) async {
   if (Get.isSnackbarOpen) await Get.closeCurrentSnackbar();
   Get.bottomSheet(
-    Container(
-      height: Get.height * 0.7,
-      padding: const EdgeInsets.all(24),
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      child: GetBuilder<OrdersController>(
-        builder: (controller) {
-          if (controller.isFetchingOrderDetails ||
-              controller.selectedOrderDetails == null) {
-            return const Center(child: CircularProgressIndicator());
-          }
+    DraggableScrollableSheet(
+      initialChildSize: 0.6,
+      minChildSize: 0.4,
+      maxChildSize: 0.95,
+      expand: false,
+      builder: (ctx, scrollController) => Container(
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        ),
+        child: GetBuilder<OrdersController>(
+          builder: (controller) {
+            if (controller.isFetchingOrderDetails ||
+                controller.selectedOrderDetails == null) {
+              return const Center(
+                child: CircularProgressIndicator(color: ColorsValue.primary),
+              );
+            }
 
-          final details = controller.selectedOrderDetails!.data;
-          if (details == null) {
-            return const Center(child: Text('No details available.'));
-          }
+            final details = controller.selectedOrderDetails!.data;
+            if (details == null) {
+              return const Center(child: Text('No details available.'));
+            }
 
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Text(
-                'Order Details',
-                style: Styles.txtBlackColorW70020,
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 16),
-              Text(
-                'Order ID: ${details.orderno ?? "-"}',
-                style: Styles.txtBlackColorW60014,
-              ),
-              const SizedBox(height: 4),
-              Text(
-                'Status: ${details.status ?? "Pending"}',
-                style: Styles.txtBlackColorW60014.copyWith(
-                  color: ColorsValue.primary,
+            return ListView(
+              controller: scrollController,
+              padding: const EdgeInsets.fromLTRB(24, 20, 24, 32),
+              children: [
+                // Drag handle
+                Center(
+                  child: Container(
+                    width: 40,
+                    height: 4,
+                    margin: const EdgeInsets.only(bottom: 16),
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade300,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
                 ),
-              ),
-              const SizedBox(height: 4),
-              Padding(
-                padding: const EdgeInsets.only(top: 4.0),
-                child: Text(
+
+                // Title
+                Text(
+                  'Order Details',
+                  style: Styles.txtBlackColorW70020,
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 16),
+
+                // Order meta
+                Text(
+                  'Order ID: ${details.orderno ?? "-"}',
+                  style: Styles.txtBlackColorW60014,
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'Status: ${details.status ?? "Pending"}',
+                  style: Styles.txtBlackColorW60014.copyWith(
+                    color: ColorsValue.primary,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
                   'Date: ${details.createdAt?.split('T').first ?? ''}',
                   style: Styles.txtGreyColorW40012,
                 ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                'Delivery Date: ${details.deliverydate?.split('T').first ?? "N/A"}',
-                style: Styles.txtGreyColorW40012,
-              ),
-              const SizedBox(height: 4),
-              const Divider(height: 32),
-              Text('Items:', style: Styles.txtBlackColorW60014),
-              const SizedBox(height: 8),
-              Expanded(
-                child: ListView.builder(
-                  itemCount: details.items?.length ?? 0,
-                  itemBuilder: (ctx, idx) {
-                    final item = details.items![idx];
-                    String pName = 'Unknown Product';
-                    if (item.productid is Map) {
-                      pName =
-                          item.productid['name'] ??
-                          item.productid['_id'] ??
-                          'Unknown Product';
-                    } else if (item.productid != null) {
-                      final localMatch = controller.allProducts
-                          .firstWhereOrNull((p) => p.id == item.productid);
-                      pName = localMatch?.name ?? item.productid.toString();
-                    }
+                const SizedBox(height: 4),
+                Text(
+                  'Delivery Date: ${details.deliverydate?.split('T').first ?? "N/A"}',
+                  style: Styles.txtGreyColorW40012,
+                ),
+                const SizedBox(height: 16),
 
-                    return Card(
-                      elevation: 0,
-                      color: Colors.grey.shade50,
-                      margin: const EdgeInsets.only(bottom: 8),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        side: BorderSide(color: Colors.grey.shade200),
+                // Distributor Info
+                if (details.distributorid != null) ...[
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: ColorsValue.primary.withValues(alpha: 0.06),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: ColorsValue.primary.withValues(alpha: 0.2),
                       ),
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 12,
-                        ),
-                        child: Row(
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
                           children: [
-                            Container(
-                              width: 40,
-                              height: 40,
-                              decoration: BoxDecoration(
-                                color: ColorsValue.primary.withValues(
-                                  alpha: 0.1,
-                                ),
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: const Center(
-                                child: Icon(
-                                  Icons.inventory_2_outlined,
-                                  color: ColorsValue.primary,
-                                  size: 20,
-                                ),
-                              ),
+                            Icon(
+                              Icons.person_pin_circle_outlined,
+                              size: 16,
+                              color: ColorsValue.primary,
                             ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    pName,
-                                    style: Styles.txtBlackColorW60014,
-                                  ),
-                                  const SizedBox(height: 4),
-                                  Text(
-                                    'Qty: ${item.quantity}',
-                                    style: Styles.txtGreyColorW40012,
-                                  ),
-                                ],
+                            const SizedBox(width: 6),
+                            Text(
+                              'Distributor Info',
+                              style: Styles.txtBlackColorW60014.copyWith(
+                                color: ColorsValue.primary,
                               ),
                             ),
                           ],
                         ),
-                      ),
-                    );
-                  },
-                ),
-              ),
+                        const SizedBox(height: 8),
+                        if (details.distributorid!.name != null)
+                          _buildDistributorRow(
+                            Icons.badge_outlined,
+                            'Name',
+                            details.distributorid!.name!,
+                          ),
+                        if (details.distributorid!.email != null) ...[
+                          const SizedBox(height: 4),
+                          _buildDistributorRow(
+                            Icons.email_outlined,
+                            'Email',
+                            details.distributorid!.email!,
+                          ),
+                        ],
+                        if (details.distributorid!.mobile != null) ...[
+                          const SizedBox(height: 4),
+                          _buildDistributorRow(
+                            Icons.phone_outlined,
+                            'Mobile',
+                            details.distributorid!.mobile!,
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                ],
 
-              const SizedBox(height: 24),
-              if (!RoleUtils.isAdmin(homeController.roleName))
-                Row(
-                  children: [
-                    Expanded(
-                      child: ElevatedButton.icon(
-                        onPressed: () {
-                          controller.populateOrderForEdit(details);
-                          Get.back();
-                          Get.to(() => NewOrderScreen(controller: controller));
-                        },
-                        icon: const Icon(
-                          Icons.edit,
-                          color: Colors.white,
-                          size: 18,
-                        ),
-                        label: const Text(
-                          'Edit',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: ColorsValue.primary,
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: ElevatedButton.icon(
-                        onPressed: () {
-                          Utility.showDeleteDialog(
-                            title: 'Confirm Delete',
-                            message:
-                                'Are you sure you want to delete this order?',
-                            onConfirm: () {
-                              if (details.id != null) {
-                                controller.deleteOrder(details.id!);
-                              }
-                            },
-                          );
-                        },
-                        icon: const Icon(
-                          Icons.delete_outline,
-                          color: Colors.white,
-                          size: 18,
-                        ),
-                        label: const Text(
-                          'Delete',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.red.shade400,
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
+                const Divider(height: 24),
+                Text(
+                  'Items (${details.items?.length ?? 0}):',
+                  style: Styles.txtBlackColorW60014,
                 ),
-            ],
-          );
-        },
+                const SizedBox(height: 8),
+
+                // Items — rendered inline, no nested ListView
+                ...List.generate(details.items?.length ?? 0, (idx) {
+                  final item = details.items![idx];
+                  String pName = 'Unknown Product';
+                  if (item.productid is Map) {
+                    pName =
+                        item.productid['name'] ??
+                        item.productid['_id'] ??
+                        'Unknown Product';
+                  } else if (item.productid != null) {
+                    final localMatch = controller.allProducts.firstWhereOrNull(
+                      (p) => p.id == item.productid,
+                    );
+                    pName = localMatch?.name ?? item.productid.toString();
+                  }
+
+                  return Card(
+                    elevation: 0,
+                    color: Colors.grey.shade50,
+                    margin: const EdgeInsets.only(bottom: 8),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      side: BorderSide(color: Colors.grey.shade200),
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 12,
+                      ),
+                      child: Row(
+                        children: [
+                          Container(
+                            width: 40,
+                            height: 40,
+                            decoration: BoxDecoration(
+                              color: ColorsValue.primary.withValues(alpha: 0.1),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: const Center(
+                              child: Icon(
+                                Icons.inventory_2_outlined,
+                                color: ColorsValue.primary,
+                                size: 20,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(pName, style: Styles.txtBlackColorW60014),
+                                const SizedBox(height: 4),
+                                Text(
+                                  'Qty: ${item.quantity}',
+                                  style: Styles.txtGreyColorW40012,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                }),
+
+                const SizedBox(height: 24),
+
+                // Action buttons
+                if (!RoleUtils.isAdmin(homeController.roleName))
+                  Row(
+                    children: [
+                      Expanded(
+                        child: ElevatedButton.icon(
+                          onPressed: () {
+                            controller.populateOrderForEdit(details);
+                            Get.back();
+                            Get.to(
+                              () => NewOrderScreen(controller: controller),
+                            );
+                          },
+                          icon: const Icon(
+                            Icons.edit,
+                            color: Colors.white,
+                            size: 18,
+                          ),
+                          label: const Text(
+                            'Edit',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: ColorsValue.primary,
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: ElevatedButton.icon(
+                          onPressed: () {
+                            Utility.showDeleteDialog(
+                              title: 'Confirm Delete',
+                              message:
+                                  'Are you sure you want to delete this order?',
+                              onConfirm: () {
+                                if (details.id != null) {
+                                  controller.deleteOrder(details.id!);
+                                }
+                              },
+                            );
+                          },
+                          icon: const Icon(
+                            Icons.delete_outline,
+                            color: Colors.white,
+                            size: 18,
+                          ),
+                          label: const Text(
+                            'Delete',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.red.shade400,
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+              ],
+            );
+          },
+        ),
       ),
     ),
     isScrollControlled: true,

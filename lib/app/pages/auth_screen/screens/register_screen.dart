@@ -43,7 +43,7 @@ class RegisterScreen extends StatelessWidget {
                           ? Dimens.twenty
                           : Dimens.eighteen,
                     ),
-                    backgroundColor: ColorsValue.appColor,
+                    backgroundColor: ColorsValue.primary,
                     heightBtn: Utility.isTablet() ? Dimens.sixty : Dimens.fifty,
                   ),
                 ),

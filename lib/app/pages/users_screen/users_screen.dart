@@ -88,7 +88,11 @@ class _UsersScreenState extends State<UsersScreen> {
                 /// Users List
                 Expanded(
                   child: controller.isLoading
-                      ? const Center(child: CircularProgressIndicator())
+                      ? const Center(
+                          child: CircularProgressIndicator(
+                            color: ColorsValue.primary,
+                          ),
+                        )
                       : controller.users.isEmpty
                       ? Center(
                           child: Column(
@@ -120,7 +124,9 @@ class _UsersScreenState extends State<UsersScreen> {
                                 return const Padding(
                                   padding: EdgeInsets.symmetric(vertical: 16),
                                   child: Center(
-                                    child: CircularProgressIndicator(),
+                                    child: CircularProgressIndicator(
+                                      color: ColorsValue.primary,
+                                    ),
                                   ),
                                 );
                               }
@@ -268,6 +274,7 @@ class _UsersScreenState extends State<UsersScreen> {
         child: SingleChildScrollView(
           child: Form(
             key: controller.addFormKey,
+            autovalidateMode: AutovalidateMode.onUserInteraction,
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -293,79 +300,65 @@ class _UsersScreenState extends State<UsersScreen> {
                   ),
                 ),
                 const SizedBox(height: 24),
-                TextFormField(
+                _buildField(
                   controller: controller.nameCtrl,
-                  textInputAction: TextInputAction.next,
-                  decoration: InputDecoration(
-                    labelText: 'Full Name',
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    prefixIcon: const Icon(Icons.person_outline),
-                  ),
+                  label: 'Full Name',
+                  icon: Icons.person_outline,
+                  action: TextInputAction.next,
                   validator: (v) => v!.isEmpty ? 'Please enter a name' : null,
                 ),
                 const SizedBox(height: 16),
-                TextFormField(
+                _buildField(
                   controller: controller.emailCtrl,
+                  label: 'Email Address',
+                  icon: Icons.email_outlined,
                   keyboardType: TextInputType.emailAddress,
-                  textInputAction: TextInputAction.next,
-                  decoration: InputDecoration(
-                    labelText: 'Email Address',
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    prefixIcon: const Icon(Icons.email_outlined),
-                  ),
-                  validator: (v) => v!.isEmpty ? 'Please enter an email' : null,
+                  action: TextInputAction.next,
+                  validator: (v) {
+                    if (v == null || v.trim().isEmpty) {
+                      return 'Please enter an email';
+                    } else if (!Utility.emailValidation(v.trim())) {
+                      return 'Please enter a valid email';
+                    }
+                    return null;
+                  },
                 ),
                 const SizedBox(height: 16),
-                TextFormField(
+                _buildField(
                   controller: controller.phoneCtrl,
+                  label: 'Phone Number',
+                  icon: Icons.phone_outlined,
                   keyboardType: TextInputType.phone,
-                  textInputAction: TextInputAction.next,
+                  action: TextInputAction.next,
                   maxLength: 10,
                   inputFormatters: [
                     FilteringTextInputFormatter.digitsOnly,
                     LengthLimitingTextInputFormatter(10),
                   ],
-                  decoration: InputDecoration(
-                    labelText: 'Phone Number',
-                    counterText: '',
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    prefixIcon: const Icon(Icons.phone_outlined),
-                  ),
                   validator: (v) =>
                       v!.isEmpty ? 'Please enter a phone number' : null,
                 ),
                 const SizedBox(height: 16),
                 Obx(
-                  () => TextFormField(
+                  () => _buildField(
                     controller: controller.passwordCtrl,
+                    label: controller.editingUserId.value.isNotEmpty
+                        ? 'Password (leave blank to keep)'
+                        : 'Password',
+                    icon: Icons.lock_outline,
                     obscureText: controller.isPasswordHidden.value,
-                    textInputAction: TextInputAction.done,
-                    decoration: InputDecoration(
-                      labelText: controller.editingUserId.value.isNotEmpty
-                          ? 'Password (leave blank to keep)'
-                          : 'Password',
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
+                    action: TextInputAction.done,
+                    suffixIcon: IconButton(
+                      icon: Icon(
+                        controller.isPasswordHidden.value
+                            ? Icons.visibility_off
+                            : Icons.visibility,
+                        color: Colors.grey,
                       ),
-                      prefixIcon: const Icon(Icons.lock_outline),
-                      suffixIcon: IconButton(
-                        icon: Icon(
-                          controller.isPasswordHidden.value
-                              ? Icons.visibility_off
-                              : Icons.visibility,
-                          color: Colors.grey,
-                        ),
-                        onPressed: () {
-                          controller.isPasswordHidden.value =
-                              !controller.isPasswordHidden.value;
-                        },
-                      ),
+                      onPressed: () {
+                        controller.isPasswordHidden.value =
+                            !controller.isPasswordHidden.value;
+                      },
                     ),
                     validator: (v) {
                       if (controller.editingUserId.value.isEmpty &&
@@ -377,28 +370,43 @@ class _UsersScreenState extends State<UsersScreen> {
                   ),
                 ),
                 const SizedBox(height: 16),
-                TextFormField(
+                _buildField(
                   controller: controller.addressCtrl,
-                  textInputAction: TextInputAction.done,
-                  decoration: InputDecoration(
-                    labelText: 'Address',
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    prefixIcon: const Icon(Icons.lock_outline),
-                  ),
+                  label: 'Address',
+                  icon: Icons.home_outlined,
+                  action: TextInputAction.done,
                   validator: (v) =>
-                      v!.isEmpty ? 'Please enter a address' : null,
+                      v!.isEmpty ? 'Please enter an address' : null,
                 ),
                 const SizedBox(height: 16),
                 DropdownButtonFormField<String>(
+                  autovalidateMode: AutovalidateMode.onUserInteraction,
                   value: controller.selectedRoleId,
                   decoration: InputDecoration(
                     labelText: 'Role',
+                    labelStyle: Styles.txtGreyColorW40014,
+                    floatingLabelStyle: const TextStyle(
+                      color: ColorsValue.primary,
+                    ),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(color: Colors.grey.shade300),
                     ),
-                    prefixIcon: const Icon(Icons.admin_panel_settings_outlined),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(color: Colors.grey.shade300),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(
+                        color: ColorsValue.primary,
+                        width: 1.5,
+                      ),
+                    ),
+                    prefixIcon: Icon(
+                      Icons.admin_panel_settings_outlined,
+                      color: ColorsValue.primary.withValues(alpha: 0.8),
+                    ),
                   ),
                   items: controller.roles.map((role) {
                     return DropdownMenuItem(
@@ -441,6 +449,55 @@ class _UsersScreenState extends State<UsersScreen> {
       ),
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
+    );
+  }
+
+  Widget _buildField({
+    required TextEditingController controller,
+    required String label,
+    required IconData icon,
+    TextInputType keyboardType = TextInputType.text,
+    TextInputAction action = TextInputAction.done,
+    bool obscureText = false,
+    int? maxLength,
+    List<TextInputFormatter>? inputFormatters,
+    String? Function(String?)? validator,
+    Widget? suffixIcon,
+  }) {
+    return TextFormField(
+      autovalidateMode: AutovalidateMode.onUserInteraction,
+      controller: controller,
+      keyboardType: keyboardType,
+      textInputAction: action,
+      obscureText: obscureText,
+      maxLength: maxLength,
+      inputFormatters: inputFormatters,
+      cursorColor: ColorsValue.primary,
+      style: Styles.txtBlackColorW50014,
+      decoration: InputDecoration(
+        labelText: label,
+        labelStyle: Styles.txtGreyColorW40014,
+        floatingLabelStyle: const TextStyle(color: ColorsValue.primary),
+        counterText: maxLength != null ? '' : null,
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: Colors.grey.shade300),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: Colors.grey.shade300),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: ColorsValue.primary, width: 1.5),
+        ),
+        prefixIcon: Icon(
+          icon,
+          color: ColorsValue.primary.withValues(alpha: 0.8),
+        ),
+        suffixIcon: suffixIcon,
+      ),
+      validator: validator,
     );
   }
 }

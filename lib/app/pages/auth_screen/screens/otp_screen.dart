@@ -63,15 +63,15 @@ class OtpScreen extends StatelessWidget {
                         autoFocus: true,
                         hintCharacter: "0",
                         hintStyle: Styles.txtGreyColorW50014,
-                        pastedTextStyle: TextStyle(
-                          color: ColorsValue.appColor,
+                        pastedTextStyle: const TextStyle(
+                          color: ColorsValue.primary,
                           fontWeight: FontWeight.bold,
                         ),
                         animationType: AnimationType.fade,
                         pinTheme: PinTheme(
                           shape: PinCodeFieldShape.box,
-                          activeColor: ColorsValue.appColor,
-                          selectedColor: ColorsValue.appColor,
+                          activeColor: ColorsValue.primary,
+                          selectedColor: ColorsValue.primary,
                           inactiveColor: ColorsValue.textFieldBg,
                           selectedFillColor: ColorsValue.whiteColor,
                           inactiveFillColor: ColorsValue.textFieldBg,
@@ -81,7 +81,7 @@ class OtpScreen extends StatelessWidget {
                           fieldHeight: Get.width / Dimens.eight,
                           fieldWidth: Get.width / Dimens.eight,
                         ),
-                        cursorColor: ColorsValue.appColor,
+                        cursorColor: ColorsValue.primary,
                         enableActiveFill: true,
                         keyboardType: TextInputType.number,
                         errorTextMargin: Dimens.edgeInsetsTop20,

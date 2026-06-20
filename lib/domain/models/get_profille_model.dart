@@ -74,6 +74,7 @@ class ProfileDataUserData {
   String channelid;
   String currencyCode;
   String fcmToken;
+  ProfileBranch? branchid;
 
   ProfileDataUserData({
     required this.id,
@@ -99,6 +100,7 @@ class ProfileDataUserData {
     required this.channelid,
     required this.currencyCode,
     required this.fcmToken,
+    this.branchid,
   });
 
   factory ProfileDataUserData.fromJson(Map<String, dynamic> json) =>
@@ -136,6 +138,9 @@ class ProfileDataUserData {
         channelid: json["channelid"] as String? ?? '',
         currencyCode: json["currencyCode"] as String? ?? '',
         fcmToken: json["fcm_token"] as String? ?? '',
+        branchid: json["branchid"] != null
+            ? ProfileBranch.fromJson(json["branchid"] as Map<String, dynamic>)
+            : null,
       );
 
   Map<String, dynamic> toJson() => {
@@ -162,6 +167,7 @@ class ProfileDataUserData {
     "channelid": channelid,
     "currencyCode": currencyCode,
     "fcm_token": fcmToken,
+    "branchid": branchid?.toJson(),
   };
 }
 
@@ -196,4 +202,28 @@ class Roleid {
       Roleid(id: json["_id"], rolename: json["rolename"]);
 
   Map<String, dynamic> toJson() => {"_id": id, "rolename": rolename};
+}
+
+class ProfileBranch {
+  String id;
+  String name;
+  String shortname;
+
+  ProfileBranch({
+    required this.id,
+    required this.name,
+    required this.shortname,
+  });
+
+  factory ProfileBranch.fromJson(Map<String, dynamic> json) => ProfileBranch(
+    id: json["_id"] as String? ?? '',
+    name: json["name"] as String? ?? '',
+    shortname: json["shortname"] as String? ?? '',
+  );
+
+  Map<String, dynamic> toJson() => {
+    "_id": id,
+    "name": name,
+    "shortname": shortname,
+  };
 }

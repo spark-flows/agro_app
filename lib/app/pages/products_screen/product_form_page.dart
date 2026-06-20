@@ -109,32 +109,22 @@ class _ProductFormPageState extends State<ProductFormPage> {
 
       if (imageUrl != null && imageUrl.isNotEmpty) {
         Get.find<ProductsController>().imageCtrl.text = imageUrl;
-        Get.snackbar(
-          'Success',
+        Utility.snacBar(
           'Image uploaded successfully',
-          snackPosition: SnackPosition.BOTTOM,
-          backgroundColor: Colors.green.shade50,
-          colorText: Colors.green.shade800,
+          Colors.green,
         );
       } else {
         // Log full response so we can find the correct key
         debugPrint('[ProductForm] Upload response: $data');
-        Get.snackbar(
-          'Upload Note',
-          'Image uploaded but URL not found in response. Check console.',
-          snackPosition: SnackPosition.BOTTOM,
+        Utility.snacBar(
+          'Image uploaded but URL not found in response',
+          Colors.orange,
         );
       }
     } catch (e) {
       debugPrint('[ProductForm] Upload error: $e');
       setState(() => _pickedImage = null);
-      Get.snackbar(
-        'Error',
-        'Image upload failed. Please try again.',
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red.shade50,
-        colorText: Colors.red.shade800,
-      );
+      Utility.errorMessage('Image upload failed. Please try again.');
     } finally {
       if (mounted) setState(() => _uploadingImage = false);
     }
@@ -159,6 +149,7 @@ class _ProductFormPageState extends State<ProductFormPage> {
           ),
           body: Form(
             key: controller.formKey,
+            autovalidateMode: AutovalidateMode.onUserInteraction,
             child: ListView(
               padding: const EdgeInsets.all(20),
               children: [
@@ -169,7 +160,7 @@ class _ProductFormPageState extends State<ProductFormPage> {
                 if (_loadingCategories)
                   const SizedBox(
                     height: 56,
-                    child: Center(child: CircularProgressIndicator()),
+                    child: Center(child: CircularProgressIndicator(color: ColorsValue.primary)),
                   )
                 else if (_categories.isEmpty)
                   OutlinedButton.icon(
@@ -189,6 +180,7 @@ class _ProductFormPageState extends State<ProductFormPage> {
                   )
                 else
                   DropdownButtonFormField<String>(
+                    autovalidateMode: AutovalidateMode.onUserInteraction,
                     value: _selectedCategoryId,
                     decoration: InputDecoration(
                       labelText: 'Category *',
@@ -437,7 +429,7 @@ class _ProductFormPageState extends State<ProductFormPage> {
               ? const SizedBox(
                   width: 18,
                   height: 18,
-                  child: CircularProgressIndicator(strokeWidth: 2),
+                  child: CircularProgressIndicator(strokeWidth: 2, color: ColorsValue.primary),
                 )
               : const Icon(
                   Icons.add_photo_alternate_outlined,
@@ -489,13 +481,29 @@ class _ProductFormPageState extends State<ProductFormPage> {
     String? Function(String?)? validator,
   }) {
     return TextFormField(
+      autovalidateMode: AutovalidateMode.onUserInteraction,
       controller: fieldController,
       keyboardType: keyboardType,
       textInputAction: action,
+      cursorColor: ColorsValue.primary,
+      style: Styles.txtBlackColorW50014,
       decoration: InputDecoration(
         labelText: label,
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-        prefixIcon: Icon(icon),
+        labelStyle: Styles.txtGreyColorW40014,
+        floatingLabelStyle: const TextStyle(color: ColorsValue.primary),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: Colors.grey.shade300),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: Colors.grey.shade300),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: ColorsValue.primary, width: 1.5),
+        ),
+        prefixIcon: Icon(icon, color: ColorsValue.primary.withValues(alpha: 0.8)),
       ),
       validator: validator,
     );

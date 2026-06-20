@@ -49,8 +49,8 @@ class ThumbNailImageFullpageState extends State<ThumbNailImageFullpage> {
             ),
           );
         } else {
-          return Center(
-            child: CircularProgressIndicator(color: ColorsValue.appColor),
+          return const Center(
+            child: CircularProgressIndicator(color: ColorsValue.primary),
           );
         }
       },

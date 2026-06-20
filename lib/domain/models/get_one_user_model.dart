@@ -48,6 +48,12 @@ class Data {
   bool? status;
   String? createdAt;
   String? updatedAt;
+  String? surname;
+  String? fathername;
+  String? gstnumber;
+  String? bankname;
+  String? bankaccountnumber;
+  String? bankifsscode;
 
   Data({
     this.id,
@@ -63,6 +69,12 @@ class Data {
     this.status,
     this.createdAt,
     this.updatedAt,
+    this.surname,
+    this.fathername,
+    this.gstnumber,
+    this.bankname,
+    this.bankaccountnumber,
+    this.bankifsscode,
   });
 
   factory Data.fromJson(Map<String, dynamic> json) => Data(
@@ -79,6 +91,12 @@ class Data {
     status: json["status"],
     createdAt: json["createdAt"],
     updatedAt: json["updatedAt"],
+    surname: json["surname"]?.toString(),
+    fathername: json["fathername"]?.toString(),
+    gstnumber: json["gstnumber"]?.toString(),
+    bankname: json["bankname"]?.toString(),
+    bankaccountnumber: json["bankaccountnumber"]?.toString(),
+    bankifsscode: (json["bankifsscode"] ?? json["bankifscode"])?.toString(),
   );
 
   Map<String, dynamic> toJson() => {
@@ -95,6 +113,12 @@ class Data {
     "status": status,
     "createdAt": createdAt,
     "updatedAt": updatedAt,
+    "surname": surname,
+    "fathername": fathername,
+    "gstnumber": gstnumber,
+    "bankname": bankname,
+    "bankaccountnumber": bankaccountnumber,
+    "bankifsscode": bankifsscode,
   };
 }
 

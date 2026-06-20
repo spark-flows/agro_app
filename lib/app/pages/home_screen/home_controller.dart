@@ -2,15 +2,20 @@ import 'dart:convert';
 
 import 'package:agro_app/app/navigators/routes_management.dart';
 import 'package:agro_app/domain/domain.dart';
+import 'package:agro_app/domain/models/get_all_branches_model.dart' as branch_model;
 import 'package:get/get.dart';
 
 class HomeController extends GetxController {
   String roleName = '';
+  List<branch_model.Doc> branches = [];
+  branch_model.Doc? selectedBranch;
+  bool isBranchesLoading = false;
 
   @override
   void onInit() {
     super.onInit();
     _loadRoleFromLocal();
+    fetchBranches();
   }
 
   Future<void> _loadRoleFromLocal() async {
@@ -45,7 +50,7 @@ class HomeController extends GetxController {
     final response = await Get.find<Repository>().getProfileApi(
       isLoading: false,
     );
-    if (response != null && response.data != null) {
+    if (response != null) {
       final userData = response.data.userData;
       roleName = userData.rolename;
 
@@ -72,4 +77,44 @@ class HomeController extends GetxController {
   void goToProducts() => RouteManagement.goToProductsScreen();
   void goToProfile() => RouteManagement.goToProfileScreen();
   void goToUsers() => RouteManagement.goToUserListScreen();
+
+  Future<void> fetchBranches() async {
+    isBranchesLoading = true;
+    update();
+    try {
+      final response = await Get.find<Repository>().getAllBranchesApi(isLoading: false);
+      if (response != null && response.data != null && response.data!.docs != null) {
+        branches = response.data!.docs!.where((b) => b.isDeleted != true).toList();
+        
+        if (branches.isNotEmpty) {
+          final savedBranchId = await Get.find<Repository>().getSecureValue(LocalKeys.selectedBranchId);
+          if (savedBranchId.isNotEmpty) {
+            final matched = branches.firstWhereOrNull((b) => b.id == savedBranchId);
+            if (matched != null) {
+              selectedBranch = matched;
+            } else {
+              selectedBranch = branches.first;
+              Get.find<Repository>().saveSecureValue(LocalKeys.selectedBranchId, selectedBranch!.id ?? '');
+            }
+          } else {
+            selectedBranch = branches.first;
+            Get.find<Repository>().saveSecureValue(LocalKeys.selectedBranchId, selectedBranch!.id ?? '');
+          }
+        }
+      }
+    } catch (e) {
+      print("Error fetching branches: $e");
+    } finally {
+      isBranchesLoading = false;
+      update();
+    }
+  }
+
+  void selectBranch(branch_model.Doc? branch) {
+    if (branch != null) {
+      selectedBranch = branch;
+      Get.find<Repository>().saveSecureValue(LocalKeys.selectedBranchId, branch.id ?? '');
+      update();
+    }
+  }
 }

@@ -270,6 +270,8 @@ class ConnectHelper {
       '[CustomerList] Final - role="$role", isAdmin=$isAdmin, distributorId="$distributorId"',
     );
 
+    final String branchId = await _resolveBranchId();
+
     var data = {
       "page": page,
       "limit": limit,
@@ -282,6 +284,7 @@ class ConnectHelper {
       "countrycode": [],
       "mobile": [],
       "sortoption": -1,
+      "branchid": branchId,
     };
     var response = await apiWrapper.makeRequest(
       EndPoints.customerListApi,
@@ -307,6 +310,7 @@ class ConnectHelper {
     // Use provided distributorid (admin) or fall back to logged-in dealer's ID
     final resolvedDistributorId =
         distributorid ?? await Utility.getSecureValue(LocalKeys.distributorId);
+    final String branchId = await _resolveBranchId();
     var data = {
       "customerid": customerid ?? "",
       "distributorid": resolvedDistributorId,
@@ -316,6 +320,7 @@ class ConnectHelper {
       "mobile": mobile,
       "feedback": feedback,
       "village": village,
+      "branchid": branchId,
     };
     var response = await apiWrapper.makeRequest(
       EndPoints.createCustomerApi,
@@ -388,13 +393,16 @@ class ConnectHelper {
     }
 
     final String normalizedRole = role.toLowerCase().trim();
-    final bool isDealer = normalizedRole == 'dealer' || normalizedRole == 'distributor';
+    final bool isDealer =
+        normalizedRole == 'dealer' || normalizedRole == 'distributor';
     var distributorId = await Utility.getSecureValue(LocalKeys.distributorId);
 
     dynamic distributorVal = [];
     if (isDealer && distributorId.isNotEmpty) {
       distributorVal = [distributorId];
     }
+
+    final String branchId = await _resolveBranchId();
 
     var data = {
       "page": 1,
@@ -408,6 +416,7 @@ class ConnectHelper {
       "deliverydate": [],
       "totalamount": [],
       "sortoption": -1,
+      "branchid": branchId,
     };
     var response = await apiWrapper.makeRequest(
       EndPoints.orderListApi,
@@ -427,12 +436,14 @@ class ConnectHelper {
     bool isLoading = false,
   }) async {
     var distributorId = await Utility.getSecureValue(LocalKeys.distributorId);
+    final String branchId = await _resolveBranchId();
     var data = {
       "orderid": orderid ?? "",
       "distributorid": distributorId,
       "items": items,
       "deliverydate": deliverydate ?? "",
       "totalamount": totalamount.toString(),
+      "branchid": branchId,
     };
     var response = await apiWrapper.makeRequest(
       EndPoints.createOrderApi,
@@ -493,13 +504,16 @@ class ConnectHelper {
     }
 
     final String normalizedRole = role.toLowerCase().trim();
-    final bool isDealer = normalizedRole == 'dealer' || normalizedRole == 'distributor';
+    final bool isDealer =
+        normalizedRole == 'dealer' || normalizedRole == 'distributor';
     var distributorId = await Utility.getSecureValue(LocalKeys.distributorId);
 
     dynamic distributorVal = [];
     if (isDealer && distributorId.isNotEmpty) {
       distributorVal = [distributorId];
     }
+
+    final String branchId = await _resolveBranchId();
 
     var data = {
       "page": 1,
@@ -512,6 +526,7 @@ class ConnectHelper {
       "orderno": [],
       "sortfield": "orderno",
       "sortoption": -1,
+      "branchid": branchId,
     };
     var response = await apiWrapper.makeRequest(
       EndPoints.customerOrderListApi,
@@ -533,6 +548,7 @@ class ConnectHelper {
     bool isLoading = false,
   }) async {
     var distributorId = await Utility.getSecureValue(LocalKeys.distributorId);
+    final String branchId = await _resolveBranchId();
     var data = {
       "customerorderid": customerorderid ?? "",
       "distributorid": distributorId,
@@ -541,6 +557,7 @@ class ConnectHelper {
       "remark1": remark1,
       "remark2": remark2,
       "remark3": remark3,
+      "branchid": branchId,
     };
     var response = await apiWrapper.makeRequest(
       EndPoints.createCustomerOrderApi,
@@ -676,6 +693,7 @@ class ConnectHelper {
     String type = "",
     bool isLoading = false,
   }) async {
+    final String branchId = await _resolveBranchId();
     var data = {
       "page": page,
       "type": type,
@@ -684,7 +702,7 @@ class ConnectHelper {
       "sortfield": sortfield,
       "sortoption": sortoption,
       "roleid": roleid,
-      "branchid": "",
+      "branchid": branchId,
     };
     var response = await apiWrapper.makeRequest(
       EndPoints.usersApi,
@@ -728,6 +746,7 @@ class ConnectHelper {
     String? bankifsscode,
     bool isLoading = false,
   }) async {
+    final String branchId = await _resolveBranchId();
     var data = {
       "userid": userid ?? "",
       "name": name,
@@ -737,6 +756,7 @@ class ConnectHelper {
       "password": password ?? "",
       "location": address,
       "roleid": roleid,
+      "branchid": branchId,
       if (surname != null && surname.isNotEmpty) "surname": surname,
       if (fathername != null && fathername.isNotEmpty) "fathername": fathername,
       if (gstnumber != null && gstnumber.isNotEmpty) "gstnumber": gstnumber,
@@ -755,6 +775,113 @@ class ConnectHelper {
       await Utility.commonHeader(),
     );
     return response;
+  }
+
+  Future<ResponseModel> getAllBranchesApi({
+    int page = 1,
+    int limit = 100,
+    String search = "",
+    bool isLoading = false,
+  }) async {
+    var data = {
+      "page": page,
+      "limit": limit,
+      "search": search,
+      "sortfield": "_id",
+      "sortoption": 1,
+    };
+    var response = await apiWrapper.makeRequest(
+      EndPoints.branchApi,
+      Request.post,
+      data,
+      isLoading,
+      await Utility.commonHeader(),
+    );
+    return response;
+  }
+
+  Future<String> _resolveBranchId() async {
+    final String role = await Utility.getSecureValue(LocalKeys.roleName);
+    final String normalizedRole = role.toLowerCase().trim();
+    final bool isAdmin =
+        normalizedRole == 'admin' ||
+        normalizedRole == 'is_admin' ||
+        normalizedRole == '1';
+
+    if (isAdmin) {
+      return await Utility.getSecureValue(LocalKeys.selectedBranchId);
+    }
+
+    // Non-admin branch resolution (e.g. dealer)
+    String profileJson = await Utility.getSecureValue(LocalKeys.profileData);
+    String branchId = '';
+
+    if (profileJson.isNotEmpty) {
+      try {
+        final Map<String, dynamic> decoded = json.decode(profileJson);
+        if (decoded['branchid'] != null) {
+          if (decoded['branchid'] is Map) {
+            branchId = decoded['branchid']['_id']?.toString() ?? '';
+          } else {
+            branchId = decoded['branchid'].toString();
+          }
+        }
+      } catch (_) {}
+    }
+
+    // Fallback: If resolved branchId is empty, try fetching fresh profile from API
+    if (branchId.isEmpty) {
+      print(
+        '[BranchResolution] Branch ID not found in local cache. Fetching from API...',
+      );
+      try {
+        final profileRes = await getProfileApi(isLoading: false);
+        if (!profileRes.hasError && profileRes.data.isNotEmpty) {
+          final decodedProfile = json.decode(profileRes.data);
+          final userData = decodedProfile['Data']?['userData'];
+          if (userData != null) {
+            // Save fresh profile cache
+            Get.find<Repository>().saveSecureValue(
+              LocalKeys.profileData,
+              json.encode(userData),
+            );
+
+            // Save other keys
+            final freshRole =
+                userData['roleid']?['rolename']?.toString() ??
+                userData['rolename']?.toString() ??
+                '';
+            if (freshRole.isNotEmpty) {
+              Get.find<Repository>().saveSecureValue(
+                LocalKeys.roleName,
+                freshRole,
+              );
+            }
+            final freshDistId = userData['_id']?.toString() ?? '';
+            if (freshDistId.isNotEmpty) {
+              Get.find<Repository>().saveSecureValue(
+                LocalKeys.distributorId,
+                freshDistId,
+              );
+            }
+
+            // Extract branch ID
+            final rawBranch = userData['branchid'];
+            if (rawBranch != null) {
+              if (rawBranch is Map) {
+                branchId = rawBranch['_id']?.toString() ?? '';
+              } else {
+                branchId = rawBranch.toString();
+              }
+            }
+          }
+        }
+      } catch (e) {
+        print('[BranchResolution] Error during API branch fallback: $e');
+      }
+    }
+
+    return branchId;
   }
 }
 

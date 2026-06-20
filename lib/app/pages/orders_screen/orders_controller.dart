@@ -341,11 +341,9 @@ class OrdersController extends GetxController {
       if (Get.isSnackbarOpen) await Get.closeCurrentSnackbar();
       Get.back();
       Get.back();
-      Get.snackbar(
-        'Success',
+      Utility.snacBar(
         'Order placed successfully!',
-        backgroundColor: Colors.green,
-        colorText: Colors.white,
+        Colors.green,
       );
     } else {
       Utility.errorMessage(response?.message ?? 'Failed to place order');
@@ -366,11 +364,9 @@ class OrdersController extends GetxController {
       } else {
         fetchAllOrders();
       }
-      Get.snackbar(
-        'Deleted',
+      Utility.snacBar(
         'Order deleted successfully',
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
+        Colors.green,
       );
     } else {
       Utility.errorMessage('Failed to delete order');

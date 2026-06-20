@@ -344,4 +344,16 @@ class DataRepository extends DomainRepository {
     bankifsscode: bankifsscode,
     isLoading: isLoading,
   );
+
+  Future<ResponseModel> getAllBranchesApi({
+    int page = 1,
+    int limit = 100,
+    String search = "",
+    bool isLoading = false,
+  }) async => connectHelper.getAllBranchesApi(
+    page: page,
+    limit: limit,
+    search: search,
+    isLoading: isLoading,
+  );
 }

@@ -151,11 +151,7 @@ class UsersController extends GetxController {
 
   Future<void> saveUser() async {
     if (selectedRoleId == null) {
-      Get.snackbar(
-        'Error',
-        'Please select a role',
-        snackPosition: SnackPosition.BOTTOM,
-      );
+      Utility.errorMessage('Please select a role');
       return;
     }
 
@@ -173,23 +169,13 @@ class UsersController extends GetxController {
 
     if (errorMsg == null) {
       Get.back();
-      Get.snackbar(
-        'Success',
+      Utility.snacBar(
         editingUserId.value.isNotEmpty ? 'User updated' : 'User added',
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.green.withValues(alpha: 0.9),
-        colorText: Colors.white,
+        Colors.green,
       );
       fetchUsers(isRefresh: true);
     } else {
-      Get.snackbar(
-        'Error',
-        errorMsg,
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red.withValues(alpha: 0.9),
-        colorText: Colors.white,
-        duration: const Duration(seconds: 4),
-      );
+      Utility.errorMessage(errorMsg);
     }
   }
 
@@ -199,18 +185,13 @@ class UsersController extends GetxController {
       isLoading: true,
     );
     if (success) {
-      Get.snackbar(
-        'Success',
+      Utility.snacBar(
         'User deleted successfully',
-        snackPosition: SnackPosition.BOTTOM,
+        Colors.green,
       );
       fetchUsers(isRefresh: true);
     } else {
-      Get.snackbar(
-        'Error',
-        'Failed to delete user',
-        snackPosition: SnackPosition.BOTTOM,
-      );
+      Utility.errorMessage('Failed to delete user');
     }
   }
 }

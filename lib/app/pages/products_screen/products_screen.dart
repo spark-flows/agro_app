@@ -86,7 +86,7 @@ class _ProductsScreenState extends State<ProductsScreen> {
                 // ── Product List ───────────────────────────────────────────
                 Expanded(
                   child: controller.isLoading
-                      ? const Center(child: CircularProgressIndicator())
+                      ? const Center(child: CircularProgressIndicator(color: ColorsValue.primary))
                       : controller.products.isEmpty
                       ? Center(
                           child: Column(
@@ -118,7 +118,7 @@ class _ProductsScreenState extends State<ProductsScreen> {
                                 return const Padding(
                                   padding: EdgeInsets.symmetric(vertical: 16),
                                   child: Center(
-                                    child: CircularProgressIndicator(),
+                                    child: CircularProgressIndicator(color: ColorsValue.primary),
                                   ),
                                 );
                               }

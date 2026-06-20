@@ -19,6 +19,7 @@ import 'package:agro_app/domain/models/get_all_users_model.dart';
 import 'package:agro_app/domain/models/get_one_order_model.dart';
 import 'package:agro_app/domain/models/get_one_user_model.dart';
 import 'package:agro_app/domain/models/get_profille_model.dart';
+import 'package:agro_app/domain/models/get_all_branches_model.dart';
 
 /// The main repository which will get the data from [DeviceRepository] or the
 /// [DataRepository].
@@ -915,6 +916,44 @@ class Repository {
           fallback;
     } catch (_) {
       return fallback;
+    }
+  }
+
+  Future<GetAllBranchs?> getAllBranchesApi({
+    int page = 1,
+    int limit = 100,
+    String search = "",
+    bool isLoading = false,
+  }) async {
+    try {
+      var response = await _dataRepository.getAllBranchesApi(
+        page: page,
+        limit: limit,
+        search: search,
+        isLoading: isLoading,
+      );
+      if (response.hasError) {
+        final msg = _parseErrorMessage(
+          response.data,
+          'Failed to load branches',
+        );
+        Utility.showMessage(msg, MessageType.error, null, '');
+        return null;
+      }
+      if (response.data.isNotEmpty) {
+        return getAllBranchsFromJson(response.data);
+      }
+      return null;
+    } catch (e, st) {
+      print('getAllBranchesApi error: $e\n$st');
+      Utility.closeDialog();
+      Utility.showMessage(
+        'Failed to load branches',
+        MessageType.error,
+        null,
+        '',
+      );
+      return null;
     }
   }
 }

@@ -1,3 +1,4 @@
+import 'package:agro_app/app/theme/colors_value.dart';
 import 'package:flutter/material.dart';
 
 bool isValidEmail(String email) {
@@ -108,14 +109,14 @@ class _SimpleEmailDialogState extends State<_SimpleEmailDialog> {
               child: Row(
                 children: [
                   Container(
-                    padding: EdgeInsets.all(8),
+                    padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: Colors.blue.shade50,
+                      color: ColorsValue.primary.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(8),
                     ),
-                    child: Icon(
+                    child: const Icon(
                       Icons.mail_outline,
-                      color: Colors.blue.shade600,
+                      color: ColorsValue.primary,
                       size: 20,
                     ),
                   ),
@@ -197,7 +198,7 @@ class _SimpleEmailDialogState extends State<_SimpleEmailDialog> {
                         borderSide: BorderSide(
                           color: _error.isNotEmpty
                               ? Colors.red.shade500
-                              : Colors.blue.shade500,
+                              : ColorsValue.primary,
                           width: 2,
                         ),
                       ),
@@ -282,9 +283,7 @@ class _SimpleEmailDialogState extends State<_SimpleEmailDialog> {
                       style: ElevatedButton.styleFrom(
                         backgroundColor: _loading
                             ? Colors.grey.shade400
-                            : _success
-                            ? Colors.green.shade600
-                            : Colors.blue.shade600,
+                            : ColorsValue.primary,
                         padding: EdgeInsets.symmetric(vertical: 12),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(8),

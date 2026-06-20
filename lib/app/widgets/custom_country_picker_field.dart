@@ -73,9 +73,9 @@ class CustomCountryPickerField extends StatelessWidget {
         ),
         inputBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(radius ?? Dimens.eight),
-          borderSide: BorderSide(
-            width: Dimens.one,
-            color: ColorsValue.appColor,
+          borderSide: const BorderSide(
+            width: 1.0,
+            color: ColorsValue.primary,
           ),
         ),
         inputDecoration: InputDecoration(
@@ -83,31 +83,31 @@ class CustomCountryPickerField extends StatelessWidget {
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(radius ?? Dimens.eight),
             borderSide: isBorder ?? false
-                ? BorderSide(width: Dimens.one, color: ColorsValue.appColor)
+                ? const BorderSide(width: 1.5, color: ColorsValue.primary)
                 : BorderSide.none,
           ),
           enabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(radius ?? Dimens.eight),
             borderSide: isBorder ?? false
-                ? BorderSide(width: Dimens.one, color: ColorsValue.appColor)
+                ? const BorderSide(width: 1.0, color: ColorsValue.borderCol)
                 : BorderSide.none,
           ),
           disabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(radius ?? Dimens.eight),
             borderSide: isBorder ?? false
-                ? BorderSide(width: Dimens.one, color: ColorsValue.appColor)
+                ? const BorderSide(width: 1.0, color: ColorsValue.borderCol)
                 : BorderSide.none,
           ),
           errorBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(radius ?? Dimens.eight),
             borderSide: isBorder ?? false
-                ? BorderSide(width: Dimens.one, color: ColorsValue.appColor)
+                ? const BorderSide(width: 1.0, color: Colors.red)
                 : BorderSide.none,
           ),
           focusedErrorBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(radius ?? Dimens.eight),
             borderSide: isBorder ?? false
-                ? BorderSide(width: Dimens.one, color: ColorsValue.appColor)
+                ? const BorderSide(width: 1.5, color: Colors.red)
                 : BorderSide.none,
           ),
           hintText: hintText,

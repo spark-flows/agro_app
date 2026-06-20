@@ -1,5 +1,7 @@
 import 'package:agro_app/app/app.dart';
 import 'package:agro_app/domain/services/enum.dart';
+import 'package:agro_app/domain/models/get_all_branches_model.dart'
+    as branch_model;
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -56,6 +58,75 @@ class HomeScreen extends StatelessWidget {
                   ),
 
                   const SizedBox(height: 20),
+
+                  // Branch dropdown selection (Admin only)
+                  if (RoleUtils.isAdmin(controller.roleName)) ...[
+                    if (controller.isBranchesLoading)
+                      const Center(
+                        child: CircularProgressIndicator(
+                          color: ColorsValue.primary,
+                        ),
+                      )
+                    else if (controller.branches.isNotEmpty) ...[
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: Colors.grey.shade200),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.03),
+                              blurRadius: 8,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        child: DropdownButtonHideUnderline(
+                          child: DropdownButton<branch_model.Doc>(
+                            value: controller.selectedBranch,
+                            isExpanded: true,
+                            icon: const Icon(
+                              Icons.arrow_drop_down,
+                              color: ColorsValue.primary,
+                            ),
+                            dropdownColor: Colors.white,
+                            borderRadius: BorderRadius.circular(12),
+                            hint: Text(
+                              'Select Branch',
+                              style: Styles.txtGreyColorW40014,
+                            ),
+                            items: controller.branches.map((
+                              branch_model.Doc branch,
+                            ) {
+                              return DropdownMenuItem<branch_model.Doc>(
+                                value: branch,
+                                child: Row(
+                                  children: [
+                                    const Icon(
+                                      Icons.storefront_outlined,
+                                      color: ColorsValue.primary,
+                                      size: 20,
+                                    ),
+                                    const SizedBox(width: 10),
+                                    Text(
+                                      branch.name ?? '',
+                                      style: Styles.txtBlackColorW60014,
+                                    ),
+                                  ],
+                                ),
+                              );
+                            }).toList(),
+                            onChanged: controller.selectBranch,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+                    ],
+                  ],
 
                   GridView.count(
                     crossAxisCount: 2,

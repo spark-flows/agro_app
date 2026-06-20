@@ -31,7 +31,11 @@ class CustomerOrdersScreen extends StatelessWidget {
               _buildTopBar(context, controller),
               Expanded(
                 child: controller.isLoading
-                    ? const Center(child: CircularProgressIndicator())
+                    ? const Center(
+                        child: CircularProgressIndicator(
+                          color: ColorsValue.primary,
+                        ),
+                      )
                     : controller.ordersList.isEmpty
                     ? _buildEmptyState()
                     : _buildOrdersList(controller),
@@ -88,8 +92,8 @@ class CustomerOrdersScreen extends StatelessWidget {
                         'Filter by Customer (Optional)',
                         style: Styles.txtGreyColorW40014,
                       ),
-                      value: controller.selectedCustomerId.isNotEmpty
-                          ? controller.selectedCustomerId
+                      value: controller.filterCustomerId.isNotEmpty
+                          ? controller.filterCustomerId
                           : null,
                       items: [
                         const DropdownMenuItem<String>(
@@ -108,7 +112,7 @@ class CustomerOrdersScreen extends StatelessWidget {
                       ],
                       onChanged: (val) {
                         if (val != null) {
-                          controller.selectedCustomerId = val;
+                          controller.filterCustomerId = val;
                           controller.update();
                           if (val.isEmpty) {
                             controller.fetchAllCustomerOrders();
@@ -288,190 +292,223 @@ class CustomerOrdersScreen extends StatelessWidget {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => Container(
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: const BorderRadius.vertical(
-                  top: Radius.circular(24),
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.05),
-                    blurRadius: 10,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Order Details',
-                          style: Styles.txtBlackColorW70020,
-                        ),
-                        Text(
-                          order.customerid?.name ?? '---',
-                          style: Styles.txtGreyColorW40014,
-                        ),
-                      ],
-                    ),
-                  ),
-                  IconButton(
-                    onPressed: () => Get.back(),
-                    icon: Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: Colors.grey.shade100,
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(Icons.close, size: 20),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            Flexible(
-              child: ListView(
-                shrinkWrap: true,
+      builder: (context) => DraggableScrollableSheet(
+        initialChildSize: 0.6,
+        minChildSize: 0.4,
+        maxChildSize: 0.95,
+        expand: false,
+        builder: (ctx, scrollController) => Container(
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+          ),
+          child: Column(
+            children: [
+              // Fixed header (not scrollable)
+              Container(
                 padding: const EdgeInsets.all(20),
-                children: [
-                  if (order.image != null && order.image!.isNotEmpty)
-                    Container(
-                      margin: const EdgeInsets.only(bottom: 24),
-                      height: 200,
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: Colors.grey.shade200),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: const BorderRadius.vertical(
+                    top: Radius.circular(24),
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.05),
+                      blurRadius: 10,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    // Drag handle + title row
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Center(
+                            child: Container(
+                              width: 40,
+                              height: 4,
+                              margin: const EdgeInsets.only(bottom: 8),
+                              decoration: BoxDecoration(
+                                color: Colors.grey.shade300,
+                                borderRadius: BorderRadius.circular(2),
+                              ),
+                            ),
+                          ),
+                          Text(
+                            'Order Details',
+                            style: Styles.txtBlackColorW70020,
+                          ),
+                          Text(
+                            'Name: ${order.customerid?.name ?? '---'}',
+                            style: Styles.txtGreyColorW40014,
+                          ),
+                          Text(
+                            'Email: ${order.customerid?.email ?? '---'}',
+                            style: Styles.txtGreyColorW40014,
+                          ),
+                          Text(
+                            'Mobile No: ${order.customerid?.mobile ?? '---'}',
+                            style: Styles.txtGreyColorW40014,
+                          ),
+                        ],
                       ),
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(16),
-                        child: Image.network(
-                          order.image ?? '',
-                          fit: BoxFit.cover,
-                          errorBuilder: (_, _, _) => const Center(
-                            child: Icon(
-                              Icons.image_not_supported,
-                              size: 40,
-                              color: Colors.grey,
+                    ),
+                    IconButton(
+                      onPressed: () => Get.back(),
+                      icon: Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: Colors.grey.shade100,
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(Icons.close, size: 20),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              // Scrollable body
+              Expanded(
+                child: ListView(
+                  controller: scrollController,
+                  padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
+                  children: [
+                    if (order.image != null && order.image!.isNotEmpty)
+                      Container(
+                        margin: const EdgeInsets.only(bottom: 24),
+                        height: 200,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: Colors.grey.shade200),
+                        ),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(16),
+                          child: Image.network(
+                            order.image ?? '',
+                            fit: BoxFit.cover,
+                            errorBuilder: (_, _, _) => const Center(
+                              child: Icon(
+                                Icons.image_not_supported,
+                                size: 40,
+                                color: Colors.grey,
+                              ),
                             ),
                           ),
                         ),
                       ),
-                    ),
-                  if (isAdmin) ...[
-                    _buildDetailRow('Remark 1', order.remark1 ?? '-'),
-                    const SizedBox(height: 12),
-                    _buildDetailRow('Remark 2', order.remark2 ?? '-'),
-                    const SizedBox(height: 12),
-                    _buildDetailRow('Remark 3', order.remark3 ?? '-'),
+                    if (isAdmin) ...[
+                      _buildDetailRow('Remark 1', order.remark1 ?? '-'),
+                      const SizedBox(height: 12),
+                      _buildDetailRow('Remark 2', order.remark2 ?? '-'),
+                      const SizedBox(height: 12),
+                      _buildDetailRow('Remark 3', order.remark3 ?? '-'),
+                    ],
+                    const SizedBox(height: 100), // space for bottom buttons
                   ],
-                ],
+                ),
               ),
-            ),
-            Container(
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.05),
-                    blurRadius: 10,
-                    offset: const Offset(0, -5),
-                  ),
-                ],
-              ),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: ElevatedButton.icon(
-                      onPressed: () async {
-                        Get.back(); // close modal
-                        await controller.editOrder(order);
-                        if (context.mounted) {
-                          _showCreateOrderBottomSheet(
-                            context,
-                            controller,
-                            isEdit: true,
+
+              // Fixed bottom action buttons
+              Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.05),
+                      blurRadius: 10,
+                      offset: const Offset(0, -5),
+                    ),
+                  ],
+                ),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: ElevatedButton.icon(
+                        onPressed: () async {
+                          Get.back(); // close details modal
+                          await controller.editOrder(order);
+                          // Use Get.context to avoid stale context after modal closes
+                          final ctx = Get.context;
+                          if (ctx != null) {
+                            _showCreateOrderBottomSheet(
+                              ctx,
+                              controller,
+                              isEdit: true,
+                            );
+                          }
+                        },
+                        icon: const Icon(
+                          Icons.edit_outlined,
+                          color: Colors.white,
+                          size: 18,
+                        ),
+                        label: const Text(
+                          'Edit',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.blue,
+                          minimumSize: const Size(double.infinity, 50),
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: ElevatedButton.icon(
+                        onPressed: () {
+                          Utility.showDeleteDialog(
+                            title: 'Confirm Delete',
+                            message:
+                                'Are you sure you want to delete this customer order?',
+                            onConfirm: () {
+                              Get.back(); // close modal sheet
+                              if (order.id != null) {
+                                controller.deleteOrder(order.id!);
+                              }
+                            },
                           );
-                        }
-                      },
-                      icon: const Icon(
-                        Icons.edit_outlined,
-                        color: Colors.white,
-                        size: 18,
-                      ),
-                      label: const Text(
-                        'Edit',
-                        style: TextStyle(
+                        },
+                        icon: const Icon(
+                          Icons.delete_outline,
                           color: Colors.white,
-                          fontWeight: FontWeight.bold,
+                          size: 18,
                         ),
-                      ),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.blue,
-                        minimumSize: const Size(double.infinity, 50),
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
+                        label: const Text(
+                          'Delete',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.red,
+                          minimumSize: const Size(double.infinity, 50),
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
                         ),
                       ),
                     ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: ElevatedButton.icon(
-                      onPressed: () {
-                        Utility.showDeleteDialog(
-                          title: 'Confirm Delete',
-                          message:
-                              'Are you sure you want to delete this customer order?',
-                          onConfirm: () {
-                            Get.back(); // close modal sheet
-                            if (order.id != null) {
-                              controller.deleteOrder(order.id!);
-                            }
-                          },
-                        );
-                      },
-                      icon: const Icon(
-                        Icons.delete_outline,
-                        color: Colors.white,
-                        size: 18,
-                      ),
-                      label: const Text(
-                        'Delete',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.red,
-                        minimumSize: const Size(double.infinity, 50),
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

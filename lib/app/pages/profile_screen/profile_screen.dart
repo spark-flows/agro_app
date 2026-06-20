@@ -21,7 +21,9 @@ class ProfileScreen extends StatelessWidget {
           ),
           body: Obx(() {
             if (controller.isLoading.value) {
-              return const Center(child: CircularProgressIndicator());
+              return const Center(
+                child: CircularProgressIndicator(color: ColorsValue.primary),
+              );
             }
 
             final user = controller.userData;
@@ -74,6 +76,12 @@ class ProfileScreen extends StatelessWidget {
                   const SizedBox(height: 32),
 
                   _buildInfoTile(Icons.phone, 'Phone', user.mobile),
+                  if (user.branchid != null && user.branchid!.name.isNotEmpty)
+                    _buildInfoTile(
+                      Icons.storefront_outlined,
+                      'Branch Name',
+                      user.branchid!.name,
+                    ),
                   // _buildInfoTile(Icons.info_outline, 'Address', user.data?. ? user.address : 'N/A'),
                   // _buildInfoTile(
                   //   Icons.badge_outlined,

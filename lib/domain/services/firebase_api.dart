@@ -7,21 +7,10 @@ import 'package:flutter/material.dart';
 import 'package:agro_app/app/app.dart';
 
 class FirebaseApi {
-  final _firebaseMessaging = FirebaseMessaging.instance;
   static String? currentUuid;
   static bool isVideo = false;
 
   Future<void> initNotification() async {
-    await _firebaseMessaging.requestPermission(
-      alert: true,
-      announcement: true,
-      badge: true,
-      carPlay: false,
-      criticalAlert: true,
-      provisional: true,
-      sound: true,
-    );
-
     FirebaseMessaging.onMessage.listen((RemoteMessage message) async {
       print(message.notification);
 
@@ -104,13 +93,7 @@ class FirebaseApi {
       onActionReceivedMethod: _onNotificationActionReceived,
     );
 
-    await AwesomeNotifications().isNotificationAllowed().then((
-      isAllowed,
-    ) async {
-      if (!isAllowed) {
-        await AwesomeNotifications().requestPermissionToSendNotifications();
-      }
-    });
+
 
     // ✅ Must be registered before any background work
     FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);

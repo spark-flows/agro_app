@@ -13,6 +13,11 @@ class CustomerOrdersController extends GetxController {
   bool isLoading = false;
 
   List<GetAllCustomerDoc> customersList = [];
+
+  // Used ONLY for the top-bar filter dropdown
+  String filterCustomerId = '';
+
+  // Used ONLY for the create/edit form
   String selectedCustomerId = '';
 
   // Form Fields
@@ -77,6 +82,7 @@ class CustomerOrdersController extends GetxController {
   }
 
   void resetForm() {
+    // Only reset form fields — do NOT touch filterCustomerId
     selectedCustomerId = '';
     selectedImage = null;
     existingImageUrl = null;
@@ -174,16 +180,19 @@ class CustomerOrdersController extends GetxController {
 
     if (createRes != null && createRes.isSuccess == true) {
       Get.back(); // Close bottom sheet
-      Get.snackbar(
-        'Success',
+      Utility.snacBar(
         editingCustomerOrderId == null
             ? 'Customer order created successfully!'
             : 'Customer order updated successfully!',
-        backgroundColor: Colors.green,
-        colorText: Colors.white,
+        Colors.green,
       );
       resetForm();
-      fetchAllCustomerOrders();
+      // Re-fetch using the current filter selection (not cleared by resetForm)
+      if (filterCustomerId.isNotEmpty) {
+        fetchCustomerOrdersByCustomer(filterCustomerId);
+      } else {
+        fetchAllCustomerOrders();
+      }
     }
   }
 
@@ -195,13 +204,12 @@ class CustomerOrdersController extends GetxController {
     );
     Utility.closeDialog();
     if (success) {
-      Get.snackbar(
-        'Deleted',
-        'Customer order deleted successfully',
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-      );
-      fetchAllCustomerOrders();
+      Utility.snacBar('Customer order deleted successfully', Colors.green);
+      if (filterCustomerId.isNotEmpty) {
+        fetchCustomerOrdersByCustomer(filterCustomerId);
+      } else {
+        fetchAllCustomerOrders();
+      }
     }
   }
 }

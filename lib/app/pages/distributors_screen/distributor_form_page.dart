@@ -1,5 +1,6 @@
 import 'package:agro_app/app/pages/distributors_screen/distributors_controller.dart';
 import 'package:agro_app/app/theme/theme.dart';
+import 'package:agro_app/app/utils/utility.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
@@ -29,6 +30,7 @@ class DistributorFormPage extends StatelessWidget {
           ),
           body: Form(
             key: controller.addFormKey,
+            autovalidateMode: AutovalidateMode.onUserInteraction,
             child: ListView(
               padding: const EdgeInsets.all(20),
               children: [
@@ -68,8 +70,14 @@ class DistributorFormPage extends StatelessWidget {
                   icon: Icons.email_outlined,
                   keyboardType: TextInputType.emailAddress,
                   action: TextInputAction.next,
-                  validator: (v) =>
-                      v!.trim().isEmpty ? 'Please enter an email' : null,
+                  validator: (v) {
+                    if (v == null || v.trim().isEmpty) {
+                      return 'Please enter an email';
+                    } else if (!Utility.emailValidation(v.trim())) {
+                      return 'Please enter a valid email';
+                    }
+                    return null;
+                  },
                 ),
                 const SizedBox(height: 12),
                 _buildField(
@@ -94,8 +102,20 @@ class DistributorFormPage extends StatelessWidget {
                         ? 'Password (leave blank to keep)'
                         : 'Password *',
                     icon: Icons.lock_outline,
-                    obscureText: true,
+                    obscureText: controller.isPasswordHidden.value,
                     action: TextInputAction.next,
+                    suffixIcon: IconButton(
+                      icon: Icon(
+                        controller.isPasswordHidden.value
+                            ? Icons.visibility_off
+                            : Icons.visibility,
+                        color: Colors.grey,
+                      ),
+                      onPressed: () {
+                        controller.isPasswordHidden.value =
+                            !controller.isPasswordHidden.value;
+                      },
+                    ),
                     validator: (v) {
                       if (controller.editingUserId.value.isEmpty &&
                           v!.trim().isEmpty) {
@@ -124,6 +144,25 @@ class DistributorFormPage extends StatelessWidget {
                   label: 'GST Number',
                   icon: Icons.receipt_long_outlined,
                   action: TextInputAction.next,
+                  maxLength: 15,
+                  inputFormatters: [
+                    LengthLimitingTextInputFormatter(15),
+                    TextInputFormatter.withFunction(
+                      (oldValue, newValue) =>
+                          newValue.copyWith(text: newValue.text.toUpperCase()),
+                    ),
+                  ],
+                  validator: (v) {
+                    if (v != null && v.trim().isNotEmpty) {
+                      final regExp = RegExp(
+                        r'^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[0-9A-Z]{1}Z[0-9A-Z]{1}$',
+                      );
+                      if (!regExp.hasMatch(v.trim())) {
+                        return 'Enter a valid 15-digit GSTIN (e.g. 24ABCDE1234F1Z5)';
+                      }
+                    }
+                    return null;
+                  },
                 ),
                 const SizedBox(height: 12),
                 _buildField(
@@ -150,6 +189,20 @@ class DistributorFormPage extends StatelessWidget {
                   icon: Icons.credit_card_outlined,
                   keyboardType: TextInputType.number,
                   action: TextInputAction.next,
+                  maxLength: 18,
+                  inputFormatters: [
+                    FilteringTextInputFormatter.digitsOnly,
+                    LengthLimitingTextInputFormatter(18),
+                  ],
+                  validator: (v) {
+                    if (v != null && v.trim().isNotEmpty) {
+                      final regExp = RegExp(r'^[0-9]{9,18}$');
+                      if (!regExp.hasMatch(v.trim())) {
+                        return 'Enter a valid bank account number (9 to 18 digits)';
+                      }
+                    }
+                    return null;
+                  },
                 ),
                 const SizedBox(height: 12),
                 _buildField(
@@ -157,6 +210,23 @@ class DistributorFormPage extends StatelessWidget {
                   label: 'IFSC Code',
                   icon: Icons.code_outlined,
                   action: TextInputAction.next,
+                  maxLength: 11,
+                  inputFormatters: [
+                    LengthLimitingTextInputFormatter(11),
+                    TextInputFormatter.withFunction(
+                      (oldValue, newValue) =>
+                          newValue.copyWith(text: newValue.text.toUpperCase()),
+                    ),
+                  ],
+                  validator: (v) {
+                    if (v != null && v.trim().isNotEmpty) {
+                      final regExp = RegExp(r'^[A-Z]{4}0[A-Z0-9]{6}$');
+                      if (!regExp.hasMatch(v.trim())) {
+                        return 'Enter a valid 11-character IFSC (e.g. SBIN0001234)';
+                      }
+                    }
+                    return null;
+                  },
                 ),
                 const SizedBox(height: 24),
 
@@ -246,19 +316,40 @@ class DistributorFormPage extends StatelessWidget {
     int? maxLength,
     List<TextInputFormatter>? inputFormatters,
     String? Function(String?)? validator,
+    Widget? suffixIcon,
   }) {
     return TextFormField(
+      autovalidateMode: AutovalidateMode.onUserInteraction,
       controller: controller,
       keyboardType: keyboardType,
       textInputAction: action,
       obscureText: obscureText,
       maxLength: maxLength,
       inputFormatters: inputFormatters,
+      cursorColor: ColorsValue.primary,
+      style: Styles.txtBlackColorW50014,
       decoration: InputDecoration(
         labelText: label,
+        labelStyle: Styles.txtGreyColorW40014,
+        floatingLabelStyle: const TextStyle(color: ColorsValue.primary),
         counterText: maxLength != null ? '' : null,
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-        prefixIcon: Icon(icon),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: Colors.grey.shade300),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: Colors.grey.shade300),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: ColorsValue.primary, width: 1.5),
+        ),
+        prefixIcon: Icon(
+          icon,
+          color: ColorsValue.primary.withValues(alpha: 0.8),
+        ),
+        suffixIcon: suffixIcon,
       ),
       validator: validator,
     );

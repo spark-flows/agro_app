@@ -5,14 +5,17 @@ import 'package:get/get.dart';
 import 'package:agro_app/app/theme/colors_value.dart';
 
 ThemeData themeData(BuildContext context) => ThemeData(
+  progressIndicatorTheme: const ProgressIndicatorThemeData(
+    color: ColorsValue.primary,
+  ),
   disabledColor: const Color(0xFFEEEEEE),
   bottomSheetTheme: const BottomSheetThemeData(
     backgroundColor: Colors.transparent,
   ),
-  timePickerTheme: TimePickerThemeData(dayPeriodColor: ColorsValue.appColor),
+  timePickerTheme: const TimePickerThemeData(dayPeriodColor: ColorsValue.primary),
   shadowColor: const Color(0xFFDDE3FD),
   checkboxTheme: CheckboxThemeData(
-    fillColor: WidgetStateProperty.all<Color>(ColorsValue.appColor),
+    fillColor: WidgetStateProperty.all<Color>(ColorsValue.primary),
     side: BorderSide.none,
   ),
   appBarTheme: const AppBarTheme(
@@ -26,28 +29,24 @@ ThemeData themeData(BuildContext context) => ThemeData(
     type: BottomNavigationBarType.fixed,
     elevation: 0,
   ),
-  primaryColor: ColorsValue.appColor,
+  primaryColor: ColorsValue.primary,
   secondaryHeaderColor: Colors.white,
   fontFamily: 'Product Sans',
   brightness: Brightness.light,
   scaffoldBackgroundColor: Colors.transparent,
-  colorScheme: ColorScheme.light(
+  colorScheme: const ColorScheme.light(
     surface: Colors.white,
-    onInverseSurface: const Color.fromRGBO(0, 0, 0, 0.12),
-    primary: ColorsValue.appColor,
+    onInverseSurface: Color.fromRGBO(0, 0, 0, 0.12),
+    primary: ColorsValue.primary,
   ),
   iconTheme: const IconThemeData(color: Colors.black),
   inputDecorationTheme: InputDecorationTheme(
     fillColor: Colors.grey,
     hintStyle: TextStyle(color: Get.theme.hintColor.withOpacity(.3)),
+    floatingLabelStyle: const TextStyle(color: ColorsValue.primary),
     border: OutlineInputBorder(
       borderRadius: BorderRadius.circular(12),
       borderSide: const BorderSide(color: Color(0xFFCCCCCC), width: 1.0),
-      // borderSide: BorderSide(
-      //   color: Color(0xFFEA6F00),
-      //   // color: Color.fromARGB(255, 209, 209, 209),
-      //   width: 1.5,
-      // ),
     ),
     enabledBorder: OutlineInputBorder(
       borderRadius: BorderRadius.circular(12),
@@ -55,22 +54,25 @@ ThemeData themeData(BuildContext context) => ThemeData(
     ),
     errorBorder: OutlineInputBorder(
       borderRadius: BorderRadius.circular(12),
-      borderSide: const BorderSide(color: Color(0xFFCCCCCC), width: 1.0),
+      borderSide: const BorderSide(color: Colors.red, width: 1.0),
     ),
     focusedBorder: OutlineInputBorder(
       borderRadius: BorderRadius.circular(12),
-      borderSide: const BorderSide(color: Color(0xFFCCCCCC), width: 1.0),
+      borderSide: const BorderSide(color: ColorsValue.primary, width: 1.5),
     ),
     focusedErrorBorder: OutlineInputBorder(
       borderRadius: BorderRadius.circular(12),
-      borderSide: const BorderSide(color: Color(0xFFCCCCCC), width: 1.0),
+      borderSide: const BorderSide(color: Colors.red, width: 1.5),
     ),
   ),
-  textSelectionTheme: TextSelectionThemeData(cursorColor: ColorsValue.appColor),
-  tabBarTheme: TabBarThemeData(labelColor: Colors.white),
+  textSelectionTheme: const TextSelectionThemeData(cursorColor: ColorsValue.primary),
+  tabBarTheme: const TabBarThemeData(labelColor: Colors.white),
 );
 
 ThemeData darkThemeData(BuildContext context) => ThemeData(
+  progressIndicatorTheme: const ProgressIndicatorThemeData(
+    color: ColorsValue.primary,
+  ),
   textSelectionTheme: const TextSelectionThemeData(cursorColor: Colors.white),
   appBarTheme: const AppBarTheme(
     titleTextStyle: TextStyle(color: Colors.white, fontFamily: 'Product Sans'),

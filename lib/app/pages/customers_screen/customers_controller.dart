@@ -227,18 +227,13 @@ class CustomersController extends GetxController {
     Utility.closeLoader();
 
     if (success) {
-      Get.snackbar(
-        'Success',
+      Utility.snacBar(
         'Customer deleted successfully',
-        snackPosition: SnackPosition.BOTTOM,
+        Colors.green,
       );
       fetchCustomers(isRefresh: true);
     } else {
-      Get.snackbar(
-        'Error',
-        'Failed to delete customer',
-        snackPosition: SnackPosition.BOTTOM,
-      );
+      Utility.errorMessage('Failed to delete customer');
     }
   }
 
@@ -258,11 +253,7 @@ class CustomersController extends GetxController {
   Future<void> submitFeedback(String customerId) async {
     final feedback = feedbackCtrl.text.trim();
     if (feedback.isEmpty) {
-      Get.snackbar(
-        'Error',
-        'Please enter feedback',
-        snackPosition: SnackPosition.BOTTOM,
-      );
+      Utility.errorMessage('Please enter feedback');
       return;
     }
 
@@ -276,25 +267,15 @@ class CustomersController extends GetxController {
 
     if (errorMsg == null) {
       Get.back(); // Close the bottom sheet
-      Get.snackbar(
-        'Success',
+      Utility.snacBar(
         'Feedback submitted successfully',
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.green.withValues(alpha: 0.9),
-        colorText: Colors.white,
+        Colors.green,
       );
       feedbackCtrl.clear();
       // Optional: you can refresh customers if feedback is shown in the list
       fetchCustomers(isRefresh: true);
     } else {
-      Get.snackbar(
-        'Error',
-        errorMsg,
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red.withValues(alpha: 0.9),
-        colorText: Colors.white,
-        duration: const Duration(seconds: 4),
-      );
+      Utility.errorMessage(errorMsg);
     }
   }
 }

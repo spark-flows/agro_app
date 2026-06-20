@@ -1,5 +1,6 @@
 import 'package:agro_app/app/pages/distributors_screen/distributors_controller.dart';
 import 'package:agro_app/app/theme/theme.dart';
+import 'package:agro_app/app/utils/utility.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
@@ -89,7 +90,11 @@ class _DistributorsScreenState extends State<DistributorsScreen> {
                 /// Distributor List
                 Expanded(
                   child: controller.isLoading
-                      ? const Center(child: CircularProgressIndicator())
+                      ? const Center(
+                          child: CircularProgressIndicator(
+                            color: ColorsValue.primary,
+                          ),
+                        )
                       : controller.users.isEmpty
                       ? Center(
                           child: Column(
@@ -121,7 +126,9 @@ class _DistributorsScreenState extends State<DistributorsScreen> {
                                 return const Padding(
                                   padding: EdgeInsets.symmetric(vertical: 16),
                                   child: Center(
-                                    child: CircularProgressIndicator(),
+                                    child: CircularProgressIndicator(
+                                      color: ColorsValue.primary,
+                                    ),
                                   ),
                                 );
                               }
@@ -136,8 +143,8 @@ class _DistributorsScreenState extends State<DistributorsScreen> {
                                   borderRadius: BorderRadius.circular(12),
                                 ),
                                 child: InkWell(
-                                  onTap: () {
-                                    controller.setupEdit(user);
+                                  onTap: () async {
+                                    await controller.setupEdit(user);
                                     Get.toNamed<void>('/distributorForm');
                                   },
                                   borderRadius: BorderRadius.circular(12),
@@ -242,6 +249,7 @@ class _DistributorsScreenState extends State<DistributorsScreen> {
         child: SingleChildScrollView(
           child: Form(
             key: controller.addFormKey,
+            autovalidateMode: AutovalidateMode.onUserInteraction,
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -315,8 +323,14 @@ class _DistributorsScreenState extends State<DistributorsScreen> {
                   icon: Icons.email_outlined,
                   keyboardType: TextInputType.emailAddress,
                   action: TextInputAction.next,
-                  validator: (v) =>
-                      v!.trim().isEmpty ? 'Please enter an email' : null,
+                  validator: (v) {
+                    if (v == null || v.trim().isEmpty) {
+                      return 'Please enter an email';
+                    } else if (!Utility.emailValidation(v.trim())) {
+                      return 'Please enter a valid email';
+                    }
+                    return null;
+                  },
                 ),
                 const SizedBox(height: 12),
 
@@ -338,19 +352,33 @@ class _DistributorsScreenState extends State<DistributorsScreen> {
                 const SizedBox(height: 12),
 
                 // Password
-                _buildField(
-                  controller: controller.passwordCtrl,
-                  label: 'Password',
-                  icon: Icons.lock_outline,
-                  obscureText: true,
-                  action: TextInputAction.next,
-                  validator: (v) {
-                    if (controller.editingUserId.value.isEmpty &&
-                        v!.trim().isEmpty) {
-                      return 'Please enter a password';
-                    }
-                    return null;
-                  },
+                Obx(
+                  () => _buildField(
+                    controller: controller.passwordCtrl,
+                    label: 'Password',
+                    icon: Icons.lock_outline,
+                    obscureText: controller.isPasswordHidden.value,
+                    action: TextInputAction.next,
+                    suffixIcon: IconButton(
+                      icon: Icon(
+                        controller.isPasswordHidden.value
+                            ? Icons.visibility_off
+                            : Icons.visibility,
+                        color: Colors.grey,
+                      ),
+                      onPressed: () {
+                        controller.isPasswordHidden.value =
+                            !controller.isPasswordHidden.value;
+                      },
+                    ),
+                    validator: (v) {
+                      if (controller.editingUserId.value.isEmpty &&
+                          v!.trim().isEmpty) {
+                        return 'Please enter a password';
+                      }
+                      return null;
+                    },
+                  ),
                 ),
                 const SizedBox(height: 12),
 
@@ -421,13 +449,33 @@ class _DistributorsScreenState extends State<DistributorsScreen> {
 
                 // ── Role Dropdown
                 DropdownButtonFormField<String>(
+                  autovalidateMode: AutovalidateMode.onUserInteraction,
                   value: controller.selectedRoleId,
                   decoration: InputDecoration(
                     labelText: 'Role',
+                    labelStyle: Styles.txtGreyColorW40014,
+                    floatingLabelStyle: const TextStyle(
+                      color: ColorsValue.primary,
+                    ),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(color: Colors.grey.shade300),
                     ),
-                    prefixIcon: const Icon(Icons.admin_panel_settings_outlined),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(color: Colors.grey.shade300),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(
+                        color: ColorsValue.primary,
+                        width: 1.5,
+                      ),
+                    ),
+                    prefixIcon: Icon(
+                      Icons.admin_panel_settings_outlined,
+                      color: ColorsValue.primary.withValues(alpha: 0.8),
+                    ),
                   ),
                   items: controller.roles.map((role) {
                     return DropdownMenuItem(
@@ -504,19 +552,40 @@ class _DistributorsScreenState extends State<DistributorsScreen> {
     int? maxLength,
     List<TextInputFormatter>? inputFormatters,
     String? Function(String?)? validator,
+    Widget? suffixIcon,
   }) {
     return TextFormField(
+      autovalidateMode: AutovalidateMode.onUserInteraction,
       controller: controller,
       keyboardType: keyboardType,
       textInputAction: action,
       obscureText: obscureText,
       maxLength: maxLength,
       inputFormatters: inputFormatters,
+      cursorColor: ColorsValue.primary,
+      style: Styles.txtBlackColorW50014,
       decoration: InputDecoration(
         labelText: label,
+        labelStyle: Styles.txtGreyColorW40014,
+        floatingLabelStyle: const TextStyle(color: ColorsValue.primary),
         counterText: maxLength != null ? '' : null,
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-        prefixIcon: Icon(icon),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: Colors.grey.shade300),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: Colors.grey.shade300),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: ColorsValue.primary, width: 1.5),
+        ),
+        prefixIcon: Icon(
+          icon,
+          color: ColorsValue.primary.withValues(alpha: 0.8),
+        ),
+        suffixIcon: suffixIcon,
       ),
       validator: validator,
     );

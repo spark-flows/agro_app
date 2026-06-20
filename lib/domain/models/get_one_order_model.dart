@@ -35,7 +35,7 @@ class GetOneOrderModel {
 class GetOneOrderData {
   String? id;
   String? orderno;
-  dynamic distributorid;
+  GetOneOrderDistributor? distributorid;
   dynamic customerid;
   List<GetOneOrderItem>? items;
   dynamic deliverydate;
@@ -71,7 +71,13 @@ class GetOneOrderData {
       GetOneOrderData(
         id: json["_id"]?.toString(),
         orderno: json["orderno"]?.toString(),
-        distributorid: json["distributorid"],
+        distributorid: json["distributorid"] == null
+            ? null
+            : (json["distributorid"] is Map)
+            ? GetOneOrderDistributor.fromJson(
+                json["distributorid"] as Map<String, dynamic>,
+              )
+            : null,
         customerid: json["customerid"],
         items: json["items"] == null
             ? []
@@ -132,5 +138,29 @@ class GetOneOrderItem {
     "quantity": quantity,
     "price": price,
     "_id": id,
+  };
+}
+
+class GetOneOrderDistributor {
+  String? id;
+  String? name;
+  String? email;
+  String? mobile;
+
+  GetOneOrderDistributor({this.id, this.name, this.email, this.mobile});
+
+  factory GetOneOrderDistributor.fromJson(Map<String, dynamic> json) =>
+      GetOneOrderDistributor(
+        id: json["_id"]?.toString(),
+        name: json["name"]?.toString(),
+        email: json["email"]?.toString(),
+        mobile: json["mobile"]?.toString(),
+      );
+
+  Map<String, dynamic> toJson() => {
+    "_id": id,
+    "name": name,
+    "email": email,
+    "mobile": mobile,
   };
 }

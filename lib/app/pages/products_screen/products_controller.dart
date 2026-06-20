@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:agro_app/app/utils/utility.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:agro_app/domain/models/get_all_product_model.dart';
@@ -141,11 +142,7 @@ class ProductsController extends GetxController {
   // ── Save (Create / Update) ─────────────────────────────────────────────────
   Future<void> saveProduct() async {
     if (selectedCategoryId == null) {
-      Get.snackbar(
-        'Error',
-        'Please select a category',
-        snackPosition: SnackPosition.BOTTOM,
-      );
+      Utility.errorMessage('Please select a category');
       return;
     }
 
@@ -166,23 +163,13 @@ class ProductsController extends GetxController {
 
     if (errorMsg == null) {
       Get.back();
-      Get.snackbar(
-        'Success',
+      Utility.snacBar(
         editingProductId.isNotEmpty ? 'Product updated' : 'Product added',
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.green.withValues(alpha: 0.9),
-        colorText: Colors.white,
+        Colors.green,
       );
       fetchProducts(isRefresh: true);
     } else {
-      Get.snackbar(
-        'Error',
-        errorMsg,
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red.withValues(alpha: 0.9),
-        colorText: Colors.white,
-        duration: const Duration(seconds: 4),
-      );
+      Utility.errorMessage(errorMsg);
     }
   }
 
@@ -192,18 +179,13 @@ class ProductsController extends GetxController {
       isLoading: true,
     );
     if (success) {
-      Get.snackbar(
-        'Success',
+      Utility.snacBar(
         'Product deleted successfully',
-        snackPosition: SnackPosition.BOTTOM,
+        Colors.green,
       );
       fetchProducts(isRefresh: true);
     } else {
-      Get.snackbar(
-        'Error',
-        'Failed to delete product',
-        snackPosition: SnackPosition.BOTTOM,
-      );
+      Utility.errorMessage('Failed to delete product');
     }
   }
 }

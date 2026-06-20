@@ -86,7 +86,7 @@ class ShowFullScareenImage extends StatelessWidget {
       ),
       body: SafeArea(
         child: Container(
-          color: ColorsValue.appColor,
+          color: ColorsValue.primary,
           child: PhotoViewGallery.builder(
             backgroundDecoration: BoxDecoration(color: ColorsValue.appBg),
             builder: (BuildContext context, int index) {
@@ -215,7 +215,7 @@ class _GalleryAllVideoPlayerState extends State<GalleryAllVideoPlayer> {
                       child: VideoPlayer(_controller!),
                     );
                   } else {
-                    return const CircularProgressIndicator();
+                    return const CircularProgressIndicator(color: ColorsValue.primary);
                   }
                 },
               ),
@@ -232,7 +232,7 @@ class _GalleryAllVideoPlayerState extends State<GalleryAllVideoPlayer> {
                   !_controller!.value.isPlaying
                       ? Icons.pause
                       : Icons.play_arrow,
-                  color: ColorsValue.appColor,
+                  color: ColorsValue.primary,
                   size: Dimens.sixty,
                 ),
               ),
@@ -248,9 +248,9 @@ class _GalleryAllVideoPlayerState extends State<GalleryAllVideoPlayer> {
                 _controller!,
                 padding: Dimens.edgeInsets0,
                 colors: VideoProgressColors(
-                  playedColor: ColorsValue.appColor,
-                  bufferedColor: ColorsValue.appColor.withAlpha(100),
-                  backgroundColor: ColorsValue.appColor.withAlpha(100),
+                  playedColor: ColorsValue.primary,
+                  bufferedColor: ColorsValue.primary.withAlpha(100),
+                  backgroundColor: ColorsValue.primary.withAlpha(100),
                 ),
                 allowScrubbing: true,
               ),
