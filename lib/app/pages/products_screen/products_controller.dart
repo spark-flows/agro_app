@@ -6,6 +6,7 @@ import 'package:agro_app/domain/models/get_all_product_model.dart';
 import 'package:agro_app/domain/models/get_all_category_model.dart';
 import 'package:agro_app/domain/models/get_all_unit_model.dart';
 import 'package:agro_app/domain/repositories/repository.dart';
+import 'package:agro_app/domain/repositories/local_storage_keys.dart';
 
 class ProductsController extends GetxController {
   // ── List state ─────────────────────────────────────────────────────────────
@@ -19,6 +20,40 @@ class ProductsController extends GetxController {
 
   String _searchQuery = '';
   String get searchQuery => _searchQuery;
+
+  // ── Filter state ───────────────────────────────────────────────────────────
+  String? filterCategoryId;
+  String? filterUnitId;
+
+  bool get isFilterActive => filterCategoryId != null || filterUnitId != null;
+
+  List<GetAllProductDoc> get filteredProducts {
+    List<GetAllProductDoc> result = List.from(products);
+
+    // Filter by category
+    if (filterCategoryId != null && filterCategoryId!.isNotEmpty) {
+      result = result.where((p) => p.categoryid?.id == filterCategoryId).toList();
+    }
+
+    // Filter by unit
+    if (filterUnitId != null && filterUnitId!.isNotEmpty) {
+      result = result.where((p) => p.unit?.id == filterUnitId).toList();
+    }
+
+    return result;
+  }
+
+  void applyFilters({String? categoryId, String? unitId}) {
+    filterCategoryId = categoryId;
+    filterUnitId = unitId;
+    update();
+  }
+
+  void clearFilters() {
+    filterCategoryId = null;
+    filterUnitId = null;
+    update();
+  }
 
   // ── Form state ─────────────────────────────────────────────────────────────
   final formKey = GlobalKey<FormState>();

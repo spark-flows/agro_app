@@ -131,13 +131,13 @@ class GetAllProductDoc {
                   ? GetAllProductCategoryid(id: json["categoryid"], name: '')
                   : GetAllProductCategoryid.fromJson(json["categoryid"])),
         name: json["name"]?.toString(),
-        unit: json["unit"] == null
+        unit: json["unitid"] == null
             ? null
-            : (json["unit"] is String
-                  ? GetAllProductUnit(id: json["unit"], name: '')
-                  : GetAllProductUnit.fromJson(json["unit"])),
+            : (json["unitid"] is String
+                  ? GetAllProductUnit(id: json["unitid"], name: '')
+                  : GetAllProductUnit.fromJson(json["unitid"])),
         price: num.tryParse(json["price"]?.toString() ?? '')?.toInt(),
-        qty: num.tryParse(json["qty"]?.toString() ?? '')?.toInt(),
+        qty: num.tryParse(json["quantity"]?.toString() ?? '')?.toInt(),
         image: json["image"]?.toString(),
         description: json["description"]?.toString(),
         isDeleted: json["isDeleted"],

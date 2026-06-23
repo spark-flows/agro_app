@@ -192,11 +192,11 @@ class ConnectHelper {
     var data = {
       'productid': productid ?? '',
       'name': name,
-      'unit': unit,
+      'unitid': unit,
       'price': price,
       'description': description,
       'image': image,
-      'qty': qty,
+      'quantity': qty,
       'categoryid': categoryid,
       'branchid': branchId,
     };
@@ -824,11 +824,18 @@ class ConnectHelper {
         normalizedRole == 'is_admin' ||
         normalizedRole == '1';
 
+    // For admin users, try the selected branch first
     if (isAdmin) {
-      return await Utility.getSecureValue(LocalKeys.selectedBranchId);
+      final String selectedBranch =
+          await Utility.getSecureValue(LocalKeys.selectedBranchId);
+      if (selectedBranch.isNotEmpty) {
+        return selectedBranch;
+      }
+      // If selectedBranchId is not yet set (e.g. first launch before
+      // fetchBranches completes), fall through to profile/API fallback below.
     }
 
-    // Non-admin branch resolution (e.g. dealer)
+    // Non-admin branch resolution (e.g. dealer) — also used as admin fallback
     String profileJson = await Utility.getSecureValue(LocalKeys.profileData);
     String branchId = '';
 
@@ -889,6 +896,14 @@ class ConnectHelper {
               } else {
                 branchId = rawBranch.toString();
               }
+            }
+
+            // For admin: also save as selectedBranchId so future calls are fast
+            if (isAdmin && branchId.isNotEmpty) {
+              Get.find<Repository>().saveSecureValue(
+                LocalKeys.selectedBranchId,
+                branchId,
+              );
             }
           }
         }

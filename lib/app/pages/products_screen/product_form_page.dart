@@ -372,16 +372,6 @@ class _ProductFormPageState extends State<ProductFormPage> {
                 const SizedBox(height: 12),
 
                 _buildField(
-                  fieldController: controller.priceCtrl,
-                  label: 'Price (₹) *',
-                  icon: Icons.currency_rupee_outlined,
-                  keyboardType: TextInputType.number,
-                  action: TextInputAction.next,
-                  validator: (v) =>
-                      v!.trim().isEmpty ? 'Please enter a price' : null,
-                ),
-                const SizedBox(height: 12),
-                _buildField(
                   fieldController: controller.qtyCtrl,
                   label: 'Quantity *',
                   icon: Icons.numbers_outlined,
@@ -389,23 +379,6 @@ class _ProductFormPageState extends State<ProductFormPage> {
                   action: TextInputAction.next,
                   validator: (v) =>
                       v!.trim().isEmpty ? 'Please enter quantity' : null,
-                ),
-                const SizedBox(height: 12),
-                TextFormField(
-                  controller: controller.descriptionCtrl,
-                  maxLines: 3,
-                  textInputAction: TextInputAction.next,
-                  decoration: InputDecoration(
-                    labelText: 'Description',
-                    alignLabelWithHint: true,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    prefixIcon: const Padding(
-                      padding: EdgeInsets.only(bottom: 48),
-                      child: Icon(Icons.description_outlined),
-                    ),
-                  ),
                 ),
                 const SizedBox(height: 24),
 

@@ -49,45 +49,95 @@ class _ProductsScreenState extends State<ProductsScreen> {
             padding: const EdgeInsets.all(16),
             child: Column(
               children: [
-                // ── Search Bar ─────────────────────────────────────────────
-                TextField(
-                  controller: _searchController,
-                  onChanged: controller.searchProducts,
-                  decoration: InputDecoration(
-                    hintText: 'Search products...',
-                    hintStyle: Styles.txtGreyColorW40014,
-                    prefixIcon: const Icon(
-                      Icons.search,
-                      color: ColorsValue.primary,
+                // ── Search Bar + Filter ────────────────────────────────────
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        controller: _searchController,
+                        onChanged: controller.searchProducts,
+                        decoration: InputDecoration(
+                          hintText: 'Search products...',
+                          hintStyle: Styles.txtGreyColorW40014,
+                          prefixIcon: const Icon(
+                            Icons.search,
+                            color: ColorsValue.primary,
+                          ),
+                          suffixIcon: _searchController.text.isNotEmpty
+                              ? IconButton(
+                                  icon: const Icon(Icons.clear, size: 18),
+                                  onPressed: () {
+                                    _searchController.clear();
+                                    controller.searchProducts('');
+                                  },
+                                )
+                              : null,
+                          filled: true,
+                          fillColor: Colors.white,
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide(color: Colors.grey.shade200),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide(color: Colors.grey.shade200),
+                          ),
+                        ),
+                      ),
                     ),
-                    suffixIcon: _searchController.text.isNotEmpty
-                        ? IconButton(
-                            icon: const Icon(Icons.clear, size: 18),
-                            onPressed: () {
-                              _searchController.clear();
-                              controller.searchProducts('');
-                            },
-                          )
-                        : null,
-                    filled: true,
-                    fillColor: Colors.white,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(color: Colors.grey.shade200),
+                    const SizedBox(width: 8),
+                    // ── Filter Button ────────────────────────────────────────
+                    Stack(
+                      children: [
+                        Container(
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: controller.isFilterActive
+                                  ? ColorsValue.primary
+                                  : Colors.grey.shade200,
+                            ),
+                          ),
+                          child: IconButton(
+                            icon: Icon(
+                              Icons.filter_list_rounded,
+                              color: controller.isFilterActive
+                                  ? ColorsValue.primary
+                                  : Colors.grey.shade600,
+                            ),
+                            onPressed: () =>
+                                _showFilterBottomSheet(context, controller),
+                          ),
+                        ),
+                        if (controller.isFilterActive)
+                          Positioned(
+                            right: 6,
+                            top: 6,
+                            child: Container(
+                              width: 8,
+                              height: 8,
+                              decoration: const BoxDecoration(
+                                color: ColorsValue.primary,
+                                shape: BoxShape.circle,
+                              ),
+                            ),
+                          ),
+                      ],
                     ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(color: Colors.grey.shade200),
-                    ),
-                  ),
+                  ],
                 ),
                 const SizedBox(height: 10),
 
                 // ── Product List ───────────────────────────────────────────
                 Expanded(
                   child: controller.isLoading
-                      ? const Center(child: CircularProgressIndicator(color: ColorsValue.primary))
-                      : controller.products.isEmpty
+                      ? const Center(
+                          child: CircularProgressIndicator(
+                            color: ColorsValue.primary,
+                          ),
+                        )
+                      : controller.filteredProducts.isEmpty
                       ? Center(
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
@@ -111,18 +161,21 @@ class _ProductsScreenState extends State<ProductsScreen> {
                           child: ListView.builder(
                             controller: _scrollController,
                             itemCount:
-                                controller.products.length +
+                                controller.filteredProducts.length +
                                 (controller.isFetchingMore ? 1 : 0),
                             itemBuilder: (context, index) {
-                              if (index == controller.products.length) {
+                              if (index == controller.filteredProducts.length) {
                                 return const Padding(
                                   padding: EdgeInsets.symmetric(vertical: 16),
                                   child: Center(
-                                    child: CircularProgressIndicator(color: ColorsValue.primary),
+                                    child: CircularProgressIndicator(
+                                      color: ColorsValue.primary,
+                                    ),
                                   ),
                                 );
                               }
-                              final product = controller.products[index];
+                              final product =
+                                  controller.filteredProducts[index];
                               final isActive = !(product.isDeleted ?? false);
 
                               return Card(
@@ -190,7 +243,6 @@ class _ProductsScreenState extends State<ProductsScreen> {
                                             if (product.unit?.name != null &&
                                                 product.unit!.name!.isNotEmpty)
                                               'Unit: ${product.unit?.name}',
-                                            'Price: ₹${product.price ?? 0}',
                                             'Qty: ${product.qty ?? 0}',
                                           ].join(' | '),
                                           style: Styles.txtGreyColorW40012,
@@ -292,6 +344,155 @@ class _ProductsScreenState extends State<ProductsScreen> {
         transitionsBuilder: (ctx, animation, secAnim, child) =>
             FadeTransition(opacity: animation, child: child),
       ),
+    );
+  }
+
+  // ── Filter Bottom Sheet ────────────────────────────────────────────────────
+  void _showFilterBottomSheet(
+    BuildContext context,
+    ProductsController controller,
+  ) {
+    String? tempCategoryId = controller.filterCategoryId;
+    String? tempUnitId = controller.filterUnitId;
+
+    Get.bottomSheet(
+      StatefulBuilder(
+        builder: (context, setSheetState) {
+          return Container(
+            padding: const EdgeInsets.all(24),
+            decoration: const BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Handle bar
+                Center(
+                  child: Container(
+                    width: 40,
+                    height: 5,
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade300,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 20),
+
+                // Title row
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text('Filter Products', style: Styles.txtBlackColorW70020),
+                    if (tempCategoryId != null || tempUnitId != null)
+                      TextButton(
+                        onPressed: () {
+                          setSheetState(() {
+                            tempCategoryId = null;
+                            tempUnitId = null;
+                          });
+                        },
+                        child: const Text(
+                          'Clear All',
+                          style: TextStyle(color: Colors.red, fontSize: 13),
+                        ),
+                      ),
+                  ],
+                ),
+                const SizedBox(height: 20),
+
+                // ── Category Dropdown ──────────────────────────────────────
+                DropdownButtonFormField<String>(
+                  value: tempCategoryId,
+                  decoration: InputDecoration(
+                    labelText: 'Category',
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    prefixIcon: const Icon(Icons.category_outlined),
+                  ),
+                  items: [
+                    const DropdownMenuItem<String>(
+                      value: null,
+                      child: Text('All Categories'),
+                    ),
+                    ...controller.categories.map(
+                      (cat) => DropdownMenuItem<String>(
+                        value: cat.id,
+                        child: Text(cat.name),
+                      ),
+                    ),
+                  ],
+                  onChanged: (val) {
+                    setSheetState(() => tempCategoryId = val);
+                  },
+                ),
+                const SizedBox(height: 16),
+
+                // ── Unit Dropdown ──────────────────────────────────────────
+                DropdownButtonFormField<String>(
+                  value: tempUnitId,
+                  decoration: InputDecoration(
+                    labelText: 'Unit',
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    prefixIcon: const Icon(Icons.scale_outlined),
+                  ),
+                  items: [
+                    const DropdownMenuItem<String>(
+                      value: null,
+                      child: Text('All Units'),
+                    ),
+                    ...controller.units.map(
+                      (unit) => DropdownMenuItem<String>(
+                        value: unit.id,
+                        child: Text(unit.name ?? ''),
+                      ),
+                    ),
+                  ],
+                  onChanged: (val) {
+                    setSheetState(() => tempUnitId = val);
+                  },
+                ),
+                const SizedBox(height: 24),
+
+                // ── Apply Button ───────────────────────────────────────────
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: () {
+                      controller.applyFilters(
+                        categoryId: tempCategoryId,
+                        unitId: tempUnitId,
+                      );
+                      Get.back();
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: ColorsValue.primary,
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    child: const Text(
+                      'Apply Filters',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+              ],
+            ),
+          );
+        },
+      ),
+      isScrollControlled: true,
     );
   }
 }
