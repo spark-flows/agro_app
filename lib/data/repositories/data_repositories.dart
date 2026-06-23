@@ -88,25 +88,28 @@ class DataRepository extends DomainRepository {
   Future<ResponseModel> getCategoryListApi({bool isLoading = false}) async =>
       connectHelper.getCategoryListApi(isLoading: isLoading);
 
+  Future<ResponseModel> getUnitListApi({bool isLoading = false}) async =>
+      connectHelper.getUnitListApi(isLoading: isLoading);
+
   Future<ResponseModel> createProductApi({
     String? productid,
     required String name,
-    // required String unit,
-    // required int price,
-    // required String description,
+    required String unit,
+    required int price,
+    required String description,
     required String image,
     required String categoryid,
-    // required int qty,
+    required int qty,
     bool isLoading = false,
   }) async => connectHelper.createProductApi(
     productid: productid,
     name: name,
-    // unit: unit,
-    // price: price,
-    // description: description,
+    unit: unit,
+    price: price,
+    description: description,
     image: image,
     categoryid: categoryid,
-    // qty: qty,
+    qty: qty,
     isLoading: isLoading,
   );
 

@@ -128,6 +128,8 @@ class ConnectHelper {
         role.toLowerCase() == 'is_admin' ||
         role == '1';
 
+    final String branchId = await _resolveBranchId();
+
     var data = {
       'page': page,
       'limit': limit,
@@ -141,6 +143,7 @@ class ConnectHelper {
       'price': [],
       'description': [],
       'sortoption': -1,
+      'branchid': branchId,
     };
     var response = await apiWrapper.makeRequest(
       EndPoints.productApi,
@@ -163,26 +166,39 @@ class ConnectHelper {
     return response;
   }
 
+  Future<ResponseModel> getUnitListApi({bool isLoading = false}) async {
+    var response = await apiWrapper.makeRequest(
+      '${EndPoints.unitApi}?search=',
+      Request.get,
+      null,
+      isLoading,
+      await Utility.commonHeader(),
+    );
+    return response;
+  }
+
   Future<ResponseModel> createProductApi({
     String? productid,
     required String name,
-    // required String unit,
-    // required int price,
-    // required String description,
+    required String unit,
+    required int price,
+    required String description,
     required String image,
     required String categoryid,
-    // required int qty,
+    required int qty,
     bool isLoading = false,
   }) async {
+    final String branchId = await _resolveBranchId();
     var data = {
       'productid': productid ?? '',
       'name': name,
-      // 'unit': unit,
-      // 'price': price,
-      // 'description': description,
+      'unit': unit,
+      'price': price,
+      'description': description,
       'image': image,
-      // 'qty': qty,
+      'qty': qty,
       'categoryid': categoryid,
+      'branchid': branchId,
     };
     var response = await apiWrapper.makeRequest(
       EndPoints.createProductApi,

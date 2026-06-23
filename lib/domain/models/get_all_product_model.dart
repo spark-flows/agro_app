@@ -106,6 +106,7 @@ class GetAllProductDoc {
   String? description;
   bool? isDeleted;
   String? createdAt;
+  dynamic branchid;
 
   GetAllProductDoc({
     this.id,
@@ -118,6 +119,7 @@ class GetAllProductDoc {
     this.description,
     this.isDeleted,
     this.createdAt,
+    this.branchid,
   });
 
   factory GetAllProductDoc.fromJson(Map<String, dynamic> json) =>
@@ -140,6 +142,7 @@ class GetAllProductDoc {
         description: json["description"]?.toString(),
         isDeleted: json["isDeleted"],
         createdAt: json["createdAt"]?.toString(),
+        branchid: json["branchid"],
       );
 
   Map<String, dynamic> toJson() => {
@@ -153,6 +156,7 @@ class GetAllProductDoc {
     "description": description,
     "isDeleted": isDeleted,
     "createdAt": createdAt,
+    "branchid": branchid,
   };
 }
 

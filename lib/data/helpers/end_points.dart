@@ -26,4 +26,5 @@ class EndPoints {
   static String deleteUsersApi = 'api/users/delete';
   static String customerFeedbackApi = 'api/customer/feedback';
   static String branchApi = 'api/branch';
+  static String unitApi = 'api/unit';
 }

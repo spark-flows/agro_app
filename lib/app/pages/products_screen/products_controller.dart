@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:agro_app/domain/models/get_all_product_model.dart';
 import 'package:agro_app/domain/models/get_all_category_model.dart';
+import 'package:agro_app/domain/models/get_all_unit_model.dart';
 import 'package:agro_app/domain/repositories/repository.dart';
 
 class ProductsController extends GetxController {
@@ -31,6 +32,9 @@ class ProductsController extends GetxController {
   String? selectedCategoryId;
   List<GetAllCategoryDoc> categories = <GetAllCategoryDoc>[];
 
+  String? selectedUnitId;
+  List<GetAllUnitDatum> units = <GetAllUnitDatum>[];
+
   Timer? _searchTimer;
 
   @override
@@ -38,6 +42,7 @@ class ProductsController extends GetxController {
     super.onInit();
     fetchProducts();
     fetchCategories();
+    fetchUnits();
   }
 
   @override
@@ -78,6 +83,28 @@ class ProductsController extends GetxController {
       }
     } catch (e, st) {
       debugPrint('[Products] fetchCategories error: $e\n$st');
+    }
+  }
+
+  // ── Fetch Units ────────────────────────────────────────────────────────────
+  Future<void> fetchUnits() async {
+    try {
+      debugPrint('[Products] fetchUnits: calling API...');
+      final response = await Get.find<Repository>().getUnitListApi();
+      debugPrint(
+        '[Products] fetchUnits: response=$response, data=${response?.data?.length}',
+      );
+      if (response != null && response.data != null && response.data!.isNotEmpty) {
+        units = response.data!;
+        update();
+        debugPrint(
+          '[Products] fetchUnits: loaded ${units.length} units',
+        );
+      } else {
+        debugPrint('[Products] fetchUnits: no units returned');
+      }
+    } catch (e, st) {
+      debugPrint('[Products] fetchUnits error: $e\n$st');
     }
   }
 
@@ -125,6 +152,7 @@ class ProductsController extends GetxController {
     descriptionCtrl.clear();
     imageCtrl.clear();
     selectedCategoryId = null;
+    selectedUnitId = null;
     update();
   }
 
@@ -136,6 +164,7 @@ class ProductsController extends GetxController {
     descriptionCtrl.text = product.description ?? '';
     imageCtrl.text = product.image ?? '';
     selectedCategoryId = product.categoryid?.id;
+    selectedUnitId = product.unit?.id;
     update();
   }
 
@@ -145,17 +174,21 @@ class ProductsController extends GetxController {
       Utility.errorMessage('Please select a category');
       return;
     }
+    if (selectedUnitId == null) {
+      Utility.errorMessage('Please select a unit');
+      return;
+    }
 
-    // final price = int.tryParse(priceCtrl.text.trim()) ?? 0;
-    // final qty = int.tryParse(qtyCtrl.text.trim()) ?? 0;
+    final price = int.tryParse(priceCtrl.text.trim()) ?? 0;
+    final qty = int.tryParse(qtyCtrl.text.trim()) ?? 0;
 
     final errorMsg = await Get.find<Repository>().createProductApi(
       productid: editingProductId.isNotEmpty ? editingProductId : null,
       name: nameCtrl.text.trim(),
-      // unit: selectedUnitId!,
-      // price: price,
-      // qty: qty,
-      // description: descriptionCtrl.text.trim(),
+      unit: selectedUnitId!,
+      price: price,
+      qty: qty,
+      description: descriptionCtrl.text.trim(),
       image: imageCtrl.text.trim(),
       categoryid: selectedCategoryId!,
       isLoading: true,

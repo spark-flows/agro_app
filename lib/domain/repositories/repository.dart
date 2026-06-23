@@ -14,6 +14,7 @@ import 'package:agro_app/domain/models/get_all_category_model.dart';
 import 'package:agro_app/domain/models/get_all_customers_model.dart';
 import 'package:agro_app/domain/models/get_all_order_model.dart';
 import 'package:agro_app/domain/models/get_all_product_model.dart';
+import 'package:agro_app/domain/models/get_all_unit_model.dart';
 import 'package:agro_app/domain/models/get_all_roll_model.dart';
 import 'package:agro_app/domain/models/get_all_users_model.dart';
 import 'package:agro_app/domain/models/get_one_order_model.dart';
@@ -393,14 +394,46 @@ class Repository {
     }
   }
 
+  Future<GetAllUnitModel?> getUnitListApi({
+    bool isLoading = false,
+  }) async {
+    try {
+      var response = await _dataRepository.getUnitListApi(
+        isLoading: isLoading,
+      );
+      if (response.hasError) {
+        final msg = _parseErrorMessage(
+          response.data,
+          'Failed to load units',
+        );
+        Utility.showMessage(msg, MessageType.error, null, '');
+        return null;
+      }
+      if (response.data.isNotEmpty) {
+        return getAllUnitModelFromJson(response.data);
+      }
+      return null;
+    } catch (e, st) {
+      print('[Repo] getUnitListApi error: $e\n$st');
+      Utility.closeDialog();
+      Utility.showMessage(
+        'Failed to load units',
+        MessageType.error,
+        null,
+        '',
+      );
+      return null;
+    }
+  }
+
   /// Returns null on success, or an error message string on failure.
   Future<String?> createProductApi({
     String? productid,
     required String name,
-    // required String unit,
-    // required int price,
-    // required int qty,
-    // required String description,
+    required String unit,
+    required int price,
+    required int qty,
+    required String description,
     required String image,
     required String categoryid,
     bool isLoading = false,
@@ -409,10 +442,10 @@ class Repository {
       var response = await _dataRepository.createProductApi(
         productid: productid,
         name: name,
-        // unit: unit,
-        // price: price,
-        // qty: qty,
-        // description: description,
+        unit: unit,
+        price: price,
+        qty: qty,
+        description: description,
         image: image,
         categoryid: categoryid,
         isLoading: isLoading,

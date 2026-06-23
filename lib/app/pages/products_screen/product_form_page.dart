@@ -3,8 +3,10 @@ import 'dart:io';
 import 'package:agro_app/app/pages/products_screen/products_controller.dart';
 import 'package:agro_app/app/theme/theme.dart';
 import 'package:agro_app/app/utils/utility.dart';
+import 'package:agro_app/data/helpers/api_wrapper.dart';
 import 'package:agro_app/data/helpers/end_points.dart';
 import 'package:agro_app/domain/models/get_all_category_model.dart';
+import 'package:agro_app/domain/models/get_all_unit_model.dart';
 import 'package:agro_app/domain/repositories/repository.dart';
 import 'package:dio/dio.dart' as dio;
 import 'package:flutter/material.dart';
@@ -24,6 +26,11 @@ class _ProductFormPageState extends State<ProductFormPage> {
   bool _loadingCategories = true;
   String? _selectedCategoryId;
 
+  // ── Unit state ────────────────────────────────────────────────────────────
+  List<GetAllUnitDatum> _units = [];
+  bool _loadingUnits = true;
+  String? _selectedUnitId;
+
   // ── Image state ───────────────────────────────────────────────────────────
   File? _pickedImage;
   bool _uploadingImage = false;
@@ -33,7 +40,9 @@ class _ProductFormPageState extends State<ProductFormPage> {
     super.initState();
     final ctrl = Get.find<ProductsController>();
     _selectedCategoryId = ctrl.selectedCategoryId;
+    _selectedUnitId = ctrl.selectedUnitId;
     _loadCategories();
+    _loadUnits();
   }
 
   // ── Load categories via repository ────────────────────────────────────────
@@ -53,11 +62,28 @@ class _ProductFormPageState extends State<ProductFormPage> {
     }
   }
 
+  // ── Load units via repository ────────────────────────────────────────────
+  Future<void> _loadUnits() async {
+    setState(() => _loadingUnits = true);
+    try {
+      final response = await Get.find<Repository>().getUnitListApi();
+      if (mounted) {
+        setState(() {
+          _units = response?.data ?? [];
+          _loadingUnits = false;
+        });
+      }
+    } catch (e) {
+      debugPrint('[ProductForm] _loadUnits error: $e');
+      if (mounted) setState(() => _loadingUnits = false);
+    }
+  }
+
   // ── Pick image from gallery / camera ─────────────────────────────────────
-  Future<void> _pickAndUploadImage() async {
+  Future<void> _pickAndUploadImage(ImageSource source) async {
     final picker = ImagePicker();
     final picked = await picker.pickImage(
-      source: ImageSource.gallery,
+      source: source,
       imageQuality: 85,
     );
     if (picked == null) return;
@@ -81,7 +107,7 @@ class _ProductFormPageState extends State<ProductFormPage> {
       });
 
       final response = await dioClient.post(
-        'https://api.japexim.co.in/${EndPoints.productUploadApi}',
+        '${ApiWrapper.api}${EndPoints.productUploadApi}',
         data: formData,
         options: dio.Options(headers: headers),
       );
@@ -128,6 +154,83 @@ class _ProductFormPageState extends State<ProductFormPage> {
     } finally {
       if (mounted) setState(() => _uploadingImage = false);
     }
+  }
+
+  void _showImageSourceBottomSheet(BuildContext context) {
+    Get.bottomSheet(
+      Container(
+        padding: const EdgeInsets.all(24),
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Center(
+              child: Container(
+                width: 40,
+                height: 5,
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade300,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+            ),
+            const SizedBox(height: 24),
+            Text('Select Image Source', style: Styles.txtBlackColorW70020),
+            const SizedBox(height: 24),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                _buildSourceOption(
+                  icon: Icons.camera_alt_outlined,
+                  label: 'Camera',
+                  onTap: () {
+                    Get.back();
+                    _pickAndUploadImage(ImageSource.camera);
+                  },
+                ),
+                _buildSourceOption(
+                  icon: Icons.photo_library_outlined,
+                  label: 'Gallery',
+                  onTap: () {
+                    Get.back();
+                    _pickAndUploadImage(ImageSource.gallery);
+                  },
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSourceOption({
+    required IconData icon,
+    required String label,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Column(
+        children: [
+          Container(
+            width: 60,
+            height: 60,
+            decoration: BoxDecoration(
+              color: ColorsValue.primary.withValues(alpha: 0.1),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(icon, color: ColorsValue.primary, size: 28),
+          ),
+          const SizedBox(height: 8),
+          Text(label, style: Styles.txtBlackColorW60014),
+        ],
+      ),
+    );
   }
 
   @override
@@ -220,91 +323,91 @@ class _ProductFormPageState extends State<ProductFormPage> {
                 ),
                 const SizedBox(height: 24),
 
-                // // ── Unit Dropdown ───────────────────────────────────────────
-                // if (_loadingUnits)
-                //   const SizedBox(
-                //     height: 56,
-                //     child: Center(child: CircularProgressIndicator()),
-                //   )
-                // else if (_units.isEmpty)
-                //   OutlinedButton.icon(
-                //     onPressed: _loadUnits,
-                //     icon: const Icon(Icons.refresh, color: ColorsValue.primary),
-                //     label: const Text(
-                //       'Tap to retry loading units',
-                //       style: TextStyle(color: ColorsValue.primary),
-                //     ),
-                //     style: OutlinedButton.styleFrom(
-                //       minimumSize: const Size.fromHeight(56),
-                //       side: const BorderSide(color: ColorsValue.primary),
-                //       shape: RoundedRectangleBorder(
-                //         borderRadius: BorderRadius.circular(12),
-                //       ),
-                //     ),
-                //   )
-                // else
-                //   DropdownButtonFormField<String>(
-                //     value: _selectedUnitId,
-                //     decoration: InputDecoration(
-                //       labelText: 'Unit *',
-                //       border: OutlineInputBorder(
-                //         borderRadius: BorderRadius.circular(12),
-                //       ),
-                //       prefixIcon: const Icon(Icons.scale_outlined),
-                //     ),
-                //     items: _units
-                //         .map(
-                //           (unit) => DropdownMenuItem<String>(
-                //             value: unit.id,
-                //             child: Text(unit.name ?? ''),
-                //           ),
-                //         )
-                //         .toList(),
-                //     onChanged: (val) {
-                //       setState(() => _selectedUnitId = val);
-                //       controller.selectedUnitId = val;
-                //     },
-                //     validator: (v) => v == null ? 'Please select a unit' : null,
-                //   ),
-                // const SizedBox(height: 12),
+                // ── Unit Dropdown ───────────────────────────────────────────
+                if (_loadingUnits)
+                  const SizedBox(
+                    height: 56,
+                    child: Center(child: CircularProgressIndicator(color: ColorsValue.primary)),
+                  )
+                else if (_units.isEmpty)
+                  OutlinedButton.icon(
+                    onPressed: _loadUnits,
+                    icon: const Icon(Icons.refresh, color: ColorsValue.primary),
+                    label: const Text(
+                      'Tap to retry loading units',
+                      style: TextStyle(color: ColorsValue.primary),
+                    ),
+                    style: OutlinedButton.styleFrom(
+                      minimumSize: const Size.fromHeight(56),
+                      side: const BorderSide(color: ColorsValue.primary),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                  )
+                else
+                  DropdownButtonFormField<String>(
+                    value: _selectedUnitId,
+                    decoration: InputDecoration(
+                      labelText: 'Unit *',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      prefixIcon: const Icon(Icons.scale_outlined),
+                    ),
+                    items: _units
+                        .map(
+                          (unit) => DropdownMenuItem<String>(
+                            value: unit.id,
+                            child: Text(unit.name ?? ''),
+                          ),
+                        )
+                        .toList(),
+                    onChanged: (val) {
+                      setState(() => _selectedUnitId = val);
+                      controller.selectedUnitId = val;
+                    },
+                    validator: (v) => v == null ? 'Please select a unit' : null,
+                  ),
+                const SizedBox(height: 12),
 
-                // _buildField(
-                //   fieldController: controller.priceCtrl,
-                //   label: 'Price (₹) *',
-                //   icon: Icons.currency_rupee_outlined,
-                //   keyboardType: TextInputType.number,
-                //   action: TextInputAction.next,
-                //   validator: (v) =>
-                //       v!.trim().isEmpty ? 'Please enter a price' : null,
-                // ),
-                // const SizedBox(height: 12),
-                // _buildField(
-                //   fieldController: controller.qtyCtrl,
-                //   label: 'Quantity *',
-                //   icon: Icons.numbers_outlined,
-                //   keyboardType: TextInputType.number,
-                //   action: TextInputAction.next,
-                //   validator: (v) =>
-                //       v!.trim().isEmpty ? 'Please enter quantity' : null,
-                // ),
-                // const SizedBox(height: 12),
-                // TextFormField(
-                //   controller: controller.descriptionCtrl,
-                //   maxLines: 3,
-                //   textInputAction: TextInputAction.next,
-                //   decoration: InputDecoration(
-                //     labelText: 'Description',
-                //     alignLabelWithHint: true,
-                //     border: OutlineInputBorder(
-                //       borderRadius: BorderRadius.circular(12),
-                //     ),
-                //     prefixIcon: const Padding(
-                //       padding: EdgeInsets.only(bottom: 48),
-                //       child: Icon(Icons.description_outlined),
-                //     ),
-                //   ),
-                // ),
-                // const SizedBox(height: 24),
+                _buildField(
+                  fieldController: controller.priceCtrl,
+                  label: 'Price (₹) *',
+                  icon: Icons.currency_rupee_outlined,
+                  keyboardType: TextInputType.number,
+                  action: TextInputAction.next,
+                  validator: (v) =>
+                      v!.trim().isEmpty ? 'Please enter a price' : null,
+                ),
+                const SizedBox(height: 12),
+                _buildField(
+                  fieldController: controller.qtyCtrl,
+                  label: 'Quantity *',
+                  icon: Icons.numbers_outlined,
+                  keyboardType: TextInputType.number,
+                  action: TextInputAction.next,
+                  validator: (v) =>
+                      v!.trim().isEmpty ? 'Please enter quantity' : null,
+                ),
+                const SizedBox(height: 12),
+                TextFormField(
+                  controller: controller.descriptionCtrl,
+                  maxLines: 3,
+                  textInputAction: TextInputAction.next,
+                  decoration: InputDecoration(
+                    labelText: 'Description',
+                    alignLabelWithHint: true,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    prefixIcon: const Padding(
+                      padding: EdgeInsets.only(bottom: 48),
+                      child: Icon(Icons.description_outlined),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 24),
 
                 // ── Product Image ──────────────────────────────────────────
                 _sectionHeader('Product Image'),
@@ -319,6 +422,7 @@ class _ProductFormPageState extends State<ProductFormPage> {
                       : () {
                           if (controller.formKey.currentState!.validate()) {
                             controller.selectedCategoryId = _selectedCategoryId;
+                            controller.selectedUnitId = _selectedUnitId;
                             controller.saveProduct();
                           }
                         },
@@ -424,7 +528,9 @@ class _ProductFormPageState extends State<ProductFormPage> {
 
         // Pick / Change image button
         OutlinedButton.icon(
-          onPressed: _uploadingImage ? null : _pickAndUploadImage,
+          onPressed: _uploadingImage
+              ? null
+              : () => _showImageSourceBottomSheet(context),
           icon: _uploadingImage
               ? const SizedBox(
                   width: 18,
@@ -440,7 +546,7 @@ class _ProductFormPageState extends State<ProductFormPage> {
                 ? 'Uploading...'
                 : hasImage
                 ? 'Change Image'
-                : 'Pick Image from Gallery',
+                : 'Pick Image',
             style: const TextStyle(color: ColorsValue.primary),
           ),
           style: OutlinedButton.styleFrom(

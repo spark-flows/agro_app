@@ -52,6 +52,7 @@ class CreateProductData {
   String? createdAt;
   String? updatedAt;
   int? v;
+  dynamic branchid;
 
   CreateProductData({
     this.categoryid,
@@ -69,6 +70,7 @@ class CreateProductData {
     this.createdAt,
     this.updatedAt,
     this.v,
+    this.branchid,
   });
 
   factory CreateProductData.fromJson(Map<String, dynamic> json) =>
@@ -88,6 +90,7 @@ class CreateProductData {
         createdAt: json["createdAt"],
         updatedAt: json["updatedAt"],
         v: json["__v"],
+        branchid: json["branchid"],
       );
 
   Map<String, dynamic> toJson() => {
@@ -106,5 +109,6 @@ class CreateProductData {
     "createdAt": createdAt,
     "updatedAt": updatedAt,
     "__v": v,
+    "branchid": branchid,
   };
 }

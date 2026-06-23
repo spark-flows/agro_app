@@ -469,13 +469,18 @@ Widget _buildProductCard(OrdersController controller, ProductItem item) {
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),
-                    // const SizedBox(height: 8),
-                    // Text(
-                    //   '${item.price} ${item.unit}',
-                    //   style: Styles.txtBlackColorW70014.copyWith(
-                    //     color: ColorsValue.primary,
-                    //   ),
-                    // ),
+                    const SizedBox(height: 4),
+                    Text(
+                      '${item.price} / ${item.unit.replaceAll("per ", "")}',
+                      style: Styles.txtBlackColorW70014.copyWith(
+                        color: ColorsValue.primary,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Available Qty: ${item.qty ?? 0}',
+                      style: Styles.txtGreyColorW40012,
+                    ),
                   ],
                 ),
               ),
@@ -548,6 +553,14 @@ void _showCartBottomSheet(
                 Text(
                   'Checkout',
                   style: Styles.txtBlackColorW70020,
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  'Total Amount: ₹${controller.cartTotal}',
+                  style: Styles.txtBlackColorW70016.copyWith(
+                    color: ColorsValue.primary,
+                  ),
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 16),
@@ -796,16 +809,24 @@ void _showOrderDetailsDialog(
                 ...List.generate(details.items?.length ?? 0, (idx) {
                   final item = details.items![idx];
                   String pName = 'Unknown Product';
+                  String? pUnit;
                   if (item.productid is Map) {
                     pName =
                         item.productid['name'] ??
                         item.productid['_id'] ??
                         'Unknown Product';
+                    final unitData = item.productid['unit'];
+                    if (unitData is Map) {
+                      pUnit = unitData['name']?.toString();
+                    } else if (unitData is String) {
+                      pUnit = unitData;
+                    }
                   } else if (item.productid != null) {
                     final localMatch = controller.allProducts.firstWhereOrNull(
                       (p) => p.id == item.productid,
                     );
                     pName = localMatch?.name ?? item.productid.toString();
+                    pUnit = localMatch?.unit?.replaceAll("per ", "");
                   }
 
                   return Card(
@@ -846,7 +867,7 @@ void _showOrderDetailsDialog(
                                 Text(pName, style: Styles.txtBlackColorW60014),
                                 const SizedBox(height: 4),
                                 Text(
-                                  'Qty: ${item.quantity}',
+                                  'Qty: ${item.quantity}${pUnit != null && pUnit.isNotEmpty ? " $pUnit" : ""}',
                                   style: Styles.txtGreyColorW40012,
                                 ),
                               ],

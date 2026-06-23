@@ -3,6 +3,7 @@ import 'package:agro_app/domain/domain.dart';
 import 'package:agro_app/domain/services/enum.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 
 import 'customer_orders_controller.dart';
@@ -649,7 +650,8 @@ class CustomerOrdersScreen extends StatelessWidget {
                     Stack(
                       children: [
                         GestureDetector(
-                          onTap: ctrl.pickImage,
+                          onTap: () =>
+                              _showImageSourceBottomSheet(context, ctrl),
                           child: Container(
                             height: 150,
                             width: double.infinity,
@@ -864,6 +866,86 @@ class CustomerOrdersScreen extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+
+  void _showImageSourceBottomSheet(
+    BuildContext context,
+    CustomerOrdersController controller,
+  ) {
+    Get.bottomSheet(
+      Container(
+        padding: const EdgeInsets.all(24),
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Center(
+              child: Container(
+                width: 40,
+                height: 5,
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade300,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+            ),
+            const SizedBox(height: 24),
+            Text('Select Image Source', style: Styles.txtBlackColorW70020),
+            const SizedBox(height: 24),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                _buildSourceOption(
+                  icon: Icons.camera_alt_outlined,
+                  label: 'Camera',
+                  onTap: () {
+                    Get.back();
+                    controller.pickImage(ImageSource.camera);
+                  },
+                ),
+                _buildSourceOption(
+                  icon: Icons.photo_library_outlined,
+                  label: 'Gallery',
+                  onTap: () {
+                    Get.back();
+                    controller.pickImage(ImageSource.gallery);
+                  },
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSourceOption({
+    required IconData icon,
+    required String label,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Column(
+        children: [
+          Container(
+            width: 60,
+            height: 60,
+            decoration: BoxDecoration(
+              color: ColorsValue.primary.withValues(alpha: 0.1),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(icon, color: ColorsValue.primary, size: 28),
+          ),
+          const SizedBox(height: 8),
+          Text(label, style: Styles.txtBlackColorW60014),
+        ],
+      ),
     );
   }
 }

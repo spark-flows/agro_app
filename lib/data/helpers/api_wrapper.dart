@@ -11,9 +11,10 @@ import 'package:http_parser/src/media_type.dart' as media_type;
 
 /// API WRAPPER to call all the APIs and handle the error status codes
 class ApiWrapper {
-  final String _baseUrl = 'https://api.japexim.co.in/';
-  static final String baseUrl = 'https://api.japexim.co.in/';
-  static final String api = 'https://api.japexim.co.in';
+  final String _baseUrl = 'https://z459qvgk-3080.inc1.devtunnels.ms/';
+  static final String baseUrl = 'https://z459qvgk-3080.inc1.devtunnels.ms/';
+  static final String api =
+      "https://z459qvgk-3080.inc1.devtunnels.ms/"; // 'https://api.japexim.co.in';
   static String imageUrl = 'https://eventopackage.s3.ap-south-1.amazonaws.com/';
 
   static http.Client client = http.Client();
