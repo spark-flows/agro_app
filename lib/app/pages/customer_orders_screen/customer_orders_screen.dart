@@ -37,7 +37,7 @@ class CustomerOrdersScreen extends StatelessWidget {
                           color: ColorsValue.primary,
                         ),
                       )
-                    : controller.ordersList.isEmpty
+                    : controller.filteredOrders.isEmpty
                     ? _buildEmptyState()
                     : _buildOrdersList(controller),
               ),
@@ -130,6 +130,45 @@ class CustomerOrdersScreen extends StatelessWidget {
                   ),
                 ),
               ),
+              const SizedBox(width: 8),
+              Stack(
+                children: [
+                  Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: controller.isFilterActive
+                            ? ColorsValue.primary
+                            : Colors.grey.shade200,
+                      ),
+                    ),
+                    child: IconButton(
+                      icon: Icon(
+                        Icons.filter_list_rounded,
+                        color: controller.isFilterActive
+                            ? ColorsValue.primary
+                            : Colors.grey.shade600,
+                      ),
+                      onPressed: () =>
+                          _showFilterBottomSheet(context, controller),
+                    ),
+                  ),
+                  if (controller.isFilterActive)
+                    Positioned(
+                      right: 6,
+                      top: 6,
+                      child: Container(
+                        width: 8,
+                        height: 8,
+                        decoration: const BoxDecoration(
+                          color: ColorsValue.primary,
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                    ),
+                ],
+              ),
             ],
           ),
         ],
@@ -179,9 +218,9 @@ class CustomerOrdersScreen extends StatelessWidget {
       },
       child: ListView.builder(
         padding: const EdgeInsets.all(16),
-        itemCount: controller.ordersList.length,
+        itemCount: controller.filteredOrders.length,
         itemBuilder: (context, index) {
-          final order = controller.ordersList[index];
+          final order = controller.filteredOrders[index];
           String customerName = 'Unknown Customer';
           if (order.customerid != null) {
             customerName = order.customerid?.name ?? ' 0--0 ';
@@ -946,6 +985,260 @@ class CustomerOrdersScreen extends StatelessWidget {
           Text(label, style: Styles.txtBlackColorW60014),
         ],
       ),
+    );
+  }
+
+  void _showFilterBottomSheet(
+    BuildContext context,
+    CustomerOrdersController controller,
+  ) {
+    DateTime? tempDateFrom = controller.filterDateFrom;
+    DateTime? tempDateTo = controller.filterDateTo;
+    String? tempDistributorId = controller.filterDistributorId;
+
+    String formatDate(DateTime d) =>
+        '${d.day.toString().padLeft(2, '0')}/${d.month.toString().padLeft(2, '0')}/${d.year}';
+
+    Get.bottomSheet(
+      StatefulBuilder(
+        builder: (context, setSheetState) {
+          Future<void> pickDate({
+            required DateTime? initialDate,
+            required ValueChanged<DateTime?> onPicked,
+          }) async {
+            final picked = await showDatePicker(
+              context: context,
+              initialDate: initialDate ?? DateTime.now(),
+              firstDate: DateTime(2020),
+              lastDate: DateTime(2030),
+              builder: (context, child) {
+                return Theme(
+                  data: Theme.of(context).copyWith(
+                    colorScheme: const ColorScheme.light(
+                      primary: ColorsValue.primary,
+                    ),
+                  ),
+                  child: child!,
+                );
+              },
+            );
+            if (picked != null) {
+              setSheetState(() => onPicked(picked));
+            }
+          }
+
+          return Container(
+            padding: const EdgeInsets.all(24),
+            decoration: const BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+            ),
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Center(
+                    child: Container(
+                      width: 40,
+                      height: 5,
+                      decoration: BoxDecoration(
+                        color: Colors.grey.shade300,
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+
+                  Text('Filter Orders', style: Styles.txtBlackColorW70020),
+                  const SizedBox(height: 20),
+
+                  // ── Date Range ──────────────────────────────────────────
+                  Text('Order Date', style: Styles.txtBlackColorW60014),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: InkWell(
+                          onTap: () => pickDate(
+                            initialDate: tempDateFrom,
+                            onPicked: (d) => tempDateFrom = d,
+                          ),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 14,
+                            ),
+                            decoration: BoxDecoration(
+                              border: Border.all(color: Colors.grey.shade300),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Row(
+                              children: [
+                                Icon(
+                                  Icons.calendar_today,
+                                  size: 16,
+                                  color: Colors.grey.shade600,
+                                ),
+                                const SizedBox(width: 8),
+                                Text(
+                                  tempDateFrom != null
+                                      ? formatDate(tempDateFrom!)
+                                      : 'From',
+                                  style: TextStyle(
+                                    color: tempDateFrom != null
+                                        ? Colors.black87
+                                        : Colors.grey.shade500,
+                                    fontSize: 13,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: InkWell(
+                          onTap: () => pickDate(
+                            initialDate: tempDateTo,
+                            onPicked: (d) => tempDateTo = d,
+                          ),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 14,
+                            ),
+                            decoration: BoxDecoration(
+                              border: Border.all(color: Colors.grey.shade300),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Row(
+                              children: [
+                                Icon(
+                                  Icons.calendar_today,
+                                  size: 16,
+                                  color: Colors.grey.shade600,
+                                ),
+                                const SizedBox(width: 8),
+                                Text(
+                                  tempDateTo != null
+                                      ? formatDate(tempDateTo!)
+                                      : 'To',
+                                  style: TextStyle(
+                                    color: tempDateTo != null
+                                        ? Colors.black87
+                                        : Colors.grey.shade500,
+                                    fontSize: 13,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+
+                  // ── Distributor Dropdown (Admin only) ───────────────────
+                  if (controller.isAdmin) ...[
+                    DropdownButtonFormField<String>(
+                      value: tempDistributorId,
+                      decoration: InputDecoration(
+                        labelText: 'Distributor',
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        prefixIcon: const Icon(Icons.person_outline),
+                      ),
+                      items: [
+                        const DropdownMenuItem<String>(
+                          value: null,
+                          child: Text('All Distributors'),
+                        ),
+                        ...controller.distributors.map(
+                          (dist) => DropdownMenuItem<String>(
+                            value: dist.id,
+                            child: Text(dist.name),
+                          ),
+                        ),
+                      ],
+                      onChanged: (val) {
+                        setSheetState(() => tempDistributorId = val);
+                      },
+                    ),
+                    const SizedBox(height: 16),
+                  ],
+
+                  const SizedBox(height: 8),
+
+                  // ── Action Buttons ──────────────────────────────────────
+                  Row(
+                    children: [
+                      if (controller.isFilterActive) ...[
+                        Expanded(
+                          child: OutlinedButton(
+                            onPressed: () {
+                              controller.clearFilters();
+                              Get.back();
+                            },
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: Colors.red,
+                              side: const BorderSide(color: Colors.red),
+                              padding: const EdgeInsets.symmetric(vertical: 14),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                            child: const Text(
+                              'Clear Filter',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                      ],
+                      Expanded(
+                        child: ElevatedButton(
+                          onPressed: () {
+                            controller.applyFilters(
+                              dateFrom: tempDateFrom,
+                              dateTo: tempDateTo,
+                              distributorId: tempDistributorId,
+                            );
+                            Get.back();
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: ColorsValue.primary,
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          child: const Text(
+                            'Apply Filters',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+      isScrollControlled: true,
     );
   }
 }

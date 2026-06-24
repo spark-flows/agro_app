@@ -5,7 +5,6 @@ import 'dart:io';
 import 'package:agro_app/app/app.dart';
 import 'package:agro_app/data/data.dart';
 import 'package:agro_app/domain/domain.dart';
-import 'package:agro_app/domain/services/enum.dart';
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:dio/dio.dart';
 import 'package:get/get.dart';
@@ -824,10 +823,13 @@ class ConnectHelper {
         normalizedRole == 'is_admin' ||
         normalizedRole == '1';
 
+    print('[BranchResolution] role="$role", isAdmin=$isAdmin');
+
     // For admin users, try the selected branch first
     if (isAdmin) {
       final String selectedBranch =
           await Utility.getSecureValue(LocalKeys.selectedBranchId);
+      print('[BranchResolution] Admin selectedBranchId="$selectedBranch"');
       if (selectedBranch.isNotEmpty) {
         return selectedBranch;
       }
@@ -835,7 +837,15 @@ class ConnectHelper {
       // fetchBranches completes), fall through to profile/API fallback below.
     }
 
-    // Non-admin branch resolution (e.g. dealer) — also used as admin fallback
+    // Non-admin: also check selectedBranchId first (saved during login/splash)
+    final String savedBranch =
+        await Utility.getSecureValue(LocalKeys.selectedBranchId);
+    if (savedBranch.isNotEmpty) {
+      print('[BranchResolution] Using saved selectedBranchId="$savedBranch"');
+      return savedBranch;
+    }
+
+    // Fallback to profile data cache
     String profileJson = await Utility.getSecureValue(LocalKeys.profileData);
     String branchId = '';
 
@@ -849,6 +859,7 @@ class ConnectHelper {
             branchId = decoded['branchid'].toString();
           }
         }
+        print('[BranchResolution] From profileData cache branchId="$branchId"');
       } catch (_) {}
     }
 
@@ -898,17 +909,55 @@ class ConnectHelper {
               }
             }
 
-            // For admin: also save as selectedBranchId so future calls are fast
-            if (isAdmin && branchId.isNotEmpty) {
+            // Save as selectedBranchId so future calls are fast
+            if (branchId.isNotEmpty) {
               Get.find<Repository>().saveSecureValue(
                 LocalKeys.selectedBranchId,
                 branchId,
               );
             }
+            print('[BranchResolution] From API fallback branchId="$branchId"');
           }
         }
       } catch (e) {
         print('[BranchResolution] Error during API branch fallback: $e');
+      }
+    }
+
+    // Final fallback: if branchId is still empty, fetch branches and select the first one
+    if (branchId.isEmpty) {
+      print('[BranchResolution] branchId is still empty. Fetching branches list as fallback...');
+      try {
+        final response = await getAllBranchesApi(isLoading: false);
+        if (!response.hasError && response.data.isNotEmpty) {
+          final decoded = json.decode(response.data);
+          final docs = decoded['Data']?['docs'];
+          if (docs is List && docs.isNotEmpty) {
+            dynamic activeBranch;
+            for (var b in docs) {
+              if (b is Map && b['isDeleted'] != true) {
+                activeBranch = b;
+                break;
+              }
+            }
+            if (activeBranch == null && docs.isNotEmpty) {
+              activeBranch = docs.first;
+            }
+            if (activeBranch != null && activeBranch is Map) {
+              final firstBranchId = activeBranch['_id']?.toString() ?? '';
+              if (firstBranchId.isNotEmpty) {
+                branchId = firstBranchId;
+                Get.find<Repository>().saveSecureValue(
+                  LocalKeys.selectedBranchId,
+                  branchId,
+                );
+                print('[BranchResolution] Final fallback resolved branch: "$branchId"');
+              }
+            }
+          }
+        }
+      } catch (e) {
+        print('[BranchResolution] Error during final branch fallback: $e');
       }
     }
 

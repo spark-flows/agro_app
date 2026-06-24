@@ -66,6 +66,14 @@ class HomeController extends GetxController {
         LocalKeys.profileData,
         json.encode(userData.toJson()),
       );
+
+      // Pre-populate branchId so it's available for the first API calls
+      if (userData.branchid != null && userData.branchid!.id.isNotEmpty) {
+        Get.find<Repository>().saveSecureValue(
+          LocalKeys.selectedBranchId,
+          userData.branchid!.id,
+        );
+      }
       update();
     }
   }

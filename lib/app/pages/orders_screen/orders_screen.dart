@@ -11,6 +11,14 @@ class OrdersScreen extends StatefulWidget {
 }
 
 class _OrdersScreenState extends State<OrdersScreen> {
+  final TextEditingController _searchController = TextEditingController();
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     return GetBuilder<OrdersController>(
@@ -32,54 +40,91 @@ class _OrdersScreenState extends State<OrdersScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                /// Customer Selection Dropdown for History
-                // DropdownButtonFormField<String>(
-                //   decoration: InputDecoration(
-                //     labelText: 'Select Customer',
-                //     labelStyle: Styles.txtGreyColorW40014,
-                //     border: OutlineInputBorder(
-                //       borderRadius: BorderRadius.circular(12),
-                //       borderSide: BorderSide(color: Colors.grey.shade300),
-                //     ),
-                //     enabledBorder: OutlineInputBorder(
-                //       borderRadius: BorderRadius.circular(12),
-                //       borderSide: BorderSide(color: Colors.grey.shade300),
-                //     ),
-                //     filled: true,
-                //     fillColor: Colors.white,
-                //     prefixIcon: const Icon(
-                //       Icons.person_outline,
-                //       color: ColorsValue.primary,
-                //     ),
-                //     suffixIcon: controller.historyCustomerId != null
-                //         ? IconButton(
-                //             icon: const Icon(Icons.clear, color: Colors.grey),
-                //             onPressed: () {
-                //               controller.historyCustomerId = null;
-                //               controller.update();
-                //               controller.fetchAllOrders();
-                //             },
-                //           )
-                //         : null,
-                //   ),
-                //   value: controller.historyCustomerId,
-                //   items: controller.customers.map((c) {
-                //     return DropdownMenuItem<String>(
-                //       value: c.id,
-                //       child: Text('${c.name} (${c.mobile ?? ''})'),
-                //     );
-                //   }).toList(),
-                //   onChanged: (val) {
-                //     controller.historyCustomerId = val;
-                //     controller.update();
-                //     if (val != null) {
-                //       controller.fetchOrderHistory(val);
-                //     } else {
-                //       controller.fetchAllOrders();
-                //     }
-                //   },
-                // ),
-                // const SizedBox(height: 10),
+                // ── Search & Filter Row ───────────────────────────────────
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        controller: _searchController,
+                        onChanged: controller.searchOrders,
+                        decoration: InputDecoration(
+                          hintText: 'Search orders, customers or products...',
+                          hintStyle: Styles.txtGreyColorW40014,
+                          prefixIcon: const Icon(
+                            Icons.search,
+                            color: ColorsValue.primary,
+                          ),
+                          suffixIcon: _searchController.text.isNotEmpty
+                              ? IconButton(
+                                  icon: const Icon(Icons.clear, size: 18),
+                                  onPressed: () {
+                                    _searchController.clear();
+                                    controller.searchOrders('');
+                                  },
+                                )
+                              : null,
+                          filled: true,
+                          fillColor: Colors.white,
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide(color: Colors.grey.shade200),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide(color: Colors.grey.shade200),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: const BorderSide(
+                              color: ColorsValue.primary,
+                              width: 1.5,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Stack(
+                      children: [
+                        Container(
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: controller.isFilterActive
+                                  ? ColorsValue.primary
+                                  : Colors.grey.shade200,
+                            ),
+                          ),
+                          child: IconButton(
+                            icon: Icon(
+                              Icons.filter_list_rounded,
+                              color: controller.isFilterActive
+                                  ? ColorsValue.primary
+                                  : Colors.grey.shade600,
+                            ),
+                            onPressed: () =>
+                                _showFilterBottomSheet(context, controller),
+                          ),
+                        ),
+                        if (controller.isFilterActive)
+                          Positioned(
+                            right: 6,
+                            top: 6,
+                            child: Container(
+                              width: 8,
+                              height: 8,
+                              decoration: const BoxDecoration(
+                                color: ColorsValue.primary,
+                                shape: BoxShape.circle,
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 10),
 
                 /// Order List
                 Expanded(
@@ -89,7 +134,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
                             color: ColorsValue.primary,
                           ),
                         )
-                      : controller.customerOrders.isEmpty
+                      : controller.filteredOrders.isEmpty
                       ? Center(
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
@@ -108,9 +153,9 @@ class _OrdersScreenState extends State<OrdersScreen> {
                           ),
                         )
                       : ListView.builder(
-                          itemCount: controller.customerOrders.length,
+                          itemCount: controller.filteredOrders.length,
                           itemBuilder: (context, index) {
-                            final order = controller.customerOrders[index];
+                            final order = controller.filteredOrders[index];
                             return Card(
                               elevation: 1,
                               margin: const EdgeInsets.only(bottom: 12),
@@ -212,6 +257,385 @@ class _OrdersScreenState extends State<OrdersScreen> {
               : null,
         );
       },
+    );
+  }
+
+  // ── Filter Bottom Sheet ──────────────────────────────────────────────────
+  void _showFilterBottomSheet(
+    BuildContext context,
+    OrdersController controller,
+  ) {
+    DateTime? tempDateFrom = controller.filterDateFrom;
+    DateTime? tempDateTo = controller.filterDateTo;
+    DateTime? tempDeliveryDateFrom = controller.filterDeliveryDateFrom;
+    DateTime? tempDeliveryDateTo = controller.filterDeliveryDateTo;
+    String? tempStatus = controller.filterStatus;
+    String? tempDistributorId = controller.filterDistributorId;
+
+    String formatDate(DateTime d) =>
+        '${d.day.toString().padLeft(2, '0')}/${d.month.toString().padLeft(2, '0')}/${d.year}';
+
+    Get.bottomSheet(
+      StatefulBuilder(
+        builder: (context, setSheetState) {
+          Future<void> pickDate({
+            required DateTime? initialDate,
+            required ValueChanged<DateTime?> onPicked,
+          }) async {
+            final picked = await showDatePicker(
+              context: context,
+              initialDate: initialDate ?? DateTime.now(),
+              firstDate: DateTime(2020),
+              lastDate: DateTime(2030),
+              builder: (context, child) {
+                return Theme(
+                  data: Theme.of(context).copyWith(
+                    colorScheme: const ColorScheme.light(
+                      primary: ColorsValue.primary,
+                    ),
+                  ),
+                  child: child!,
+                );
+              },
+            );
+            if (picked != null) {
+              setSheetState(() => onPicked(picked));
+            }
+          }
+
+          return Container(
+            padding: const EdgeInsets.all(24),
+            decoration: const BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+            ),
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Handle bar
+                  Center(
+                    child: Container(
+                      width: 40,
+                      height: 5,
+                      decoration: BoxDecoration(
+                        color: Colors.grey.shade300,
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+
+                  Text('Filter Orders', style: Styles.txtBlackColorW70020),
+                  const SizedBox(height: 20),
+
+                  // ── Date (Created At) Range ─────────────────────────────
+                  Text('Order Date', style: Styles.txtBlackColorW60014),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: InkWell(
+                          onTap: () => pickDate(
+                            initialDate: tempDateFrom,
+                            onPicked: (d) => tempDateFrom = d,
+                          ),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 14,
+                            ),
+                            decoration: BoxDecoration(
+                              border: Border.all(color: Colors.grey.shade300),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Row(
+                              children: [
+                                Icon(
+                                  Icons.calendar_today,
+                                  size: 16,
+                                  color: Colors.grey.shade600,
+                                ),
+                                const SizedBox(width: 8),
+                                Text(
+                                  tempDateFrom != null
+                                      ? formatDate(tempDateFrom!)
+                                      : 'From',
+                                  style: TextStyle(
+                                    color: tempDateFrom != null
+                                        ? Colors.black87
+                                        : Colors.grey.shade500,
+                                    fontSize: 13,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: InkWell(
+                          onTap: () => pickDate(
+                            initialDate: tempDateTo,
+                            onPicked: (d) => tempDateTo = d,
+                          ),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 14,
+                            ),
+                            decoration: BoxDecoration(
+                              border: Border.all(color: Colors.grey.shade300),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Row(
+                              children: [
+                                Icon(
+                                  Icons.calendar_today,
+                                  size: 16,
+                                  color: Colors.grey.shade600,
+                                ),
+                                const SizedBox(width: 8),
+                                Text(
+                                  tempDateTo != null
+                                      ? formatDate(tempDateTo!)
+                                      : 'To',
+                                  style: TextStyle(
+                                    color: tempDateTo != null
+                                        ? Colors.black87
+                                        : Colors.grey.shade500,
+                                    fontSize: 13,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+
+                  // ── Delivery Date Range ─────────────────────────────────
+                  Text('Delivery Date', style: Styles.txtBlackColorW60014),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: InkWell(
+                          onTap: () => pickDate(
+                            initialDate: tempDeliveryDateFrom,
+                            onPicked: (d) => tempDeliveryDateFrom = d,
+                          ),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 14,
+                            ),
+                            decoration: BoxDecoration(
+                              border: Border.all(color: Colors.grey.shade300),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Row(
+                              children: [
+                                Icon(
+                                  Icons.event,
+                                  size: 16,
+                                  color: Colors.grey.shade600,
+                                ),
+                                const SizedBox(width: 8),
+                                Text(
+                                  tempDeliveryDateFrom != null
+                                      ? formatDate(tempDeliveryDateFrom!)
+                                      : 'From',
+                                  style: TextStyle(
+                                    color: tempDeliveryDateFrom != null
+                                        ? Colors.black87
+                                        : Colors.grey.shade500,
+                                    fontSize: 13,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: InkWell(
+                          onTap: () => pickDate(
+                            initialDate: tempDeliveryDateTo,
+                            onPicked: (d) => tempDeliveryDateTo = d,
+                          ),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 14,
+                            ),
+                            decoration: BoxDecoration(
+                              border: Border.all(color: Colors.grey.shade300),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Row(
+                              children: [
+                                Icon(
+                                  Icons.event,
+                                  size: 16,
+                                  color: Colors.grey.shade600,
+                                ),
+                                const SizedBox(width: 8),
+                                Text(
+                                  tempDeliveryDateTo != null
+                                      ? formatDate(tempDeliveryDateTo!)
+                                      : 'To',
+                                  style: TextStyle(
+                                    color: tempDeliveryDateTo != null
+                                        ? Colors.black87
+                                        : Colors.grey.shade500,
+                                    fontSize: 13,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+
+                  // ── Status Dropdown ─────────────────────────────────────
+                  DropdownButtonFormField<String>(
+                    value: tempStatus,
+                    decoration: InputDecoration(
+                      labelText: 'Status',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      prefixIcon: const Icon(Icons.flag_outlined),
+                    ),
+                    items: [
+                      const DropdownMenuItem<String>(
+                        value: null,
+                        child: Text('All Statuses'),
+                      ),
+                      ...controller.availableStatuses.map(
+                        (status) => DropdownMenuItem<String>(
+                          value: status,
+                          child: Text(status),
+                        ),
+                      ),
+                    ],
+                    onChanged: (val) {
+                      setSheetState(() => tempStatus = val);
+                    },
+                  ),
+                  const SizedBox(height: 16),
+
+                  // ── Distributor Dropdown (Admin only) ───────────────────
+                  if (controller.isAdmin) ...[
+                    DropdownButtonFormField<String>(
+                      value: tempDistributorId,
+                      decoration: InputDecoration(
+                        labelText: 'Distributor',
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        prefixIcon: const Icon(Icons.person_outline),
+                      ),
+                      items: [
+                        const DropdownMenuItem<String>(
+                          value: null,
+                          child: Text('All Distributors'),
+                        ),
+                        ...controller.distributors.map(
+                          (dist) => DropdownMenuItem<String>(
+                            value: dist.id,
+                            child: Text(dist.name),
+                          ),
+                        ),
+                      ],
+                      onChanged: (val) {
+                        setSheetState(() => tempDistributorId = val);
+                      },
+                    ),
+                    const SizedBox(height: 16),
+                  ],
+
+                  const SizedBox(height: 8),
+
+                  // ── Action Buttons ──────────────────────────────────────
+                  Row(
+                    children: [
+                      if (controller.isFilterActive) ...[
+                        Expanded(
+                          child: OutlinedButton(
+                            onPressed: () {
+                              _searchController.clear();
+                              controller.clearFilters();
+                              Get.back();
+                            },
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: Colors.red,
+                              side: const BorderSide(color: Colors.red),
+                              padding: const EdgeInsets.symmetric(vertical: 14),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                            child: const Text(
+                              'Clear Filter',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                      ],
+                      Expanded(
+                        child: ElevatedButton(
+                          onPressed: () {
+                            controller.applyFilters(
+                              dateFrom: tempDateFrom,
+                              dateTo: tempDateTo,
+                              deliveryDateFrom: tempDeliveryDateFrom,
+                              deliveryDateTo: tempDeliveryDateTo,
+                              status: tempStatus,
+                              distributorId: tempDistributorId,
+                            );
+                            Get.back();
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: ColorsValue.primary,
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          child: const Text(
+                            'Apply Filters',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+      isScrollControlled: true,
     );
   }
 }

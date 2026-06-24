@@ -1,6 +1,8 @@
 import 'dart:async';
+import 'dart:convert';
 import 'package:agro_app/app/utils/utility.dart';
 import 'package:agro_app/domain/domain.dart';
+import 'package:agro_app/domain/models/get_all_users_model.dart' as users_model;
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -57,6 +59,13 @@ class OrdersController extends GetxController {
   final TextEditingController searchController = TextEditingController();
   Timer? _searchDebounce;
 
+  String orderSearchQuery = '';
+
+  void searchOrders(String query) {
+    orderSearchQuery = query;
+    update();
+  }
+
   // Pagination state
   int _currentPage = 1;
   bool _hasMoreProducts = true;
@@ -66,12 +75,236 @@ class OrdersController extends GetxController {
   final TextEditingController titleController = TextEditingController();
   final TextEditingController deliveryDateController = TextEditingController();
 
+  // ── Filter state ───────────────────────────────────────────────────────────
+  DateTime? filterDateFrom;
+  DateTime? filterDateTo;
+  DateTime? filterDeliveryDateFrom;
+  DateTime? filterDeliveryDateTo;
+  String? filterStatus;
+  String? filterDistributorId;
+
+  bool isAdmin = false;
+  List<users_model.Doc> distributors = [];
+
+  bool get isFilterActive =>
+      filterDateFrom != null ||
+      filterDateTo != null ||
+      filterDeliveryDateFrom != null ||
+      filterDeliveryDateTo != null ||
+      filterStatus != null ||
+      filterDistributorId != null;
+
+  List<GetAllOrderDoc> get filteredOrders {
+    List<GetAllOrderDoc> result = List.from(customerOrders);
+
+    // Filter by created date range
+    if (filterDateFrom != null) {
+      result = result.where((o) {
+        if (o.createdAt == null) return false;
+        final date = DateTime.tryParse(o.createdAt!);
+        if (date == null) return false;
+        return !date.isBefore(
+          DateTime(
+            filterDateFrom!.year,
+            filterDateFrom!.month,
+            filterDateFrom!.day,
+          ),
+        );
+      }).toList();
+    }
+    if (filterDateTo != null) {
+      result = result.where((o) {
+        if (o.createdAt == null) return false;
+        final date = DateTime.tryParse(o.createdAt!);
+        if (date == null) return false;
+        return !date.isAfter(
+          DateTime(
+            filterDateTo!.year,
+            filterDateTo!.month,
+            filterDateTo!.day,
+            23,
+            59,
+            59,
+          ),
+        );
+      }).toList();
+    }
+
+    // Filter by delivery date range
+    if (filterDeliveryDateFrom != null) {
+      result = result.where((o) {
+        if (o.deliverydate == null) return false;
+        final date = DateTime.tryParse(o.deliverydate.toString());
+        if (date == null) return false;
+        return !date.isBefore(
+          DateTime(
+            filterDeliveryDateFrom!.year,
+            filterDeliveryDateFrom!.month,
+            filterDeliveryDateFrom!.day,
+          ),
+        );
+      }).toList();
+    }
+    if (filterDeliveryDateTo != null) {
+      result = result.where((o) {
+        if (o.deliverydate == null) return false;
+        final date = DateTime.tryParse(o.deliverydate.toString());
+        if (date == null) return false;
+        return !date.isAfter(
+          DateTime(
+            filterDeliveryDateTo!.year,
+            filterDeliveryDateTo!.month,
+            filterDeliveryDateTo!.day,
+            23,
+            59,
+            59,
+          ),
+        );
+      }).toList();
+    }
+
+    // Filter by status
+    if (filterStatus != null && filterStatus!.isNotEmpty) {
+      result = result
+          .where((o) => o.status?.toLowerCase() == filterStatus!.toLowerCase())
+          .toList();
+    }
+
+    // Filter by distributor
+    if (filterDistributorId != null && filterDistributorId!.isNotEmpty) {
+      result = result
+          .where((o) => o.distributorid?.id == filterDistributorId)
+          .toList();
+    }
+
+    // Filter by search query (order number, customer name, distributor name, product name)
+    if (orderSearchQuery.isNotEmpty) {
+      final q = orderSearchQuery.toLowerCase();
+      result = result.where((o) {
+        if (o.orderno != null && o.orderno!.toLowerCase().contains(q)) {
+          return true;
+        }
+        if (o.customerid?.name != null &&
+            o.customerid!.name!.toLowerCase().contains(q)) {
+          return true;
+        }
+        if (o.distributorid?.name != null &&
+            o.distributorid!.name!.toLowerCase().contains(q)) {
+          return true;
+        }
+        if (o.items != null) {
+          for (var item in o.items!) {
+            String pName = '';
+            if (item.productid is Map) {
+              final prodMap = item.productid as Map;
+              pName = prodMap['name']?.toString() ?? '';
+            } else if (item.productid != null) {
+              final localMatch = allProducts.firstWhereOrNull(
+                (p) => p.id == item.productid,
+              );
+              pName = localMatch?.name ?? '';
+            }
+            if (pName.toLowerCase().contains(q)) {
+              return true;
+            }
+          }
+        }
+        return false;
+      }).toList();
+    }
+
+    return result;
+  }
+
+  void applyFilters({
+    DateTime? dateFrom,
+    DateTime? dateTo,
+    DateTime? deliveryDateFrom,
+    DateTime? deliveryDateTo,
+    String? status,
+    String? distributorId,
+  }) {
+    filterDateFrom = dateFrom;
+    filterDateTo = dateTo;
+    filterDeliveryDateFrom = deliveryDateFrom;
+    filterDeliveryDateTo = deliveryDateTo;
+    filterStatus = status;
+    filterDistributorId = distributorId;
+    update();
+  }
+
+  void clearFilters() {
+    filterDateFrom = null;
+    filterDateTo = null;
+    filterDeliveryDateFrom = null;
+    filterDeliveryDateTo = null;
+    filterStatus = null;
+    filterDistributorId = null;
+    orderSearchQuery = '';
+    update();
+  }
+
+  /// Unique statuses from current orders for filter dropdown
+  List<String> get availableStatuses {
+    final statuses = customerOrders
+        .where((o) => o.status != null && o.status!.isNotEmpty)
+        .map((o) => o.status!)
+        .toSet()
+        .toList();
+    statuses.sort();
+    return statuses;
+  }
+
   @override
   void onInit() {
     super.onInit();
+    _loadRole();
     fetchProducts();
     fetchCustomers();
     fetchAllOrders();
+  }
+
+  Future<void> _loadRole() async {
+    String role = await Utility.getSecureValue(LocalKeys.roleName);
+    if (role.isEmpty) {
+      final profileJson = await Utility.getSecureValue(LocalKeys.profileData);
+      if (profileJson.isNotEmpty) {
+        try {
+          final decoded = json.decode(profileJson);
+          role =
+              decoded['roleid']?['rolename']?.toString() ??
+              decoded['rolename']?.toString() ??
+              '';
+        } catch (_) {}
+      }
+    }
+    final normalizedRole = role.toLowerCase().trim();
+    isAdmin =
+        normalizedRole == 'admin' ||
+        normalizedRole == 'is_admin' ||
+        normalizedRole == '1';
+    update();
+
+    if (isAdmin) {
+      fetchDistributors();
+    }
+  }
+
+  Future<void> fetchDistributors() async {
+    try {
+      var response = await Get.find<Repository>().getUsersListApi(
+        page: 1,
+        limit: 100,
+        type: 'dealer',
+        isLoading: false,
+      );
+      if (response != null && response.isSuccess) {
+        distributors = response.data.docs;
+        update();
+      }
+    } catch (e) {
+      debugPrint('[Orders] fetchDistributors error: $e');
+    }
   }
 
   Future<void> fetchAllOrders() async {
@@ -348,10 +581,7 @@ class OrdersController extends GetxController {
       if (Get.isSnackbarOpen) await Get.closeCurrentSnackbar();
       Get.back();
       Get.back();
-      Utility.snacBar(
-        'Order placed successfully!',
-        Colors.green,
-      );
+      Utility.snacBar('Order placed successfully!', Colors.green);
     } else {
       Utility.errorMessage(response?.message ?? 'Failed to place order');
     }
@@ -371,10 +601,7 @@ class OrdersController extends GetxController {
       } else {
         fetchAllOrders();
       }
-      Utility.snacBar(
-        'Order deleted successfully',
-        Colors.green,
-      );
+      Utility.snacBar('Order deleted successfully', Colors.green);
     } else {
       Utility.errorMessage('Failed to delete order');
     }

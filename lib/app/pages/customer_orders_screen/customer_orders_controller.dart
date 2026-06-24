@@ -1,10 +1,14 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:agro_app/app/app.dart';
 import 'package:agro_app/domain/domain.dart';
+import 'package:agro_app/domain/models/get_all_users_model.dart' as users_model;
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:agro_app/app/pages/home_screen/home_controller.dart';
+import 'package:agro_app/domain/services/enum.dart';
 
 class CustomerOrdersController extends GetxController {
   final Repository _repository = Get.find<Repository>();
@@ -16,6 +20,19 @@ class CustomerOrdersController extends GetxController {
 
   // Used ONLY for the top-bar filter dropdown
   String filterCustomerId = '';
+
+  // ── Filter state ───────────────────────────────────────────────────────────
+  DateTime? filterDateFrom;
+  DateTime? filterDateTo;
+  String? filterDistributorId;
+
+  bool isAdmin = false;
+  List<users_model.Doc> distributors = [];
+
+  bool get isFilterActive =>
+      filterDateFrom != null ||
+      filterDateTo != null ||
+      filterDistributorId != null;
 
   // Used ONLY for the create/edit form
   String selectedCustomerId = '';
@@ -31,8 +48,135 @@ class CustomerOrdersController extends GetxController {
   @override
   void onInit() {
     super.onInit();
+    _loadRole();
     fetchCustomers();
     fetchAllCustomerOrders();
+  }
+
+  Future<void> _loadRole() async {
+    try {
+      final homeController = Get.find<HomeController>();
+      isAdmin = RoleUtils.isAdmin(homeController.roleName);
+      print(
+        '[CustomerOrders] Resolved isAdmin=$isAdmin from HomeController roleName="${homeController.roleName}"',
+      );
+    } catch (e) {
+      print(
+        '[CustomerOrders] Error finding HomeController: $e. Falling back to local storage.',
+      );
+      String role = await Utility.getSecureValue(LocalKeys.roleName);
+      if (role.isEmpty) {
+        final profileJson = await Utility.getSecureValue(LocalKeys.profileData);
+        if (profileJson.isNotEmpty) {
+          try {
+            final decoded = json.decode(profileJson);
+            role =
+                decoded['roleid']?['rolename']?.toString() ??
+                decoded['rolename']?.toString() ??
+                '';
+          } catch (_) {}
+        }
+      }
+      isAdmin = RoleUtils.isAdmin(role);
+    }
+    update();
+
+    if (isAdmin) {
+      fetchDistributors();
+    }
+  }
+
+  Future<void> fetchDistributors() async {
+    try {
+      var response = await _repository.getUsersListApi(
+        page: 1,
+        limit: 100,
+        type: 'dealer',
+        isLoading: false,
+      );
+      if (response != null && response.isSuccess) {
+        distributors = response.data.docs;
+        update();
+      }
+    } catch (e) {
+      debugPrint('[CustomerOrders] fetchDistributors error: $e');
+    }
+  }
+
+  List<CustomerOrderDoc> get filteredOrders {
+    List<CustomerOrderDoc> result = List.from(ordersList);
+
+    // Filter by created date range
+    if (filterDateFrom != null) {
+      result = result.where((o) {
+        if (o.createdAt == null) return false;
+        final date = DateTime.tryParse(o.createdAt!);
+        if (date == null) return false;
+        return !date.isBefore(
+          DateTime(
+            filterDateFrom!.year,
+            filterDateFrom!.month,
+            filterDateFrom!.day,
+          ),
+        );
+      }).toList();
+    }
+    if (filterDateTo != null) {
+      result = result.where((o) {
+        if (o.createdAt == null) return false;
+        final date = DateTime.tryParse(o.createdAt!);
+        if (date == null) return false;
+        return !date.isAfter(
+          DateTime(
+            filterDateTo!.year,
+            filterDateTo!.month,
+            filterDateTo!.day,
+            23,
+            59,
+            59,
+          ),
+        );
+      }).toList();
+    }
+
+    // Filter by distributor
+    if (filterDistributorId != null && filterDistributorId!.isNotEmpty) {
+      result = result.where((o) {
+        String distId = '';
+        if (o.distributorid is Map) {
+          distId =
+              o.distributorid['_id']?.toString() ??
+              o.distributorid['id']?.toString() ??
+              '';
+        } else if (o.distributorid != null) {
+          distId = o.distributorid.toString();
+        }
+        print(
+          '[FilterCustomerOrder] Comparing order distributor="$distId" with filter="$filterDistributorId"',
+        );
+        return distId == filterDistributorId;
+      }).toList();
+    }
+
+    return result;
+  }
+
+  void applyFilters({
+    DateTime? dateFrom,
+    DateTime? dateTo,
+    String? distributorId,
+  }) {
+    filterDateFrom = dateFrom;
+    filterDateTo = dateTo;
+    filterDistributorId = distributorId;
+    update();
+  }
+
+  void clearFilters() {
+    filterDateFrom = null;
+    filterDateTo = null;
+    filterDistributorId = null;
+    update();
   }
 
   Future<void> fetchCustomers() async {

@@ -89,6 +89,14 @@ class AuthController extends GetxController {
           LocalKeys.roleName,
           profileData.roleid.rolename,
         );
+
+        // Pre-populate branchId so it's available for the first API calls
+        if (profileData.branchid != null && profileData.branchid!.id.isNotEmpty) {
+          Get.find<Repository>().saveSecureValue(
+            LocalKeys.selectedBranchId,
+            profileData.branchid!.id,
+          );
+        }
       }
 
       RouteManagement.goToBottomScreen();

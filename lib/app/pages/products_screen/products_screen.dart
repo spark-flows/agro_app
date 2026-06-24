@@ -366,6 +366,8 @@ class _ProductsScreenState extends State<ProductsScreen> {
             ),
             child: Column(
               mainAxisSize: MainAxisSize.min,
+              mainAxisAlignment: MainAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 // Handle bar
                 Center(
@@ -380,26 +382,28 @@ class _ProductsScreenState extends State<ProductsScreen> {
                 ),
                 const SizedBox(height: 20),
 
+                Text('Filter Products', style: Styles.txtBlackColorW70020),
+
                 // Title row
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text('Filter Products', style: Styles.txtBlackColorW70020),
-                    if (tempCategoryId != null || tempUnitId != null)
-                      TextButton(
-                        onPressed: () {
-                          setSheetState(() {
-                            tempCategoryId = null;
-                            tempUnitId = null;
-                          });
-                        },
-                        child: const Text(
-                          'Clear All',
-                          style: TextStyle(color: Colors.red, fontSize: 13),
-                        ),
-                      ),
-                  ],
-                ),
+                // Row(
+                //   mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                //   children: [
+                //     Text('Filter Products', style: Styles.txtBlackColorW70020),
+                //     // if (tempCategoryId != null || tempUnitId != null)
+                //     //   TextButton(
+                //     //     onPressed: () {
+                //     //       setSheetState(() {
+                //     //         tempCategoryId = null;
+                //     //         tempUnitId = null;
+                //     //       });
+                //     //     },
+                //     //     child: const Text(
+                //     //       'Clear All',
+                //     //       style: TextStyle(color: Colors.red, fontSize: 13),
+                //     //     ),
+                //     //   ),
+                //   ],
+                // ),
                 const SizedBox(height: 20),
 
                 // ── Category Dropdown ──────────────────────────────────────
@@ -458,33 +462,63 @@ class _ProductsScreenState extends State<ProductsScreen> {
                 ),
                 const SizedBox(height: 24),
 
-                // ── Apply Button ───────────────────────────────────────────
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: () {
-                      controller.applyFilters(
-                        categoryId: tempCategoryId,
-                        unitId: tempUnitId,
-                      );
-                      Get.back();
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: ColorsValue.primary,
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
+                Row(
+                  children: [
+                    // ── Clear Filter Button (only when filters are active) ──
+                    if (controller.isFilterActive) ...[
+                      Expanded(
+                        child: OutlinedButton(
+                          onPressed: () {
+                            controller.clearFilters();
+                            Get.back();
+                          },
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: Colors.red,
+                            side: const BorderSide(color: Colors.red),
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          child: const Text(
+                            'Clear Filter',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                    ],
+                    // ── Apply Filters Button ────────────────────────────────
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: () {
+                          controller.applyFilters(
+                            categoryId: tempCategoryId,
+                            unitId: tempUnitId,
+                          );
+                          Get.back();
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: ColorsValue.primary,
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        child: const Text(
+                          'Apply Filters',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                        ),
                       ),
                     ),
-                    child: const Text(
-                      'Apply Filters',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ),
+                  ],
                 ),
                 const SizedBox(height: 16),
               ],
