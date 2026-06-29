@@ -46,4 +46,5 @@ abstract class RouteManagement {
   static void goToCustomerOrdersScreen() => Get.toNamed<void>(Routes.customerOrdersScreen);
   static void goToProductsScreen() => Get.toNamed<void>(Routes.productsScreen);
   static void goToProfileScreen() => Get.toNamed<void>(Routes.profileScreen);
+  static void goToTasksScreen() => Get.toNamed<void>(Routes.tasksScreen);
 }

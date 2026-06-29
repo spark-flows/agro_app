@@ -9,3 +9,4 @@ export 'users_screen/users_binding.dart';
 export 'users_screen/users_screen.dart';
 export 'customer_orders_screen/customer_orders_screen.dart';
 export 'customer_orders_screen/customer_orders_binding.dart';
+export 'tasks_screen/tasks_page.dart';

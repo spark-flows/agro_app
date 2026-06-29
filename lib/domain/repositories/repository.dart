@@ -21,6 +21,9 @@ import 'package:agro_app/domain/models/get_one_order_model.dart';
 import 'package:agro_app/domain/models/get_one_user_model.dart';
 import 'package:agro_app/domain/models/get_profille_model.dart';
 import 'package:agro_app/domain/models/get_all_branches_model.dart';
+import 'package:agro_app/domain/models/getAll_tasks_model.dart';
+import 'package:agro_app/domain/models/create_task_model.dart';
+import 'package:agro_app/domain/models/get_one_task_model.dart';
 
 /// The main repository which will get the data from [DeviceRepository] or the
 /// [DataRepository].
@@ -987,6 +990,190 @@ class Repository {
         '',
       );
       return null;
+    }
+  }
+
+  Future<GetAllTasksModel?> getTaskListApi({
+    int page = 1,
+    int limit = 10,
+    String search = "",
+    String sortfield = "date",
+    int sortoption = -1,
+    bool isLoading = false,
+  }) async {
+    try {
+      var response = await _dataRepository.getTaskListApi(
+        page: page,
+        limit: limit,
+        search: search,
+        sortfield: sortfield,
+        sortoption: sortoption,
+        isLoading: isLoading,
+      );
+      if (response.hasError) {
+        final msg = _parseErrorMessage(
+          response.data,
+          'Failed to load tasks',
+        );
+        Utility.showMessage(msg, MessageType.error, null, '');
+        return null;
+      }
+      if (response.data.isNotEmpty) {
+        return getAllTasksModelFromJson(response.data);
+      }
+      return null;
+    } catch (e, st) {
+      print('getTaskListApi error: $e\n$st');
+      Utility.closeDialog();
+      Utility.showMessage(
+        'Failed to load tasks',
+        MessageType.error,
+        null,
+        '',
+      );
+      return null;
+    }
+  }
+
+  Future<CreateTasks?> createTaskApi({
+    String? taskid,
+    required String date,
+    required String taskname,
+    required String description,
+    required String assignedto,
+    required String status,
+    bool isLoading = false,
+  }) async {
+    try {
+      var response = await _dataRepository.createTaskApi(
+        taskid: taskid,
+        date: date,
+        taskname: taskname,
+        description: description,
+        assignedto: assignedto,
+        status: status,
+        isLoading: isLoading,
+      );
+      if (response.hasError) {
+        final msg = _parseErrorMessage(
+          response.data,
+          'Failed to save task',
+        );
+        Utility.showMessage(msg, MessageType.error, null, '');
+        return null;
+      }
+      if (response.data.isNotEmpty) {
+        return createTasksFromJson(response.data);
+      }
+      return null;
+    } catch (e, st) {
+      print('createTaskApi error: $e\n$st');
+      Utility.closeDialog();
+      Utility.showMessage(
+        'Failed to save task',
+        MessageType.error,
+        null,
+        '',
+      );
+      return null;
+    }
+  }
+
+  Future<bool> deleteTaskApi({
+    required String taskid,
+    bool isLoading = false,
+  }) async {
+    try {
+      var response = await _dataRepository.deleteTaskApi(
+        taskid: taskid,
+        isLoading: isLoading,
+      );
+      if (response.hasError) {
+        final msg = _parseErrorMessage(
+          response.data,
+          'Failed to delete task',
+        );
+        Utility.showMessage(msg, MessageType.error, null, '');
+        return false;
+      }
+      return true;
+    } catch (e) {
+      print('deleteTaskApi error: $e');
+      Utility.closeDialog();
+      Utility.showMessage(
+        'Failed to delete task',
+        MessageType.error,
+        null,
+        '',
+      );
+      return false;
+    }
+  }
+
+  Future<GetOneTaskModel?> getOneTaskApi({
+    required String taskid,
+    bool isLoading = false,
+  }) async {
+    try {
+      var response = await _dataRepository.getOneTaskApi(
+        taskid: taskid,
+        isLoading: isLoading,
+      );
+      if (response.hasError) {
+        final msg = _parseErrorMessage(
+          response.data,
+          'Failed to load task details',
+        );
+        Utility.showMessage(msg, MessageType.error, null, '');
+        return null;
+      }
+      if (response.data.isNotEmpty) {
+        return getOneTaskModelFromJson(response.data);
+      }
+      return null;
+    } catch (e, st) {
+      print('getOneTaskApi error: $e\n$st');
+      Utility.closeDialog();
+      Utility.showMessage(
+        'Failed to load task details',
+        MessageType.error,
+        null,
+        '',
+      );
+      return null;
+    }
+  }
+
+  Future<bool> changeTaskStatusApi({
+    required String taskid,
+    required String status,
+    bool isLoading = false,
+  }) async {
+    try {
+      var response = await _dataRepository.changeTaskStatusApi(
+        taskid: taskid,
+        status: status,
+        isLoading: isLoading,
+      );
+      if (response.hasError) {
+        final msg = _parseErrorMessage(
+          response.data,
+          'Failed to change task status',
+        );
+        Utility.showMessage(msg, MessageType.error, null, '');
+        return false;
+      }
+      return true;
+    } catch (e, st) {
+      print('changeTaskStatusApi error: $e\n$st');
+      Utility.closeDialog();
+      Utility.showMessage(
+        'Failed to change task status',
+        MessageType.error,
+        null,
+        '',
+      );
+      return false;
     }
   }
 }

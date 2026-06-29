@@ -82,10 +82,7 @@ class _ProductFormPageState extends State<ProductFormPage> {
   // ── Pick image from gallery / camera ─────────────────────────────────────
   Future<void> _pickAndUploadImage(ImageSource source) async {
     final picker = ImagePicker();
-    final picked = await picker.pickImage(
-      source: source,
-      imageQuality: 85,
-    );
+    final picked = await picker.pickImage(source: source, imageQuality: 85);
     if (picked == null) return;
 
     setState(() {
@@ -135,10 +132,7 @@ class _ProductFormPageState extends State<ProductFormPage> {
 
       if (imageUrl != null && imageUrl.isNotEmpty) {
         Get.find<ProductsController>().imageCtrl.text = imageUrl;
-        Utility.snacBar(
-          'Image uploaded successfully',
-          Colors.green,
-        );
+        Utility.snacBar('Image uploaded successfully', Colors.green);
       } else {
         // Log full response so we can find the correct key
         debugPrint('[ProductForm] Upload response: $data');
@@ -263,7 +257,11 @@ class _ProductFormPageState extends State<ProductFormPage> {
                 if (_loadingCategories)
                   const SizedBox(
                     height: 56,
-                    child: Center(child: CircularProgressIndicator(color: ColorsValue.primary)),
+                    child: Center(
+                      child: CircularProgressIndicator(
+                        color: ColorsValue.primary,
+                      ),
+                    ),
                   )
                 else if (_categories.isEmpty)
                   OutlinedButton.icon(
@@ -284,7 +282,9 @@ class _ProductFormPageState extends State<ProductFormPage> {
                 else
                   DropdownButtonFormField<String>(
                     autovalidateMode: AutovalidateMode.onUserInteraction,
-                    value: _selectedCategoryId,
+                    value: _categories.any((cat) => cat.id == _selectedCategoryId)
+                        ? _selectedCategoryId
+                        : null,
                     decoration: InputDecoration(
                       labelText: 'Category *',
                       border: OutlineInputBorder(
@@ -327,7 +327,11 @@ class _ProductFormPageState extends State<ProductFormPage> {
                 if (_loadingUnits)
                   const SizedBox(
                     height: 56,
-                    child: Center(child: CircularProgressIndicator(color: ColorsValue.primary)),
+                    child: Center(
+                      child: CircularProgressIndicator(
+                        color: ColorsValue.primary,
+                      ),
+                    ),
                   )
                 else if (_units.isEmpty)
                   OutlinedButton.icon(
@@ -347,7 +351,9 @@ class _ProductFormPageState extends State<ProductFormPage> {
                   )
                 else
                   DropdownButtonFormField<String>(
-                    value: _selectedUnitId,
+                    value: _units.any((unit) => unit.id == _selectedUnitId)
+                        ? _selectedUnitId
+                        : null,
                     decoration: InputDecoration(
                       labelText: 'Unit *',
                       border: OutlineInputBorder(
@@ -508,7 +514,10 @@ class _ProductFormPageState extends State<ProductFormPage> {
               ? const SizedBox(
                   width: 18,
                   height: 18,
-                  child: CircularProgressIndicator(strokeWidth: 2, color: ColorsValue.primary),
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: ColorsValue.primary,
+                  ),
                 )
               : const Icon(
                   Icons.add_photo_alternate_outlined,
@@ -582,7 +591,10 @@ class _ProductFormPageState extends State<ProductFormPage> {
           borderRadius: BorderRadius.circular(12),
           borderSide: const BorderSide(color: ColorsValue.primary, width: 1.5),
         ),
-        prefixIcon: Icon(icon, color: ColorsValue.primary.withValues(alpha: 0.8)),
+        prefixIcon: Icon(
+          icon,
+          color: ColorsValue.primary.withValues(alpha: 0.8),
+        ),
       ),
       validator: validator,
     );

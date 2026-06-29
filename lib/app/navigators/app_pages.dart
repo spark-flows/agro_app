@@ -110,5 +110,19 @@ class AppPages {
       binding: ProfileBinding(),
       transition: Transition.rightToLeft,
     ),
+    GetPage<TasksScreen>(
+      name: _Paths.tasksScreen,
+      transitionDuration: transitionDuration,
+      page: TasksScreen.new,
+      binding: TasksBinding(),
+      transition: Transition.rightToLeft,
+    ),
+    GetPage<TaskFormPage>(
+      name: _Paths.taskForm,
+      transitionDuration: transitionDuration,
+      page: TaskFormPage.new,
+      binding: TasksBinding(),
+      transition: Transition.rightToLeft,
+    ),
   ];
 }

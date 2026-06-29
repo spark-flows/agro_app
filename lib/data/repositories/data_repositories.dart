@@ -359,4 +359,64 @@ class DataRepository extends DomainRepository {
     search: search,
     isLoading: isLoading,
   );
+
+  Future<ResponseModel> getTaskListApi({
+    int page = 1,
+    int limit = 10,
+    String search = "",
+    String sortfield = "date",
+    int sortoption = -1,
+    bool isLoading = false,
+  }) async => connectHelper.getTaskListApi(
+    page: page,
+    limit: limit,
+    search: search,
+    sortfield: sortfield,
+    sortoption: sortoption,
+    isLoading: isLoading,
+  );
+
+  Future<ResponseModel> createTaskApi({
+    String? taskid,
+    required String date,
+    required String taskname,
+    required String description,
+    required String assignedto,
+    required String status,
+    bool isLoading = false,
+  }) async => connectHelper.createTaskApi(
+    taskid: taskid,
+    date: date,
+    taskname: taskname,
+    description: description,
+    assignedto: assignedto,
+    status: status,
+    isLoading: isLoading,
+  );
+
+  Future<ResponseModel> deleteTaskApi({
+    required String taskid,
+    bool isLoading = false,
+  }) async => connectHelper.deleteTaskApi(
+    taskid: taskid,
+    isLoading: isLoading,
+  );
+
+  Future<ResponseModel> getOneTaskApi({
+    required String taskid,
+    bool isLoading = false,
+  }) async => connectHelper.getOneTaskApi(
+    taskid: taskid,
+    isLoading: isLoading,
+  );
+
+  Future<ResponseModel> changeTaskStatusApi({
+    required String taskid,
+    required String status,
+    bool isLoading = false,
+  }) async => connectHelper.changeTaskStatusApi(
+    taskid: taskid,
+    status: status,
+    isLoading: isLoading,
+  );
 }

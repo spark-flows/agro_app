@@ -174,6 +174,12 @@ class HomeScreen extends StatelessWidget {
                           color: Colors.purple,
                           onTap: controller.goToUsers,
                         ),
+                      _buildMenuCard(
+                        title: 'Tasks',
+                        icon: Icons.assignment_outlined,
+                        color: Colors.teal,
+                        onTap: controller.goToTasks,
+                      ),
                     ],
                   ),
                   const SizedBox(height: 32),

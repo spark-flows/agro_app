@@ -6,7 +6,6 @@ import 'package:agro_app/domain/models/get_all_product_model.dart';
 import 'package:agro_app/domain/models/get_all_category_model.dart';
 import 'package:agro_app/domain/models/get_all_unit_model.dart';
 import 'package:agro_app/domain/repositories/repository.dart';
-import 'package:agro_app/domain/repositories/local_storage_keys.dart';
 
 class ProductsController extends GetxController {
   // ── List state ─────────────────────────────────────────────────────────────

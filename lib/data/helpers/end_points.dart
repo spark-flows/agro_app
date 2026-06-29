@@ -27,4 +27,10 @@ class EndPoints {
   static String customerFeedbackApi = 'api/customer/feedback';
   static String branchApi = 'api/branch';
   static String unitApi = 'api/unit';
+
+  static String taskListApi = 'api/task';
+  static String createTaskApi = 'api/task/create';
+  static String deleteTaskApi = 'api/task/delete';
+  static String getOneTaskApi = 'api/task/getone';
+  static String changeTaskStatusApi = 'api/task/changestatus';
 }

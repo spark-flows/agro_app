@@ -963,6 +963,119 @@ class ConnectHelper {
 
     return branchId;
   }
+
+  Future<ResponseModel> getTaskListApi({
+    int page = 1,
+    int limit = 10,
+    String search = "",
+    String sortfield = "date",
+    int sortoption = -1,
+    bool isLoading = false,
+  }) async {
+    final String branchId = await _resolveBranchId();
+    var data = {
+      "page": page,
+      "limit": limit,
+      "serch": search.isNotEmpty ? {"taskname": search} : {},
+      "branchid": branchId.isNotEmpty ? [branchId] : [],
+      "assignedto": [],
+      "date": [],
+      "taskname": [],
+      "description": [],
+      "sortfield": sortfield,
+      "sortoption": sortoption,
+    };
+    var response = await apiWrapper.makeRequest(
+      EndPoints.taskListApi,
+      Request.post,
+      data,
+      isLoading,
+      await Utility.commonHeader(),
+    );
+    return response;
+  }
+
+  Future<ResponseModel> createTaskApi({
+    String? taskid,
+    required String date,
+    required String taskname,
+    required String description,
+    required String assignedto,
+    required String status,
+    bool isLoading = false,
+  }) async {
+    final String branchId = await _resolveBranchId();
+    var data = {
+      "taskid": taskid ?? "",
+      "date": date,
+      "branchid": branchId,
+      "taskname": taskname,
+      "description": description,
+      "assignedto": assignedto,
+      "status": status,
+    };
+    var response = await apiWrapper.makeRequest(
+      EndPoints.createTaskApi,
+      Request.post,
+      data,
+      isLoading,
+      await Utility.commonHeader(),
+    );
+    return response;
+  }
+
+  Future<ResponseModel> deleteTaskApi({
+    required String taskid,
+    bool isLoading = false,
+  }) async {
+    var data = {
+      "taskid": taskid,
+    };
+    var response = await apiWrapper.makeRequest(
+      EndPoints.deleteTaskApi,
+      Request.post,
+      data,
+      isLoading,
+      await Utility.commonHeader(),
+    );
+    return response;
+  }
+
+  Future<ResponseModel> getOneTaskApi({
+    required String taskid,
+    bool isLoading = false,
+  }) async {
+    var data = {
+      "taskid": taskid,
+    };
+    var response = await apiWrapper.makeRequest(
+      EndPoints.getOneTaskApi,
+      Request.post,
+      data,
+      isLoading,
+      await Utility.commonHeader(),
+    );
+    return response;
+  }
+
+  Future<ResponseModel> changeTaskStatusApi({
+    required String taskid,
+    required String status,
+    bool isLoading = false,
+  }) async {
+    var data = {
+      "taskid": taskid,
+      "status": status,
+    };
+    var response = await apiWrapper.makeRequest(
+      EndPoints.changeTaskStatusApi,
+      Request.post,
+      data,
+      isLoading,
+      await Utility.commonHeader(),
+    );
+    return response;
+  }
 }
 
 class FileUrl {

@@ -20,6 +20,8 @@ abstract class Routes {
   static const groupChatMessageScreen = _Paths.groupChatMessageScreen;
   static const shareLocationScreen = _Paths.shareLocationScreen;
   static const userListScreen = _Paths.userListScreen;
+  static const tasksScreen = _Paths.tasksScreen;
+  static const taskForm = _Paths.taskForm;
 }
 
 abstract class _Paths {
@@ -42,4 +44,6 @@ abstract class _Paths {
   static const groupChatMessageScreen = '/groupChatMessageScreen';
   static const shareLocationScreen = '/shareLocationScreen';
   static const userListScreen = '/userListScreen';
+  static const tasksScreen = '/tasksScreen';
+  static const taskForm = '/taskForm';
 }
