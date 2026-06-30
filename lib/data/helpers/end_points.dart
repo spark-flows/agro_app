@@ -33,4 +33,10 @@ class EndPoints {
   static String deleteTaskApi = 'api/task/delete';
   static String getOneTaskApi = 'api/task/getone';
   static String changeTaskStatusApi = 'api/task/changestatus';
+
+  static String attendanceListApi = 'api/attendance';
+  static String createAttendanceApi = 'api/attendance/create';
+  static String getOneAttendanceApi = 'api/attendance/getone';
+  static String deleteAttendanceApi = 'api/attendance/delete';
+  static String changeAttendanceStatusApi = 'api/attendance/changestatus';
 }

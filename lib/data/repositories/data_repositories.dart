@@ -115,7 +115,7 @@ class DataRepository extends DomainRepository {
 
   Future<ResponseModel> getCustomerListApi({
     int page = 1,
-    int limit = 100,
+    int limit = 10,
     String search = "",
     bool isLoading = false,
   }) async => connectHelper.getCustomerListApi(
@@ -220,18 +220,14 @@ class DataRepository extends DomainRepository {
     String? customerorderid,
     required String customerid,
     required String image,
-    required String remark1,
-    required String remark2,
-    required String remark3,
+    required List<Map<String, dynamic>> remark,
     bool isLoading = false,
   }) async {
     return await connectHelper.createCustomerOrderApi(
       customerorderid: customerorderid,
       customerid: customerid,
       image: image,
-      remark1: remark1,
-      remark2: remark2,
-      remark3: remark3,
+      remark: remark,
       isLoading: isLoading,
     );
   }
@@ -350,7 +346,7 @@ class DataRepository extends DomainRepository {
 
   Future<ResponseModel> getAllBranchesApi({
     int page = 1,
-    int limit = 100,
+    int limit = 10,
     String search = "",
     bool isLoading = false,
   }) async => connectHelper.getAllBranchesApi(
@@ -416,6 +412,72 @@ class DataRepository extends DomainRepository {
     bool isLoading = false,
   }) async => connectHelper.changeTaskStatusApi(
     taskid: taskid,
+    status: status,
+    isLoading: isLoading,
+  );
+
+  Future<ResponseModel> getAttendanceListApi({
+    int page = 1,
+    int limit = 10,
+    String search = "",
+    String sortfield = "date",
+    int sortoption = -1,
+    bool isLoading = false,
+  }) async => connectHelper.getAttendanceListApi(
+    page: page,
+    limit: limit,
+    search: search,
+    sortfield: sortfield,
+    sortoption: sortoption,
+    isLoading: isLoading,
+  );
+
+  Future<ResponseModel> createAttendanceApi({
+    String? attendanceid,
+    required String date,
+    required String timein,
+    required String timeout,
+    required Map<String, String> coordinates,
+    required String breakstart,
+    required String breakend,
+    required String remark,
+    required String status,
+    bool isLoading = false,
+  }) async => connectHelper.createAttendanceApi(
+    attendanceid: attendanceid,
+    date: date,
+    timein: timein,
+    timeout: timeout,
+    coordinates: coordinates,
+    breakstart: breakstart,
+    breakend: breakend,
+    remark: remark,
+    status: status,
+    isLoading: isLoading,
+  );
+
+  Future<ResponseModel> deleteAttendanceApi({
+    required String attendanceid,
+    bool isLoading = false,
+  }) async => connectHelper.deleteAttendanceApi(
+    attendanceid: attendanceid,
+    isLoading: isLoading,
+  );
+
+  Future<ResponseModel> getOneAttendanceApi({
+    required String attendanceid,
+    bool isLoading = false,
+  }) async => connectHelper.getOneAttendanceApi(
+    attendanceid: attendanceid,
+    isLoading: isLoading,
+  );
+
+  Future<ResponseModel> changeAttendanceStatusApi({
+    required String attendanceid,
+    required String status,
+    bool isLoading = false,
+  }) async => connectHelper.changeAttendanceStatusApi(
+    attendanceid: attendanceid,
     status: status,
     isLoading: isLoading,
   );

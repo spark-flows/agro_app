@@ -122,10 +122,7 @@ class ConnectHelper {
       }
     }
 
-    final bool isAdmin =
-        role.toLowerCase() == 'admin' ||
-        role.toLowerCase() == 'is_admin' ||
-        role == '1';
+    final bool isAdmin = RoleUtils.isAdmin(role);
 
     final String branchId = await _resolveBranchId();
 
@@ -211,7 +208,7 @@ class ConnectHelper {
 
   Future<ResponseModel> getCustomerListApi({
     int page = 1,
-    int limit = 100,
+    int limit = 10,
     String search = "",
     bool isLoading = false,
   }) async {
@@ -276,10 +273,7 @@ class ConnectHelper {
       }
     }
 
-    final isAdmin =
-        role.toLowerCase() == 'admin' ||
-        role.toLowerCase() == 'is_admin' ||
-        role == '1';
+    final isAdmin = RoleUtils.isAdmin(role);
 
     print(
       '[CustomerList] Final - role="$role", isAdmin=$isAdmin, distributorId="$distributorId"',
@@ -421,7 +415,7 @@ class ConnectHelper {
 
     var data = {
       "page": 1,
-      "limit": 100,
+      "limit": 10,
       "search": {},
       "distributorid": distributorVal,
       "customerid": customerid != null && customerid.isNotEmpty
@@ -532,7 +526,7 @@ class ConnectHelper {
 
     var data = {
       "page": 1,
-      "limit": 100,
+      "limit": 10,
       "search": {},
       "distributorid": distributorVal,
       "customerid": customerid != null && customerid.isNotEmpty
@@ -557,9 +551,7 @@ class ConnectHelper {
     String? customerorderid,
     required String customerid,
     required String image,
-    required String remark1,
-    required String remark2,
-    required String remark3,
+    required List<Map<String, dynamic>> remark,
     bool isLoading = false,
   }) async {
     var distributorId = await Utility.getSecureValue(LocalKeys.distributorId);
@@ -569,9 +561,7 @@ class ConnectHelper {
       "distributorid": distributorId,
       "customerid": customerid,
       "image": image,
-      "remark1": remark1,
-      "remark2": remark2,
-      "remark3": remark3,
+      "remark": remark,
       "branchid": branchId,
     };
     var response = await apiWrapper.makeRequest(
@@ -794,7 +784,7 @@ class ConnectHelper {
 
   Future<ResponseModel> getAllBranchesApi({
     int page = 1,
-    int limit = 100,
+    int limit = 10,
     String search = "",
     bool isLoading = false,
   }) async {
@@ -817,11 +807,7 @@ class ConnectHelper {
 
   Future<String> _resolveBranchId() async {
     final String role = await Utility.getSecureValue(LocalKeys.roleName);
-    final String normalizedRole = role.toLowerCase().trim();
-    final bool isAdmin =
-        normalizedRole == 'admin' ||
-        normalizedRole == 'is_admin' ||
-        normalizedRole == '1';
+    final bool isAdmin = RoleUtils.isAdmin(role);
 
     print('[BranchResolution] role="$role", isAdmin=$isAdmin');
 
@@ -1069,6 +1055,123 @@ class ConnectHelper {
     };
     var response = await apiWrapper.makeRequest(
       EndPoints.changeTaskStatusApi,
+      Request.post,
+      data,
+      isLoading,
+      await Utility.commonHeader(),
+    );
+    return response;
+  }
+
+  Future<ResponseModel> getAttendanceListApi({
+    int page = 1,
+    int limit = 10,
+    String search = "",
+    String sortfield = "date",
+    int sortoption = -1,
+    bool isLoading = false,
+  }) async {
+    var data = {
+      "page": page,
+      "limit": limit,
+      "search": search.isNotEmpty ? {"remark": search} : {},
+      "sortfield": sortfield,
+      "sortoption": sortoption,
+    };
+    var response = await apiWrapper.makeRequest(
+      EndPoints.attendanceListApi,
+      Request.post,
+      data,
+      isLoading,
+      await Utility.commonHeader(),
+    );
+    return response;
+  }
+
+  Future<ResponseModel> createAttendanceApi({
+    String? attendanceid,
+    required String date,
+    required String timein,
+    required String timeout,
+    required Map<String, String> coordinates,
+    required String breakstart,
+    required String breakend,
+    required String remark,
+    required String status,
+    bool isLoading = false,
+  }) async {
+    final String branchId = await _resolveBranchId();
+    final String distributorId =
+        await Utility.getSecureValue(LocalKeys.distributorId);
+
+    var data = {
+      "attendanceid": attendanceid ?? "",
+      "date": date,
+      "branchid": branchId,
+      "userid": distributorId,
+      "timein": timein,
+      "timeout": timeout,
+      "coordinates": coordinates,
+      "breakstart": breakstart,
+      "breakend": breakend,
+      "remark": remark,
+      "status": status,
+    };
+    var response = await apiWrapper.makeRequest(
+      EndPoints.createAttendanceApi,
+      Request.post,
+      data,
+      isLoading,
+      await Utility.commonHeader(),
+    );
+    return response;
+  }
+
+  Future<ResponseModel> deleteAttendanceApi({
+    required String attendanceid,
+    bool isLoading = false,
+  }) async {
+    var data = {
+      "attendanceid": attendanceid,
+    };
+    var response = await apiWrapper.makeRequest(
+      EndPoints.deleteAttendanceApi,
+      Request.post,
+      data,
+      isLoading,
+      await Utility.commonHeader(),
+    );
+    return response;
+  }
+
+  Future<ResponseModel> getOneAttendanceApi({
+    required String attendanceid,
+    bool isLoading = false,
+  }) async {
+    var data = {
+      "attendanceid": attendanceid,
+    };
+    var response = await apiWrapper.makeRequest(
+      EndPoints.getOneAttendanceApi,
+      Request.post,
+      data,
+      isLoading,
+      await Utility.commonHeader(),
+    );
+    return response;
+  }
+
+  Future<ResponseModel> changeAttendanceStatusApi({
+    required String attendanceid,
+    required String status,
+    bool isLoading = false,
+  }) async {
+    var data = {
+      "attendanceid": attendanceid,
+      "status": status,
+    };
+    var response = await apiWrapper.makeRequest(
+      EndPoints.changeAttendanceStatusApi,
       Request.post,
       data,
       isLoading,

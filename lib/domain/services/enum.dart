@@ -17,6 +17,7 @@ class RoleUtils {
     return normalizedRole == 'admin' ||
         normalizedRole == 'is_admin' ||
         normalizedRole == 'isadmin' ||
+        normalizedRole == 'user' ||
         normalizedRole == '1' || // Sometimes API returns 1 for admin
         normalizedRole == 'true';
   }

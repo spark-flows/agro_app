@@ -124,5 +124,19 @@ class AppPages {
       binding: TasksBinding(),
       transition: Transition.rightToLeft,
     ),
+    GetPage<AttendanceScreen>(
+      name: _Paths.attendanceScreen,
+      transitionDuration: transitionDuration,
+      page: AttendanceScreen.new,
+      binding: AttendanceBinding(),
+      transition: Transition.rightToLeft,
+    ),
+    GetPage<AttendanceFormPage>(
+      name: _Paths.attendanceForm,
+      transitionDuration: transitionDuration,
+      page: AttendanceFormPage.new,
+      binding: AttendanceBinding(),
+      transition: Transition.rightToLeft,
+    ),
   ];
 }

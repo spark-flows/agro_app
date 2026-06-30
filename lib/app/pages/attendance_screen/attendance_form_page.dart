@@ -1,0 +1,368 @@
+import 'package:agro_app/app/pages/attendance_screen/attendance_controller.dart';
+import 'package:agro_app/app/theme/theme.dart';
+import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:intl/intl.dart';
+
+class AttendanceFormPage extends StatefulWidget {
+  const AttendanceFormPage({super.key});
+
+  @override
+  State<AttendanceFormPage> createState() => _AttendanceFormPageState();
+}
+
+class _AttendanceFormPageState extends State<AttendanceFormPage> {
+  Future<void> _selectDate(
+      BuildContext context, AttendanceController controller) async {
+    DateTime initialDate;
+    try {
+      initialDate = DateFormat('dd-MM-yyyy').parse(controller.dateCtrl.text);
+    } catch (_) {
+      initialDate = DateTime.now();
+    }
+
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: initialDate,
+      firstDate: DateTime(2020),
+      lastDate: DateTime(2100),
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: const ColorScheme.light(
+              primary: ColorsValue.primary,
+              onPrimary: Colors.white,
+              onSurface: Colors.black87,
+            ),
+          ),
+          child: child!,
+        );
+      },
+    );
+    if (picked != null) {
+      setState(() {
+        controller.dateCtrl.text = DateFormat('dd-MM-yyyy').format(picked);
+      });
+      controller.update();
+    }
+  }
+
+  Future<void> _selectTime(
+      BuildContext context, TextEditingController ctrl) async {
+    TimeOfDay initialTime = TimeOfDay.now();
+    if (ctrl.text.isNotEmpty) {
+      try {
+        final parts = ctrl.text.split(':');
+        if (parts.length == 2) {
+          initialTime = TimeOfDay(
+            hour: int.parse(parts[0]),
+            minute: int.parse(parts[1]),
+          );
+        }
+      } catch (_) {}
+    }
+
+    final TimeOfDay? picked = await showTimePicker(
+      context: context,
+      initialTime: initialTime,
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: const ColorScheme.light(
+              primary: ColorsValue.primary,
+              onPrimary: Colors.white,
+              onSurface: Colors.black87,
+            ),
+          ),
+          child: child!,
+        );
+      },
+    );
+
+    if (picked != null) {
+      final hourStr = picked.hour.toString().padLeft(2, '0');
+      final minuteStr = picked.minute.toString().padLeft(2, '0');
+      setState(() {
+        ctrl.text = "$hourStr:$minuteStr";
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return GetBuilder<AttendanceController>(
+      builder: (controller) {
+        return Scaffold(
+          backgroundColor: ColorsValue.bgMain,
+          appBar: AppBar(
+            backgroundColor: Colors.white,
+            elevation: 0,
+            iconTheme: const IconThemeData(color: Colors.black87),
+            title: Text(
+              controller.editingAttendanceId.isNotEmpty
+                  ? 'Edit Attendance'
+                  : 'Add Attendance',
+              style: Styles.txtBlackColorW70020,
+            ),
+          ),
+          body: Form(
+            key: controller.formKey,
+            autovalidateMode: AutovalidateMode.onUserInteraction,
+            child: ListView(
+              padding: const EdgeInsets.all(20),
+              children: [
+                _sectionHeader('Time Logs'),
+                const SizedBox(height: 16),
+
+                // ── Date Picker ──────────────────────────────────────────────
+                InkWell(
+                  onTap: () => _selectDate(context, controller),
+                  child: IgnorePointer(
+                    child: _buildField(
+                      fieldController: controller.dateCtrl,
+                      label: 'Date *',
+                      icon: Icons.calendar_today_outlined,
+                      validator: (v) =>
+                          v!.trim().isEmpty ? 'Please select a date' : null,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 20),
+
+                // ── Time In & Time Out Row ────────────────────────────────────
+                Row(
+                  children: [
+                    Expanded(
+                      child: InkWell(
+                        onTap: () => _selectTime(context, controller.timeInCtrl),
+                        child: IgnorePointer(
+                          child: _buildField(
+                            fieldController: controller.timeInCtrl,
+                            label: 'Time In *',
+                            icon: Icons.login,
+                            validator: (v) =>
+                                v!.trim().isEmpty ? 'Time In is required' : null,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: InkWell(
+                        onTap: () => _selectTime(context, controller.timeOutCtrl),
+                        child: IgnorePointer(
+                          child: _buildField(
+                            fieldController: controller.timeOutCtrl,
+                            label: 'Time Out *',
+                            icon: Icons.logout,
+                            validator: (v) =>
+                                v!.trim().isEmpty ? 'Time Out is required' : null,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 20),
+
+                // ── Break Start & Break End Row ───────────────────────────────
+                Row(
+                  children: [
+                    Expanded(
+                      child: InkWell(
+                        onTap: () => _selectTime(context, controller.breakStartCtrl),
+                        child: IgnorePointer(
+                          child: _buildField(
+                            fieldController: controller.breakStartCtrl,
+                            label: 'Break Start *',
+                            icon: Icons.free_breakfast_outlined,
+                            validator: (v) =>
+                                v!.trim().isEmpty ? 'Required' : null,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: InkWell(
+                        onTap: () => _selectTime(context, controller.breakEndCtrl),
+                        child: IgnorePointer(
+                          child: _buildField(
+                            fieldController: controller.breakEndCtrl,
+                            label: 'Break End *',
+                            icon: Icons.restaurant_outlined,
+                            validator: (v) =>
+                                v!.trim().isEmpty ? 'Required' : null,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 24),
+
+
+                _sectionHeader('Status & Feedback'),
+                const SizedBox(height: 16),
+
+                // ── Status Dropdown Form Field ───────────────────────────────
+                DropdownButtonFormField<String>(
+                  value: controller.selectedStatus,
+                  decoration: InputDecoration(
+                    labelText: 'Status *',
+                    labelStyle: Styles.txtGreyColorW40014,
+                    floatingLabelStyle:
+                        const TextStyle(color: ColorsValue.primary),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(color: Colors.grey.shade300),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(color: Colors.grey.shade300),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(
+                        color: ColorsValue.primary,
+                        width: 1.5,
+                      ),
+                    ),
+                    prefixIcon: const Icon(
+                      Icons.tag_faces_outlined,
+                      color: ColorsValue.primary,
+                    ),
+                  ),
+                  items: ['present', 'absent', 'holiday', 'halfday', 'leave']
+                      .map(
+                        (val) => DropdownMenuItem<String>(
+                          value: val,
+                          child: Text(val.toUpperCase()),
+                        ),
+                      )
+                      .toList(),
+                  onChanged: (newValue) {
+                    if (newValue != null) {
+                      controller.selectedStatus = newValue;
+                      controller.update();
+                    }
+                  },
+                ),
+                const SizedBox(height: 20),
+
+                // ── Remark input field ───────────────────────────────────────
+                _buildField(
+                  fieldController: controller.remarkCtrl,
+                  label: 'Remark',
+                  icon: Icons.comment_outlined,
+                  keyboardType: TextInputType.multiline,
+                  action: TextInputAction.newline,
+                  maxLines: 3,
+                ),
+                const SizedBox(height: 32),
+
+                // ── Form Action Buttons ──────────────────────────────────────
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: () => Get.back(),
+                        style: OutlinedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          side: BorderSide(color: Colors.grey.shade300),
+                        ),
+                        child: Text(
+                          'Cancel',
+                          style: TextStyle(
+                            color: Colors.grey.shade700,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: controller.saveAttendance,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: ColorsValue.primary,
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        child: const Text(
+                          'Save',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 24),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _sectionHeader(String title) {
+    return Text(
+      title,
+      style: const TextStyle(
+        fontSize: 16,
+        fontWeight: FontWeight.bold,
+        color: ColorsValue.primary,
+      ),
+    );
+  }
+
+  Widget _buildField({
+    required TextEditingController fieldController,
+    required String label,
+    required IconData icon,
+    TextInputType keyboardType = TextInputType.text,
+    TextInputAction action = TextInputAction.done,
+    String? Function(String?)? validator,
+    int maxLines = 1,
+  }) {
+    return TextFormField(
+      controller: fieldController,
+      keyboardType: keyboardType,
+      textInputAction: action,
+      validator: validator,
+      maxLines: maxLines,
+      decoration: InputDecoration(
+        labelText: label,
+        labelStyle: Styles.txtGreyColorW40014,
+        floatingLabelStyle: const TextStyle(color: ColorsValue.primary),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: Colors.grey.shade300),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: Colors.grey.shade300),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(
+            color: ColorsValue.primary,
+            width: 1.5,
+          ),
+        ),
+        prefixIcon: Icon(icon, color: ColorsValue.primary),
+        filled: true,
+        fillColor: Colors.white,
+      ),
+    );
+  }
+}

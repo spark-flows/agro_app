@@ -83,6 +83,7 @@ class CustomerOrderDoc {
   String? remark1;
   String? remark2;
   String? remark3;
+  List<RemarkItem>? remark;
 
   String? status;
 
@@ -115,6 +116,7 @@ class CustomerOrderDoc {
     this.createdAt,
     this.updatedAt,
     this.v,
+    this.remark,
   });
 
   CustomerOrderDoc.fromJson(Map<String, dynamic> json) {
@@ -141,6 +143,12 @@ class CustomerOrderDoc {
     createdAt = json['createdAt']?.toString();
     updatedAt = json['updatedAt']?.toString();
     v = json['__v'];
+    if (json['remark'] != null) {
+      remark = <RemarkItem>[];
+      json['remark'].forEach((v) {
+        remark!.add(RemarkItem.fromJson(v));
+      });
+    }
   }
 }
 
@@ -223,4 +231,63 @@ class CustomerIdModel {
     mobile = json['mobile']?.toString();
     village = json['village']?.toString();
   }
+}
+
+class RemarkItem {
+  String? date;
+  UseridItem? userId;
+  String? remark;
+
+  RemarkItem({this.date, this.userId, this.remark});
+
+  factory RemarkItem.fromJson(Map<String, dynamic> json) {
+    return RemarkItem(
+      date: json['date']?.toString(),
+      userId: UseridItem.fromJson(
+        json['userid'] ?? json['userid'] ?? json['userids'] ?? json['userids'],
+      ),
+      remark: json['remark']?.toString(),
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+    "date": date,
+    "userid": userId,
+    "remark": remark,
+  };
+}
+
+class UseridItem {
+  String? id;
+  String? name;
+  String? email;
+  String? mobile;
+
+  UseridItem({this.id, this.email, this.mobile, this.name});
+
+  factory UseridItem.fromJson(dynamic json) {
+    if (json == null) return UseridItem();
+    if (json is String) {
+      return UseridItem(id: json);
+    }
+    if (json is Map) {
+      return UseridItem(
+        id: json['_id']?.toString() ?? json['id']?.toString(),
+        email: json['email']?.toString(),
+        name:
+            json['name']?.toString() ??
+            json['username']?.toString() ??
+            json['userName']?.toString(),
+        mobile: json['mobile']?.toString(),
+      );
+    }
+    return UseridItem();
+  }
+
+  Map<String, dynamic> toJson() => {
+    "_id": id,
+    "name": name,
+    "email": email,
+    "mobile": mobile,
+  };
 }

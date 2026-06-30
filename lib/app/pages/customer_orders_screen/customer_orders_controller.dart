@@ -44,16 +44,135 @@ class CustomerOrdersController extends GetxController {
   final TextEditingController remark1Controller = TextEditingController();
   final TextEditingController remark2Controller = TextEditingController();
   final TextEditingController remark3Controller = TextEditingController();
+  List<TextEditingController> remarkControllers = [];
+  List<RemarkItem> loadedRemarks = [];
+  String currentUserId = '';
+  String currentUserName = '';
+
+  String getRemarkUserName(RemarkItem remark) {
+    if (remark.userId?.name != null && remark.userId!.name!.isNotEmpty) {
+      return remark.userId!.name!;
+    }
+    final uid = remark.userId?.id ?? '';
+    if (uid.isEmpty) return '-';
+
+    if (uid == currentUserId) {
+      return currentUserName.isNotEmpty ? currentUserName : 'Me';
+    }
+
+    final dist = distributors.firstWhereOrNull((d) => d.id == uid);
+    if (dist != null) {
+      return dist.name;
+    }
+
+    return uid;
+  }
+
+  String formatRemarkDate(String? dateStr) {
+    if (dateStr == null || dateStr.isEmpty) return '-';
+    try {
+      return Utility.getFormatedTime(dateStr, 'dd MMM yyyy hh:mm a');
+    } catch (_) {
+      return dateStr;
+    }
+  }
 
   @override
   void onInit() {
     super.onInit();
+    remarkControllers = [TextEditingController()];
     _loadRole();
     fetchCustomers();
     fetchAllCustomerOrders();
   }
 
+  @override
+  void onClose() {
+    for (var c in remarkControllers) {
+      c.dispose();
+    }
+    remark1Controller.dispose();
+    remark2Controller.dispose();
+    remark3Controller.dispose();
+    super.onClose();
+  }
+
+  void addRemarkField() {
+    remarkControllers.add(TextEditingController());
+    update();
+  }
+
+  void removeRemarkFieldAt(int index) {
+    if (remarkControllers.length > 1) {
+      remarkControllers[index].dispose();
+      remarkControllers.removeAt(index);
+      if (index < loadedRemarks.length) {
+        loadedRemarks.removeAt(index);
+      }
+      update();
+    }
+  }
+
+  void populateRemarks(CustomerOrderDoc order) {
+    for (var c in remarkControllers) {
+      c.dispose();
+    }
+    remarkControllers.clear();
+    loadedRemarks.clear();
+
+    if (order.remark != null && order.remark!.isNotEmpty) {
+      for (var r in order.remark!) {
+        remarkControllers.add(TextEditingController(text: r.remark ?? ''));
+        loadedRemarks.add(r);
+      }
+    } else {
+      final list = <String>[];
+      if (order.remark1 != null && order.remark1!.trim().isNotEmpty) {
+        list.add(order.remark1!);
+      }
+      if (order.remark2 != null && order.remark2!.trim().isNotEmpty) {
+        list.add(order.remark2!);
+      }
+      if (order.remark3 != null && order.remark3!.trim().isNotEmpty) {
+        list.add(order.remark3!);
+      }
+
+      if (list.isNotEmpty) {
+        for (var text in list) {
+          remarkControllers.add(TextEditingController(text: text));
+          loadedRemarks.add(
+            RemarkItem(
+              remark: text,
+              date: order.createdAt ?? DateTime.now().toUtc().toIso8601String(),
+              userId: UseridItem(id: order.createdBy ?? ''),
+            ),
+          );
+        }
+      }
+    }
+
+    if (remarkControllers.isEmpty) {
+      remarkControllers.add(TextEditingController());
+    }
+  }
+
   Future<void> _loadRole() async {
+    final profileJson = await Utility.getSecureValue(LocalKeys.profileData);
+    if (profileJson.isNotEmpty) {
+      try {
+        final Map<String, dynamic>? decoded =
+            json.decode(profileJson) as Map<String, dynamic>?;
+        if (decoded != null) {
+          final Map<String, dynamic> userData =
+              (decoded['userData'] is Map<String, dynamic>)
+              ? decoded['userData'] as Map<String, dynamic>
+              : decoded;
+          currentUserId =
+              userData['id']?.toString() ?? userData['_id']?.toString() ?? '';
+          currentUserName = userData['name']?.toString() ?? '';
+        }
+      } catch (_) {}
+    }
     try {
       final homeController = Get.find<HomeController>();
       isAdmin = RoleUtils.isAdmin(homeController.roleName);
@@ -90,7 +209,7 @@ class CustomerOrdersController extends GetxController {
     try {
       var response = await _repository.getUsersListApi(
         page: 1,
-        limit: 100,
+        limit: 10,
         type: 'dealer',
         isLoading: false,
       );
@@ -231,6 +350,11 @@ class CustomerOrdersController extends GetxController {
     selectedImage = null;
     existingImageUrl = null;
     editingCustomerOrderId = null;
+    for (var c in remarkControllers) {
+      c.dispose();
+    }
+    remarkControllers = [TextEditingController()];
+    loadedRemarks.clear();
     remark1Controller.clear();
     remark2Controller.clear();
     remark3Controller.clear();
@@ -246,9 +370,7 @@ class CustomerOrdersController extends GetxController {
     final exists = customersList.any((c) => c.id == custId);
     selectedCustomerId = exists ? custId : '';
 
-    remark1Controller.text = order.remark1 ?? '';
-    remark2Controller.text = order.remark2 ?? '';
-    remark3Controller.text = order.remark3 ?? '';
+    populateRemarks(order);
     existingImageUrl = order.image;
     selectedImage = null;
     update();
@@ -260,9 +382,7 @@ class CustomerOrdersController extends GetxController {
         isLoading: false,
       );
       if (fetchedOrder != null) {
-        remark1Controller.text = fetchedOrder.remark1 ?? '';
-        remark2Controller.text = fetchedOrder.remark2 ?? '';
-        remark3Controller.text = fetchedOrder.remark3 ?? '';
+        populateRemarks(fetchedOrder);
         existingImageUrl = fetchedOrder.image;
         update();
       }
@@ -309,14 +429,43 @@ class CustomerOrdersController extends GetxController {
       }
     }
 
+    final String distributorId = await Utility.getSecureValue(
+      LocalKeys.distributorId,
+    );
+    final String currentDate = DateTime.now().toUtc().toIso8601String();
+
+    List<Map<String, dynamic>> remarkPayload = [];
+    for (int i = 0; i < remarkControllers.length; i++) {
+      final text = remarkControllers[i].text.trim();
+      if (text.isEmpty && remarkControllers.length > 1) {
+        continue;
+      }
+
+      String rDate = currentDate;
+      String rUserId = distributorId;
+
+      if (i < loadedRemarks.length) {
+        rDate = loadedRemarks[i].date ?? currentDate;
+        rUserId = loadedRemarks[i].userId?.id ?? distributorId;
+      }
+
+      remarkPayload.add({"date": rDate, "userid": rUserId, "remark": text});
+    }
+
+    if (remarkPayload.isEmpty) {
+      remarkPayload.add({
+        "date": currentDate,
+        "userid": distributorId,
+        "remark": "",
+      });
+    }
+
     // 2. Create or Update the order
     final createRes = await _repository.createCustomerOrderApi(
       customerorderid: editingCustomerOrderId,
       customerid: selectedCustomerId,
       image: imageUrl,
-      remark1: remark1Controller.text.trim(),
-      remark2: remark2Controller.text.trim(),
-      remark3: remark3Controller.text.trim(),
+      remark: remarkPayload,
       isLoading: false,
     );
 

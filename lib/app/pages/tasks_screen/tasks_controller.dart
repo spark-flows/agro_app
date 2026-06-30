@@ -97,7 +97,7 @@ class TasksController extends GetxController {
     try {
       final response = await Get.find<Repository>().getUsersListApi(
         page: 1,
-        limit: 100, // Load first 100 users for assignees
+        limit: 10, // Load first 100 users for assignees
         type: 'user',
         isLoading: false,
       );

@@ -34,7 +34,7 @@ class CustomersController extends GetxController {
   bool isLoading = false;
   
   int currentPage = 1;
-  int limit = 100;
+  int limit = 10;
   String _searchQuery = '';
 
   final TextEditingController searchController = TextEditingController();
@@ -144,7 +144,7 @@ class CustomersController extends GetxController {
     try {
       final response = await Get.find<Repository>().getUsersListApi(
         page: 1,
-        limit: 200,
+        limit: 10,
         search: '',
         type: 'dealer',
         isLoading: false,

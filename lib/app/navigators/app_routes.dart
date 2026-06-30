@@ -22,6 +22,8 @@ abstract class Routes {
   static const userListScreen = _Paths.userListScreen;
   static const tasksScreen = _Paths.tasksScreen;
   static const taskForm = _Paths.taskForm;
+  static const attendanceScreen = _Paths.attendanceScreen;
+  static const attendanceForm = _Paths.attendanceForm;
 }
 
 abstract class _Paths {
@@ -46,4 +48,6 @@ abstract class _Paths {
   static const userListScreen = '/userListScreen';
   static const tasksScreen = '/tasksScreen';
   static const taskForm = '/taskForm';
+  static const attendanceScreen = '/attendanceScreen';
+  static const attendanceForm = '/attendanceForm';
 }

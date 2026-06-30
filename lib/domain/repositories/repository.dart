@@ -7,9 +7,11 @@ import 'package:agro_app/data/data.dart';
 import 'package:agro_app/device/device.dart';
 import 'package:agro_app/domain/entities/enums.dart';
 import 'package:agro_app/domain/models/auth_model.dart';
+import 'package:agro_app/domain/models/create_attandance_model.dart';
 import 'package:agro_app/domain/models/create_customer_model.dart';
 import 'package:agro_app/domain/models/create_order_model.dart';
 import 'package:agro_app/domain/models/customer_order_model.dart';
+import 'package:agro_app/domain/models/get_all_attandance_model.dart';
 import 'package:agro_app/domain/models/get_all_category_model.dart';
 import 'package:agro_app/domain/models/get_all_customers_model.dart';
 import 'package:agro_app/domain/models/get_all_order_model.dart';
@@ -17,6 +19,7 @@ import 'package:agro_app/domain/models/get_all_product_model.dart';
 import 'package:agro_app/domain/models/get_all_unit_model.dart';
 import 'package:agro_app/domain/models/get_all_roll_model.dart';
 import 'package:agro_app/domain/models/get_all_users_model.dart';
+import 'package:agro_app/domain/models/get_one_attandance_model.dart';
 import 'package:agro_app/domain/models/get_one_order_model.dart';
 import 'package:agro_app/domain/models/get_one_user_model.dart';
 import 'package:agro_app/domain/models/get_profille_model.dart';
@@ -193,9 +196,7 @@ class Repository {
     String? customerorderid,
     required String customerid,
     required String image,
-    required String remark1,
-    required String remark2,
-    required String remark3,
+    required List<Map<String, dynamic>> remark,
     bool isLoading = false,
   }) async {
     try {
@@ -203,9 +204,7 @@ class Repository {
         customerorderid: customerorderid,
         customerid: customerid,
         image: image,
-        remark1: remark1,
-        remark2: remark2,
-        remark3: remark3,
+        remark: remark,
         isLoading: isLoading,
       );
       if (response.hasError) {
@@ -397,18 +396,11 @@ class Repository {
     }
   }
 
-  Future<GetAllUnitModel?> getUnitListApi({
-    bool isLoading = false,
-  }) async {
+  Future<GetAllUnitModel?> getUnitListApi({bool isLoading = false}) async {
     try {
-      var response = await _dataRepository.getUnitListApi(
-        isLoading: isLoading,
-      );
+      var response = await _dataRepository.getUnitListApi(isLoading: isLoading);
       if (response.hasError) {
-        final msg = _parseErrorMessage(
-          response.data,
-          'Failed to load units',
-        );
+        final msg = _parseErrorMessage(response.data, 'Failed to load units');
         Utility.showMessage(msg, MessageType.error, null, '');
         return null;
       }
@@ -419,12 +411,7 @@ class Repository {
     } catch (e, st) {
       print('[Repo] getUnitListApi error: $e\n$st');
       Utility.closeDialog();
-      Utility.showMessage(
-        'Failed to load units',
-        MessageType.error,
-        null,
-        '',
-      );
+      Utility.showMessage('Failed to load units', MessageType.error, null, '');
       return null;
     }
   }
@@ -467,7 +454,7 @@ class Repository {
 
   Future<GetAllCustomerModel?> getCustomerListApi({
     int page = 1,
-    int limit = 100,
+    int limit = 10,
     String search = "",
     bool isLoading = false,
   }) async {
@@ -957,7 +944,7 @@ class Repository {
 
   Future<GetAllBranchs?> getAllBranchesApi({
     int page = 1,
-    int limit = 100,
+    int limit = 10,
     String search = "",
     bool isLoading = false,
   }) async {
@@ -1011,10 +998,7 @@ class Repository {
         isLoading: isLoading,
       );
       if (response.hasError) {
-        final msg = _parseErrorMessage(
-          response.data,
-          'Failed to load tasks',
-        );
+        final msg = _parseErrorMessage(response.data, 'Failed to load tasks');
         Utility.showMessage(msg, MessageType.error, null, '');
         return null;
       }
@@ -1025,12 +1009,7 @@ class Repository {
     } catch (e, st) {
       print('getTaskListApi error: $e\n$st');
       Utility.closeDialog();
-      Utility.showMessage(
-        'Failed to load tasks',
-        MessageType.error,
-        null,
-        '',
-      );
+      Utility.showMessage('Failed to load tasks', MessageType.error, null, '');
       return null;
     }
   }
@@ -1055,10 +1034,7 @@ class Repository {
         isLoading: isLoading,
       );
       if (response.hasError) {
-        final msg = _parseErrorMessage(
-          response.data,
-          'Failed to save task',
-        );
+        final msg = _parseErrorMessage(response.data, 'Failed to save task');
         Utility.showMessage(msg, MessageType.error, null, '');
         return null;
       }
@@ -1069,12 +1045,7 @@ class Repository {
     } catch (e, st) {
       print('createTaskApi error: $e\n$st');
       Utility.closeDialog();
-      Utility.showMessage(
-        'Failed to save task',
-        MessageType.error,
-        null,
-        '',
-      );
+      Utility.showMessage('Failed to save task', MessageType.error, null, '');
       return null;
     }
   }
@@ -1089,10 +1060,7 @@ class Repository {
         isLoading: isLoading,
       );
       if (response.hasError) {
-        final msg = _parseErrorMessage(
-          response.data,
-          'Failed to delete task',
-        );
+        final msg = _parseErrorMessage(response.data, 'Failed to delete task');
         Utility.showMessage(msg, MessageType.error, null, '');
         return false;
       }
@@ -1100,12 +1068,7 @@ class Repository {
     } catch (e) {
       print('deleteTaskApi error: $e');
       Utility.closeDialog();
-      Utility.showMessage(
-        'Failed to delete task',
-        MessageType.error,
-        null,
-        '',
-      );
+      Utility.showMessage('Failed to delete task', MessageType.error, null, '');
       return false;
     }
   }
@@ -1169,6 +1132,172 @@ class Repository {
       Utility.closeDialog();
       Utility.showMessage(
         'Failed to change task status',
+        MessageType.error,
+        null,
+        '',
+      );
+      return false;
+    }
+  }
+
+  Future<GetAllAttendanceModel?> getAttendanceListApi({
+    int page = 1,
+    int limit = 10,
+    String search = "",
+    String sortfield = "date",
+    int sortoption = -1,
+    bool isLoading = false,
+  }) async {
+    try {
+      var response = await _dataRepository.getAttendanceListApi(
+        page: page,
+        limit: limit,
+        search: search,
+        sortfield: sortfield,
+        sortoption: sortoption,
+        isLoading: isLoading,
+      );
+      if (response.hasError) {
+        final msg = _parseErrorMessage(response.data, 'Failed to load attendance records');
+        Utility.showMessage(msg, MessageType.error, null, '');
+        return null;
+      }
+      if (response.data.isNotEmpty) {
+        return getAllAttendanceModelFromJson(response.data);
+      }
+      return null;
+    } catch (e, st) {
+      print('getAttendanceListApi error: $e\n$st');
+      Utility.closeDialog();
+      Utility.showMessage('Failed to load attendance records', MessageType.error, null, '');
+      return null;
+    }
+  }
+
+  Future<CreateAttendanceModel?> createAttendanceApi({
+    String? attendanceid,
+    required String date,
+    required String timein,
+    required String timeout,
+    required Map<String, String> coordinates,
+    required String breakstart,
+    required String breakend,
+    required String remark,
+    required String status,
+    bool isLoading = false,
+  }) async {
+    try {
+      var response = await _dataRepository.createAttendanceApi(
+        attendanceid: attendanceid,
+        date: date,
+        timein: timein,
+        timeout: timeout,
+        coordinates: coordinates,
+        breakstart: breakstart,
+        breakend: breakend,
+        remark: remark,
+        status: status,
+        isLoading: isLoading,
+      );
+      if (response.hasError) {
+        final msg = _parseErrorMessage(response.data, 'Failed to save attendance');
+        Utility.showMessage(msg, MessageType.error, null, '');
+        return null;
+      }
+      if (response.data.isNotEmpty) {
+        return createAttendanceModelFromJson(response.data);
+      }
+      return null;
+    } catch (e, st) {
+      print('createAttendanceApi error: $e\n$st');
+      Utility.closeDialog();
+      Utility.showMessage('Failed to save attendance', MessageType.error, null, '');
+      return null;
+    }
+  }
+
+  Future<bool> deleteAttendanceApi({
+    required String attendanceid,
+    bool isLoading = false,
+  }) async {
+    try {
+      var response = await _dataRepository.deleteAttendanceApi(
+        attendanceid: attendanceid,
+        isLoading: isLoading,
+      );
+      if (response.hasError) {
+        final msg = _parseErrorMessage(response.data, 'Failed to delete attendance');
+        Utility.showMessage(msg, MessageType.error, null, '');
+        return false;
+      }
+      return true;
+    } catch (e) {
+      print('deleteAttendanceApi error: $e');
+      Utility.closeDialog();
+      Utility.showMessage('Failed to delete attendance', MessageType.error, null, '');
+      return false;
+    }
+  }
+
+  Future<GetAttendanceModel?> getOneAttendanceApi({
+    required String attendanceid,
+    bool isLoading = false,
+  }) async {
+    try {
+      var response = await _dataRepository.getOneAttendanceApi(
+        attendanceid: attendanceid,
+        isLoading: isLoading,
+      );
+      if (response.hasError) {
+        final msg = _parseErrorMessage(
+          response.data,
+          'Failed to load attendance details',
+        );
+        Utility.showMessage(msg, MessageType.error, null, '');
+        return null;
+      }
+      if (response.data.isNotEmpty) {
+        return getAttendanceModelFromJson(response.data);
+      }
+      return null;
+    } catch (e, st) {
+      print('getOneAttendanceApi error: $e\n$st');
+      Utility.closeDialog();
+      Utility.showMessage(
+        'Failed to load attendance details',
+        MessageType.error,
+        null,
+        '',
+      );
+      return null;
+    }
+  }
+
+  Future<bool> changeAttendanceStatusApi({
+    required String attendanceid,
+    required String status,
+    bool isLoading = false,
+  }) async {
+    try {
+      var response = await _dataRepository.changeAttendanceStatusApi(
+        attendanceid: attendanceid,
+        status: status,
+        isLoading: isLoading,
+      );
+      if (response.hasError) {
+        final msg = _parseErrorMessage(
+          response.data,
+          'Failed to change attendance status',
+        );
+        Utility.showMessage(msg, MessageType.error, null, '');
+        return false;
+      }
+      return true;
+    } catch (e, st) {
+      print('changeAttendanceStatusApi error: $e\n$st');
+      Utility.closeDialog();
+      Utility.showMessage(
+        'Failed to change attendance status',
         MessageType.error,
         null,
         '',

@@ -278,11 +278,7 @@ class OrdersController extends GetxController {
         } catch (_) {}
       }
     }
-    final normalizedRole = role.toLowerCase().trim();
-    isAdmin =
-        normalizedRole == 'admin' ||
-        normalizedRole == 'is_admin' ||
-        normalizedRole == '1';
+    isAdmin = RoleUtils.isAdmin(role);
     update();
 
     if (isAdmin) {
@@ -294,7 +290,7 @@ class OrdersController extends GetxController {
     try {
       var response = await Get.find<Repository>().getUsersListApi(
         page: 1,
-        limit: 100,
+        limit: 10,
         type: 'dealer',
         isLoading: false,
       );

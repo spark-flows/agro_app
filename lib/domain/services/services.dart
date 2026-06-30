@@ -7,3 +7,4 @@ library;
 
 export 'common_service.dart';
 export 'firebase_api.dart';
+export 'enum.dart';

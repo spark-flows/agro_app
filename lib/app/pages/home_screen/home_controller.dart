@@ -86,6 +86,7 @@ class HomeController extends GetxController {
   void goToProfile() => RouteManagement.goToProfileScreen();
   void goToUsers() => RouteManagement.goToUserListScreen();
   void goToTasks() => RouteManagement.goToTasksScreen();
+  void goToAttendance() => RouteManagement.goToAttendanceScreen();
 
   Future<void> fetchBranches() async {
     isBranchesLoading = true;

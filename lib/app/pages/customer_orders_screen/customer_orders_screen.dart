@@ -443,11 +443,23 @@ class CustomerOrdersScreen extends StatelessWidget {
                         ),
                       ),
                     if (isAdmin) ...[
-                      _buildDetailRow('Remark 1', order.remark1 ?? '-'),
-                      const SizedBox(height: 12),
-                      _buildDetailRow('Remark 2', order.remark2 ?? '-'),
-                      const SizedBox(height: 12),
-                      _buildDetailRow('Remark 3', order.remark3 ?? '-'),
+                      if (order.remark != null && order.remark!.isNotEmpty)
+                        for (int i = 0; i < order.remark!.length; i++) ...[
+                          _buildRemarkCard(
+                            'Remark ${i + 1}',
+                            order.remark![i].remark ?? '-',
+                            controller.getRemarkUserName(order.remark![i]),
+                            controller.formatRemarkDate(order.remark![i].date),
+                          ),
+                          const SizedBox(height: 12),
+                        ]
+                      else ...[
+                        _buildDetailRow('Remark 1', order.remark1 ?? '-'),
+                        const SizedBox(height: 12),
+                        _buildDetailRow('Remark 2', order.remark2 ?? '-'),
+                        const SizedBox(height: 12),
+                        _buildDetailRow('Remark 3', order.remark3 ?? '-'),
+                      ]
                     ],
                     const SizedBox(height: 100), // space for bottom buttons
                   ],
@@ -568,6 +580,57 @@ class CustomerOrdersScreen extends StatelessWidget {
           Text(label, style: Styles.txtGreyColorW40012),
           const SizedBox(height: 4),
           Text(value, style: Styles.txtBlackColorW50014),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildRemarkCard(
+    String label,
+    String value,
+    String author,
+    String date,
+  ) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.grey.shade50,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.grey.shade200),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(label, style: Styles.txtGreyColorW40012),
+              if (date.isNotEmpty && date != '-')
+                Text(
+                  date,
+                  style: Styles.txtGreyColorW40012.copyWith(fontSize: 11),
+                ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(value, style: Styles.txtBlackColorW50014),
+          if (author.isNotEmpty && author != '-') ...[
+            const SizedBox(height: 8),
+            Divider(color: Colors.grey.shade200, height: 1),
+            const SizedBox(height: 6),
+            Align(
+              alignment: Alignment.bottomRight,
+              child: Text(
+                'By $author',
+                style: Styles.txtGreyColorW40012.copyWith(
+                  fontStyle: FontStyle.italic,
+                  fontSize: 11,
+                  color: ColorsValue.primary,
+                ),
+              ),
+            ),
+          ],
         ],
       ),
     );
@@ -822,13 +885,47 @@ class CustomerOrdersScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: 20),
 
-                    // Remarks
                     if (isAdmin) ...[
-                      _buildTextField('Remark 1', ctrl.remark1Controller),
-                      const SizedBox(height: 16),
-                      _buildTextField('Remark 2', ctrl.remark2Controller),
-                      const SizedBox(height: 16),
-                      _buildTextField('Remark 3', ctrl.remark3Controller),
+                      for (int i = 0; i < ctrl.remarkControllers.length; i++) ...[
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Expanded(
+                              child: _buildTextField('Remark ${i + 1}', ctrl.remarkControllers[i]),
+                            ),
+                            if (ctrl.remarkControllers.length > 1) ...[
+                              const SizedBox(width: 8),
+                              Padding(
+                                padding: const EdgeInsets.only(top: 28.0),
+                                child: IconButton(
+                                  onPressed: () {
+                                    ctrl.removeRemarkFieldAt(i);
+                                  },
+                                  icon: const Icon(Icons.delete_outline, color: Colors.red),
+                                ),
+                              ),
+                            ],
+                          ],
+                        ),
+                        const SizedBox(height: 16),
+                      ],
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: TextButton.icon(
+                          onPressed: ctrl.addRemarkField,
+                          style: TextButton.styleFrom(
+                            foregroundColor: ColorsValue.primary,
+                          ),
+                          icon: const Icon(Icons.add, size: 20),
+                          label: const Text(
+                            'Add Remark',
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ),
                     ],
                     const SizedBox(height: 40),
                   ],
