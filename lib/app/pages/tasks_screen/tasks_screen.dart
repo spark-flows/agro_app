@@ -116,6 +116,26 @@ class _TasksScreenState extends State<TasksScreen> {
                         ),
                       ),
                     ),
+                    const SizedBox(width: 10),
+                    Container(
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: Colors.grey.shade200),
+                      ),
+                      child: IconButton(
+                        icon: Icon(
+                          Icons.filter_alt_outlined,
+                          color: (controller.filterStatus != null ||
+                                  controller.filterFromDate != null ||
+                                  controller.filterToDate != null ||
+                                  controller.filterAssignedBy != null)
+                              ? ColorsValue.primary
+                              : Colors.grey,
+                        ),
+                        onPressed: () => _showFilterBottomSheet(context, controller),
+                      ),
+                    ),
                   ],
                 ),
                 const SizedBox(height: 16),
@@ -385,6 +405,193 @@ class _TasksScreenState extends State<TasksScreen> {
             },
             child: const Icon(Icons.add, color: Colors.white),
           ),
+        );
+      },
+    );
+  }
+
+  void _showFilterBottomSheet(BuildContext context, TasksController controller) {
+    DateTime? tempFromDate = controller.filterFromDate;
+    DateTime? tempToDate = controller.filterToDate;
+    String? tempStatus = controller.filterStatus;
+    String? tempAssignedBy = controller.filterAssignedBy;
+
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            return Container(
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+              ),
+              padding: EdgeInsets.only(
+                left: 16,
+                right: 16,
+                top: 16,
+                bottom: MediaQuery.of(context).viewInsets.bottom + 16,
+              ),
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text('Filter Tasks', style: Styles.txtBlackColorW70020.copyWith(fontSize: 18)),
+                        TextButton(
+                          onPressed: () {
+                            controller.clearFilters();
+                            Navigator.pop(context);
+                          },
+                          child: const Text('Clear All', style: TextStyle(color: Colors.red)),
+                        ),
+                      ],
+                    ),
+                    const Divider(),
+                    const SizedBox(height: 8),
+
+                    // Date Range
+                    const Text('Date Range', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: OutlinedButton(
+                            style: OutlinedButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                            ),
+                            onPressed: () async {
+                              final picked = await showDatePicker(
+                                context: context,
+                                initialDate: tempFromDate ?? DateTime.now(),
+                                firstDate: DateTime(2020),
+                                lastDate: DateTime(2100),
+                              );
+                              if (picked != null) {
+                                setModalState(() => tempFromDate = picked);
+                              }
+                            },
+                            child: Text(
+                              tempFromDate == null
+                                  ? 'From Date'
+                                  : DateFormat('dd-MM-yyyy').format(tempFromDate!),
+                              style: TextStyle(color: tempFromDate != null ? Colors.black87 : Colors.grey.shade600),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: OutlinedButton(
+                            style: OutlinedButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                            ),
+                            onPressed: () async {
+                              final picked = await showDatePicker(
+                                context: context,
+                                initialDate: tempToDate ?? DateTime.now(),
+                                firstDate: DateTime(2020),
+                                lastDate: DateTime(2100),
+                              );
+                              if (picked != null) {
+                                setModalState(() => tempToDate = picked);
+                              }
+                            },
+                            child: Text(
+                              tempToDate == null
+                                  ? 'To Date'
+                                  : DateFormat('dd-MM-yyyy').format(tempToDate!),
+                              style: TextStyle(color: tempToDate != null ? Colors.black87 : Colors.grey.shade600),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+
+                    // Status Dropdown
+                    const Text('Status', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                    const SizedBox(height: 8),
+                    DropdownButtonFormField<String>(
+                      value: tempStatus != null && tempStatus!.isNotEmpty ? tempStatus : null,
+                      hint: const Text('Select Status'),
+                      decoration: InputDecoration(
+                        filled: true,
+                        fillColor: Colors.grey.shade50,
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.grey.shade300)),
+                        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.grey.shade200)),
+                      ),
+                      items: const [
+                        DropdownMenuItem(value: 'pending', child: Text('Pending')),
+                        DropdownMenuItem(value: 'processing', child: Text('Processing')),
+                        DropdownMenuItem(value: 'completed', child: Text('Completed')),
+                        DropdownMenuItem(value: 'cancelled', child: Text('Cancelled')),
+                      ],
+                      onChanged: (val) {
+                        setModalState(() => tempStatus = val);
+                      },
+                    ),
+                    const SizedBox(height: 16),
+
+                    // Assigned By Dropdown
+                    const Text('Assigned By', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                    const SizedBox(height: 8),
+                    DropdownButtonFormField<String>(
+                      value: tempAssignedBy != null && tempAssignedBy!.isNotEmpty ? tempAssignedBy : null,
+                      hint: const Text('Select User'),
+                      decoration: InputDecoration(
+                        filled: true,
+                        fillColor: Colors.grey.shade50,
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.grey.shade300)),
+                        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.grey.shade200)),
+                      ),
+                      items: controller.usersList.map((user) {
+                        return DropdownMenuItem(
+                          value: user.id,
+                          child: Text(user.name),
+                        );
+                      }).toList(),
+                      onChanged: (val) {
+                        setModalState(() => tempAssignedBy = val);
+                      },
+                    ),
+                    const SizedBox(height: 24),
+
+                    // Apply Button
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: ColorsValue.primary,
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                        ),
+                        onPressed: () {
+                          controller.setFilters(
+                            fromDate: tempFromDate,
+                            toDate: tempToDate,
+                            status: tempStatus,
+                            assignedBy: tempAssignedBy,
+                          );
+                          Navigator.pop(context);
+                        },
+                        child: const Text('Apply Filters', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                  ],
+                ),
+              ),
+            );
+          },
         );
       },
     );

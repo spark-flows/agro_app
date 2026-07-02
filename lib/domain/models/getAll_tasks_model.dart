@@ -99,6 +99,10 @@ class Doc {
     AtedBy? updatedBy;
     Branchid? branchid;
     DeletedBy? deletedBy;
+    String? duedate;
+    String? time;
+    String? priority;
+    List<Attachment>? attachment;
 
     Doc({
         this.id,
@@ -111,6 +115,10 @@ class Doc {
         this.updatedBy,
         this.branchid,
         this.deletedBy,
+        this.duedate,
+        this.time,
+        this.priority,
+        this.attachment,
     });
 
     factory Doc.fromJson(Map<String, dynamic> json) => Doc(
@@ -124,6 +132,10 @@ class Doc {
         updatedBy: json["updatedBy"] == null ? null : AtedBy.fromJson(json["updatedBy"]),
         branchid: json["branchid"] == null ? null : Branchid.fromJson(json["branchid"]),
         deletedBy: json["deletedBy"] == null ? null : DeletedBy.fromJson(json["deletedBy"]),
+        duedate: json["duedate"],
+        time: json["time"],
+        priority: json["priority"],
+        attachment: json["attachment"] == null ? [] : List<Attachment>.from(json["attachment"]!.map((x) => Attachment.fromJson(x))),
     );
 
     Map<String, dynamic> toJson() => {
@@ -137,6 +149,10 @@ class Doc {
         "updatedBy": updatedBy?.toJson(),
         "branchid": branchid?.toJson(),
         "deletedBy": deletedBy?.toJson(),
+        "duedate": duedate,
+        "time": time,
+        "priority": priority,
+        "attachment": attachment == null ? [] : List<dynamic>.from(attachment!.map((x) => x.toJson())),
     };
 }
 
@@ -223,5 +239,19 @@ class DeletedBy {
     );
 
     Map<String, dynamic> toJson() => {
+    };
+}
+
+class Attachment {
+    String? path;
+
+    Attachment({this.path});
+
+    factory Attachment.fromJson(Map<String, dynamic> json) => Attachment(
+        path: json["path"],
+    );
+
+    Map<String, dynamic> toJson() => {
+        "path": path,
     };
 }

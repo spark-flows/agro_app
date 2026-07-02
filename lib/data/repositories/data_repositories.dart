@@ -362,6 +362,10 @@ class DataRepository extends DomainRepository {
     String search = "",
     String sortfield = "date",
     int sortoption = -1,
+    String fromDate = "",
+    String toDate = "",
+    String status = "",
+    String assignedBy = "",
     bool isLoading = false,
   }) async => connectHelper.getTaskListApi(
     page: page,
@@ -369,6 +373,10 @@ class DataRepository extends DomainRepository {
     search: search,
     sortfield: sortfield,
     sortoption: sortoption,
+    fromDate: fromDate,
+    toDate: toDate,
+    status: status,
+    assignedBy: assignedBy,
     isLoading: isLoading,
   );
 
@@ -377,8 +385,12 @@ class DataRepository extends DomainRepository {
     required String date,
     required String taskname,
     required String description,
-    required String assignedto,
+    required List<String> assignedto,
     required String status,
+    required String duedate,
+    required String time,
+    required String priority,
+    required List<Map<String, String>> attachment,
     bool isLoading = false,
   }) async => connectHelper.createTaskApi(
     taskid: taskid,
@@ -387,6 +399,18 @@ class DataRepository extends DomainRepository {
     description: description,
     assignedto: assignedto,
     status: status,
+    duedate: duedate,
+    time: time,
+    priority: priority,
+    attachment: attachment,
+    isLoading: isLoading,
+  );
+
+  Future<ResponseModel> uploadTaskAttachmentApi(
+    List<File> files, {
+    bool isLoading = false,
+  }) async => connectHelper.uploadTaskAttachmentApi(
+    files,
     isLoading: isLoading,
   );
 
@@ -422,6 +446,11 @@ class DataRepository extends DomainRepository {
     String search = "",
     String sortfield = "date",
     int sortoption = -1,
+    String branchId = "",
+    String fromDate = "",
+    String toDate = "",
+    String status = "",
+    String createdBy = "",
     bool isLoading = false,
   }) async => connectHelper.getAttendanceListApi(
     page: page,
@@ -429,6 +458,11 @@ class DataRepository extends DomainRepository {
     search: search,
     sortfield: sortfield,
     sortoption: sortoption,
+    branchId: branchId,
+    fromDate: fromDate,
+    toDate: toDate,
+    status: status,
+    createdBy: createdBy,
     isLoading: isLoading,
   );
 

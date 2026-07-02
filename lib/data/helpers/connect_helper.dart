@@ -813,8 +813,9 @@ class ConnectHelper {
 
     // For admin users, try the selected branch first
     if (isAdmin) {
-      final String selectedBranch =
-          await Utility.getSecureValue(LocalKeys.selectedBranchId);
+      final String selectedBranch = await Utility.getSecureValue(
+        LocalKeys.selectedBranchId,
+      );
       print('[BranchResolution] Admin selectedBranchId="$selectedBranch"');
       if (selectedBranch.isNotEmpty) {
         return selectedBranch;
@@ -824,8 +825,9 @@ class ConnectHelper {
     }
 
     // Non-admin: also check selectedBranchId first (saved during login/splash)
-    final String savedBranch =
-        await Utility.getSecureValue(LocalKeys.selectedBranchId);
+    final String savedBranch = await Utility.getSecureValue(
+      LocalKeys.selectedBranchId,
+    );
     if (savedBranch.isNotEmpty) {
       print('[BranchResolution] Using saved selectedBranchId="$savedBranch"');
       return savedBranch;
@@ -912,7 +914,9 @@ class ConnectHelper {
 
     // Final fallback: if branchId is still empty, fetch branches and select the first one
     if (branchId.isEmpty) {
-      print('[BranchResolution] branchId is still empty. Fetching branches list as fallback...');
+      print(
+        '[BranchResolution] branchId is still empty. Fetching branches list as fallback...',
+      );
       try {
         final response = await getAllBranchesApi(isLoading: false);
         if (!response.hasError && response.data.isNotEmpty) {
@@ -937,7 +941,9 @@ class ConnectHelper {
                   LocalKeys.selectedBranchId,
                   branchId,
                 );
-                print('[BranchResolution] Final fallback resolved branch: "$branchId"');
+                print(
+                  '[BranchResolution] Final fallback resolved branch: "$branchId"',
+                );
               }
             }
           }
@@ -956,6 +962,10 @@ class ConnectHelper {
     String search = "",
     String sortfield = "date",
     int sortoption = -1,
+    String fromDate = "",
+    String toDate = "",
+    String status = "",
+    String assignedBy = "",
     bool isLoading = false,
   }) async {
     final String branchId = await _resolveBranchId();
@@ -965,11 +975,19 @@ class ConnectHelper {
       "serch": search.isNotEmpty ? {"taskname": search} : {},
       "branchid": branchId.isNotEmpty ? [branchId] : [],
       "assignedto": [],
-      "date": [],
+      "date": (fromDate.isNotEmpty && toDate.isNotEmpty)
+          ? [fromDate, toDate]
+          : [],
       "taskname": [],
       "description": [],
       "sortfield": sortfield,
       "sortoption": sortoption,
+      if (status.isNotEmpty) "status": [status],
+      if (status.isNotEmpty) "status_str": status,
+      if (assignedBy.isNotEmpty) "createdby": [assignedBy],
+      if (assignedBy.isNotEmpty) "assignedby": [assignedBy],
+      if (fromDate.isNotEmpty) "fromdate": fromDate,
+      if (toDate.isNotEmpty) "todate": toDate,
     };
     var response = await apiWrapper.makeRequest(
       EndPoints.taskListApi,
@@ -986,8 +1004,12 @@ class ConnectHelper {
     required String date,
     required String taskname,
     required String description,
-    required String assignedto,
+    required List<String> assignedto,
     required String status,
+    required String duedate,
+    required String time,
+    required String priority,
+    required List<Map<String, String>> attachment,
     bool isLoading = false,
   }) async {
     final String branchId = await _resolveBranchId();
@@ -999,6 +1021,10 @@ class ConnectHelper {
       "description": description,
       "assignedto": assignedto,
       "status": status,
+      "duedate": duedate,
+      "time": time,
+      "priority": priority,
+      "attachment": attachment,
     };
     var response = await apiWrapper.makeRequest(
       EndPoints.createTaskApi,
@@ -1010,13 +1036,52 @@ class ConnectHelper {
     return response;
   }
 
+  Future<ResponseModel> uploadTaskAttachmentApi(
+    List<File> files, {
+    bool isLoading = false,
+  }) async {
+    try {
+      if (isLoading) {
+        if (Get.isSnackbarOpen) {
+          await Get.closeCurrentSnackbar();
+        }
+        Utility.showLoader();
+      }
+
+      var uri = ApiWrapper.baseUrl + EndPoints.uploadTaskAttachmentApi;
+      var request = http.MultipartRequest('POST', Uri.parse(uri));
+
+      for (var file in files) {
+        request.files.add(await http.MultipartFile.fromPath('attachment', file.path));
+      }
+
+      request.headers.addAll(await Utility.commonHeader());
+
+      var response = await request.send().timeout(const Duration(seconds: 120));
+
+      if (isLoading) Utility.closeDialog();
+
+      var bytesToString = await response.stream.bytesToString();
+      var hasError = response.statusCode < 200 || response.statusCode >= 300;
+      return ResponseModel(
+        data: bytesToString,
+        hasError: hasError,
+        statusCode: response.statusCode,
+      );
+    } catch (e) {
+      if (isLoading) Utility.closeDialog();
+      return ResponseModel(
+        data: '{"message":"Upload failed: $e"}',
+        hasError: true,
+      );
+    }
+  }
+
   Future<ResponseModel> deleteTaskApi({
     required String taskid,
     bool isLoading = false,
   }) async {
-    var data = {
-      "taskid": taskid,
-    };
+    var data = {"taskid": taskid};
     var response = await apiWrapper.makeRequest(
       EndPoints.deleteTaskApi,
       Request.post,
@@ -1031,9 +1096,7 @@ class ConnectHelper {
     required String taskid,
     bool isLoading = false,
   }) async {
-    var data = {
-      "taskid": taskid,
-    };
+    var data = {"taskid": taskid};
     var response = await apiWrapper.makeRequest(
       EndPoints.getOneTaskApi,
       Request.post,
@@ -1049,10 +1112,7 @@ class ConnectHelper {
     required String status,
     bool isLoading = false,
   }) async {
-    var data = {
-      "taskid": taskid,
-      "status": status,
-    };
+    var data = {"taskid": taskid, "status": status};
     var response = await apiWrapper.makeRequest(
       EndPoints.changeTaskStatusApi,
       Request.post,
@@ -1069,14 +1129,30 @@ class ConnectHelper {
     String search = "",
     String sortfield = "date",
     int sortoption = -1,
+    String branchId = "",
+    String fromDate = "",
+    String toDate = "",
+    String status = "",
+    String createdBy = "",
     bool isLoading = false,
   }) async {
+    String resolvedBranchId = branchId;
+    if (resolvedBranchId.isEmpty) {
+      resolvedBranchId = await _resolveBranchId();
+    }
     var data = {
       "page": page,
       "limit": limit,
       "search": search.isNotEmpty ? {"remark": search} : {},
       "sortfield": sortfield,
       "sortoption": sortoption,
+      "branchid": resolvedBranchId,
+      if (status.isNotEmpty) "status": status,
+      if (createdBy.isNotEmpty) "userid": createdBy,
+      if (createdBy.isNotEmpty) "createdby": createdBy,
+      if (fromDate.isNotEmpty && toDate.isNotEmpty) "date": [fromDate, toDate],
+      if (fromDate.isNotEmpty) "fromdate": fromDate,
+      if (toDate.isNotEmpty) "todate": toDate,
     };
     var response = await apiWrapper.makeRequest(
       EndPoints.attendanceListApi,
@@ -1101,8 +1177,9 @@ class ConnectHelper {
     bool isLoading = false,
   }) async {
     final String branchId = await _resolveBranchId();
-    final String distributorId =
-        await Utility.getSecureValue(LocalKeys.distributorId);
+    final String distributorId = await Utility.getSecureValue(
+      LocalKeys.distributorId,
+    );
 
     var data = {
       "attendanceid": attendanceid ?? "",
@@ -1131,9 +1208,7 @@ class ConnectHelper {
     required String attendanceid,
     bool isLoading = false,
   }) async {
-    var data = {
-      "attendanceid": attendanceid,
-    };
+    var data = {"attendanceid": attendanceid};
     var response = await apiWrapper.makeRequest(
       EndPoints.deleteAttendanceApi,
       Request.post,
@@ -1148,9 +1223,7 @@ class ConnectHelper {
     required String attendanceid,
     bool isLoading = false,
   }) async {
-    var data = {
-      "attendanceid": attendanceid,
-    };
+    var data = {"attendanceid": attendanceid};
     var response = await apiWrapper.makeRequest(
       EndPoints.getOneAttendanceApi,
       Request.post,
@@ -1166,10 +1239,7 @@ class ConnectHelper {
     required String status,
     bool isLoading = false,
   }) async {
-    var data = {
-      "attendanceid": attendanceid,
-      "status": status,
-    };
+    var data = {"attendanceid": attendanceid, "status": status};
     var response = await apiWrapper.makeRequest(
       EndPoints.changeAttendanceStatusApi,
       Request.post,

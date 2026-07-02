@@ -27,6 +27,7 @@ import 'package:agro_app/domain/models/get_all_branches_model.dart';
 import 'package:agro_app/domain/models/getAll_tasks_model.dart';
 import 'package:agro_app/domain/models/create_task_model.dart';
 import 'package:agro_app/domain/models/get_one_task_model.dart';
+import 'package:agro_app/domain/models/response_model.dart';
 
 /// The main repository which will get the data from [DeviceRepository] or the
 /// [DataRepository].
@@ -986,6 +987,10 @@ class Repository {
     String search = "",
     String sortfield = "date",
     int sortoption = -1,
+    String fromDate = "",
+    String toDate = "",
+    String status = "",
+    String assignedBy = "",
     bool isLoading = false,
   }) async {
     try {
@@ -995,6 +1000,10 @@ class Repository {
         search: search,
         sortfield: sortfield,
         sortoption: sortoption,
+        fromDate: fromDate,
+        toDate: toDate,
+        status: status,
+        assignedBy: assignedBy,
         isLoading: isLoading,
       );
       if (response.hasError) {
@@ -1019,8 +1028,12 @@ class Repository {
     required String date,
     required String taskname,
     required String description,
-    required String assignedto,
+    required List<String> assignedto,
     required String status,
+    required String duedate,
+    required String time,
+    required String priority,
+    required List<Map<String, String>> attachment,
     bool isLoading = false,
   }) async {
     try {
@@ -1031,6 +1044,10 @@ class Repository {
         description: description,
         assignedto: assignedto,
         status: status,
+        duedate: duedate,
+        time: time,
+        priority: priority,
+        attachment: attachment,
         isLoading: isLoading,
       );
       if (response.hasError) {
@@ -1049,6 +1066,14 @@ class Repository {
       return null;
     }
   }
+
+  Future<ResponseModel> uploadTaskAttachmentApi(
+    List<File> files, {
+    bool isLoading = false,
+  }) async => _dataRepository.uploadTaskAttachmentApi(
+    files,
+    isLoading: isLoading,
+  );
 
   Future<bool> deleteTaskApi({
     required String taskid,
@@ -1146,6 +1171,11 @@ class Repository {
     String search = "",
     String sortfield = "date",
     int sortoption = -1,
+    String branchId = "",
+    String fromDate = "",
+    String toDate = "",
+    String status = "",
+    String createdBy = "",
     bool isLoading = false,
   }) async {
     try {
@@ -1155,6 +1185,11 @@ class Repository {
         search: search,
         sortfield: sortfield,
         sortoption: sortoption,
+        branchId: branchId,
+        fromDate: fromDate,
+        toDate: toDate,
+        status: status,
+        createdBy: createdBy,
         isLoading: isLoading,
       );
       if (response.hasError) {

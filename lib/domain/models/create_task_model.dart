@@ -40,7 +40,7 @@ class Data {
     String? taskname;
     String? description;
     String? branchid;
-    String? assignedto;
+    dynamic assignedto;
     String? status;
     String? date;
     bool? isDeleted;

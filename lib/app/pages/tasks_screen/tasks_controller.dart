@@ -1,11 +1,14 @@
 import 'dart:async';
+import 'dart:io';
 import 'package:agro_app/app/utils/utility.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:agro_app/domain/models/get_all_users_model.dart' as user_model;
 import 'package:agro_app/domain/models/getAll_tasks_model.dart' as task_list_model;
+import 'package:agro_app/domain/models/upload_files_model.dart';
 import 'package:agro_app/domain/repositories/repository.dart';
+import 'package:file_picker/file_picker.dart';
 
 class TasksController extends GetxController {
   // ── Task list & pagination state ──────────────────────────────────────────
@@ -20,6 +23,12 @@ class TasksController extends GetxController {
   String _searchQuery = '';
   String get searchQuery => _searchQuery;
 
+  // ── Filter State ───────────────────────────────────────────────────────────
+  DateTime? filterFromDate;
+  DateTime? filterToDate;
+  String? filterStatus;
+  String? filterAssignedBy; // Store User ID string of creator
+
   // ── System users list ──────────────────────────────────────────────────────
   List<user_model.Doc> usersList = [];
   bool isLoadingUsers = false;
@@ -29,8 +38,13 @@ class TasksController extends GetxController {
   final taskNameCtrl = TextEditingController();
   final descriptionCtrl = TextEditingController();
   final dateCtrl = TextEditingController();
-  String? selectedAssignedToId; // Store User ID string
+  final dueCtrl = TextEditingController();
+  final dueTimeCtrl = TextEditingController();
+  List<String> selectedAssignedToIds = []; // Store User ID strings
   String selectedStatus = 'pending'; // Default: pending
+  String selectedPriority = 'medium'; // Default: medium
+  List<File> selectedFiles = []; // Picked local files
+  List<Map<String, String>> existingAttachments = []; // Uploaded attachments when editing
 
   String editingTaskId = '';
   Timer? _searchTimer;
@@ -48,6 +62,8 @@ class TasksController extends GetxController {
     taskNameCtrl.dispose();
     descriptionCtrl.dispose();
     dateCtrl.dispose();
+    dueCtrl.dispose();
+    dueTimeCtrl.dispose();
     super.onClose();
   }
 
@@ -69,6 +85,10 @@ class TasksController extends GetxController {
         page: currentPage,
         limit: limit,
         search: searchQuery,
+        fromDate: filterFromDate != null ? DateFormat('yyyy-MM-dd').format(filterFromDate!) : "",
+        toDate: filterToDate != null ? DateFormat('yyyy-MM-dd').format(filterToDate!) : "",
+        status: filterStatus ?? "",
+        assignedBy: filterAssignedBy ?? "",
         isLoading: isRefresh,
       );
 
@@ -120,6 +140,28 @@ class TasksController extends GetxController {
     });
   }
 
+  void setFilters({
+    DateTime? fromDate,
+    DateTime? toDate,
+    String? status,
+    String? assignedBy,
+  }) {
+    filterFromDate = fromDate;
+    filterToDate = toDate;
+    filterStatus = status;
+    filterAssignedBy = assignedBy;
+    fetchTasks(isRefresh: true);
+  }
+
+  void clearFilters() {
+    filterFromDate = null;
+    filterToDate = null;
+    filterStatus = null;
+    filterAssignedBy = null;
+    fetchTasks(isRefresh: true);
+  }
+
+  // ── Setup Form State ───────────────────────────────────────────────────────
   // ── Setup Form State ───────────────────────────────────────────────────────
   void setupForm(task_list_model.Doc? task) {
     if (task == null) {
@@ -128,8 +170,13 @@ class TasksController extends GetxController {
       descriptionCtrl.clear();
       // Default date to today formatted as dd-MM-yyyy
       dateCtrl.text = DateFormat('dd-MM-yyyy').format(DateTime.now());
-      selectedAssignedToId = null;
+      selectedAssignedToIds = [];
       selectedStatus = 'pending'; // Default as requested
+      dueCtrl.clear();
+      dueTimeCtrl.clear();
+      selectedPriority = 'medium';
+      selectedFiles = [];
+      existingAttachments = [];
     } else {
       editingTaskId = task.id ?? '';
       taskNameCtrl.text = task.taskname ?? '';
@@ -152,8 +199,32 @@ class TasksController extends GetxController {
         dateCtrl.text = '';
       }
 
-      selectedAssignedToId = task.assignedto?.id;
+      // Convert API yyyy-MM-dd to display dd-MM-yyyy for duedate
+      if (task.duedate != null && task.duedate!.isNotEmpty) {
+        try {
+          final parsed = DateTime.parse(task.duedate!);
+          dueCtrl.text = DateFormat('dd-MM-yyyy').format(parsed);
+        } catch (_) {
+          try {
+            final parsed = DateFormat('yyyy-MM-dd').parse(task.duedate!);
+            dueCtrl.text = DateFormat('dd-MM-yyyy').format(parsed);
+          } catch (_) {
+            dueCtrl.text = task.duedate ?? '';
+          }
+        }
+      } else {
+        dueCtrl.text = '';
+      }
+
+      dueTimeCtrl.text = task.time ?? '';
+      selectedPriority = task.priority ?? 'medium';
+      selectedAssignedToIds = [];
+      if (task.assignedto?.id != null) {
+        selectedAssignedToIds.add(task.assignedto!.id!);
+      }
       selectedStatus = task.status ?? 'pending';
+      selectedFiles = [];
+      existingAttachments = task.attachment?.map((att) => {"path": att.path ?? ""}).toList() ?? [];
     }
     update();
   }
@@ -168,13 +239,53 @@ class TasksController extends GetxController {
         apiDate = DateFormat('yyyy-MM-dd').format(parsed);
       } catch (_) {}
 
+      // Convert display dd-MM-yyyy to API yyyy-MM-dd for duedate
+      String apiDueDate = dueCtrl.text.trim();
+      if (apiDueDate.isNotEmpty) {
+        try {
+          final parsed = DateFormat('dd-MM-yyyy').parse(apiDueDate);
+          apiDueDate = DateFormat('yyyy-MM-dd').format(parsed);
+        } catch (_) {}
+      }
+
+      // Upload new selected files if any
+      List<Map<String, String>> uploadedUrls = [];
+      if (selectedFiles.isNotEmpty) {
+        final uploadResponse = await Get.find<Repository>().uploadTaskAttachmentApi(
+          selectedFiles,
+          isLoading: true,
+        );
+        if (!uploadResponse.hasError) {
+          final uploadResult = uploadFilesFromJson(uploadResponse.data);
+          if (uploadResult.data != null) {
+            for (var fileDatum in uploadResult.data!) {
+              if (fileDatum.url != null) {
+                uploadedUrls.add({"path": fileDatum.url!});
+              }
+            }
+          }
+        } else {
+          Utility.snacBar('Failed to upload attachments', Colors.red);
+          return;
+        }
+      }
+
+      final List<Map<String, String>> finalAttachments = [
+        ...existingAttachments,
+        ...uploadedUrls,
+      ];
+
       final response = await Get.find<Repository>().createTaskApi(
         taskid: editingTaskId.isNotEmpty ? editingTaskId : null,
         date: apiDate,
         taskname: taskNameCtrl.text.trim(),
         description: descriptionCtrl.text.trim(),
-        assignedto: selectedAssignedToId ?? '',
+        assignedto: selectedAssignedToIds,
         status: selectedStatus,
+        duedate: apiDueDate,
+        time: dueTimeCtrl.text.trim(),
+        priority: selectedPriority,
+        attachment: finalAttachments,
         isLoading: true,
       );
 
@@ -188,6 +299,42 @@ class TasksController extends GetxController {
       }
     } catch (e) {
       debugPrint('[TasksController] saveTask error: $e');
+    }
+  }
+
+  // ── Attachment Picker Helpers ──────────────────────────────────────────────
+  Future<void> pickAttachments() async {
+    try {
+      FilePickerResult? result = await FilePicker.platform.pickFiles(
+        type: FileType.custom,
+        allowedExtensions: ['pdf', 'xls', 'xlsx', 'jpg', 'jpeg', 'png'],
+        allowMultiple: true,
+      );
+      if (result != null) {
+        selectedFiles.addAll(
+          result.paths
+              .where((path) => path != null)
+              .map((path) => File(path!))
+              .toList(),
+        );
+        update();
+      }
+    } catch (e) {
+      debugPrint('[TasksController] pickAttachments error: $e');
+    }
+  }
+
+  void removeSelectedFile(int index) {
+    if (index >= 0 && index < selectedFiles.length) {
+      selectedFiles.removeAt(index);
+      update();
+    }
+  }
+
+  void removeExistingAttachment(int index) {
+    if (index >= 0 && index < existingAttachments.length) {
+      existingAttachments.removeAt(index);
+      update();
     }
   }
 

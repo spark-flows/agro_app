@@ -1,6 +1,5 @@
 import 'package:agro_app/app/pages/attendance_screen/attendance_controller.dart';
 import 'package:agro_app/app/theme/theme.dart';
-import 'package:agro_app/app/utils/utility.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
@@ -120,6 +119,26 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                             borderSide: BorderSide(color: Colors.grey.shade200),
                           ),
                         ),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Container(
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: Colors.grey.shade200),
+                      ),
+                      child: IconButton(
+                        icon: Icon(
+                          Icons.filter_alt_outlined,
+                          color: (controller.filterStatus != null ||
+                                  controller.filterFromDate != null ||
+                                  controller.filterToDate != null ||
+                                  controller.filterCreatedBy != null)
+                              ? ColorsValue.primary
+                              : Colors.grey,
+                        ),
+                        onPressed: () => _showFilterBottomSheet(context, controller),
                       ),
                     ),
                   ],
@@ -472,6 +491,194 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
           ),
         ],
       ),
+    );
+  }
+
+  void _showFilterBottomSheet(BuildContext context, AttendanceController controller) {
+    DateTime? tempFromDate = controller.filterFromDate;
+    DateTime? tempToDate = controller.filterToDate;
+    String? tempStatus = controller.filterStatus;
+    String? tempCreatedBy = controller.filterCreatedBy;
+
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            return Container(
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+              ),
+              padding: EdgeInsets.only(
+                left: 16,
+                right: 16,
+                top: 16,
+                bottom: MediaQuery.of(context).viewInsets.bottom + 16,
+              ),
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text('Filter Attendance', style: Styles.txtBlackColorW70020.copyWith(fontSize: 18)),
+                        TextButton(
+                          onPressed: () {
+                            controller.clearFilters();
+                            Navigator.pop(context);
+                          },
+                          child: const Text('Clear All', style: TextStyle(color: Colors.red)),
+                        ),
+                      ],
+                    ),
+                    const Divider(),
+                    const SizedBox(height: 8),
+
+                    // Date Range
+                    const Text('Date Range', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: OutlinedButton(
+                            style: OutlinedButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                            ),
+                            onPressed: () async {
+                              final picked = await showDatePicker(
+                                context: context,
+                                initialDate: tempFromDate ?? DateTime.now(),
+                                firstDate: DateTime(2020),
+                                lastDate: DateTime(2100),
+                              );
+                              if (picked != null) {
+                                setModalState(() => tempFromDate = picked);
+                              }
+                            },
+                            child: Text(
+                              tempFromDate == null
+                                  ? 'From Date'
+                                  : DateFormat('dd-MM-yyyy').format(tempFromDate!),
+                              style: TextStyle(color: tempFromDate != null ? Colors.black87 : Colors.grey.shade600),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: OutlinedButton(
+                            style: OutlinedButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                            ),
+                            onPressed: () async {
+                              final picked = await showDatePicker(
+                                context: context,
+                                initialDate: tempToDate ?? DateTime.now(),
+                                firstDate: DateTime(2020),
+                                lastDate: DateTime(2100),
+                              );
+                              if (picked != null) {
+                                setModalState(() => tempToDate = picked);
+                              }
+                            },
+                            child: Text(
+                              tempToDate == null
+                                  ? 'To Date'
+                                  : DateFormat('dd-MM-yyyy').format(tempToDate!),
+                              style: TextStyle(color: tempToDate != null ? Colors.black87 : Colors.grey.shade600),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+
+                    // Status Dropdown
+                    const Text('Status', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                    const SizedBox(height: 8),
+                    DropdownButtonFormField<String>(
+                      value: tempStatus != null && tempStatus!.isNotEmpty ? tempStatus : null,
+                      hint: const Text('Select Status'),
+                      decoration: InputDecoration(
+                        filled: true,
+                        fillColor: Colors.grey.shade50,
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.grey.shade300)),
+                        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.grey.shade200)),
+                      ),
+                      items: const [
+                        DropdownMenuItem(value: 'present', child: Text('Present')),
+                        DropdownMenuItem(value: 'absent', child: Text('Absent')),
+                        DropdownMenuItem(value: 'holiday', child: Text('Holiday')),
+                        DropdownMenuItem(value: 'halfday', child: Text('Halfday')),
+                        DropdownMenuItem(value: 'leave', child: Text('Leave')),
+                      ],
+                      onChanged: (val) {
+                        setModalState(() => tempStatus = val);
+                      },
+                    ),
+                    const SizedBox(height: 16),
+
+                    // Created By Dropdown
+                    const Text('Created By', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                    const SizedBox(height: 8),
+                    DropdownButtonFormField<String>(
+                      value: tempCreatedBy != null && tempCreatedBy!.isNotEmpty ? tempCreatedBy : null,
+                      hint: const Text('Select User'),
+                      decoration: InputDecoration(
+                        filled: true,
+                        fillColor: Colors.grey.shade50,
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.grey.shade300)),
+                        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.grey.shade200)),
+                      ),
+                      items: controller.usersList.map((user) {
+                        return DropdownMenuItem(
+                          value: user.id,
+                          child: Text(user.name),
+                        );
+                      }).toList(),
+                      onChanged: (val) {
+                        setModalState(() => tempCreatedBy = val);
+                      },
+                    ),
+                    const SizedBox(height: 24),
+
+                    // Apply Button
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: ColorsValue.primary,
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                        ),
+                        onPressed: () {
+                          controller.setFilters(
+                            fromDate: tempFromDate,
+                            toDate: tempToDate,
+                            status: tempStatus,
+                            createdBy: tempCreatedBy,
+                          );
+                          Navigator.pop(context);
+                        },
+                        child: const Text('Apply Filters', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
     );
   }
 }

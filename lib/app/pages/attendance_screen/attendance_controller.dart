@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:agro_app/domain/models/get_all_attandance_model.dart' as get_all_model;
 import 'package:agro_app/domain/models/get_one_attandance_model.dart' as get_one_model;
+import 'package:agro_app/domain/models/get_all_users_model.dart' as user_model;
 import 'package:agro_app/domain/repositories/repository.dart';
 
 class AttendanceController extends GetxController {
@@ -20,6 +21,14 @@ class AttendanceController extends GetxController {
 
   String _searchQuery = '';
   String get searchQuery => _searchQuery;
+
+  // ── Filter State ───────────────────────────────────────────────────────────
+  DateTime? filterFromDate;
+  DateTime? filterToDate;
+  String? filterStatus;
+  String? filterCreatedBy; // Store User ID string of creator
+  List<user_model.Doc> usersList = [];
+  bool isLoadingUsers = false;
 
   // ── Form State ─────────────────────────────────────────────────────────────
   final formKey = GlobalKey<FormState>();
@@ -44,6 +53,7 @@ class AttendanceController extends GetxController {
   void onInit() {
     super.onInit();
     fetchAttendance(isRefresh: true);
+    fetchUsers();
   }
 
   @override
@@ -78,6 +88,10 @@ class AttendanceController extends GetxController {
         page: currentPage,
         limit: limit,
         search: searchQuery,
+        fromDate: filterFromDate != null ? DateFormat('yyyy-MM-dd').format(filterFromDate!) : "",
+        toDate: filterToDate != null ? DateFormat('yyyy-MM-dd').format(filterToDate!) : "",
+        status: filterStatus ?? "",
+        createdBy: filterCreatedBy ?? "",
         isLoading: isRefresh,
       );
 
@@ -106,6 +120,47 @@ class AttendanceController extends GetxController {
     _searchTimer = Timer(const Duration(milliseconds: 500), () {
       fetchAttendance(isRefresh: true);
     });
+  }
+
+  void setFilters({
+    DateTime? fromDate,
+    DateTime? toDate,
+    String? status,
+    String? createdBy,
+  }) {
+    filterFromDate = fromDate;
+    filterToDate = toDate;
+    filterStatus = status;
+    filterCreatedBy = createdBy;
+    fetchAttendance(isRefresh: true);
+  }
+
+  void clearFilters() {
+    filterFromDate = null;
+    filterToDate = null;
+    filterStatus = null;
+    filterCreatedBy = null;
+    fetchAttendance(isRefresh: true);
+  }
+
+  Future<void> fetchUsers() async {
+    isLoadingUsers = true;
+    update();
+    try {
+      final response = await Get.find<Repository>().getUsersListApi(
+        page: 1,
+        limit: 100, // Load users for creator selection
+        type: 'user',
+        isLoading: false,
+      );
+      if (response != null && response.isSuccess) {
+        usersList = response.data.docs;
+      }
+    } catch (e) {
+      debugPrint('[AttendanceController] fetchUsers error: $e');
+    }
+    isLoadingUsers = false;
+    update();
   }
 
   // ── DMS Coordinates Formatter ──────────────────────────────────────────────
@@ -249,8 +304,8 @@ class AttendanceController extends GetxController {
               desiredAccuracy: LocationAccuracy.high,
               timeLimit: const Duration(seconds: 5),
             );
-            lat = convertToDms(position.latitude);
-            lon = convertToDms(position.longitude);
+            lat = position.latitude.toString();
+            lon = position.longitude.toString();
           }
         }
       } catch (e) {
@@ -267,6 +322,8 @@ class AttendanceController extends GetxController {
       final coordinatesPayload = {
         "latitude": lat,
         "longitude": lon,
+        "Latitude": lat,
+        "Longitude": lon,
       };
 
       // Format display dd-MM-yyyy to API yyyy-MM-dd
