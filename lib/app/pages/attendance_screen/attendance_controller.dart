@@ -4,9 +4,11 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:geolocator/geolocator.dart';
-import 'package:agro_app/domain/models/get_all_attandance_model.dart' as get_all_model;
-import 'package:agro_app/domain/models/get_one_attandance_model.dart' as get_one_model;
-import 'package:agro_app/domain/models/get_all_users_model.dart' as user_model;
+import 'package:agro_app/domain/models/get_all_attandance_model.dart'
+    as get_all_model;
+import 'package:agro_app/domain/models/get_one_attandance_model.dart'
+    as get_one_model;
+import 'package:agro_app/domain/repositories/local_storage_keys.dart';
 import 'package:agro_app/domain/repositories/repository.dart';
 
 class AttendanceController extends GetxController {
@@ -23,12 +25,8 @@ class AttendanceController extends GetxController {
   String get searchQuery => _searchQuery;
 
   // ── Filter State ───────────────────────────────────────────────────────────
-  DateTime? filterFromDate;
-  DateTime? filterToDate;
+  DateTime? filterDate;
   String? filterStatus;
-  String? filterCreatedBy; // Store User ID string of creator
-  List<user_model.Doc> usersList = [];
-  bool isLoadingUsers = false;
 
   // ── Form State ─────────────────────────────────────────────────────────────
   final formKey = GlobalKey<FormState>();
@@ -45,6 +43,7 @@ class AttendanceController extends GetxController {
   String existingLatitude = '';
   String existingLongitude = '';
 
+  bool isAdmin = false;
   String editingAttendanceId = '';
   Timer? _searchTimer;
   bool isLocationLoading = false;
@@ -53,7 +52,13 @@ class AttendanceController extends GetxController {
   void onInit() {
     super.onInit();
     fetchAttendance(isRefresh: true);
-    fetchUsers();
+    checkAdminRole();
+  }
+
+  Future<void> checkAdminRole() async {
+    final role = await Get.find<Repository>().getSecureValue(LocalKeys.roleName);
+    isAdmin = role.toLowerCase() == 'admin';
+    update();
   }
 
   @override
@@ -88,14 +93,19 @@ class AttendanceController extends GetxController {
         page: currentPage,
         limit: limit,
         search: searchQuery,
-        fromDate: filterFromDate != null ? DateFormat('yyyy-MM-dd').format(filterFromDate!) : "",
-        toDate: filterToDate != null ? DateFormat('yyyy-MM-dd').format(filterToDate!) : "",
+        fromDate: filterDate != null
+            ? DateFormat('yyyy-MM-dd').format(filterDate!)
+            : "",
+        toDate: filterDate != null
+            ? DateFormat('yyyy-MM-dd').format(filterDate!)
+            : "",
         status: filterStatus ?? "",
-        createdBy: filterCreatedBy ?? "",
         isLoading: isRefresh,
       );
 
-      if (response != null && response.isSuccess == true && response.data != null) {
+      if (response != null &&
+          response.isSuccess == true &&
+          response.data != null) {
         final docs = response.data!.docs ?? [];
         if (isRefresh) {
           attendanceRecords = docs;
@@ -122,45 +132,16 @@ class AttendanceController extends GetxController {
     });
   }
 
-  void setFilters({
-    DateTime? fromDate,
-    DateTime? toDate,
-    String? status,
-    String? createdBy,
-  }) {
-    filterFromDate = fromDate;
-    filterToDate = toDate;
+  void setFilters({DateTime? date, String? status}) {
+    filterDate = date;
     filterStatus = status;
-    filterCreatedBy = createdBy;
     fetchAttendance(isRefresh: true);
   }
 
   void clearFilters() {
-    filterFromDate = null;
-    filterToDate = null;
+    filterDate = null;
     filterStatus = null;
-    filterCreatedBy = null;
     fetchAttendance(isRefresh: true);
-  }
-
-  Future<void> fetchUsers() async {
-    isLoadingUsers = true;
-    update();
-    try {
-      final response = await Get.find<Repository>().getUsersListApi(
-        page: 1,
-        limit: 100, // Load users for creator selection
-        type: 'user',
-        isLoading: false,
-      );
-      if (response != null && response.isSuccess) {
-        usersList = response.data.docs;
-      }
-    } catch (e) {
-      debugPrint('[AttendanceController] fetchUsers error: $e');
-    }
-    isLoadingUsers = false;
-    update();
   }
 
   // ── DMS Coordinates Formatter ──────────────────────────────────────────────
@@ -203,7 +184,10 @@ class AttendanceController extends GetxController {
 
       if (permission == LocationPermission.deniedForever) {
         if (showFeedback) {
-          Utility.snacBar('Location permissions are permanently denied.', Colors.red);
+          Utility.snacBar(
+            'Location permissions are permanently denied.',
+            Colors.red,
+          );
         }
         isLocationLoading = false;
         update();
@@ -216,9 +200,12 @@ class AttendanceController extends GetxController {
 
       latitudeCtrl.text = convertToDms(position.latitude);
       longitudeCtrl.text = convertToDms(position.longitude);
-      
+
       if (showFeedback) {
-        Utility.snacBar('Location coordinates fetched successfully.', Colors.green);
+        Utility.snacBar(
+          'Location coordinates fetched successfully.',
+          Colors.green,
+        );
       }
     } catch (e) {
       debugPrint('[AttendanceController] getCurrentCoordinates error: $e');
@@ -322,20 +309,25 @@ class AttendanceController extends GetxController {
       final coordinatesPayload = {
         "latitude": lat,
         "longitude": lon,
-        "Latitude": lat,
-        "Longitude": lon,
+        // "Latitude": lat,
+        // "Longitude": lon,
       };
 
       // Format display dd-MM-yyyy to API yyyy-MM-dd
       String apiDate = dateCtrl.text.trim();
-      try {
-        final parsed = DateFormat('dd-MM-yyyy').parse(apiDate);
-        apiDate = DateFormat('yyyy-MM-dd').format(parsed);
-      } catch (_) {}
+      if (apiDate.isEmpty) {
+        apiDate = DateFormat('yyyy-MM-dd').format(DateTime.now());
+      } else {
+        try {
+          final parsed = DateFormat('dd-MM-yyyy').parse(apiDate);
+          apiDate = DateFormat('yyyy-MM-dd').format(parsed);
+        } catch (_) {}
+      }
 
       final response = await Get.find<Repository>().createAttendanceApi(
-        attendanceid:
-            editingAttendanceId.isNotEmpty ? editingAttendanceId : null,
+        attendanceid: editingAttendanceId.isNotEmpty
+            ? editingAttendanceId
+            : null,
         date: apiDate,
         timein: timeInCtrl.text.trim(),
         timeout: timeOutCtrl.text.trim(),
@@ -388,12 +380,16 @@ class AttendanceController extends GetxController {
         attendanceid: id,
         isLoading: true,
       );
-      if (response != null && response.isSuccess == true && response.data != null) {
+      if (response != null &&
+          response.isSuccess == true &&
+          response.data != null) {
         setupForm(response.data);
         Get.toNamed<void>('/attendanceForm');
       }
     } catch (e) {
-      debugPrint('[AttendanceController] fetchAttendanceDetailsAndOpenForm error: $e');
+      debugPrint(
+        '[AttendanceController] fetchAttendanceDetailsAndOpenForm error: $e',
+      );
     }
   }
 
@@ -415,6 +411,323 @@ class AttendanceController extends GetxController {
       }
     } catch (e) {
       debugPrint('[AttendanceController] changeAttendanceStatus error: $e');
+    }
+  }
+
+  Future<Map<String, String>> _getCurrentCoordinates() async {
+    String lat = '';
+    String lon = '';
+    try {
+      bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (serviceEnabled) {
+        LocationPermission permission = await Geolocator.checkPermission();
+        if (permission == LocationPermission.denied) {
+          permission = await Geolocator.requestPermission();
+        }
+        if (permission != LocationPermission.denied &&
+            permission != LocationPermission.deniedForever) {
+          final position = await Geolocator.getCurrentPosition(
+            desiredAccuracy: LocationAccuracy.high,
+            timeLimit: const Duration(seconds: 5),
+          );
+          lat = position.latitude.toString();
+          lon = position.longitude.toString();
+        }
+      }
+    } catch (e) {
+      debugPrint('[AttendanceController] getCurrentCoordinates error: $e');
+    }
+    return {"latitude": lat, "longitude": lon};
+  }
+
+  get_all_model.GetAllAttendanceDoc? getTodayRecord() {
+    final todayStr = DateFormat('yyyy-MM-dd').format(DateTime.now());
+    for (var record in attendanceRecords) {
+      if (record.date == todayStr) {
+        return record;
+      }
+      if (record.date != null) {
+        try {
+          final parsedDate = DateTime.parse(record.date!);
+          if (DateFormat('yyyy-MM-dd').format(parsedDate) == todayStr) {
+            return record;
+          }
+        } catch (_) {
+          try {
+            final parsedDate = DateFormat('dd-MM-yyyy').parse(record.date!);
+            if (DateFormat('yyyy-MM-dd').format(parsedDate) == todayStr) {
+              return record;
+            }
+          } catch (_) {}
+        }
+      }
+    }
+    return null;
+  }
+
+  bool isClockedInToday(get_all_model.GetAllAttendanceDoc? record) {
+    if (record == null) return false;
+    if (record.timein != null && record.timein!.isNotEmpty && (record.timeout == null || record.timeout!.isEmpty)) {
+      return true;
+    }
+    if (record.punching != null && record.punching!.isNotEmpty) {
+      final lastPunch = record.punching!.last;
+      final timeinStr = lastPunch.timein ?? "00:00";
+      final timeoutStr = lastPunch.timeout ?? "00:00";
+      if (timeinStr != "00:00" && (timeoutStr == "00:00" || timeoutStr.isEmpty)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  bool isClockedOutToday(get_all_model.GetAllAttendanceDoc? record) {
+    if (record == null) return false;
+    if (record.timeout != null && record.timeout!.isNotEmpty) {
+      return true;
+    }
+    if (record.punching != null && record.punching!.isNotEmpty) {
+      final lastPunch = record.punching!.last;
+      final timeoutStr = lastPunch.timeout ?? "00:00";
+      if (timeoutStr != "00:00" && timeoutStr.isNotEmpty) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  bool isOnBreakToday(get_all_model.GetAllAttendanceDoc? record) {
+    if (record == null) return false;
+    if (record.breakstart != null && record.breakstart!.isNotEmpty && (record.breakend == null || record.breakend!.isEmpty)) {
+      return true;
+    }
+    if (record.breaks != null && record.breaks!.isNotEmpty) {
+      final lastBreak = record.breaks!.last;
+      final breakstartStr = lastBreak.breakstart ?? "00:00";
+      final breakendStr = lastBreak.breakend ?? "00:00";
+      if (breakstartStr != "00:00" && (breakendStr == "00:00" || breakendStr.isEmpty)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  Future<void> quickClockIn() async {
+    try {
+      Utility.showLoader();
+      final todayStr = DateFormat('yyyy-MM-dd').format(DateTime.now());
+      final timeStr = DateFormat('hh:mm a').format(DateTime.now());
+      final coordinates = await _getCurrentCoordinates();
+
+      List<Map<String, String>> punchingPayload = [
+        {"timein": timeStr, "timeout": "00:00"}
+      ];
+
+      final response = await Get.find<Repository>().createAttendanceApi(
+        date: todayStr,
+        timein: timeStr,
+        timeout: '',
+        coordinates: coordinates,
+        breakstart: '',
+        breakend: '',
+        remark: '',
+        status: 'present',
+        punching: punchingPayload,
+        breaks: [],
+        isLoading: false,
+      );
+
+      Utility.closeLoader();
+      if (response != null && response.isSuccess == true) {
+        fetchAttendance(isRefresh: true);
+        Utility.snacBar('Clocked in successfully', Colors.green);
+      }
+    } catch (e) {
+      Utility.closeLoader();
+      debugPrint('[AttendanceController] quickClockIn error: $e');
+    }
+  }
+
+  Future<void> quickClockOut(get_all_model.GetAllAttendanceDoc record) async {
+    try {
+      Utility.showLoader();
+      final todayStr = DateFormat('yyyy-MM-dd').format(DateTime.now());
+      final timeStr = DateFormat('hh:mm a').format(DateTime.now());
+
+      final List<Map<String, String>> punchingPayload = [];
+      if (record.punching != null) {
+        for (var p in record.punching!) {
+          punchingPayload.add({
+            "timein": p.timein ?? "00:00",
+            "timeout": p.timeout ?? "00:00",
+          });
+        }
+      }
+      punchingPayload.add({
+        "timein": "00:00",
+        "timeout": timeStr,
+      });
+
+      final List<Map<String, String>> breaksPayload = [];
+      if (record.breaks != null) {
+        for (var b in record.breaks!) {
+          breaksPayload.add({
+            "breakstart": b.breakstart ?? "00:00",
+            "breakend": b.breakend ?? "00:00",
+          });
+        }
+      }
+
+      final Map<String, String> coordinates = {
+        "latitude": record.coordinates?.latitude ?? '',
+        "longitude": record.coordinates?.longitude ?? '',
+      };
+
+      final response = await Get.find<Repository>().createAttendanceApi(
+        attendanceid: record.id,
+        date: todayStr,
+        timein: record.timein ?? '',
+        timeout: timeStr,
+        coordinates: coordinates,
+        breakstart: record.breakstart ?? '',
+        breakend: record.breakend ?? '',
+        remark: record.remark ?? '',
+        status: 'present',
+        punching: punchingPayload,
+        breaks: breaksPayload,
+        isLoading: false,
+      );
+
+      Utility.closeLoader();
+      if (response != null && response.isSuccess == true) {
+        fetchAttendance(isRefresh: true);
+        Utility.snacBar('Clocked out successfully', Colors.green);
+      }
+    } catch (e) {
+      Utility.closeLoader();
+      debugPrint('[AttendanceController] quickClockOut error: $e');
+    }
+  }
+
+  Future<void> quickBreakIn(get_all_model.GetAllAttendanceDoc record) async {
+    try {
+      Utility.showLoader();
+      final todayStr = DateFormat('yyyy-MM-dd').format(DateTime.now());
+      final timeStr = DateFormat('hh:mm a').format(DateTime.now());
+
+      final List<Map<String, String>> punchingPayload = [];
+      if (record.punching != null) {
+        for (var p in record.punching!) {
+          punchingPayload.add({
+            "timein": p.timein ?? "00:00",
+            "timeout": p.timeout ?? "00:00",
+          });
+        }
+      }
+
+      final List<Map<String, String>> breaksPayload = [];
+      if (record.breaks != null) {
+        for (var b in record.breaks!) {
+          breaksPayload.add({
+            "breakstart": b.breakstart ?? "00:00",
+            "breakend": b.breakend ?? "00:00",
+          });
+        }
+      }
+      breaksPayload.add({
+        "breakstart": timeStr,
+        "breakend": "00:00",
+      });
+
+      final Map<String, String> coordinates = {
+        "latitude": record.coordinates?.latitude ?? '',
+        "longitude": record.coordinates?.longitude ?? '',
+      };
+
+      final response = await Get.find<Repository>().createAttendanceApi(
+        attendanceid: record.id,
+        date: todayStr,
+        timein: record.timein ?? '',
+        timeout: record.timeout ?? '',
+        coordinates: coordinates,
+        breakstart: timeStr,
+        breakend: '',
+        remark: record.remark ?? '',
+        status: 'present',
+        punching: punchingPayload,
+        breaks: breaksPayload,
+        isLoading: false,
+      );
+
+      Utility.closeLoader();
+      if (response != null && response.isSuccess == true) {
+        fetchAttendance(isRefresh: true);
+        Utility.snacBar('Break started successfully', Colors.green);
+      }
+    } catch (e) {
+      Utility.closeLoader();
+      debugPrint('[AttendanceController] quickBreakIn error: $e');
+    }
+  }
+
+  Future<void> quickBreakOut(get_all_model.GetAllAttendanceDoc record) async {
+    try {
+      Utility.showLoader();
+      final todayStr = DateFormat('yyyy-MM-dd').format(DateTime.now());
+      final timeStr = DateFormat('hh:mm a').format(DateTime.now());
+
+      final List<Map<String, String>> punchingPayload = [];
+      if (record.punching != null) {
+        for (var p in record.punching!) {
+          punchingPayload.add({
+            "timein": p.timein ?? "00:00",
+            "timeout": p.timeout ?? "00:00",
+          });
+        }
+      }
+
+      final List<Map<String, String>> breaksPayload = [];
+      if (record.breaks != null) {
+        for (var b in record.breaks!) {
+          breaksPayload.add({
+            "breakstart": b.breakstart ?? "00:00",
+            "breakend": b.breakend ?? "00:00",
+          });
+        }
+      }
+      breaksPayload.add({
+        "breakstart": "00:00",
+        "breakend": timeStr,
+      });
+
+      final Map<String, String> coordinates = {
+        "latitude": record.coordinates?.latitude ?? '',
+        "longitude": record.coordinates?.longitude ?? '',
+      };
+
+      final response = await Get.find<Repository>().createAttendanceApi(
+        attendanceid: record.id,
+        date: todayStr,
+        timein: record.timein ?? '',
+        timeout: record.timeout ?? '',
+        coordinates: coordinates,
+        breakstart: record.breakstart ?? '',
+        breakend: timeStr,
+        remark: record.remark ?? '',
+        status: 'present',
+        punching: punchingPayload,
+        breaks: breaksPayload,
+        isLoading: false,
+      );
+
+      Utility.closeLoader();
+      if (response != null && response.isSuccess == true) {
+        fetchAttendance(isRefresh: true);
+        Utility.snacBar('Break ended successfully', Colors.green);
+      }
+    } catch (e) {
+      Utility.closeLoader();
+      debugPrint('[AttendanceController] quickBreakOut error: $e');
     }
   }
 }

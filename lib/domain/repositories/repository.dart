@@ -1219,6 +1219,8 @@ class Repository {
     required String breakend,
     required String remark,
     required String status,
+    List<Map<String, String>>? punching,
+    List<Map<String, String>>? breaks,
     bool isLoading = false,
   }) async {
     try {
@@ -1232,6 +1234,8 @@ class Repository {
         breakend: breakend,
         remark: remark,
         status: status,
+        punching: punching,
+        breaks: breaks,
         isLoading: isLoading,
       );
       if (response.hasError) {

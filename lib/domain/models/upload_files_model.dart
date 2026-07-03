@@ -39,12 +39,21 @@ class UploadFiles {
 }
 
 class UploadFilesDatum {
+  String? path;
   String? url;
 
-  UploadFilesDatum({this.url});
+  UploadFilesDatum({this.path, this.url});
 
-  factory UploadFilesDatum.fromJson(Map<String, dynamic> json) =>
-      UploadFilesDatum(url: json["url"]);
+  factory UploadFilesDatum.fromJson(Map<String, dynamic> json) {
+    final parsedPath = json["path"] ?? json["url"];
+    return UploadFilesDatum(
+      path: parsedPath,
+      url: parsedPath,
+    );
+  }
 
-  Map<String, dynamic> toJson() => {"url": url};
+  Map<String, dynamic> toJson() => {
+        "path": path,
+        "url": url,
+      };
 }

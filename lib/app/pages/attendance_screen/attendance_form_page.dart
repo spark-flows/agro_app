@@ -52,14 +52,19 @@ class _AttendanceFormPageState extends State<AttendanceFormPage> {
     TimeOfDay initialTime = TimeOfDay.now();
     if (ctrl.text.isNotEmpty) {
       try {
-        final parts = ctrl.text.split(':');
-        if (parts.length == 2) {
-          initialTime = TimeOfDay(
-            hour: int.parse(parts[0]),
-            minute: int.parse(parts[1]),
-          );
-        }
-      } catch (_) {}
+        final parsedDate = DateFormat('hh:mm a').parse(ctrl.text);
+        initialTime = TimeOfDay(hour: parsedDate.hour, minute: parsedDate.minute);
+      } catch (_) {
+        try {
+          final parts = ctrl.text.split(':');
+          if (parts.length == 2) {
+            initialTime = TimeOfDay(
+              hour: int.parse(parts[0]),
+              minute: int.parse(parts[1]),
+            );
+          }
+        } catch (_) {}
+      }
     }
 
     final TimeOfDay? picked = await showTimePicker(
@@ -80,10 +85,11 @@ class _AttendanceFormPageState extends State<AttendanceFormPage> {
     );
 
     if (picked != null) {
-      final hourStr = picked.hour.toString().padLeft(2, '0');
-      final minuteStr = picked.minute.toString().padLeft(2, '0');
+      final now = DateTime.now();
+      final dt = DateTime(now.year, now.month, now.day, picked.hour, picked.minute);
+      final formattedTime = DateFormat('hh:mm a').format(dt);
       setState(() {
-        ctrl.text = "$hourStr:$minuteStr";
+        ctrl.text = formattedTime;
       });
     }
   }
@@ -116,7 +122,9 @@ class _AttendanceFormPageState extends State<AttendanceFormPage> {
 
                 // ── Date Picker ──────────────────────────────────────────────
                 InkWell(
-                  onTap: () => _selectDate(context, controller),
+                  onTap: controller.editingAttendanceId.isNotEmpty
+                      ? () => _selectDate(context, controller)
+                      : null,
                   child: IgnorePointer(
                     child: _buildField(
                       fieldController: controller.dateCtrl,

@@ -9,6 +9,7 @@ import 'package:device_info_plus/device_info_plus.dart';
 import 'package:dio/dio.dart';
 import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
+import 'package:http_parser/http_parser.dart' as media_type;
 
 /// The helper class which will connect to the world to get the data.
 class ConnectHelper {
@@ -619,9 +620,17 @@ class ConnectHelper {
       var uri = ApiWrapper.baseUrl + EndPoints.uploadCustomerOrderApi;
       var request = http.MultipartRequest('POST', Uri.parse(uri));
 
-      request.files.add(await http.MultipartFile.fromPath('image', image.path));
+      request.files.add(
+        await http.MultipartFile.fromPath(
+          'image',
+          image.path,
+          contentType: _getMediaType(image.path),
+        ),
+      );
 
-      request.headers.addAll(await Utility.commonHeader());
+      final headers = await Utility.commonHeader();
+      headers.remove('Content-Type');
+      request.headers.addAll(headers);
 
       var response = await request.send().timeout(const Duration(seconds: 120));
 
@@ -629,6 +638,11 @@ class ConnectHelper {
 
       var bytesToString = await response.stream.bytesToString();
       var hasError = response.statusCode < 200 || response.statusCode >= 300;
+      if (hasError) {
+        print(
+          '[UploadCustomerOrder] Failed with status: ${response.statusCode}, body: $bytesToString',
+        );
+      }
       return ResponseModel(
         data: bytesToString,
         hasError: hasError,
@@ -1052,10 +1066,18 @@ class ConnectHelper {
       var request = http.MultipartRequest('POST', Uri.parse(uri));
 
       for (var file in files) {
-        request.files.add(await http.MultipartFile.fromPath('attachment', file.path));
+        request.files.add(
+          await http.MultipartFile.fromPath(
+            'attachment',
+            file.path,
+            contentType: _getMediaType(file.path),
+          ),
+        );
       }
 
-      request.headers.addAll(await Utility.commonHeader());
+      final headers = await Utility.commonHeader();
+      headers.remove('Content-Type');
+      request.headers.addAll(headers);
 
       var response = await request.send().timeout(const Duration(seconds: 120));
 
@@ -1063,6 +1085,11 @@ class ConnectHelper {
 
       var bytesToString = await response.stream.bytesToString();
       var hasError = response.statusCode < 200 || response.statusCode >= 300;
+      if (hasError) {
+        print(
+          '[UploadTaskAttachment] Failed with status: ${response.statusCode}, body: $bytesToString',
+        );
+      }
       return ResponseModel(
         data: bytesToString,
         hasError: hasError,
@@ -1140,6 +1167,9 @@ class ConnectHelper {
     if (resolvedBranchId.isEmpty) {
       resolvedBranchId = await _resolveBranchId();
     }
+    final String loggedInUserId = await Utility.getSecureValue(
+      LocalKeys.distributorId,
+    );
     var data = {
       "page": page,
       "limit": limit,
@@ -1148,7 +1178,7 @@ class ConnectHelper {
       "sortoption": sortoption,
       "branchid": resolvedBranchId,
       if (status.isNotEmpty) "status": status,
-      if (createdBy.isNotEmpty) "userid": createdBy,
+      if (loggedInUserId.isNotEmpty) "userid": [loggedInUserId],
       if (createdBy.isNotEmpty) "createdby": createdBy,
       if (fromDate.isNotEmpty && toDate.isNotEmpty) "date": [fromDate, toDate],
       if (fromDate.isNotEmpty) "fromdate": fromDate,
@@ -1174,26 +1204,45 @@ class ConnectHelper {
     required String breakend,
     required String remark,
     required String status,
+    List<Map<String, String>>? punching,
+    List<Map<String, String>>? breaks,
     bool isLoading = false,
   }) async {
     final String branchId = await _resolveBranchId();
     final String distributorId = await Utility.getSecureValue(
       LocalKeys.distributorId,
     );
+    final String role = await Utility.getSecureValue(LocalKeys.roleName);
+    final bool isUser = role.toLowerCase() != 'admin';
 
-    var data = {
-      "attendanceid": attendanceid ?? "",
-      "date": date,
-      "branchid": branchId,
-      "userid": distributorId,
-      "timein": timein,
-      "timeout": timeout,
-      "coordinates": coordinates,
-      "breakstart": breakstart,
-      "breakend": breakend,
-      "remark": remark,
-      "status": status,
-    };
+    Map<String, dynamic> data;
+    if (isUser) {
+      data = {
+        "attendanceid": attendanceid ?? "",
+        "date": date,
+        "branchid": branchId,
+        "userid": distributorId,
+        "coordinates": coordinates,
+        "punching": punching ?? [],
+        "break": breaks ?? [],
+        "remark": remark,
+        "status": "present",
+      };
+    } else {
+      data = {
+        "attendanceid": attendanceid ?? "",
+        "date": date,
+        "branchid": branchId,
+        "userid": distributorId,
+        "timein": timein,
+        "timeout": timeout,
+        "coordinates": coordinates,
+        "breakstart": breakstart,
+        "breakend": breakend,
+        "remark": remark,
+        "status": status,
+      };
+    }
     var response = await apiWrapper.makeRequest(
       EndPoints.createAttendanceApi,
       Request.post,
@@ -1248,6 +1297,25 @@ class ConnectHelper {
       await Utility.commonHeader(),
     );
     return response;
+  }
+
+  media_type.MediaType _getMediaType(String path) {
+    final lower = path.toLowerCase();
+    if (lower.endsWith('.pdf')) {
+      return media_type.MediaType('application', 'pdf');
+    } else if (lower.endsWith('.xls')) {
+      return media_type.MediaType('application', 'vnd.ms-excel');
+    } else if (lower.endsWith('.xlsx')) {
+      return media_type.MediaType(
+        'application',
+        'vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      );
+    } else if (lower.endsWith('.png')) {
+      return media_type.MediaType('image', 'png');
+    } else if (lower.endsWith('.jpg') || lower.endsWith('.jpeg')) {
+      return media_type.MediaType('image', 'jpeg');
+    }
+    return media_type.MediaType('application', 'octet-stream');
   }
 }
 

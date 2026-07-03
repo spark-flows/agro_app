@@ -112,9 +112,14 @@ class HomeScreen extends StatelessWidget {
                                       size: 20,
                                     ),
                                     const SizedBox(width: 10),
-                                    Text(
-                                      branch.name ?? '',
-                                      style: Styles.txtBlackColorW60014,
+                                    Flexible(
+                                      child: Text(
+                                        branch.name ?? '',
+                                        softWrap: true,
+                                        overflow: TextOverflow.ellipsis,
+                                        maxLines: 1,
+                                        style: Styles.txtBlackColorW60014,
+                                      ),
                                     ),
                                   ],
                                 ),

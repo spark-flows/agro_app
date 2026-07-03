@@ -3,6 +3,7 @@ import 'package:agro_app/app/theme/theme.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
+import 'package:agro_app/domain/models/get_all_attandance_model.dart' as get_all_model;
 
 class AttendanceScreen extends StatefulWidget {
   const AttendanceScreen({super.key});
@@ -131,14 +132,14 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                       child: IconButton(
                         icon: Icon(
                           Icons.filter_alt_outlined,
-                          color: (controller.filterStatus != null ||
-                                  controller.filterFromDate != null ||
-                                  controller.filterToDate != null ||
-                                  controller.filterCreatedBy != null)
+                          color:
+                              (controller.filterStatus != null ||
+                                  controller.filterDate != null)
                               ? ColorsValue.primary
                               : Colors.grey,
                         ),
-                        onPressed: () => _showFilterBottomSheet(context, controller),
+                        onPressed: () =>
+                            _showFilterBottomSheet(context, controller),
                       ),
                     ),
                   ],
@@ -278,32 +279,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                                       const SizedBox(height: 8),
 
                                       // Time & Break details Grid
-                                      Row(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.spaceBetween,
-                                        children: [
-                                          _buildTimeInfo(
-                                            'In',
-                                            record.timein,
-                                            Icons.login,
-                                          ),
-                                          _buildTimeInfo(
-                                            'Out',
-                                            record.timeout,
-                                            Icons.logout,
-                                          ),
-                                          _buildTimeInfo(
-                                            'Break Start',
-                                            record.breakstart,
-                                            Icons.free_breakfast_outlined,
-                                          ),
-                                          _buildTimeInfo(
-                                            'Break End',
-                                            record.breakend,
-                                            Icons.restaurant_outlined,
-                                          ),
-                                        ],
-                                      ),
+                                      _buildPunchingAndBreaksLogs(record),
                                       const SizedBox(height: 12),
 
                                       // Location Coordinates display
@@ -422,23 +398,28 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                           ),
                         ),
                 ),
+                if (!controller.isAdmin)
+                  _buildQuickActionsPanel(context, controller),
               ],
             ),
           ),
-          floatingActionButton: FloatingActionButton(
-            backgroundColor: ColorsValue.primary,
-            child: const Icon(Icons.add, color: Colors.white),
-            onPressed: () {
-              controller.setupForm(null);
-              Get.toNamed<void>('/attendanceForm');
-            },
-          ),
+          floatingActionButton: controller.isAdmin
+              ? FloatingActionButton(
+                  backgroundColor: ColorsValue.primary,
+                  child: const Icon(Icons.add, color: Colors.white),
+                  onPressed: () {
+                    controller.setupForm(null);
+                    Get.toNamed<void>('/attendanceForm');
+                  },
+                )
+              : null,
         );
       },
     );
   }
 
   Widget _buildTimeInfo(String label, String? time, IconData icon) {
+    final displayTime = _formatTo12Hour(time);
     return Column(
       children: [
         Row(
@@ -454,7 +435,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
         ),
         const SizedBox(height: 2),
         Text(
-          (time == null || time.isEmpty) ? '--:--' : time,
+          displayTime,
           style: const TextStyle(
             fontWeight: FontWeight.w600,
             fontSize: 13,
@@ -463,6 +444,24 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
         ),
       ],
     );
+  }
+
+  String _formatTo12Hour(String? timeStr) {
+    if (timeStr == null || timeStr.isEmpty || timeStr == "00:00") return '--:--';
+    try {
+      if (timeStr.toLowerCase().contains('am') ||
+          timeStr.toLowerCase().contains('pm')) {
+        return timeStr;
+      }
+      final parts = timeStr.split(':');
+      if (parts.length >= 2) {
+        final hour = int.parse(parts[0]);
+        final minute = int.parse(parts[1].split(' ')[0]);
+        final dt = DateTime(2026, 1, 1, hour, minute);
+        return DateFormat('hh:mm a').format(dt);
+      }
+    } catch (_) {}
+    return timeStr;
   }
 
   void _showDeleteConfirmation(
@@ -494,11 +493,12 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
     );
   }
 
-  void _showFilterBottomSheet(BuildContext context, AttendanceController controller) {
-    DateTime? tempFromDate = controller.filterFromDate;
-    DateTime? tempToDate = controller.filterToDate;
+  void _showFilterBottomSheet(
+    BuildContext context,
+    AttendanceController controller,
+  ) {
+    DateTime? tempDate = controller.filterDate;
     String? tempStatus = controller.filterStatus;
-    String? tempCreatedBy = controller.filterCreatedBy;
 
     showModalBottomSheet<void>(
       context: context,
@@ -526,97 +526,157 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text('Filter Attendance', style: Styles.txtBlackColorW70020.copyWith(fontSize: 18)),
+                        Text(
+                          'Filter Attendance',
+                          style: Styles.txtBlackColorW70020.copyWith(
+                            fontSize: 18,
+                          ),
+                        ),
                         TextButton(
                           onPressed: () {
                             controller.clearFilters();
                             Navigator.pop(context);
                           },
-                          child: const Text('Clear All', style: TextStyle(color: Colors.red)),
+                          child: const Text(
+                            'Clear All',
+                            style: TextStyle(color: Colors.red),
+                          ),
                         ),
                       ],
                     ),
                     const Divider(),
                     const SizedBox(height: 8),
 
-                    // Date Range
-                    const Text('Date Range', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                    // Select Date
+                    const Text(
+                      'Select Date',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                      ),
+                    ),
                     const SizedBox(height: 8),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: OutlinedButton(
-                            style: OutlinedButton.styleFrom(
-                              padding: const EdgeInsets.symmetric(vertical: 12),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                            ),
-                            onPressed: () async {
-                              final picked = await showDatePicker(
-                                context: context,
-                                initialDate: tempFromDate ?? DateTime.now(),
-                                firstDate: DateTime(2020),
-                                lastDate: DateTime(2100),
-                              );
-                              if (picked != null) {
-                                setModalState(() => tempFromDate = picked);
-                              }
-                            },
-                            child: Text(
-                              tempFromDate == null
-                                  ? 'From Date'
-                                  : DateFormat('dd-MM-yyyy').format(tempFromDate!),
-                              style: TextStyle(color: tempFromDate != null ? Colors.black87 : Colors.grey.shade600),
-                            ),
+                    InkWell(
+                      onTap: () async {
+                        final picked = await showDatePicker(
+                          context: context,
+                          initialDate: tempDate ?? DateTime.now(),
+                          firstDate: DateTime(2020),
+                          lastDate: DateTime(2100),
+                        );
+                        if (picked != null) {
+                          setModalState(() => tempDate = picked);
+                        }
+                      },
+                      borderRadius: BorderRadius.circular(8),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 12,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.grey.shade50,
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(
+                            color: Colors.grey.shade300,
+                            width: 1,
                           ),
                         ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: OutlinedButton(
-                            style: OutlinedButton.styleFrom(
-                              padding: const EdgeInsets.symmetric(vertical: 12),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                        child: Row(
+                          children: [
+                            const Icon(
+                              Icons.calendar_today_outlined,
+                              color: ColorsValue.primary,
+                              size: 20,
                             ),
-                            onPressed: () async {
-                              final picked = await showDatePicker(
-                                context: context,
-                                initialDate: tempToDate ?? DateTime.now(),
-                                firstDate: DateTime(2020),
-                                lastDate: DateTime(2100),
-                              );
-                              if (picked != null) {
-                                setModalState(() => tempToDate = picked);
-                              }
-                            },
-                            child: Text(
-                              tempToDate == null
-                                  ? 'To Date'
-                                  : DateFormat('dd-MM-yyyy').format(tempToDate!),
-                              style: TextStyle(color: tempToDate != null ? Colors.black87 : Colors.grey.shade600),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Text(
+                                tempDate == null
+                                    ? 'Choose Date'
+                                    : DateFormat(
+                                        'dd-MM-yyyy',
+                                      ).format(tempDate!),
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: tempDate != null
+                                      ? FontWeight.w500
+                                      : FontWeight.normal,
+                                  color: tempDate != null
+                                      ? Colors.black87
+                                      : Colors.grey.shade600,
+                                ),
+                              ),
                             ),
-                          ),
+                            if (tempDate != null)
+                              GestureDetector(
+                                onTap: () {
+                                  setModalState(() => tempDate = null);
+                                },
+                                child: Icon(
+                                  Icons.cancel,
+                                  color: Colors.grey.shade400,
+                                  size: 18,
+                                ),
+                              )
+                            else
+                              Icon(
+                                Icons.arrow_drop_down,
+                                color: Colors.grey.shade400,
+                              ),
+                          ],
                         ),
-                      ],
+                      ),
                     ),
                     const SizedBox(height: 16),
 
                     // Status Dropdown
-                    const Text('Status', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                    const Text(
+                      'Status',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                      ),
+                    ),
                     const SizedBox(height: 8),
                     DropdownButtonFormField<String>(
-                      value: tempStatus != null && tempStatus!.isNotEmpty ? tempStatus : null,
+                      value: tempStatus != null && tempStatus!.isNotEmpty
+                          ? tempStatus
+                          : null,
                       hint: const Text('Select Status'),
                       decoration: InputDecoration(
                         filled: true,
                         fillColor: Colors.grey.shade50,
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.grey.shade300)),
-                        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.grey.shade200)),
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 8,
+                        ),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                          borderSide: BorderSide(color: Colors.grey.shade300),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                          borderSide: BorderSide(color: Colors.grey.shade200),
+                        ),
                       ),
                       items: const [
-                        DropdownMenuItem(value: 'present', child: Text('Present')),
-                        DropdownMenuItem(value: 'absent', child: Text('Absent')),
-                        DropdownMenuItem(value: 'holiday', child: Text('Holiday')),
-                        DropdownMenuItem(value: 'halfday', child: Text('Halfday')),
+                        DropdownMenuItem(
+                          value: 'present',
+                          child: Text('Present'),
+                        ),
+                        DropdownMenuItem(
+                          value: 'absent',
+                          child: Text('Absent'),
+                        ),
+                        DropdownMenuItem(
+                          value: 'holiday',
+                          child: Text('Holiday'),
+                        ),
+                        DropdownMenuItem(
+                          value: 'halfday',
+                          child: Text('Halfday'),
+                        ),
                         DropdownMenuItem(value: 'leave', child: Text('Leave')),
                       ],
                       onChanged: (val) {
@@ -625,29 +685,6 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                     ),
                     const SizedBox(height: 16),
 
-                    // Created By Dropdown
-                    const Text('Created By', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-                    const SizedBox(height: 8),
-                    DropdownButtonFormField<String>(
-                      value: tempCreatedBy != null && tempCreatedBy!.isNotEmpty ? tempCreatedBy : null,
-                      hint: const Text('Select User'),
-                      decoration: InputDecoration(
-                        filled: true,
-                        fillColor: Colors.grey.shade50,
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.grey.shade300)),
-                        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.grey.shade200)),
-                      ),
-                      items: controller.usersList.map((user) {
-                        return DropdownMenuItem(
-                          value: user.id,
-                          child: Text(user.name),
-                        );
-                      }).toList(),
-                      onChanged: (val) {
-                        setModalState(() => tempCreatedBy = val);
-                      },
-                    ),
                     const SizedBox(height: 24),
 
                     // Apply Button
@@ -657,18 +694,24 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                         style: ElevatedButton.styleFrom(
                           backgroundColor: ColorsValue.primary,
                           padding: const EdgeInsets.symmetric(vertical: 14),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
                         ),
                         onPressed: () {
                           controller.setFilters(
-                            fromDate: tempFromDate,
-                            toDate: tempToDate,
+                            date: tempDate,
                             status: tempStatus,
-                            createdBy: tempCreatedBy,
                           );
                           Navigator.pop(context);
                         },
-                        child: const Text('Apply Filters', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                        child: const Text(
+                          'Apply Filters',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
                       ),
                     ),
                     const SizedBox(height: 8),
@@ -679,6 +722,317 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
           },
         );
       },
+    );
+  }
+
+  Widget _buildQuickActionsPanel(
+    BuildContext context,
+    AttendanceController controller,
+  ) {
+    final record = controller.getTodayRecord();
+    final isClockedIn = controller.isClockedInToday(record);
+    final isClockedOut = controller.isClockedOutToday(record);
+    final isOnBreak = controller.isOnBreakToday(record);
+
+    final String displayTimeIn = (() {
+      if (record == null) return '';
+      if (record.timein != null && record.timein!.isNotEmpty) return record.timein!;
+      if (record.punching != null && record.punching!.isNotEmpty) {
+        for (var p in record.punching!.reversed) {
+          if (p.timein != null && p.timein != "00:00" && p.timein!.isNotEmpty) {
+            return p.timein!;
+          }
+        }
+      }
+      return '';
+    })();
+
+    final String displayTimeOut = (() {
+      if (record == null) return '';
+      if (record.timeout != null && record.timeout!.isNotEmpty) return record.timeout!;
+      if (record.punching != null && record.punching!.isNotEmpty) {
+        for (var p in record.punching!.reversed) {
+          if (p.timeout != null && p.timeout != "00:00" && p.timeout!.isNotEmpty) {
+            return p.timeout!;
+          }
+        }
+      }
+      return '';
+    })();
+
+    final String displayBreakStart = (() {
+      if (record == null) return '';
+      if (record.breakstart != null && record.breakstart!.isNotEmpty) return record.breakstart!;
+      if (record.breaks != null && record.breaks!.isNotEmpty) {
+        for (var b in record.breaks!.reversed) {
+          if (b.breakstart != null && b.breakstart != "00:00" && b.breakstart!.isNotEmpty) {
+            return b.breakstart!;
+          }
+        }
+      }
+      return '';
+    })();
+
+    // State 1: Not clocked in or already fully clocked out for today
+    final bool showClockInOnly = !isClockedIn || isClockedOut;
+
+    String title = "Daily Shift Actions";
+    String subtitle = "Start your work day by Clocking In.";
+    IconData headerIcon = Icons.punch_clock_outlined;
+    Color statusColor = Colors.grey.shade600;
+
+    if (isClockedIn && !isClockedOut) {
+      if (isOnBreak) {
+        title = "On Break";
+        subtitle =
+            "Break started at $displayBreakStart. Click Break Out to resume.";
+        headerIcon = Icons.coffee_outlined;
+        statusColor = Colors.orange;
+      } else {
+        title = "Clocked In";
+        subtitle = "Clocked in at $displayTimeIn. Have a productive day!";
+        headerIcon = Icons.work_history_outlined;
+        statusColor = ColorsValue.primary;
+      }
+    } else if (isClockedOut) {
+      title = "Shift Completed";
+      subtitle = "Clocked out at $displayTimeOut. See you tomorrow!";
+      headerIcon = Icons.task_alt;
+      statusColor = Colors.green;
+    }
+
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: 16),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+        border: Border.all(color: Colors.grey.shade100),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: statusColor.withOpacity(0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(headerIcon, color: statusColor, size: 20),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: const TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black87,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      subtitle,
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.grey.shade600,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          if (showClockInOnly)
+            SizedBox(
+              width: double.infinity,
+              height: 48,
+              child: ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: ColorsValue.primary,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  elevation: 0,
+                ),
+                icon: const Icon(Icons.login, size: 18),
+                label: const Text(
+                  "Clock In",
+                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                ),
+                onPressed: isClockedOut
+                    ? null // Disable if already clocked out for today
+                    : () => controller.quickClockIn(),
+              ),
+            )
+          else ...[
+            Row(
+              children: [
+                Expanded(
+                  child: SizedBox(
+                    height: 48,
+                    child: OutlinedButton.icon(
+                      style: OutlinedButton.styleFrom(
+                        side: BorderSide(
+                          color: isOnBreak
+                              ? Colors.orange
+                              : ColorsValue.primary,
+                          width: 1.5,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        foregroundColor: isOnBreak
+                            ? Colors.orange
+                            : ColorsValue.primary,
+                      ),
+                      icon: Icon(
+                        isOnBreak
+                            ? Icons.play_arrow_outlined
+                            : Icons.coffee_outlined,
+                        size: 18,
+                      ),
+                      label: Text(
+                        isOnBreak ? "Break Out" : "Break In",
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      onPressed: () {
+                        if (isOnBreak) {
+                          controller.quickBreakOut(record!);
+                        } else {
+                          controller.quickBreakIn(record!);
+                        }
+                      },
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: SizedBox(
+                    height: 48,
+                    child: ElevatedButton.icon(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.red,
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        elevation: 0,
+                      ),
+                      icon: const Icon(Icons.logout, size: 18),
+                      label: const Text(
+                        "Clock Out",
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      onPressed: () => controller.quickClockOut(record!),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPunchingAndBreaksLogs(
+    get_all_model.GetAllAttendanceDoc record,
+  ) {
+    final String? timeInVal = (() {
+      if (record.timein != null && record.timein!.isNotEmpty) {
+        return record.timein;
+      }
+      if (record.punching != null && record.punching!.isNotEmpty) {
+        for (var p in record.punching!) {
+          if (p.timein != null && p.timein != "00:00" && p.timein!.isNotEmpty) {
+            return p.timein;
+          }
+        }
+      }
+      return null;
+    })();
+
+    final String? timeOutVal = (() {
+      if (record.timeout != null && record.timeout!.isNotEmpty) {
+        return record.timeout;
+      }
+      if (record.punching != null && record.punching!.isNotEmpty) {
+        for (var p in record.punching!.reversed) {
+          if (p.timeout != null &&
+              p.timeout != "00:00" &&
+              p.timeout!.isNotEmpty) {
+            return p.timeout;
+          }
+        }
+      }
+      return null;
+    })();
+
+    final String? breakStartVal = (() {
+      if (record.breakstart != null && record.breakstart!.isNotEmpty) {
+        return record.breakstart;
+      }
+      if (record.breaks != null && record.breaks!.isNotEmpty) {
+        for (var b in record.breaks!) {
+          if (b.breakstart != null &&
+              b.breakstart != "00:00" &&
+              b.breakstart!.isNotEmpty) {
+            return b.breakstart;
+          }
+        }
+      }
+      return null;
+    })();
+
+    final String? breakEndVal = (() {
+      if (record.breakend != null && record.breakend!.isNotEmpty) {
+        return record.breakend;
+      }
+      if (record.breaks != null && record.breaks!.isNotEmpty) {
+        for (var b in record.breaks!.reversed) {
+          if (b.breakend != null &&
+              b.breakend != "00:00" &&
+              b.breakend!.isNotEmpty) {
+            return b.breakend;
+          }
+        }
+      }
+      return null;
+    })();
+
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        _buildTimeInfo('In', timeInVal, Icons.login),
+        _buildTimeInfo('Out', timeOutVal, Icons.logout),
+        _buildTimeInfo(
+          'Break Start',
+          breakStartVal,
+          Icons.free_breakfast_outlined,
+        ),
+        _buildTimeInfo('Break End', breakEndVal, Icons.restaurant_outlined),
+      ],
     );
   }
 }

@@ -92,7 +92,7 @@ class Doc {
     String? id;
     String? taskname;
     String? description;
-    Assignedto? assignedto;
+    List<Assignedto>? assignedto;
     String? status;
     String? date;
     AtedBy? createdBy;
@@ -125,7 +125,11 @@ class Doc {
         id: json["_id"],
         taskname: json["taskname"],
         description: json["description"],
-        assignedto: json["assignedto"] == null ? null : Assignedto.fromJson(json["assignedto"]),
+        assignedto: json["assignedto"] == null
+            ? []
+            : (json["assignedto"] is List
+                ? List<Assignedto>.from(json["assignedto"]!.map((x) => Assignedto.fromJson(x)))
+                : [Assignedto.fromJson(json["assignedto"])]),
         status: json["status"],
         date: json["date"],
         createdBy: json["createdBy"] == null ? null : AtedBy.fromJson(json["createdBy"]),
@@ -142,7 +146,7 @@ class Doc {
         "_id": id,
         "taskname": taskname,
         "description": description,
-        "assignedto": assignedto?.toJson(),
+        "assignedto": assignedto == null ? [] : List<dynamic>.from(assignedto!.map((x) => x.toJson())),
         "status": status,
         "date": date,
         "createdBy": createdBy?.toJson(),
@@ -169,12 +173,19 @@ class Assignedto {
         this.email,
     });
 
-    factory Assignedto.fromJson(Map<String, dynamic> json) => Assignedto(
-        id: json["_id"],
-        name: json["name"],
-        mobile: json["mobile"],
-        email: json["email"],
-    );
+    factory Assignedto.fromJson(dynamic json) {
+      if (json is Map<String, dynamic>) {
+        return Assignedto(
+          id: json["_id"],
+          name: json["name"],
+          mobile: json["mobile"],
+          email: json["email"],
+        );
+      } else if (json is String) {
+        return Assignedto(id: json);
+      }
+      return Assignedto();
+    }
 
     Map<String, dynamic> toJson() => {
         "_id": id,
@@ -195,11 +206,18 @@ class Branchid {
         this.shortname,
     });
 
-    factory Branchid.fromJson(Map<String, dynamic> json) => Branchid(
-        id: json["_id"],
-        name: json["name"],
-        shortname: json["shortname"],
-    );
+    factory Branchid.fromJson(dynamic json) {
+      if (json is Map<String, dynamic>) {
+        return Branchid(
+          id: json["_id"],
+          name: json["name"],
+          shortname: json["shortname"],
+        );
+      } else if (json is String) {
+        return Branchid(id: json);
+      }
+      return Branchid();
+    }
 
     Map<String, dynamic> toJson() => {
         "_id": id,
@@ -219,11 +237,18 @@ class AtedBy {
         this.profilepic,
     });
 
-    factory AtedBy.fromJson(Map<String, dynamic> json) => AtedBy(
-        id: json["_id"],
-        name: json["name"],
-        profilepic: json["profilepic"],
-    );
+    factory AtedBy.fromJson(dynamic json) {
+      if (json is Map<String, dynamic>) {
+        return AtedBy(
+          id: json["_id"],
+          name: json["name"],
+          profilepic: json["profilepic"],
+        );
+      } else if (json is String) {
+        return AtedBy(id: json);
+      }
+      return AtedBy();
+    }
 
     Map<String, dynamic> toJson() => {
         "_id": id,

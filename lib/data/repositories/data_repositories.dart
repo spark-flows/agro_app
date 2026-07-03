@@ -476,6 +476,8 @@ class DataRepository extends DomainRepository {
     required String breakend,
     required String remark,
     required String status,
+    List<Map<String, String>>? punching,
+    List<Map<String, String>>? breaks,
     bool isLoading = false,
   }) async => connectHelper.createAttendanceApi(
     attendanceid: attendanceid,
@@ -487,6 +489,8 @@ class DataRepository extends DomainRepository {
     breakend: breakend,
     remark: remark,
     status: status,
+    punching: punching,
+    breaks: breaks,
     isLoading: isLoading,
   );
 

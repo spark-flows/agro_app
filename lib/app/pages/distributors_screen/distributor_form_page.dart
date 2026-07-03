@@ -91,8 +91,15 @@ class DistributorFormPage extends StatelessWidget {
                     FilteringTextInputFormatter.digitsOnly,
                     LengthLimitingTextInputFormatter(10),
                   ],
-                  validator: (v) =>
-                      v!.trim().isEmpty ? 'Please enter a phone number' : null,
+                  validator: (v) {
+                    if (v == null || v.trim().isEmpty) {
+                      return 'Please enter a phone number';
+                    }
+                    if (v.trim().length != 10) {
+                      return 'Phone number must be exactly 10 digits';
+                    }
+                    return null;
+                  },
                 ),
                 const SizedBox(height: 12),
                 Obx(

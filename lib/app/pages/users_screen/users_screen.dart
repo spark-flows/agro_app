@@ -335,8 +335,15 @@ class _UsersScreenState extends State<UsersScreen> {
                     FilteringTextInputFormatter.digitsOnly,
                     LengthLimitingTextInputFormatter(10),
                   ],
-                  validator: (v) =>
-                      v!.isEmpty ? 'Please enter a phone number' : null,
+                  validator: (v) {
+                    if (v == null || v.trim().isEmpty) {
+                      return 'Please enter a phone number';
+                    }
+                    if (v.trim().length != 10) {
+                      return 'Phone number must be exactly 10 digits';
+                    }
+                    return null;
+                  },
                 ),
                 const SizedBox(height: 16),
                 Obx(

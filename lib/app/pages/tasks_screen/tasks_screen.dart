@@ -4,6 +4,9 @@ import 'package:agro_app/app/utils/utility.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:agro_app/data/helpers/api_wrapper.dart';
+import 'package:agro_app/app/widgets/show_full_scareen_image.dart';
 
 class TasksScreen extends StatefulWidget {
   const TasksScreen({super.key});
@@ -62,6 +65,44 @@ class _TasksScreenState extends State<TasksScreen> {
       default:
         return Colors.amber.shade800;
     }
+  }
+
+  bool _isImage(String path) {
+    final cleanPath = path.toLowerCase().split('?').first;
+    return cleanPath.endsWith('.jpg') ||
+        cleanPath.endsWith('.jpeg') ||
+        cleanPath.endsWith('.png') ||
+        cleanPath.endsWith('.gif') ||
+        cleanPath.endsWith('.webp') ||
+        cleanPath.endsWith('.heic');
+  }
+
+  bool _isVideo(String path) {
+    final cleanPath = path.toLowerCase().split('?').first;
+    return cleanPath.endsWith('.mp4') ||
+        cleanPath.endsWith('.mov') ||
+        cleanPath.endsWith('.avi') ||
+        cleanPath.endsWith('.mkv') ||
+        cleanPath.endsWith('.3gp') ||
+        cleanPath.endsWith('.webm');
+  }
+
+  String? _resolveMediaUrl(String mediaPath) {
+    final trimmedPath = mediaPath.trim();
+    if (trimmedPath.isEmpty) return null;
+    final directUri = Uri.tryParse(trimmedPath);
+    if (directUri != null &&
+        (directUri.scheme == 'http' || directUri.scheme == 'https') &&
+        directUri.host.isNotEmpty) {
+      return trimmedPath;
+    }
+    final normalizedBase = ApiWrapper.imageUrl.endsWith('/')
+        ? ApiWrapper.imageUrl
+        : '${ApiWrapper.imageUrl}/';
+    final normalizedPath = trimmedPath.startsWith('/')
+        ? trimmedPath.substring(1)
+        : trimmedPath;
+    return '$normalizedBase$normalizedPath';
   }
 
   @override
@@ -126,14 +167,16 @@ class _TasksScreenState extends State<TasksScreen> {
                       child: IconButton(
                         icon: Icon(
                           Icons.filter_alt_outlined,
-                          color: (controller.filterStatus != null ||
+                          color:
+                              (controller.filterStatus != null ||
                                   controller.filterFromDate != null ||
                                   controller.filterToDate != null ||
                                   controller.filterAssignedBy != null)
                               ? ColorsValue.primary
                               : Colors.grey,
                         ),
-                        onPressed: () => _showFilterBottomSheet(context, controller),
+                        onPressed: () =>
+                            _showFilterBottomSheet(context, controller),
                       ),
                     ),
                   ],
@@ -149,250 +192,374 @@ class _TasksScreenState extends State<TasksScreen> {
                           ),
                         )
                       : controller.tasks.isEmpty
-                          ? Center(
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Icon(
-                                    Icons.assignment_outlined,
-                                    size: 64,
-                                    color: Colors.grey.shade300,
-                                  ),
-                                  const SizedBox(height: 16),
-                                  Text(
-                                    'No tasks found',
-                                    style: Styles.txtGreyColorW40014,
-                                  ),
-                                ],
+                      ? Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.assignment_outlined,
+                                size: 64,
+                                color: Colors.grey.shade300,
                               ),
-                            )
-                          : RefreshIndicator(
-                              onRefresh: () =>
-                                  controller.fetchTasks(isRefresh: true),
-                              child: ListView.builder(
-                                controller: _scrollController,
-                                itemCount: controller.tasks.length +
-                                    (controller.isFetchingMore ? 1 : 0),
-                                itemBuilder: (context, index) {
-                                  if (index == controller.tasks.length) {
-                                    return const Padding(
-                                      padding: EdgeInsets.symmetric(
-                                        vertical: 16,
-                                      ),
-                                      child: Center(
-                                        child: CircularProgressIndicator(
-                                          color: ColorsValue.primary,
-                                        ),
-                                      ),
-                                    );
-                                  }
-
-                                  final task = controller.tasks[index];
-                                  final statusColor =
-                                      _getStatusColor(task.status);
-                                  final assigneeName =
-                                      task.assignedto?.name ?? '';
-
-                                  return Card(
-                                    elevation: 1,
-                                    margin: const EdgeInsets.only(bottom: 12),
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(12),
+                              const SizedBox(height: 16),
+                              Text(
+                                'No tasks found',
+                                style: Styles.txtGreyColorW40014,
+                              ),
+                            ],
+                          ),
+                        )
+                      : RefreshIndicator(
+                          onRefresh: () =>
+                              controller.fetchTasks(isRefresh: true),
+                          child: ListView.builder(
+                            controller: _scrollController,
+                            itemCount:
+                                controller.tasks.length +
+                                (controller.isFetchingMore ? 1 : 0),
+                            itemBuilder: (context, index) {
+                              if (index == controller.tasks.length) {
+                                return const Padding(
+                                  padding: EdgeInsets.symmetric(vertical: 16),
+                                  child: Center(
+                                    child: CircularProgressIndicator(
+                                      color: ColorsValue.primary,
                                     ),
-                                    child: InkWell(
-                                      onTap: () {
-                                        controller.fetchTaskDetailsAndOpenForm(task.id ?? '');
-                                      },
-                                      borderRadius: BorderRadius.circular(12),
-                                      child: Padding(
-                                        padding: const EdgeInsets.all(16),
-                                        child: Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
+                                  ),
+                                );
+                              }
+
+                              final task = controller.tasks[index];
+                              final statusColor = _getStatusColor(task.status);
+                              final assigneeName =
+                                  (task.assignedto != null &&
+                                      task.assignedto!.isNotEmpty)
+                                  ? task.assignedto!
+                                        .map((e) => e.name ?? '')
+                                        .where((n) => n.isNotEmpty)
+                                        .join(', ')
+                                  : '';
+
+                              return Card(
+                                elevation: 1,
+                                margin: const EdgeInsets.only(bottom: 12),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: InkWell(
+                                  onTap: () {
+                                    controller.fetchTaskDetailsAndOpenForm(
+                                      task.id ?? '',
+                                    );
+                                  },
+                                  borderRadius: BorderRadius.circular(12),
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(16),
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.spaceBetween,
                                           children: [
-                                            Row(
-                                              mainAxisAlignment:
-                                                  MainAxisAlignment.spaceBetween,
-                                              children: [
-                                                Expanded(
-                                                  child: Text(
-                                                    task.taskname ?? 'Unnamed',
-                                                    style:
-                                                        Styles.txtBlackColorW60014,
-                                                    maxLines: 1,
-                                                    overflow:
-                                                        TextOverflow.ellipsis,
-                                                  ),
+                                            Expanded(
+                                              child: Text(
+                                                task.taskname ?? 'Unnamed',
+                                                style:
+                                                    Styles.txtBlackColorW60014,
+                                                maxLines: 1,
+                                                overflow: TextOverflow.ellipsis,
+                                              ),
+                                            ),
+                                            const SizedBox(width: 8),
+                                            PopupMenuButton<String>(
+                                              padding: EdgeInsets.zero,
+                                              onSelected: (newStatus) {
+                                                controller.changeTaskStatus(
+                                                  task.id ?? '',
+                                                  newStatus,
+                                                );
+                                              },
+                                              itemBuilder: (context) => const [
+                                                PopupMenuItem(
+                                                  value: 'pending',
+                                                  child: Text('Pending'),
                                                 ),
-                                                const SizedBox(width: 8),
-                                                PopupMenuButton<String>(
-                                                  padding: EdgeInsets.zero,
-                                                  onSelected: (newStatus) {
-                                                    controller.changeTaskStatus(
-                                                      task.id ?? '',
-                                                      newStatus,
-                                                    );
-                                                  },
-                                                  itemBuilder: (context) => const [
-                                                    PopupMenuItem(
-                                                      value: 'pending',
-                                                      child: Text('Pending'),
-                                                    ),
-                                                    PopupMenuItem(
-                                                      value: 'processing',
-                                                      child: Text('Processing'),
-                                                    ),
-                                                    PopupMenuItem(
-                                                      value: 'completed',
-                                                      child: Text('Completed'),
-                                                    ),
-                                                    PopupMenuItem(
-                                                      value: 'cancelled',
-                                                      child: Text('Cancelled'),
-                                                    ),
-                                                  ],
-                                                  child: Container(
-                                                    padding:
-                                                        const EdgeInsets.symmetric(
+                                                PopupMenuItem(
+                                                  value: 'processing',
+                                                  child: Text('Processing'),
+                                                ),
+                                                PopupMenuItem(
+                                                  value: 'completed',
+                                                  child: Text('Completed'),
+                                                ),
+                                                PopupMenuItem(
+                                                  value: 'cancelled',
+                                                  child: Text('Cancelled'),
+                                                ),
+                                              ],
+                                              child: Container(
+                                                padding:
+                                                    const EdgeInsets.symmetric(
                                                       horizontal: 10,
                                                       vertical: 4,
                                                     ),
-                                                    decoration: BoxDecoration(
-                                                      color: statusColor
-                                                          .withValues(alpha: 0.1),
-                                                      borderRadius:
-                                                          BorderRadius.circular(
-                                                        20,
+                                                decoration: BoxDecoration(
+                                                  color: statusColor.withValues(
+                                                    alpha: 0.1,
+                                                  ),
+                                                  borderRadius:
+                                                      BorderRadius.circular(20),
+                                                ),
+                                                child: Row(
+                                                  mainAxisSize:
+                                                      MainAxisSize.min,
+                                                  children: [
+                                                    Text(
+                                                      Utility.capitalizeFirst(
+                                                        task.status ??
+                                                            'pending',
+                                                      ),
+                                                      style: TextStyle(
+                                                        color: statusColor,
+                                                        fontSize: 11,
+                                                        fontWeight:
+                                                            FontWeight.bold,
                                                       ),
                                                     ),
-                                                    child: Row(
-                                                      mainAxisSize: MainAxisSize.min,
-                                                      children: [
-                                                        Text(
-                                                          Utility.capitalizeFirst(
-                                                            task.status ?? 'pending',
-                                                          ),
-                                                          style: TextStyle(
-                                                            color: statusColor,
-                                                            fontSize: 11,
-                                                            fontWeight:
-                                                                FontWeight.bold,
-                                                          ),
-                                                        ),
-                                                        const SizedBox(width: 2),
-                                                        Icon(
-                                                          Icons.arrow_drop_down,
-                                                          size: 14,
-                                                          color: statusColor,
-                                                        ),
+                                                    const SizedBox(width: 2),
+                                                    Icon(
+                                                      Icons.arrow_drop_down,
+                                                      size: 14,
+                                                      color: statusColor,
+                                                    ),
+                                                  ],
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                        const SizedBox(height: 8),
+                                        if (task.description != null &&
+                                            task.description!.isNotEmpty) ...[
+                                          Text(
+                                            task.description!,
+                                            style: Styles.txtGreyColorW40012,
+                                            maxLines: 2,
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                          const SizedBox(height: 12),
+                                        ],
+                                        if (task.attachment != null &&
+                                            task.attachment!.isNotEmpty) ...[
+                                          const SizedBox(height: 8),
+                                          SizedBox(
+                                            height: 60,
+                                            child: ListView.separated(
+                                              scrollDirection: Axis.horizontal,
+                                              itemCount:
+                                                  task.attachment!.length,
+                                              separatorBuilder: (_, __) =>
+                                                  const SizedBox(width: 8),
+                                              itemBuilder: (context, index) {
+                                                final attach =
+                                                    task.attachment![index];
+                                                final path = attach.path ?? '';
+                                                if (path.isEmpty) {
+                                                  return const SizedBox
+                                                      .shrink();
+                                                }
+
+                                                final isImg = _isImage(path);
+                                                final isVid = _isVideo(path);
+                                                final resolvedUrl =
+                                                    _resolveMediaUrl(path);
+
+                                                return GestureDetector(
+                                                  onTap: () {
+                                                    Get.to(
+                                                      () =>
+                                                          const ShowFullScareenImage(),
+                                                      arguments: [
+                                                        path,
+                                                        isVid
+                                                            ? 'video'
+                                                            : 'image',
                                                       ],
+                                                    );
+                                                  },
+                                                  child: ClipRRect(
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                      8,
+                                                    ),
+                                                    child: Container(
+                                                      width: 60,
+                                                      height: 60,
+                                                      color:
+                                                          Colors.grey.shade100,
+                                                      child: isImg &&
+                                                              resolvedUrl !=
+                                                                  null
+                                                          ? CachedNetworkImage(
+                                                              imageUrl:
+                                                                  resolvedUrl,
+                                                              fit: BoxFit
+                                                                  .cover,
+                                                              placeholder: (
+                                                                context,
+                                                                url,
+                                                              ) =>
+                                                                  const Center(
+                                                                child:
+                                                                    SizedBox(
+                                                                  width: 16,
+                                                                  height: 16,
+                                                                  child:
+                                                                      CircularProgressIndicator(
+                                                                    strokeWidth:
+                                                                        2,
+                                                                    valueColor:
+                                                                        AlwaysStoppedAnimation(
+                                                                      ColorsValue
+                                                                          .primary,
+                                                                    ),
+                                                                  ),
+                                                                ),
+                                                              ),
+                                                              errorWidget: (
+                                                                context,
+                                                                url,
+                                                                error,
+                                                              ) =>
+                                                                  const Icon(
+                                                                Icons
+                                                                    .broken_image_outlined,
+                                                                size: 20,
+                                                                color: Colors
+                                                                    .grey,
+                                                              ),
+                                                            )
+                                                          : isVid
+                                                              ? Stack(
+                                                                  alignment:
+                                                                      Alignment
+                                                                          .center,
+                                                                  children: [
+                                                                    Container(
+                                                                      color: Colors
+                                                                          .black12,
+                                                                    ),
+                                                                    const Icon(
+                                                                      Icons
+                                                                          .play_circle_outline,
+                                                                      size: 24,
+                                                                      color: Colors
+                                                                          .black87,
+                                                                    ),
+                                                                  ],
+                                                                )
+                                                              : const Icon(
+                                                                  Icons
+                                                                      .insert_drive_file_outlined,
+                                                                  size: 24,
+                                                                  color: Colors
+                                                                      .grey,
+                                                                ),
                                                     ),
                                                   ),
+                                                );
+                                              },
+                                            ),
+                                          ),
+                                          const SizedBox(height: 12),
+                                        ],
+                                        Divider(
+                                          height: 1,
+                                          color: Colors.grey.shade100,
+                                        ),
+                                        const SizedBox(height: 12),
+                                        Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.spaceBetween,
+                                          children: [
+                                            Row(
+                                              children: [
+                                                const Icon(
+                                                  Icons.calendar_today_outlined,
+                                                  size: 14,
+                                                  color: ColorsValue.primary,
+                                                ),
+                                                const SizedBox(width: 6),
+                                                Text(
+                                                  _formatDisplayDate(task.date),
+                                                  style:
+                                                      Styles.txtGreyColorW40012,
                                                 ),
                                               ],
                                             ),
-                                            const SizedBox(height: 8),
-                                            if (task.description != null &&
-                                                task.description!.isNotEmpty) ...[
-                                              Text(
-                                                task.description!,
-                                                style:
-                                                    Styles.txtGreyColorW40012,
-                                                maxLines: 2,
-                                                overflow:
-                                                    TextOverflow.ellipsis,
-                                              ),
-                                              const SizedBox(height: 12),
-                                            ],
-                                            Divider(
-                                              height: 1,
-                                              color: Colors.grey.shade100,
-                                            ),
-                                            const SizedBox(height: 12),
                                             Row(
-                                              mainAxisAlignment:
-                                                  MainAxisAlignment.spaceBetween,
                                               children: [
-                                                Row(
-                                                  children: [
-                                                    const Icon(
-                                                      Icons
-                                                          .calendar_today_outlined,
-                                                      size: 14,
-                                                      color: ColorsValue.primary,
+                                                if (assigneeName
+                                                    .isNotEmpty) ...[
+                                                  const Icon(
+                                                    Icons.person_outline,
+                                                    size: 14,
+                                                    color: ColorsValue.primary,
+                                                  ),
+                                                  const SizedBox(width: 4),
+                                                  Text(
+                                                    assigneeName,
+                                                    style: const TextStyle(
+                                                      fontSize: 12,
+                                                      fontWeight:
+                                                          FontWeight.w500,
+                                                      color: Colors.black87,
                                                     ),
-                                                    const SizedBox(width: 6),
-                                                     Text(
-                                                       _formatDisplayDate(task.date),
-                                                       style:
-                                                           Styles.txtGreyColorW40012,
-                                                     ),
-                                                  ],
-                                                ),
-                                                Row(
-                                                  children: [
-                                                    if (assigneeName
-                                                        .isNotEmpty) ...[
-                                                      const Icon(
-                                                        Icons.person_outline,
-                                                        size: 14,
-                                                        color: ColorsValue
-                                                            .primary,
-                                                      ),
-                                                      const SizedBox(width: 4),
-                                                      Text(
-                                                        assigneeName,
-                                                        style: const TextStyle(
-                                                          fontSize: 12,
-                                                          fontWeight:
-                                                              FontWeight.w500,
-                                                          color: Colors.black87,
-                                                        ),
-                                                      ),
-                                                    ] else ...[
-                                                      Text(
-                                                        'Unassigned',
-                                                        style:
-                                                            Styles.txtGreyColorW40012,
-                                                      ),
-                                                    ],
-                                                    const SizedBox(width: 8),
-                                                    IconButton(
-                                                      constraints:
-                                                          const BoxConstraints(),
-                                                      padding: EdgeInsets.zero,
-                                                      icon: const Icon(
-                                                        Icons.delete_outline,
-                                                        color: Colors.red,
-                                                        size: 20,
-                                                      ),
-                                                      onPressed: () {
-                                                        Utility
-                                                            .showDeleteDialog(
-                                                          title: 'Delete Task',
-                                                          message:
-                                                              'Are you sure you want to delete "${task.taskname}"?',
-                                                          onConfirm: () {
-                                                            controller
-                                                                .deleteTask(
-                                                              task.id ?? '',
-                                                            );
-                                                          },
+                                                  ),
+                                                ] else ...[
+                                                  Text(
+                                                    'Unassigned',
+                                                    style: Styles
+                                                        .txtGreyColorW40012,
+                                                  ),
+                                                ],
+                                                const SizedBox(width: 8),
+                                                IconButton(
+                                                  constraints:
+                                                      const BoxConstraints(),
+                                                  padding: EdgeInsets.zero,
+                                                  icon: const Icon(
+                                                    Icons.delete_outline,
+                                                    color: Colors.red,
+                                                    size: 20,
+                                                  ),
+                                                  onPressed: () {
+                                                    Utility.showDeleteDialog(
+                                                      title: 'Delete Task',
+                                                      message:
+                                                          'Are you sure you want to delete "${task.taskname}"?',
+                                                      onConfirm: () {
+                                                        controller.deleteTask(
+                                                          task.id ?? '',
                                                         );
                                                       },
-                                                    ),
-                                                  ],
+                                                    );
+                                                  },
                                                 ),
                                               ],
                                             ),
                                           ],
                                         ),
-                                      ),
+                                      ],
                                     ),
-                                  );
-                                },
-                              ),
-                            ),
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                        ),
                 ),
               ],
             ),
@@ -410,7 +577,10 @@ class _TasksScreenState extends State<TasksScreen> {
     );
   }
 
-  void _showFilterBottomSheet(BuildContext context, TasksController controller) {
+  void _showFilterBottomSheet(
+    BuildContext context,
+    TasksController controller,
+  ) {
     DateTime? tempFromDate = controller.filterFromDate;
     DateTime? tempToDate = controller.filterToDate;
     String? tempStatus = controller.filterStatus;
@@ -442,13 +612,21 @@ class _TasksScreenState extends State<TasksScreen> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text('Filter Tasks', style: Styles.txtBlackColorW70020.copyWith(fontSize: 18)),
+                        Text(
+                          'Filter Tasks',
+                          style: Styles.txtBlackColorW70020.copyWith(
+                            fontSize: 18,
+                          ),
+                        ),
                         TextButton(
                           onPressed: () {
                             controller.clearFilters();
                             Navigator.pop(context);
                           },
-                          child: const Text('Clear All', style: TextStyle(color: Colors.red)),
+                          child: const Text(
+                            'Clear All',
+                            style: TextStyle(color: Colors.red),
+                          ),
                         ),
                       ],
                     ),
@@ -456,7 +634,13 @@ class _TasksScreenState extends State<TasksScreen> {
                     const SizedBox(height: 8),
 
                     // Date Range
-                    const Text('Date Range', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                    const Text(
+                      'Date Range',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                      ),
+                    ),
                     const SizedBox(height: 8),
                     Row(
                       children: [
@@ -464,7 +648,9 @@ class _TasksScreenState extends State<TasksScreen> {
                           child: OutlinedButton(
                             style: OutlinedButton.styleFrom(
                               padding: const EdgeInsets.symmetric(vertical: 12),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
                             ),
                             onPressed: () async {
                               final picked = await showDatePicker(
@@ -480,8 +666,14 @@ class _TasksScreenState extends State<TasksScreen> {
                             child: Text(
                               tempFromDate == null
                                   ? 'From Date'
-                                  : DateFormat('dd-MM-yyyy').format(tempFromDate!),
-                              style: TextStyle(color: tempFromDate != null ? Colors.black87 : Colors.grey.shade600),
+                                  : DateFormat(
+                                      'dd-MM-yyyy',
+                                    ).format(tempFromDate!),
+                              style: TextStyle(
+                                color: tempFromDate != null
+                                    ? Colors.black87
+                                    : Colors.grey.shade600,
+                              ),
                             ),
                           ),
                         ),
@@ -490,7 +682,9 @@ class _TasksScreenState extends State<TasksScreen> {
                           child: OutlinedButton(
                             style: OutlinedButton.styleFrom(
                               padding: const EdgeInsets.symmetric(vertical: 12),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
                             ),
                             onPressed: () async {
                               final picked = await showDatePicker(
@@ -506,8 +700,14 @@ class _TasksScreenState extends State<TasksScreen> {
                             child: Text(
                               tempToDate == null
                                   ? 'To Date'
-                                  : DateFormat('dd-MM-yyyy').format(tempToDate!),
-                              style: TextStyle(color: tempToDate != null ? Colors.black87 : Colors.grey.shade600),
+                                  : DateFormat(
+                                      'dd-MM-yyyy',
+                                    ).format(tempToDate!),
+                              style: TextStyle(
+                                color: tempToDate != null
+                                    ? Colors.black87
+                                    : Colors.grey.shade600,
+                              ),
                             ),
                           ),
                         ),
@@ -516,23 +716,52 @@ class _TasksScreenState extends State<TasksScreen> {
                     const SizedBox(height: 16),
 
                     // Status Dropdown
-                    const Text('Status', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                    const Text(
+                      'Status',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                      ),
+                    ),
                     const SizedBox(height: 8),
                     DropdownButtonFormField<String>(
-                      value: tempStatus != null && tempStatus!.isNotEmpty ? tempStatus : null,
+                      value: tempStatus != null && tempStatus!.isNotEmpty
+                          ? tempStatus
+                          : null,
                       hint: const Text('Select Status'),
                       decoration: InputDecoration(
                         filled: true,
                         fillColor: Colors.grey.shade50,
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.grey.shade300)),
-                        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.grey.shade200)),
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 8,
+                        ),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                          borderSide: BorderSide(color: Colors.grey.shade300),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                          borderSide: BorderSide(color: Colors.grey.shade200),
+                        ),
                       ),
                       items: const [
-                        DropdownMenuItem(value: 'pending', child: Text('Pending')),
-                        DropdownMenuItem(value: 'processing', child: Text('Processing')),
-                        DropdownMenuItem(value: 'completed', child: Text('Completed')),
-                        DropdownMenuItem(value: 'cancelled', child: Text('Cancelled')),
+                        DropdownMenuItem(
+                          value: 'pending',
+                          child: Text('Pending'),
+                        ),
+                        DropdownMenuItem(
+                          value: 'processing',
+                          child: Text('Processing'),
+                        ),
+                        DropdownMenuItem(
+                          value: 'completed',
+                          child: Text('Completed'),
+                        ),
+                        DropdownMenuItem(
+                          value: 'cancelled',
+                          child: Text('Cancelled'),
+                        ),
                       ],
                       onChanged: (val) {
                         setModalState(() => tempStatus = val);
@@ -541,17 +770,35 @@ class _TasksScreenState extends State<TasksScreen> {
                     const SizedBox(height: 16),
 
                     // Assigned By Dropdown
-                    const Text('Assigned By', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                    const Text(
+                      'Assigned By',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                      ),
+                    ),
                     const SizedBox(height: 8),
                     DropdownButtonFormField<String>(
-                      value: tempAssignedBy != null && tempAssignedBy!.isNotEmpty ? tempAssignedBy : null,
+                      value:
+                          tempAssignedBy != null && tempAssignedBy!.isNotEmpty
+                          ? tempAssignedBy
+                          : null,
                       hint: const Text('Select User'),
                       decoration: InputDecoration(
                         filled: true,
                         fillColor: Colors.grey.shade50,
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.grey.shade300)),
-                        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.grey.shade200)),
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 8,
+                        ),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                          borderSide: BorderSide(color: Colors.grey.shade300),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                          borderSide: BorderSide(color: Colors.grey.shade200),
+                        ),
                       ),
                       items: controller.usersList.map((user) {
                         return DropdownMenuItem(
@@ -572,7 +819,9 @@ class _TasksScreenState extends State<TasksScreen> {
                         style: ElevatedButton.styleFrom(
                           backgroundColor: ColorsValue.primary,
                           padding: const EdgeInsets.symmetric(vertical: 14),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
                         ),
                         onPressed: () {
                           controller.setFilters(
@@ -583,7 +832,13 @@ class _TasksScreenState extends State<TasksScreen> {
                           );
                           Navigator.pop(context);
                         },
-                        child: const Text('Apply Filters', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                        child: const Text(
+                          'Apply Filters',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
                       ),
                     ),
                     const SizedBox(height: 8),

@@ -104,6 +104,8 @@ class GetAllAttendanceDoc {
   String? remark;
   String? status;
   String? createdBy;
+  List<Punching>? punching;
+  List<BreakObj>? breaks;
 
   GetAllAttendanceDoc({
     this.id,
@@ -118,6 +120,8 @@ class GetAllAttendanceDoc {
     this.remark,
     this.status,
     this.createdBy,
+    this.punching,
+    this.breaks,
   });
 
   factory GetAllAttendanceDoc.fromJson(Map<String, dynamic> json) =>
@@ -138,6 +142,12 @@ class GetAllAttendanceDoc {
         remark: json["remark"],
         status: json["status"],
         createdBy: json["createdBy"],
+        punching: json["punching"] == null
+            ? []
+            : List<Punching>.from(json["punching"]!.map((x) => Punching.fromJson(x))),
+        breaks: json["break"] == null
+            ? []
+            : List<BreakObj>.from(json["break"]!.map((x) => BreakObj.fromJson(x))),
       );
 
   Map<String, dynamic> toJson() => {
@@ -153,7 +163,43 @@ class GetAllAttendanceDoc {
     "remark": remark,
     "status": status,
     "createdBy": createdBy,
+    "punching": punching == null ? [] : List<dynamic>.from(punching!.map((x) => x.toJson())),
+    "break": breaks == null ? [] : List<dynamic>.from(breaks!.map((x) => x.toJson())),
   };
+}
+
+class Punching {
+  String? timein;
+  String? timeout;
+
+  Punching({this.timein, this.timeout});
+
+  factory Punching.fromJson(Map<String, dynamic> json) => Punching(
+        timein: json["timein"]?.toString(),
+        timeout: json["timeout"]?.toString(),
+      );
+
+  Map<String, dynamic> toJson() => {
+        "timein": timein,
+        "timeout": timeout,
+      };
+}
+
+class BreakObj {
+  String? breakstart;
+  String? breakend;
+
+  BreakObj({this.breakstart, this.breakend});
+
+  factory BreakObj.fromJson(Map<String, dynamic> json) => BreakObj(
+        breakstart: json["breakstart"]?.toString(),
+        breakend: json["breakend"]?.toString(),
+      );
+
+  Map<String, dynamic> toJson() => {
+        "breakstart": breakstart,
+        "breakend": breakend,
+      };
 }
 
 class GetAllAttendanceBranchid {

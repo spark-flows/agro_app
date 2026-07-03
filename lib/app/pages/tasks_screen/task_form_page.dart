@@ -12,12 +12,16 @@ class TaskFormPage extends StatefulWidget {
 }
 
 class _TaskFormPageState extends State<TaskFormPage> {
-  Future<void> _selectDate(BuildContext context, TasksController controller) async {
+  Future<void> _selectDate(
+    BuildContext context,
+    TasksController controller,
+  ) async {
     DateTime initialDate;
     try {
       initialDate = DateFormat('dd-MM-yyyy').parse(controller.dateCtrl.text);
     } catch (_) {
-      initialDate = DateTime.tryParse(controller.dateCtrl.text) ?? DateTime.now();
+      initialDate =
+          DateTime.tryParse(controller.dateCtrl.text) ?? DateTime.now();
     }
 
     final DateTime? picked = await showDatePicker(
@@ -134,7 +138,9 @@ class _TaskFormPageState extends State<TaskFormPage> {
                           labelText: 'Due Time / Duration',
                           hintText: 'e.g. 20 minuets',
                           labelStyle: Styles.txtGreyColorW40014,
-                          floatingLabelStyle: const TextStyle(color: ColorsValue.primary),
+                          floatingLabelStyle: const TextStyle(
+                            color: ColorsValue.primary,
+                          ),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
                             borderSide: BorderSide(color: Colors.grey.shade300),
@@ -145,15 +151,22 @@ class _TaskFormPageState extends State<TaskFormPage> {
                           ),
                           focusedBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
-                            borderSide: const BorderSide(color: ColorsValue.primary, width: 1.5),
+                            borderSide: const BorderSide(
+                              color: ColorsValue.primary,
+                              width: 1.5,
+                            ),
                           ),
                           prefixIcon: Icon(
                             Icons.access_time_outlined,
                             color: ColorsValue.primary.withValues(alpha: 0.8),
                           ),
                           suffixIcon: IconButton(
-                            icon: const Icon(Icons.timer_outlined, color: ColorsValue.primary),
-                            onPressed: () => _selectDueTime(context, controller),
+                            icon: const Icon(
+                              Icons.timer_outlined,
+                              color: ColorsValue.primary,
+                            ),
+                            onPressed: () =>
+                                _selectDueTime(context, controller),
                           ),
                         ),
                       ),
@@ -167,7 +180,9 @@ class _TaskFormPageState extends State<TaskFormPage> {
                   decoration: InputDecoration(
                     labelText: 'Priority *',
                     labelStyle: Styles.txtGreyColorW40014,
-                    floatingLabelStyle: const TextStyle(color: ColorsValue.primary),
+                    floatingLabelStyle: const TextStyle(
+                      color: ColorsValue.primary,
+                    ),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                       borderSide: BorderSide(color: Colors.grey.shade300),
@@ -178,7 +193,10 @@ class _TaskFormPageState extends State<TaskFormPage> {
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: ColorsValue.primary, width: 1.5),
+                      borderSide: const BorderSide(
+                        color: ColorsValue.primary,
+                        width: 1.5,
+                      ),
                     ),
                     prefixIcon: const Icon(
                       Icons.priority_high_outlined,
@@ -205,6 +223,29 @@ class _TaskFormPageState extends State<TaskFormPage> {
                 _sectionHeader('Assignment & Status'),
                 const SizedBox(height: 16),
 
+                if (controller.currentAssignees.isNotEmpty) ...[
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: controller.currentAssignees.map((user) {
+                      return Chip(
+                        avatar: const CircleAvatar(
+                          backgroundColor: ColorsValue.primary,
+                          child: Icon(Icons.person, size: 12, color: Colors.white),
+                        ),
+                        label: Text(
+                          user.name ?? 'Unknown',
+                          style: const TextStyle(fontSize: 12, color: Colors.black87),
+                        ),
+                        backgroundColor: Colors.grey.shade100,
+                        side: BorderSide(color: Colors.grey.shade300),
+                        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                      );
+                    }).toList(),
+                  ),
+                  const SizedBox(height: 12),
+                ],
+
                 if (controller.isLoadingUsers)
                   const SizedBox(
                     height: 56,
@@ -214,99 +255,21 @@ class _TaskFormPageState extends State<TaskFormPage> {
                       ),
                     ),
                   )
-                else if (controller.usersList.isNotEmpty)
-                  FormField<List<String>>(
-                    initialValue: controller.selectedAssignedToIds,
-                    validator: (value) => (value == null || value.isEmpty)
-                        ? 'Please select at least one assignee'
-                        : null,
-                    builder: (formFieldState) {
-                      return Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          InkWell(
-                            onTap: () => _showAssigneeMultiSelectBottomSheet(
-                              context,
-                              controller,
-                              formFieldState,
-                            ),
-                            borderRadius: BorderRadius.circular(12),
-                            child: InputDecorator(
-                              decoration: InputDecoration(
-                                labelText: 'Assigned To *',
-                                labelStyle: Styles.txtGreyColorW40014,
-                                floatingLabelStyle: const TextStyle(color: ColorsValue.primary),
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                  borderSide: BorderSide(color: Colors.grey.shade300),
-                                ),
-                                enabledBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                  borderSide: BorderSide(color: Colors.grey.shade300),
-                                ),
-                                focusedBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                  borderSide: const BorderSide(color: ColorsValue.primary, width: 1.5),
-                                ),
-                                prefixIcon: const Icon(
-                                  Icons.person_outline,
-                                  color: ColorsValue.primary,
-                                ),
-                                errorText: formFieldState.errorText,
-                                suffixIcon: controller.selectedAssignedToIds.isNotEmpty
-                                    ? Container(
-                                        margin: const EdgeInsets.only(right: 12),
-                                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                        decoration: BoxDecoration(
-                                          color: ColorsValue.primary.withValues(alpha: 0.1),
-                                          borderRadius: BorderRadius.circular(12),
-                                        ),
-                                        child: Text(
-                                          '${controller.selectedAssignedToIds.length} Selected',
-                                          style: const TextStyle(
-                                            color: ColorsValue.primary,
-                                            fontSize: 11,
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                        ),
-                                      )
-                                    : const Icon(Icons.arrow_drop_down, color: Colors.grey),
-                                suffixIconConstraints: const BoxConstraints(
-                                  minWidth: 0,
-                                  minHeight: 0,
-                                ),
-                              ),
-                              child: Text(
-                                controller.selectedAssignedToIds.isEmpty
-                                    ? 'Select assignees'
-                                    : controller.selectedAssignedToIds
-                                        .map((id) => controller.usersList.firstWhereOrNull((u) => u.id == id)?.name ?? id)
-                                        .join(', '),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: TextStyle(
-                                  color: controller.selectedAssignedToIds.isEmpty ? Colors.grey.shade600 : Colors.black87,
-                                  fontSize: 14,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
-                      );
-                    },
-                  )
                 else
-                  // Text field fallback in case no system users are returned
-                  TextFormField(
+                  DropdownButtonFormField<String>(
                     autovalidateMode: AutovalidateMode.onUserInteraction,
-                    initialValue: controller.selectedAssignedToIds.join(', '),
-                    cursorColor: ColorsValue.primary,
-                    style: Styles.txtBlackColorW50014,
+                    initialValue: (controller.selectedAssignedToIds.isNotEmpty &&
+                            controller.usersList
+                                .where((user) => user.roleid.rolename?.toLowerCase() != 'admin')
+                                .any((user) => user.id == controller.selectedAssignedToIds.first))
+                        ? controller.selectedAssignedToIds.first
+                        : '',
                     decoration: InputDecoration(
-                      labelText: 'Assigned To (User IDs, comma separated) *',
+                      labelText: 'Assign To',
                       labelStyle: Styles.txtGreyColorW40014,
-                      floatingLabelStyle:
-                          const TextStyle(color: ColorsValue.primary),
+                      floatingLabelStyle: const TextStyle(
+                        color: ColorsValue.primary,
+                      ),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
                         borderSide: BorderSide(color: Colors.grey.shade300),
@@ -326,17 +289,31 @@ class _TaskFormPageState extends State<TaskFormPage> {
                         Icons.person_outline,
                         color: ColorsValue.primary,
                       ),
+                      filled: true,
+                      fillColor: Colors.white,
                     ),
+                    items: [
+                      const DropdownMenuItem<String>(
+                        value: '',
+                        child: Text('Select Assignee'),
+                      ),
+                      ...controller.usersList
+                          .where((user) => user.roleid.rolename?.toLowerCase() != 'admin')
+                          .map((user) {
+                        return DropdownMenuItem(
+                          value: user.id,
+                          child: Text(user.name),
+                        );
+                      }),
+                    ],
                     onChanged: (val) {
-                      controller.selectedAssignedToIds = val
-                          .split(',')
-                          .map((s) => s.trim())
-                          .where((s) => s.isNotEmpty)
-                          .toList();
+                      if (val != null && val.isNotEmpty) {
+                        controller.selectedAssignedToIds = [val];
+                      } else {
+                        controller.selectedAssignedToIds = [];
+                      }
+                      controller.update();
                     },
-                    validator: (v) => v!.trim().isEmpty
-                        ? 'Please enter assignee user ID(s)'
-                        : null,
                   ),
                 const SizedBox(height: 20),
 
@@ -346,8 +323,9 @@ class _TaskFormPageState extends State<TaskFormPage> {
                   decoration: InputDecoration(
                     labelText: 'Status *',
                     labelStyle: Styles.txtGreyColorW40014,
-                    floatingLabelStyle:
-                        const TextStyle(color: ColorsValue.primary),
+                    floatingLabelStyle: const TextStyle(
+                      color: ColorsValue.primary,
+                    ),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                       borderSide: BorderSide(color: Colors.grey.shade300),
@@ -408,24 +386,37 @@ class _TaskFormPageState extends State<TaskFormPage> {
                       if (controller.existingAttachments.isNotEmpty) ...[
                         const Text(
                           'Existing Attachments',
-                          style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.grey),
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.grey,
+                          ),
                         ),
                         const SizedBox(height: 8),
-                        ...controller.existingAttachments.asMap().entries.map((entry) {
+                        ...controller.existingAttachments.asMap().entries.map((
+                          entry,
+                        ) {
                           final idx = entry.key;
                           final att = entry.value;
                           final path = att["path"] ?? "";
                           final fileName = path.split('/').last;
                           return Container(
                             margin: const EdgeInsets.only(bottom: 8),
-                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 8,
+                            ),
                             decoration: BoxDecoration(
                               color: Colors.grey.shade50,
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: Row(
                               children: [
-                                Icon(_getFileIcon(path), color: ColorsValue.primary, size: 20),
+                                Icon(
+                                  _getFileIcon(path),
+                                  color: ColorsValue.primary,
+                                  size: 20,
+                                ),
                                 const SizedBox(width: 12),
                                 Expanded(
                                   child: Text(
@@ -436,8 +427,13 @@ class _TaskFormPageState extends State<TaskFormPage> {
                                   ),
                                 ),
                                 IconButton(
-                                  icon: const Icon(Icons.delete_outline, color: Colors.red, size: 20),
-                                  onPressed: () => controller.removeExistingAttachment(idx),
+                                  icon: const Icon(
+                                    Icons.delete_outline,
+                                    color: Colors.red,
+                                    size: 20,
+                                  ),
+                                  onPressed: () =>
+                                      controller.removeExistingAttachment(idx),
                                 ),
                               ],
                             ),
@@ -448,23 +444,38 @@ class _TaskFormPageState extends State<TaskFormPage> {
                       if (controller.selectedFiles.isNotEmpty) ...[
                         const Text(
                           'New Attachments',
-                          style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.grey),
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.grey,
+                          ),
                         ),
                         const SizedBox(height: 8),
-                        ...controller.selectedFiles.asMap().entries.map((entry) {
+                        ...controller.selectedFiles.asMap().entries.map((
+                          entry,
+                        ) {
                           final idx = entry.key;
                           final file = entry.value;
                           final fileName = file.path.split('/').last;
                           return Container(
                             margin: const EdgeInsets.only(bottom: 8),
-                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 8,
+                            ),
                             decoration: BoxDecoration(
-                              color: ColorsValue.primary.withValues(alpha: 0.03),
+                              color: ColorsValue.primary.withValues(
+                                alpha: 0.03,
+                              ),
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: Row(
                               children: [
-                                Icon(_getFileIcon(file.path), color: ColorsValue.primary, size: 20),
+                                Icon(
+                                  _getFileIcon(file.path),
+                                  color: ColorsValue.primary,
+                                  size: 20,
+                                ),
                                 const SizedBox(width: 12),
                                 Expanded(
                                   child: Text(
@@ -475,8 +486,13 @@ class _TaskFormPageState extends State<TaskFormPage> {
                                   ),
                                 ),
                                 IconButton(
-                                  icon: const Icon(Icons.close, color: Colors.grey, size: 20),
-                                  onPressed: () => controller.removeSelectedFile(idx),
+                                  icon: const Icon(
+                                    Icons.close,
+                                    color: Colors.grey,
+                                    size: 20,
+                                  ),
+                                  onPressed: () =>
+                                      controller.removeSelectedFile(idx),
                                 ),
                               ],
                             ),
@@ -490,17 +506,30 @@ class _TaskFormPageState extends State<TaskFormPage> {
                           onPressed: controller.pickAttachments,
                           style: OutlinedButton.styleFrom(
                             padding: const EdgeInsets.symmetric(vertical: 12),
-                            side: const BorderSide(color: ColorsValue.primary, width: 1.5),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                            side: const BorderSide(
+                              color: ColorsValue.primary,
+                              width: 1.5,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
                           ),
                           child: const Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              Icon(Icons.add_circle_outline, color: ColorsValue.primary, size: 20),
+                              Icon(
+                                Icons.add_circle_outline,
+                                color: ColorsValue.primary,
+                                size: 20,
+                              ),
                               SizedBox(width: 8),
                               Text(
                                 'Add PDF, Excel, or Image',
-                                style: TextStyle(color: ColorsValue.primary, fontWeight: FontWeight.bold, fontSize: 13),
+                                style: TextStyle(
+                                  color: ColorsValue.primary,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 13,
+                                ),
                               ),
                             ],
                           ),
@@ -543,7 +572,10 @@ class _TaskFormPageState extends State<TaskFormPage> {
     );
   }
 
-  Future<void> _selectDueDate(BuildContext context, TasksController controller) async {
+  Future<void> _selectDueDate(
+    BuildContext context,
+    TasksController controller,
+  ) async {
     DateTime initialDate;
     try {
       initialDate = DateFormat('dd-MM-yyyy').parse(controller.dueCtrl.text);
@@ -577,7 +609,10 @@ class _TaskFormPageState extends State<TaskFormPage> {
     }
   }
 
-  Future<void> _selectDueTime(BuildContext context, TasksController controller) async {
+  Future<void> _selectDueTime(
+    BuildContext context,
+    TasksController controller,
+  ) async {
     TimeOfDay initialTime = TimeOfDay.now();
     if (controller.dueTimeCtrl.text.isNotEmpty) {
       try {
@@ -620,7 +655,8 @@ class _TaskFormPageState extends State<TaskFormPage> {
   IconData _getFileIcon(String fileNameOrPath) {
     final lower = fileNameOrPath.toLowerCase();
     if (lower.endsWith('.pdf')) return Icons.picture_as_pdf;
-    if (lower.endsWith('.xls') || lower.endsWith('.xlsx')) return Icons.table_chart;
+    if (lower.endsWith('.xls') || lower.endsWith('.xlsx'))
+      return Icons.table_chart;
     return Icons.insert_photo;
   }
 
@@ -680,199 +716,6 @@ class _TaskFormPageState extends State<TaskFormPage> {
         ),
       ),
       validator: validator,
-    );
-  }
-
-  void _showAssigneeMultiSelectBottomSheet(
-    BuildContext context,
-    TasksController controller,
-    FormFieldState<List<String>> formFieldState,
-  ) {
-    List<String> tempSelectedIds = List.from(controller.selectedAssignedToIds);
-    String searchQuery = '';
-
-    showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) {
-        return StatefulBuilder(
-          builder: (context, setModalState) {
-            final filteredUsers = controller.usersList.where((user) {
-              final name = user.name.toLowerCase();
-              final email = user.email.toLowerCase();
-              final mobile = user.mobile.toLowerCase();
-              final q = searchQuery.toLowerCase();
-              return name.contains(q) || email.contains(q) || mobile.contains(q);
-            }).toList();
-
-            return Container(
-              decoration: const BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-              ),
-              padding: EdgeInsets.only(
-                left: 16,
-                right: 16,
-                top: 16,
-                bottom: MediaQuery.of(context).viewInsets.bottom + 16,
-              ),
-              constraints: BoxConstraints(
-                maxHeight: MediaQuery.of(context).size.height * 0.6,
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        'Select Assignees',
-                        style: Styles.txtBlackColorW70020.copyWith(fontSize: 16),
-                      ),
-                      Row(
-                        children: [
-                          if (tempSelectedIds.isNotEmpty)
-                            TextButton(
-                              onPressed: () {
-                                setModalState(() {
-                                  tempSelectedIds.clear();
-                                });
-                              },
-                              style: TextButton.styleFrom(
-                                padding: const EdgeInsets.symmetric(horizontal: 8),
-                                minimumSize: Size.zero,
-                                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                              ),
-                              child: const Text('Clear All', style: TextStyle(color: Colors.red, fontSize: 13)),
-                            ),
-                          const SizedBox(width: 8),
-                          Text(
-                            '(${tempSelectedIds.length} selected)',
-                            style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  TextField(
-                    decoration: InputDecoration(
-                      hintText: 'Search assignees...',
-                      hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 13),
-                      prefixIcon: const Icon(Icons.search, size: 18, color: ColorsValue.primary),
-                      isDense: true,
-                      contentPadding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
-                      fillColor: Colors.grey.shade50,
-                      filled: true,
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10),
-                        borderSide: BorderSide(color: Colors.grey.shade200),
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10),
-                        borderSide: BorderSide(color: Colors.grey.shade200),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10),
-                        borderSide: const BorderSide(color: ColorsValue.primary),
-                      ),
-                    ),
-                    style: const TextStyle(fontSize: 13),
-                    onChanged: (val) {
-                      setModalState(() {
-                        searchQuery = val;
-                      });
-                    },
-                  ),
-                  const SizedBox(height: 12),
-                  Expanded(
-                    child: filteredUsers.isEmpty
-                        ? const Center(child: Text('No users found', style: TextStyle(fontSize: 13, color: Colors.grey)))
-                        : ListView.builder(
-                            itemCount: filteredUsers.length,
-                            itemBuilder: (context, index) {
-                              final user = filteredUsers[index];
-                              final isSelected = tempSelectedIds.contains(user.id);
-                              return Container(
-                                margin: const EdgeInsets.symmetric(vertical: 2),
-                                decoration: BoxDecoration(
-                                  color: isSelected ? ColorsValue.primary.withValues(alpha: 0.03) : Colors.transparent,
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                child: CheckboxListTile(
-                                  activeColor: ColorsValue.primary,
-                                  dense: true,
-                                  contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 0),
-                                  visualDensity: VisualDensity.compact,
-                                  value: isSelected,
-                                  title: Text(
-                                    user.name,
-                                    style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
-                                  ),
-                                  subtitle: Text(
-                                    user.email.isNotEmpty ? user.email : user.mobile,
-                                    style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
-                                  ),
-                                  onChanged: (checked) {
-                                    setModalState(() {
-                                      if (checked == true) {
-                                        tempSelectedIds.add(user.id);
-                                      } else {
-                                        tempSelectedIds.remove(user.id);
-                                      }
-                                    });
-                                  },
-                                ),
-                              );
-                            },
-                          ),
-                  ),
-                  const SizedBox(height: 12),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: OutlinedButton(
-                          style: OutlinedButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(vertical: 10),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                            side: BorderSide(color: Colors.grey.shade300),
-                          ),
-                          onPressed: () => Navigator.pop(context),
-                          child: Text('Cancel', style: TextStyle(color: Colors.grey.shade700, fontSize: 13, fontWeight: FontWeight.bold)),
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: ColorsValue.primary,
-                            padding: const EdgeInsets.symmetric(vertical: 10),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                          ),
-                          onPressed: () {
-                            setState(() {
-                              controller.selectedAssignedToIds = tempSelectedIds;
-                              formFieldState.didChange(tempSelectedIds);
-                            });
-                            controller.update();
-                            Navigator.pop(context);
-                          },
-                          child: const Text(
-                            'Confirm',
-                            style: TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.bold),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            );
-          },
-        );
-      },
     );
   }
 }
