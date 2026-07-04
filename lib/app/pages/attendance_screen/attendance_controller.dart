@@ -28,6 +28,12 @@ class AttendanceController extends GetxController {
   DateTime? filterDate;
   String? filterStatus;
 
+  String? roleName;
+  void loadRoleName() async {
+    roleName = await Get.find<Repository>().getSecureValue(LocalKeys.roleName);
+    update();
+  }
+
   // ── Form State ─────────────────────────────────────────────────────────────
   final formKey = GlobalKey<FormState>();
   final dateCtrl = TextEditingController();
@@ -56,7 +62,9 @@ class AttendanceController extends GetxController {
   }
 
   Future<void> checkAdminRole() async {
-    final role = await Get.find<Repository>().getSecureValue(LocalKeys.roleName);
+    final role = await Get.find<Repository>().getSecureValue(
+      LocalKeys.roleName,
+    );
     isAdmin = role.toLowerCase() == 'admin';
     update();
   }
@@ -467,14 +475,17 @@ class AttendanceController extends GetxController {
 
   bool isClockedInToday(get_all_model.GetAllAttendanceDoc? record) {
     if (record == null) return false;
-    if (record.timein != null && record.timein!.isNotEmpty && (record.timeout == null || record.timeout!.isEmpty)) {
+    if (record.timein != null &&
+        record.timein!.isNotEmpty &&
+        (record.timeout == null || record.timeout!.isEmpty)) {
       return true;
     }
     if (record.punching != null && record.punching!.isNotEmpty) {
       final lastPunch = record.punching!.last;
       final timeinStr = lastPunch.timein ?? "00:00";
       final timeoutStr = lastPunch.timeout ?? "00:00";
-      if (timeinStr != "00:00" && (timeoutStr == "00:00" || timeoutStr.isEmpty)) {
+      if (timeinStr != "00:00" &&
+          (timeoutStr == "00:00" || timeoutStr.isEmpty)) {
         return true;
       }
     }
@@ -498,14 +509,17 @@ class AttendanceController extends GetxController {
 
   bool isOnBreakToday(get_all_model.GetAllAttendanceDoc? record) {
     if (record == null) return false;
-    if (record.breakstart != null && record.breakstart!.isNotEmpty && (record.breakend == null || record.breakend!.isEmpty)) {
+    if (record.breakstart != null &&
+        record.breakstart!.isNotEmpty &&
+        (record.breakend == null || record.breakend!.isEmpty)) {
       return true;
     }
     if (record.breaks != null && record.breaks!.isNotEmpty) {
       final lastBreak = record.breaks!.last;
       final breakstartStr = lastBreak.breakstart ?? "00:00";
       final breakendStr = lastBreak.breakend ?? "00:00";
-      if (breakstartStr != "00:00" && (breakendStr == "00:00" || breakendStr.isEmpty)) {
+      if (breakstartStr != "00:00" &&
+          (breakendStr == "00:00" || breakendStr.isEmpty)) {
         return true;
       }
     }
@@ -520,7 +534,7 @@ class AttendanceController extends GetxController {
       final coordinates = await _getCurrentCoordinates();
 
       List<Map<String, String>> punchingPayload = [
-        {"timein": timeStr, "timeout": "00:00"}
+        {"timein": timeStr, "timeout": "00:00"},
       ];
 
       final response = await Get.find<Repository>().createAttendanceApi(
@@ -563,10 +577,7 @@ class AttendanceController extends GetxController {
           });
         }
       }
-      punchingPayload.add({
-        "timein": "00:00",
-        "timeout": timeStr,
-      });
+      punchingPayload.add({"timein": "00:00", "timeout": timeStr});
 
       final List<Map<String, String>> breaksPayload = [];
       if (record.breaks != null) {
@@ -634,10 +645,7 @@ class AttendanceController extends GetxController {
           });
         }
       }
-      breaksPayload.add({
-        "breakstart": timeStr,
-        "breakend": "00:00",
-      });
+      breaksPayload.add({"breakstart": timeStr, "breakend": "00:00"});
 
       final Map<String, String> coordinates = {
         "latitude": record.coordinates?.latitude ?? '',
@@ -695,10 +703,7 @@ class AttendanceController extends GetxController {
           });
         }
       }
-      breaksPayload.add({
-        "breakstart": "00:00",
-        "breakend": timeStr,
-      });
+      breaksPayload.add({"breakstart": "00:00", "breakend": timeStr});
 
       final Map<String, String> coordinates = {
         "latitude": record.coordinates?.latitude ?? '',

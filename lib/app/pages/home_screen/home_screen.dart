@@ -185,12 +185,14 @@ class HomeScreen extends StatelessWidget {
                         color: Colors.teal,
                         onTap: controller.goToTasks,
                       ),
-                      _buildMenuCard(
-                        title: 'Attendance',
-                        icon: Icons.fingerprint,
-                        color: Colors.blueAccent,
-                        onTap: controller.goToAttendance,
-                      ),
+                      if (controller.roleName != "dealer") ...[
+                        _buildMenuCard(
+                          title: 'Attendance',
+                          icon: Icons.fingerprint,
+                          color: Colors.blueAccent,
+                          onTap: controller.goToAttendance,
+                        ),
+                      ],
                     ],
                   ),
                   const SizedBox(height: 32),

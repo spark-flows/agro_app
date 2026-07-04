@@ -1,9 +1,11 @@
 import 'package:agro_app/app/pages/attendance_screen/attendance_controller.dart';
 import 'package:agro_app/app/theme/theme.dart';
+import 'package:agro_app/domain/domain.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
-import 'package:agro_app/domain/models/get_all_attandance_model.dart' as get_all_model;
+import 'package:agro_app/domain/models/get_all_attandance_model.dart'
+    as get_all_model;
 
 class AttendanceScreen extends StatefulWidget {
   const AttendanceScreen({super.key});
@@ -70,6 +72,10 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
   @override
   Widget build(BuildContext context) {
     return GetBuilder<AttendanceController>(
+      initState: (state) {
+        var controller = Get.find<AttendanceController>();
+        controller.loadRoleName();
+      },
       builder: (controller) {
         return Scaffold(
           backgroundColor: ColorsValue.bgMain,
@@ -364,17 +370,20 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                                                     )
                                                     .toList(),
                                           ),
-                                          const SizedBox(width: 8),
-                                          IconButton(
-                                            icon: const Icon(
-                                              Icons.edit_outlined,
-                                              color: Colors.blue,
+                                          if (controller.roleName !=
+                                              "User") ...[
+                                            const SizedBox(width: 8),
+                                            IconButton(
+                                              icon: const Icon(
+                                                Icons.edit_outlined,
+                                                color: Colors.blue,
+                                              ),
+                                              onPressed: () => controller
+                                                  .fetchAttendanceDetailsAndOpenForm(
+                                                    record.id ?? '',
+                                                  ),
                                             ),
-                                            onPressed: () => controller
-                                                .fetchAttendanceDetailsAndOpenForm(
-                                                  record.id ?? '',
-                                                ),
-                                          ),
+                                          ],
                                           const SizedBox(width: 8),
                                           IconButton(
                                             icon: const Icon(
@@ -447,7 +456,8 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
   }
 
   String _formatTo12Hour(String? timeStr) {
-    if (timeStr == null || timeStr.isEmpty || timeStr == "00:00") return '--:--';
+    if (timeStr == null || timeStr.isEmpty || timeStr == "00:00")
+      return '--:--';
     try {
       if (timeStr.toLowerCase().contains('am') ||
           timeStr.toLowerCase().contains('pm')) {
@@ -736,7 +746,8 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
 
     final String displayTimeIn = (() {
       if (record == null) return '';
-      if (record.timein != null && record.timein!.isNotEmpty) return record.timein!;
+      if (record.timein != null && record.timein!.isNotEmpty)
+        return record.timein!;
       if (record.punching != null && record.punching!.isNotEmpty) {
         for (var p in record.punching!.reversed) {
           if (p.timein != null && p.timein != "00:00" && p.timein!.isNotEmpty) {
@@ -749,10 +760,13 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
 
     final String displayTimeOut = (() {
       if (record == null) return '';
-      if (record.timeout != null && record.timeout!.isNotEmpty) return record.timeout!;
+      if (record.timeout != null && record.timeout!.isNotEmpty)
+        return record.timeout!;
       if (record.punching != null && record.punching!.isNotEmpty) {
         for (var p in record.punching!.reversed) {
-          if (p.timeout != null && p.timeout != "00:00" && p.timeout!.isNotEmpty) {
+          if (p.timeout != null &&
+              p.timeout != "00:00" &&
+              p.timeout!.isNotEmpty) {
             return p.timeout!;
           }
         }
@@ -762,10 +776,13 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
 
     final String displayBreakStart = (() {
       if (record == null) return '';
-      if (record.breakstart != null && record.breakstart!.isNotEmpty) return record.breakstart!;
+      if (record.breakstart != null && record.breakstart!.isNotEmpty)
+        return record.breakstart!;
       if (record.breaks != null && record.breaks!.isNotEmpty) {
         for (var b in record.breaks!.reversed) {
-          if (b.breakstart != null && b.breakstart != "00:00" && b.breakstart!.isNotEmpty) {
+          if (b.breakstart != null &&
+              b.breakstart != "00:00" &&
+              b.breakstart!.isNotEmpty) {
             return b.breakstart!;
           }
         }
@@ -956,9 +973,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
     );
   }
 
-  Widget _buildPunchingAndBreaksLogs(
-    get_all_model.GetAllAttendanceDoc record,
-  ) {
+  Widget _buildPunchingAndBreaksLogs(get_all_model.GetAllAttendanceDoc record) {
     final String? timeInVal = (() {
       if (record.timein != null && record.timein!.isNotEmpty) {
         return record.timein;

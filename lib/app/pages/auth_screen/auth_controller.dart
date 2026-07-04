@@ -87,11 +87,12 @@ class AuthController extends GetxController {
 
         Get.find<Repository>().saveSecureValue(
           LocalKeys.roleName,
-          profileData.roleid.rolename,
+          profileData.rolename,
         );
 
         // Pre-populate branchId so it's available for the first API calls
-        if (profileData.branchid != null && profileData.branchid!.id.isNotEmpty) {
+        if (profileData.branchid != null &&
+            profileData.branchid!.id.isNotEmpty) {
           Get.find<Repository>().saveSecureValue(
             LocalKeys.selectedBranchId,
             profileData.branchid!.id,
