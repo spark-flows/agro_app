@@ -40,4 +40,9 @@ class EndPoints {
   static String getOneAttendanceApi = 'api/attendance/getone';
   static String deleteAttendanceApi = 'api/attendance/delete';
   static String changeAttendanceStatusApi = 'api/attendance/changestatus';
+
+  static String postCreateSalaryApi = 'api/salary/create';
+  static String postSalaryListApi = 'api/salary';
+  static String getSalaryApi = 'api/salary/getsalary';
+  static String deleteSalaryApi = 'api/salary/delete';
 }

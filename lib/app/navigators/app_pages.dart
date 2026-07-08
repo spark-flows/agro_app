@@ -138,5 +138,19 @@ class AppPages {
       binding: AttendanceBinding(),
       transition: Transition.rightToLeft,
     ),
+    GetPage<SalaryScreen>(
+      name: _Paths.salaryScreen,
+      transitionDuration: transitionDuration,
+      page: SalaryScreen.new,
+      binding: SalaryBindings(),
+      transition: Transition.rightToLeft,
+    ),
+    GetPage<AddSalaryScreen>(
+      name: _Paths.addSalaryScreen,
+      transitionDuration: transitionDuration,
+      page: AddSalaryScreen.new,
+      binding: SalaryBindings(),
+      transition: Transition.rightToLeft,
+    ),
   ];
 }

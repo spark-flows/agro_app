@@ -1,6 +1,6 @@
 import 'package:agro_app/app/pages/attendance_screen/attendance_controller.dart';
 import 'package:agro_app/app/theme/theme.dart';
-import 'package:agro_app/domain/domain.dart';
+import 'package:agro_app/app/utils/utility.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
@@ -264,20 +264,75 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                                       const SizedBox(height: 8),
                                       if (record.userid?.name != null)
                                         Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.spaceBetween,
                                           children: [
-                                            const Icon(
-                                              Icons.person_outline,
-                                              size: 16,
-                                              color: Colors.black54,
+                                            Row(
+                                              children: [
+                                                const Icon(
+                                                  Icons.person_outline,
+                                                  size: 16,
+                                                  color: Colors.black54,
+                                                ),
+                                                const SizedBox(width: 6),
+                                                Text(
+                                                  record.userid?.name ?? '',
+                                                  style: const TextStyle(
+                                                    color: Colors.black87,
+                                                    fontWeight: FontWeight.w500,
+                                                  ),
+                                                ),
+                                              ],
                                             ),
-                                            const SizedBox(width: 6),
-                                            Text(
-                                              record.userid?.name ?? '',
-                                              style: const TextStyle(
-                                                color: Colors.black87,
-                                                fontWeight: FontWeight.w500,
+                                            if (controller.isAdmin) ...[
+                                              IconButton(
+                                                onPressed: () {
+                                                  final lat = record
+                                                      .coordinates
+                                                      ?.latitude;
+                                                  final lng = record
+                                                      .coordinates
+                                                      ?.longitude;
+                                                  if (lat != null &&
+                                                      lat.trim().isNotEmpty &&
+                                                      lng != null &&
+                                                      lng.trim().isNotEmpty) {
+                                                    final url =
+                                                        "https://www.google.com/maps/search/?api=1&query=$lat,$lng";
+                                                    Utility.launchLinkURL(url);
+                                                  } else {
+                                                    Utility.snacBar(
+                                                      'Location coordinates not available.',
+                                                      Colors.red,
+                                                    );
+                                                  }
+                                                },
+                                                icon: Icon(
+                                                  Icons.location_on,
+                                                  color:
+                                                      (record
+                                                                  .coordinates
+                                                                  ?.latitude !=
+                                                              null &&
+                                                          record
+                                                              .coordinates!
+                                                              .latitude!
+                                                              .trim()
+                                                              .isNotEmpty &&
+                                                          record
+                                                                  .coordinates
+                                                                  ?.longitude !=
+                                                              null &&
+                                                          record
+                                                              .coordinates!
+                                                              .longitude!
+                                                              .trim()
+                                                              .isNotEmpty)
+                                                      ? Colors.redAccent
+                                                      : Colors.grey,
+                                                ),
                                               ),
-                                            ),
+                                            ],
                                           ],
                                         ),
                                       const SizedBox(height: 12),
@@ -289,39 +344,38 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                                       const SizedBox(height: 12),
 
                                       // Location Coordinates display
-                                      if (record.coordinates?.latitude !=
-                                              null &&
-                                          record.coordinates?.longitude != null)
-                                        Container(
-                                          padding: const EdgeInsets.all(8),
-                                          decoration: BoxDecoration(
-                                            color: Colors.grey.shade50,
-                                            borderRadius: BorderRadius.circular(
-                                              8,
-                                            ),
-                                          ),
-                                          child: Row(
-                                            children: [
-                                              const Icon(
-                                                Icons.location_on_outlined,
-                                                size: 16,
-                                                color: Colors.blueAccent,
-                                              ),
-                                              const SizedBox(width: 6),
-                                              Expanded(
-                                                child: Text(
-                                                  'Lat: ${record.coordinates!.latitude}   Lon: ${record.coordinates!.longitude}',
-                                                  style: TextStyle(
-                                                    fontSize: 12,
-                                                    color: Colors.grey.shade700,
-                                                    fontFamily: 'monospace',
-                                                  ),
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-
+                                      // if (record.coordinates?.latitude !=
+                                      //         null &&
+                                      //     record.coordinates?.longitude != null)
+                                      //   Container(
+                                      //     padding: const EdgeInsets.all(8),
+                                      //     decoration: BoxDecoration(
+                                      //       color: Colors.grey.shade50,
+                                      //       borderRadius: BorderRadius.circular(
+                                      //         8,
+                                      //       ),
+                                      //     ),
+                                      //     child: Row(
+                                      //       children: [
+                                      //         const Icon(
+                                      //           Icons.location_on_outlined,
+                                      //           size: 16,
+                                      //           color: Colors.blueAccent,
+                                      //         ),
+                                      //         const SizedBox(width: 6),
+                                      //         Expanded(
+                                      //           child: Text(
+                                      //             'Lat: ${record.coordinates!.latitude}   Lon: ${record.coordinates!.longitude}',
+                                      //             style: TextStyle(
+                                      //               fontSize: 12,
+                                      //               color: Colors.grey.shade700,
+                                      //               fontFamily: 'monospace',
+                                      //             ),
+                                      //           ),
+                                      //         ),
+                                      //       ],
+                                      //     ),
+                                      //   ),
                                       if (record.remark != null &&
                                           record.remark!.isNotEmpty) ...[
                                         const SizedBox(height: 8),

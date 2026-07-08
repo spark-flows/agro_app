@@ -979,14 +979,14 @@ void _showCartBottomSheet(
                   style: Styles.txtBlackColorW70020,
                   textAlign: TextAlign.center,
                 ),
-                const SizedBox(height: 16),
-                Text(
-                  'Total Amount: ₹${controller.cartTotal}',
-                  style: Styles.txtBlackColorW70016.copyWith(
-                    color: ColorsValue.primary,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
+                // const SizedBox(height: 16),
+                // Text(
+                //   'Total Amount: ₹${controller.cartTotal}',
+                //   style: Styles.txtBlackColorW70016.copyWith(
+                //     color: ColorsValue.primary,
+                //   ),
+                //   textAlign: TextAlign.center,
+                // ),
                 const SizedBox(height: 16),
                 // const SizedBox(height: 16),
                 // TextField(

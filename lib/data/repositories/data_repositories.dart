@@ -279,8 +279,7 @@ class DataRepository extends DomainRepository {
   Future<ResponseModel> getOneUserApi({
     required String userid,
     bool isLoading = false,
-  }) async =>
-      connectHelper.getOneUserApi(userid: userid, isLoading: isLoading);
+  }) async => connectHelper.getOneUserApi(userid: userid, isLoading: isLoading);
 
   Future<ResponseModel> getUsersListApi({
     int page = 1,
@@ -366,6 +365,7 @@ class DataRepository extends DomainRepository {
     String toDate = "",
     String status = "",
     String assignedBy = "",
+    String assignedto = "",
     bool isLoading = false,
   }) async => connectHelper.getTaskListApi(
     page: page,
@@ -377,6 +377,7 @@ class DataRepository extends DomainRepository {
     toDate: toDate,
     status: status,
     assignedBy: assignedBy,
+    assignedto: assignedto,
     isLoading: isLoading,
   );
 
@@ -409,26 +410,18 @@ class DataRepository extends DomainRepository {
   Future<ResponseModel> uploadTaskAttachmentApi(
     List<File> files, {
     bool isLoading = false,
-  }) async => connectHelper.uploadTaskAttachmentApi(
-    files,
-    isLoading: isLoading,
-  );
+  }) async =>
+      connectHelper.uploadTaskAttachmentApi(files, isLoading: isLoading);
 
   Future<ResponseModel> deleteTaskApi({
     required String taskid,
     bool isLoading = false,
-  }) async => connectHelper.deleteTaskApi(
-    taskid: taskid,
-    isLoading: isLoading,
-  );
+  }) async => connectHelper.deleteTaskApi(taskid: taskid, isLoading: isLoading);
 
   Future<ResponseModel> getOneTaskApi({
     required String taskid,
     bool isLoading = false,
-  }) async => connectHelper.getOneTaskApi(
-    taskid: taskid,
-    isLoading: isLoading,
-  );
+  }) async => connectHelper.getOneTaskApi(taskid: taskid, isLoading: isLoading);
 
   Future<ResponseModel> changeTaskStatusApi({
     required String taskid,
@@ -444,25 +437,19 @@ class DataRepository extends DomainRepository {
     int page = 1,
     int limit = 10,
     String search = "",
-    String sortfield = "date",
-    int sortoption = -1,
+    String date = "",
     String branchId = "",
-    String fromDate = "",
-    String toDate = "",
+    String userid = "",
     String status = "",
-    String createdBy = "",
     bool isLoading = false,
   }) async => connectHelper.getAttendanceListApi(
     page: page,
     limit: limit,
     search: search,
-    sortfield: sortfield,
-    sortoption: sortoption,
     branchId: branchId,
-    fromDate: fromDate,
-    toDate: toDate,
+    userid: userid,
+    date: date,
     status: status,
-    createdBy: createdBy,
     isLoading: isLoading,
   );
 
@@ -519,4 +506,77 @@ class DataRepository extends DomainRepository {
     status: status,
     isLoading: isLoading,
   );
+
+  Future<ResponseModel> postCreateSalaryApi({
+    required String? salaryid,
+    required String? date,
+    required String? userid,
+    required String? branchid,
+    required String? month,
+    required String? year,
+    required int? workdays,
+    required int? basicsalary,
+    required int? bonus,
+    required int? allowance,
+    required int? deduction,
+    required int? netsalary,
+    required String? paymentmode,
+    required String? paymentstatus,
+    required String? transactionid,
+    required String? remark,
+    bool isLoading = false,
+  }) async => connectHelper.postCreateSalaryApi(
+    salaryid: salaryid,
+    date: date,
+    userid: userid,
+    branchid: branchid,
+    month: month,
+    year: year,
+    workdays: workdays,
+    basicsalary: basicsalary,
+    bonus: bonus,
+    allowance: allowance,
+    deduction: deduction,
+    netsalary: netsalary,
+    paymentmode: paymentmode,
+    paymentstatus: paymentstatus,
+    transactionid: transactionid,
+    remark: remark,
+    isLoading: isLoading,
+  );
+
+  Future<ResponseModel> postSalaryListApi({
+    required int page,
+    required int limit,
+    required String date,
+    required String branchId,
+    bool isLoading = false,
+  }) async => connectHelper.postSalaryListApi(
+    page: page,
+    limit: limit,
+    date: date,
+    branchId: branchId,
+    isLoading: isLoading,
+  );
+
+  Future<ResponseModel> getSalaryApi({
+    bool isLoading = false,
+    required String? userid,
+    required String? month,
+    required String? year,
+  }) async => connectHelper.getSalaryApi(
+    userid: userid,
+    month: month,
+    year: year,
+    isLoading: isLoading,
+  );
+
+  Future<ResponseModel> deleteSalaryApi({
+    bool isLoading = false,
+    required String? salaryid,
+  }) async =>
+      connectHelper.deleteSalaryApi(salaryid: salaryid, isLoading: isLoading);
+
+  Future<ResponseModel> getUserList({bool isLoading = false}) async =>
+      connectHelper.getUserList(isLoading: isLoading);
 }

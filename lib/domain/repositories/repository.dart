@@ -5,6 +5,7 @@ import 'dart:io';
 import 'package:agro_app/app/utils/utility.dart';
 import 'package:agro_app/data/data.dart';
 import 'package:agro_app/device/device.dart';
+import 'package:agro_app/domain/domain.dart';
 import 'package:agro_app/domain/entities/enums.dart';
 import 'package:agro_app/domain/models/auth_model.dart';
 import 'package:agro_app/domain/models/create_attandance_model.dart';
@@ -28,6 +29,7 @@ import 'package:agro_app/domain/models/getAll_tasks_model.dart';
 import 'package:agro_app/domain/models/create_task_model.dart';
 import 'package:agro_app/domain/models/get_one_task_model.dart';
 import 'package:agro_app/domain/models/response_model.dart';
+import 'package:agro_app/domain/models/get_salary_model.dart';
 
 /// The main repository which will get the data from [DeviceRepository] or the
 /// [DataRepository].
@@ -991,6 +993,7 @@ class Repository {
     String toDate = "",
     String status = "",
     String assignedBy = "",
+    String assignedto = "",
     bool isLoading = false,
   }) async {
     try {
@@ -1004,6 +1007,7 @@ class Repository {
         toDate: toDate,
         status: status,
         assignedBy: assignedBy,
+        assignedto: assignedto,
         isLoading: isLoading,
       );
       if (response.hasError) {
@@ -1070,10 +1074,8 @@ class Repository {
   Future<ResponseModel> uploadTaskAttachmentApi(
     List<File> files, {
     bool isLoading = false,
-  }) async => _dataRepository.uploadTaskAttachmentApi(
-    files,
-    isLoading: isLoading,
-  );
+  }) async =>
+      _dataRepository.uploadTaskAttachmentApi(files, isLoading: isLoading);
 
   Future<bool> deleteTaskApi({
     required String taskid,
@@ -1169,13 +1171,10 @@ class Repository {
     int page = 1,
     int limit = 10,
     String search = "",
-    String sortfield = "date",
-    int sortoption = -1,
+    String date = "",
     String branchId = "",
-    String fromDate = "",
-    String toDate = "",
+    String userid = "",
     String status = "",
-    String createdBy = "",
     bool isLoading = false,
   }) async {
     try {
@@ -1183,17 +1182,17 @@ class Repository {
         page: page,
         limit: limit,
         search: search,
-        sortfield: sortfield,
-        sortoption: sortoption,
         branchId: branchId,
-        fromDate: fromDate,
-        toDate: toDate,
-        status: status,
-        createdBy: createdBy,
+        userid: userid,
+        date: date,
+        status:status,
         isLoading: isLoading,
       );
       if (response.hasError) {
-        final msg = _parseErrorMessage(response.data, 'Failed to load attendance records');
+        final msg = _parseErrorMessage(
+          response.data,
+          'Failed to load attendance records',
+        );
         Utility.showMessage(msg, MessageType.error, null, '');
         return null;
       }
@@ -1204,7 +1203,12 @@ class Repository {
     } catch (e, st) {
       print('getAttendanceListApi error: $e\n$st');
       Utility.closeDialog();
-      Utility.showMessage('Failed to load attendance records', MessageType.error, null, '');
+      Utility.showMessage(
+        'Failed to load attendance records',
+        MessageType.error,
+        null,
+        '',
+      );
       return null;
     }
   }
@@ -1239,7 +1243,10 @@ class Repository {
         isLoading: isLoading,
       );
       if (response.hasError) {
-        final msg = _parseErrorMessage(response.data, 'Failed to save attendance');
+        final msg = _parseErrorMessage(
+          response.data,
+          'Failed to save attendance',
+        );
         Utility.showMessage(msg, MessageType.error, null, '');
         return null;
       }
@@ -1250,7 +1257,12 @@ class Repository {
     } catch (e, st) {
       print('createAttendanceApi error: $e\n$st');
       Utility.closeDialog();
-      Utility.showMessage('Failed to save attendance', MessageType.error, null, '');
+      Utility.showMessage(
+        'Failed to save attendance',
+        MessageType.error,
+        null,
+        '',
+      );
       return null;
     }
   }
@@ -1265,7 +1277,10 @@ class Repository {
         isLoading: isLoading,
       );
       if (response.hasError) {
-        final msg = _parseErrorMessage(response.data, 'Failed to delete attendance');
+        final msg = _parseErrorMessage(
+          response.data,
+          'Failed to delete attendance',
+        );
         Utility.showMessage(msg, MessageType.error, null, '');
         return false;
       }
@@ -1273,7 +1288,12 @@ class Repository {
     } catch (e) {
       print('deleteAttendanceApi error: $e');
       Utility.closeDialog();
-      Utility.showMessage('Failed to delete attendance', MessageType.error, null, '');
+      Utility.showMessage(
+        'Failed to delete attendance',
+        MessageType.error,
+        null,
+        '',
+      );
       return false;
     }
   }
@@ -1342,6 +1362,140 @@ class Repository {
         '',
       );
       return false;
+    }
+  }
+
+  Future<ResponseModel?> postCreateSalaryApi({
+    required String? salaryid,
+    required String? date,
+    required String? userid,
+    required String? branchid,
+    required String? month,
+    required String? year,
+    required int? workdays,
+    required int? basicsalary,
+    required int? bonus,
+    required int? allowance,
+    required int? deduction,
+    required int? netsalary,
+    required String? paymentmode,
+    required String? paymentstatus,
+    required String? transactionid,
+    required String? remark,
+    bool isLoading = false,
+  }) async {
+    try {
+      var response = await _dataRepository.postCreateSalaryApi(
+        salaryid: salaryid,
+        date: date,
+        userid: userid,
+        branchid: branchid,
+        month: month,
+        year: year,
+        workdays: workdays,
+        basicsalary: basicsalary,
+        bonus: bonus,
+        allowance: allowance,
+        deduction: deduction,
+        netsalary: netsalary,
+        paymentmode: paymentmode,
+        paymentstatus: paymentstatus,
+        transactionid: transactionid,
+        remark: remark,
+        isLoading: isLoading,
+      );
+      return response;
+    } catch (_) {
+      Utility.closeDialog();
+      UnimplementedError();
+      return null;
+    }
+  }
+
+  Future<SalaryModel?> postSalaryListApi({
+    required int page,
+    required int limit,
+    required String date,
+    required String branchId,
+    bool isLoading = false,
+  }) async {
+    try {
+      var response = await _dataRepository.postSalaryListApi(
+        page: page,
+        limit: limit,
+        date: date,
+        branchId: branchId,
+        isLoading: isLoading,
+      );
+      var productListModel = salaryModelFromJson(response.data);
+      if (productListModel.data != null) {
+        return productListModel;
+      } else {
+        return productListModel;
+      }
+    } catch (_) {
+      Utility.closeDialog();
+      UnimplementedError();
+      return null;
+    }
+  }
+
+  Future<GetSalaryModel?> getSalaryApi({
+    bool isLoading = false,
+    required String? userid,
+    required String? month,
+    required String? year,
+  }) async {
+    try {
+      var response = await _dataRepository.getSalaryApi(
+        userid: userid,
+        month: month,
+        year: year,
+        isLoading: isLoading,
+      );
+      var productListModel = getSalaryModelFromJson(response.data);
+      if (productListModel.data != null) {
+        return productListModel;
+      } else {
+        return productListModel;
+      }
+    } catch (_) {
+      Utility.closeDialog();
+      UnimplementedError();
+      return null;
+    }
+  }
+
+  Future<ResponseModel?> deleteSalaryApi({
+    bool isLoading = false,
+    required String? salaryid,
+  }) async {
+    try {
+      var response = await _dataRepository.deleteSalaryApi(
+        salaryid: salaryid,
+        isLoading: isLoading,
+      );
+      return response;
+    } catch (_) {
+      Utility.closeDialog();
+      UnimplementedError();
+      return null;
+    }
+  }
+
+  Future<UserModel?> getUserList({bool isLoading = false}) async {
+    try {
+      var response = await _dataRepository.getUserList(isLoading: isLoading);
+      var productListModel = userModelFromJson(response.data);
+      if (productListModel.data != null) {
+        return productListModel;
+      } else {
+        return productListModel;
+      }
+    } catch (_) {
+      Utility.closeDialog();
+      UnimplementedError();
+      return null;
     }
   }
 }

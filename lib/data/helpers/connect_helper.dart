@@ -980,6 +980,7 @@ class ConnectHelper {
     String toDate = "",
     String status = "",
     String assignedBy = "",
+    String assignedto = "",
     bool isLoading = false,
   }) async {
     final String branchId = await _resolveBranchId();
@@ -988,7 +989,7 @@ class ConnectHelper {
       "limit": limit,
       "serch": search.isNotEmpty ? {"taskname": search} : {},
       "branchid": branchId.isNotEmpty ? [branchId] : [],
-      "assignedto": [],
+      "assignedto": [assignedto],
       "date": (fromDate.isNotEmpty && toDate.isNotEmpty)
           ? [fromDate, toDate]
           : [],
@@ -1154,35 +1155,27 @@ class ConnectHelper {
     int page = 1,
     int limit = 10,
     String search = "",
-    String sortfield = "date",
-    int sortoption = -1,
+    String date = "",
     String branchId = "",
-    String fromDate = "",
-    String toDate = "",
+    String userid = "",
     String status = "",
-    String createdBy = "",
     bool isLoading = false,
   }) async {
     String resolvedBranchId = branchId;
     if (resolvedBranchId.isEmpty) {
       resolvedBranchId = await _resolveBranchId();
     }
-    final String loggedInUserId = await Utility.getSecureValue(
-      LocalKeys.distributorId,
-    );
+
     var data = {
       "page": page,
       "limit": limit,
       "search": search.isNotEmpty ? {"remark": search} : {},
-      "sortfield": sortfield,
-      "sortoption": sortoption,
-      "branchid": resolvedBranchId,
-      if (status.isNotEmpty) "status": status,
-      if (loggedInUserId.isNotEmpty) "userid": [loggedInUserId],
-      if (createdBy.isNotEmpty) "createdby": createdBy,
-      if (fromDate.isNotEmpty && toDate.isNotEmpty) "date": [fromDate, toDate],
-      if (fromDate.isNotEmpty) "fromdate": fromDate,
-      if (toDate.isNotEmpty) "todate": toDate,
+      "date": [date],
+      "branchid": [resolvedBranchId],
+      "userid": userid.isNotEmpty ? [userid] : [],
+      "sortfield": "date",
+      "status": status.isNotEmpty ? [status] : [],
+      "sortoption": -1,
     };
     var response = await apiWrapper.makeRequest(
       EndPoints.attendanceListApi,
@@ -1316,6 +1309,131 @@ class ConnectHelper {
       return media_type.MediaType('image', 'jpeg');
     }
     return media_type.MediaType('application', 'octet-stream');
+  }
+
+  Future<ResponseModel> postCreateSalaryApi({
+    required String? salaryid,
+    required String? date,
+    required String? userid,
+    required String? branchid,
+    required String? month,
+    required String? year,
+    required int? workdays,
+    required int? basicsalary,
+    required int? bonus,
+    required int? allowance,
+    required int? deduction,
+    required int? netsalary,
+    required String? paymentmode,
+    required String? paymentstatus,
+    required String? transactionid,
+    required String? remark,
+    bool isLoading = false,
+  }) async {
+    var data = {
+      "salaryid": salaryid,
+      "date": date,
+      "userid": userid,
+      "branchid": branchid,
+      "month": month,
+      "year": year,
+      "workdays": workdays,
+      "basicsalary": basicsalary,
+      "bonus": bonus,
+      "allowance": allowance,
+      "deduction": deduction,
+      "netsalary": netsalary,
+      "paymentmode": paymentmode,
+      "paymentstatus": paymentstatus,
+      "transactionid": transactionid,
+      "remark": remark,
+    };
+    var response = await apiWrapper.makeRequest(
+      EndPoints.postCreateSalaryApi,
+      Request.post,
+      data,
+      isLoading,
+      await Utility.commonHeader(),
+    );
+    return response;
+  }
+
+  Future<ResponseModel> postSalaryListApi({
+    required int page,
+    required int limit,
+    required String date,
+    required String branchId,
+    bool isLoading = false,
+  }) async {
+    var data = {
+      "page": page,
+      "limit": limit,
+      // "search": {},
+      "date": [date],
+      "month": [],
+      "year": [],
+      "userid": [],
+      "sortfield": "date",
+      "branchid": [branchId],
+      "basicsalary": [],
+      "bonus": [],
+      "allowance": [],
+      "deduction": [],
+      "netsalary": [],
+      "remark": [],
+      "paymentmode": [],
+      "paymentstatus": [],
+      "sortoption": -1,
+    };
+    var response = await apiWrapper.makeRequest(
+      EndPoints.postSalaryListApi,
+      Request.post,
+      data,
+      isLoading,
+      await Utility.commonHeader(),
+    );
+    return response;
+  }
+
+  Future<ResponseModel> getSalaryApi({
+    bool isLoading = false,
+    required String? userid,
+    required String? month,
+    required String? year,
+  }) async {
+    var response = await apiWrapper.makeRequest(
+      "${EndPoints.getSalaryApi}?userid=$userid&month=$month&year=$year",
+      Request.get,
+      null,
+      isLoading,
+      await Utility.commonHeader(),
+    );
+    return response;
+  }
+
+  Future<ResponseModel> deleteSalaryApi({
+    bool isLoading = false,
+    required String? salaryid,
+  }) async {
+    var response = await apiWrapper.makeRequest(
+      EndPoints.deleteSalaryApi,
+      Request.post,
+      {"salaryid": salaryid},
+      isLoading,
+      await Utility.commonHeader(),
+    );
+    return response;
+  }
+
+  Future<ResponseModel> getUserList({bool isLoading = false}) async {
+    var response = await apiWrapper.makeRequest(
+      "${EndPoints.usersApi}?role=admin&branchid=${Get.find<Repository>().getSecureValue(LocalKeys.selectedBranchId)}",
+      Request.get,
+      null,
+      isLoading,
+      await Utility.commonHeader(),
+    );
+    return response;
   }
 }
 

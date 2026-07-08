@@ -25,6 +25,7 @@ class HomeScreen extends StatelessWidget {
           // ),
           body: SafeArea(
             child: SingleChildScrollView(
+              physics: ClampingScrollPhysics(),
               padding: const EdgeInsets.all(16.0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -140,12 +141,13 @@ class HomeScreen extends StatelessWidget {
                     crossAxisSpacing: 4,
                     mainAxisSpacing: 4,
                     children: [
-                      _buildMenuCard(
-                        title: 'Customers',
-                        icon: Icons.people_alt,
-                        color: Colors.blue,
-                        onTap: controller.goToCustomers,
-                      ),
+                      if (RoleUtils.isAdmin(controller.roleName))
+                        _buildMenuCard(
+                          title: 'Users',
+                          icon: Icons.manage_accounts,
+                          color: Colors.purple,
+                          onTap: controller.goToUsers,
+                        ),
                       if (RoleUtils.isAdmin(controller.roleName))
                         _buildMenuCard(
                           title: 'Distributors',
@@ -153,6 +155,12 @@ class HomeScreen extends StatelessWidget {
                           color: Colors.teal,
                           onTap: controller.goToDistributors,
                         ),
+                      _buildMenuCard(
+                        title: 'Customers',
+                        icon: Icons.people_alt,
+                        color: Colors.blue,
+                        onTap: controller.goToCustomers,
+                      ),
                       if (RoleUtils.isAdmin(controller.roleName))
                         _buildMenuCard(
                           title: 'Products',
@@ -172,19 +180,7 @@ class HomeScreen extends StatelessWidget {
                         color: Colors.deepOrange,
                         onTap: controller.goToCustomerOrders,
                       ),
-                      if (RoleUtils.isAdmin(controller.roleName))
-                        _buildMenuCard(
-                          title: 'Users',
-                          icon: Icons.manage_accounts,
-                          color: Colors.purple,
-                          onTap: controller.goToUsers,
-                        ),
-                      _buildMenuCard(
-                        title: 'Tasks',
-                        icon: Icons.assignment_outlined,
-                        color: Colors.teal,
-                        onTap: controller.goToTasks,
-                      ),
+
                       if (controller.roleName != "dealer") ...[
                         _buildMenuCard(
                           title: 'Attendance',
@@ -193,32 +189,23 @@ class HomeScreen extends StatelessWidget {
                           onTap: controller.goToAttendance,
                         ),
                       ],
+                      _buildMenuCard(
+                        title: 'Tasks',
+                        icon: Icons.assignment_outlined,
+                        color: Colors.teal,
+                        onTap: controller.goToTasks,
+                      ),
+                      if (controller.roleName == "Admin") ...[
+                        _buildMenuCard(
+                          title: 'Salary',
+                          icon: Icons.account_balance_wallet_outlined,
+                          color: Colors.green,
+                          onTap: controller.goToSalary,
+                        ),
+                      ],
                     ],
                   ),
                   const SizedBox(height: 32),
-
-                  // Text('Quick Overview', style: Styles.txtBlackColorW70018),
-                  // const SizedBox(height: 16),
-                  // _buildStatCard(
-                  //   'Total Revenue',
-                  //   '₹27,410',
-                  //   Icons.account_balance_wallet,
-                  //   Colors.green,
-                  // ),
-                  // const SizedBox(height: 12),
-                  // _buildStatCard(
-                  //   'Pending Orders',
-                  //   '1',
-                  //   Icons.pending_actions,
-                  //   Colors.red,
-                  // ),
-                  // const SizedBox(height: 12),
-                  // _buildStatCard(
-                  //   'Completed Orders',
-                  //   '3',
-                  //   Icons.check_circle,
-                  //   Colors.teal,
-                  // ),
                 ],
               ),
             ),

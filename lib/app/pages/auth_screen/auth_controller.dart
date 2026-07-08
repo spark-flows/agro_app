@@ -81,13 +81,23 @@ class AuthController extends GetxController {
         );
 
         Get.find<Repository>().saveSecureValue(
-          LocalKeys.profileData,
-          json.encode(profileData.toJson()),
+          LocalKeys.userIds,
+          profileData.id,
         );
 
         Get.find<Repository>().saveSecureValue(
           LocalKeys.roleName,
           profileData.rolename,
+        );
+
+        Get.find<Repository>().saveValue(
+          LocalKeys.roleHiveName,
+          profileData.rolename,
+        );
+
+        Get.find<Repository>().saveSecureValue(
+          LocalKeys.profileData,
+          json.encode(profileData.toJson()),
         );
 
         // Pre-populate branchId so it's available for the first API calls

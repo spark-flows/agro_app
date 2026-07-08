@@ -19,4 +19,6 @@ export 'change_attandance_status_model.dart';
 export 'create_attandance_model.dart';
 export 'get_all_attandance_model.dart';
 export 'get_one_attandance_model.dart';
-
+export 'get_salary_model.dart';
+export 'salary_model.dart';
+export 'user_model.dart';

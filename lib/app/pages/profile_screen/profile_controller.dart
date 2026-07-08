@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:agro_app/device/device.dart';
 import 'package:get/get.dart';
 import 'package:agro_app/domain/domain.dart';
 import 'package:agro_app/app/navigators/routes_management.dart';
@@ -56,6 +57,9 @@ class ProfileController extends GetxController {
     Get.find<Repository>().deleteSecuredValue(LocalKeys.distributorId);
     Get.find<Repository>().deleteSecuredValue(LocalKeys.profileData);
     Get.find<Repository>().deleteSecuredValue(LocalKeys.roleName);
+    Get.find<Repository>().saveValue(LocalKeys.roleHiveName, "");
+    Get.find<DeviceRepository>().deleteAllSecuredValues();
+    Get.find<DeviceRepository>().deleteBox();
     RouteManagement.goToAuthScreen();
   }
 }

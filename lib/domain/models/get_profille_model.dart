@@ -193,10 +193,10 @@ class ProfileDataSalestarget {
 }
 
 class Roleid {
-  String id;
-  String rolename;
+  String? id;
+  String? rolename;
 
-  Roleid({required this.id, required this.rolename});
+  Roleid({this.id, this.rolename});
 
   factory Roleid.fromJson(Map<String, dynamic> json) =>
       Roleid(id: json["_id"], rolename: json["rolename"]);

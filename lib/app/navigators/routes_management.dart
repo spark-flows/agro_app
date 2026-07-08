@@ -40,13 +40,19 @@ abstract class RouteManagement {
       Future.value(null);
 
   // ─── New Screens ────────────────────────────────────────────────────────────
-  static void goToCustomersScreen() => Get.toNamed<void>(Routes.customersScreen);
-  static void goToDistributorsScreen() => Get.toNamed<void>(Routes.distributorsScreen);
+  static void goToCustomersScreen() =>
+      Get.toNamed<void>(Routes.customersScreen);
+  static void goToDistributorsScreen() =>
+      Get.toNamed<void>(Routes.distributorsScreen);
   static void goToOrdersScreen() => Get.toNamed<void>(Routes.ordersScreen);
-  static void goToCustomerOrdersScreen() => Get.toNamed<void>(Routes.customerOrdersScreen);
+  static void goToCustomerOrdersScreen() =>
+      Get.toNamed<void>(Routes.customerOrdersScreen);
   static void goToProductsScreen() => Get.toNamed<void>(Routes.productsScreen);
   static void goToProfileScreen() => Get.toNamed<void>(Routes.profileScreen);
   static void goToTasksScreen() => Get.toNamed<void>(Routes.tasksScreen);
-  static void goToAttendanceScreen() => Get.toNamed<void>(Routes.attendanceScreen);
+  static void goToAttendanceScreen() =>
+      Get.toNamed<void>(Routes.attendanceScreen);
   static void goToAttendanceForm() => Get.toNamed<void>(Routes.attendanceForm);
+  static void goToSalaryScreen() => Get.toNamed<void>(Routes.salaryScreen);
+  static void goToAddSalaryScreen() => Get.toNamed<void>(Routes.addSalaryScreen);
 }

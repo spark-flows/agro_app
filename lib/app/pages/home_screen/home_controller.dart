@@ -2,7 +2,8 @@ import 'dart:convert';
 
 import 'package:agro_app/app/navigators/routes_management.dart';
 import 'package:agro_app/domain/domain.dart';
-import 'package:agro_app/domain/models/get_all_branches_model.dart' as branch_model;
+import 'package:agro_app/domain/models/get_all_branches_model.dart'
+    as branch_model;
 import 'package:get/get.dart';
 
 class HomeController extends GetxController {
@@ -60,7 +61,7 @@ class HomeController extends GetxController {
       );
       Get.find<Repository>().saveSecureValue(
         LocalKeys.roleName,
-        userData.roleid.rolename,
+        userData.roleid.rolename ?? "",
       );
       Get.find<Repository>().saveSecureValue(
         LocalKeys.profileData,
@@ -87,28 +88,45 @@ class HomeController extends GetxController {
   void goToUsers() => RouteManagement.goToUserListScreen();
   void goToTasks() => RouteManagement.goToTasksScreen();
   void goToAttendance() => RouteManagement.goToAttendanceScreen();
+  void goToSalary() => RouteManagement.goToSalaryScreen();
 
   Future<void> fetchBranches() async {
     isBranchesLoading = true;
     update();
     try {
-      final response = await Get.find<Repository>().getAllBranchesApi(isLoading: false);
-      if (response != null && response.data != null && response.data!.docs != null) {
-        branches = response.data!.docs!.where((b) => b.isDeleted != true).toList();
-        
+      final response = await Get.find<Repository>().getAllBranchesApi(
+        isLoading: false,
+      );
+      if (response != null &&
+          response.data != null &&
+          response.data!.docs != null) {
+        branches = response.data!.docs!
+            .where((b) => b.isDeleted != true)
+            .toList();
+
         if (branches.isNotEmpty) {
-          final savedBranchId = await Get.find<Repository>().getSecureValue(LocalKeys.selectedBranchId);
+          final savedBranchId = await Get.find<Repository>().getSecureValue(
+            LocalKeys.selectedBranchId,
+          );
           if (savedBranchId.isNotEmpty) {
-            final matched = branches.firstWhereOrNull((b) => b.id == savedBranchId);
+            final matched = branches.firstWhereOrNull(
+              (b) => b.id == savedBranchId,
+            );
             if (matched != null) {
               selectedBranch = matched;
             } else {
               selectedBranch = branches.first;
-              Get.find<Repository>().saveSecureValue(LocalKeys.selectedBranchId, selectedBranch!.id ?? '');
+              Get.find<Repository>().saveSecureValue(
+                LocalKeys.selectedBranchId,
+                selectedBranch!.id ?? '',
+              );
             }
           } else {
             selectedBranch = branches.first;
-            Get.find<Repository>().saveSecureValue(LocalKeys.selectedBranchId, selectedBranch!.id ?? '');
+            Get.find<Repository>().saveSecureValue(
+              LocalKeys.selectedBranchId,
+              selectedBranch!.id ?? '',
+            );
           }
         }
       }
@@ -123,7 +141,10 @@ class HomeController extends GetxController {
   void selectBranch(branch_model.Doc? branch) {
     if (branch != null) {
       selectedBranch = branch;
-      Get.find<Repository>().saveSecureValue(LocalKeys.selectedBranchId, branch.id ?? '');
+      Get.find<Repository>().saveSecureValue(
+        LocalKeys.selectedBranchId,
+        branch.id ?? '',
+      );
       update();
     }
   }

@@ -84,6 +84,8 @@ class TasksController extends GetxController {
     }
     update();
 
+    var userId = await Get.find<Repository>().getSecureValue(LocalKeys.userIds);
+
     try {
       final response = await Get.find<Repository>().getTaskListApi(
         page: currentPage,
@@ -97,6 +99,7 @@ class TasksController extends GetxController {
             : "",
         status: filterStatus ?? "",
         assignedBy: filterAssignedBy ?? "",
+        assignedto: userId,
         isLoading: isRefresh,
       );
 

@@ -149,6 +149,11 @@ abstract class Utility {
     return DateFormat('hh:mm a').format(date);
   }
 
+  static String convertddMMYYYTOYYYYMMDD(String isoDate) {
+    DateTime date = DateFormat("dd/MM/yyyy").parse(isoDate);
+    return DateFormat("yyyy-MM-dd").format(date);
+  }
+
   //Timestemp to Time & Date
   static String parseTimeStampToTime(int value, String dateTimeformat) {
     var date = DateTime.fromMillisecondsSinceEpoch(value);
@@ -1423,6 +1428,11 @@ abstract class Utility {
   static String formatTime(String apiTime) {
     DateTime dateTime = DateTime.parse(apiTime);
     return DateFormat('hh:mm a').format(dateTime);
+  }
+
+  static String formatDateTime(String apiTime, String format) {
+    DateTime date = DateFormat("MMMM, yyyy").parse(apiTime);
+    return DateFormat(format).format(date);
   }
 
   static String convertUtcToIst(String utcTime) {

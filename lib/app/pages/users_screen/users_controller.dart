@@ -128,10 +128,8 @@ class UsersController extends GetxController {
 
     Utility.showLoader();
     try {
-      final GetOneUserModel? userModel = await Get.find<Repository>().getOneUserApi(
-        userid: user.id,
-        isLoading: false,
-      );
+      final GetOneUserModel? userModel = await Get.find<Repository>()
+          .getOneUserApi(userid: user.id, isLoading: false);
       if (userModel != null && userModel.data != null) {
         final data = userModel.data!;
         nameCtrl.text = data.name ?? '';
@@ -163,7 +161,7 @@ class UsersController extends GetxController {
       mobile: phoneCtrl.text.trim(),
       password: passwordCtrl.text.trim(),
       address: addressCtrl.text.trim(),
-      roleid: selectedRoleId!,
+      roleid: "b8fbadff-5201-4fce-9038-0873bc3a93c1",
       isLoading: true,
     );
 
@@ -185,10 +183,7 @@ class UsersController extends GetxController {
       isLoading: true,
     );
     if (success) {
-      Utility.snacBar(
-        'User deleted successfully',
-        Colors.green,
-      );
+      Utility.snacBar('User deleted successfully', Colors.green);
       fetchUsers(isRefresh: true);
     } else {
       Utility.errorMessage('Failed to delete user');

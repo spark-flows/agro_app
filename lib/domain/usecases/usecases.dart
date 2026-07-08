@@ -5,3 +5,4 @@
 ///
 export 'auth_usecases.dart';
 export 'splash_usecases.dart';
+export 'salary_usecases.dart';

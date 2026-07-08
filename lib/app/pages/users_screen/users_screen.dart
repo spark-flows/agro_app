@@ -382,51 +382,51 @@ class _UsersScreenState extends State<UsersScreen> {
                   label: 'Address',
                   icon: Icons.home_outlined,
                   action: TextInputAction.done,
-                  validator: (v) =>
-                      v!.isEmpty ? 'Please enter an address' : null,
+                  // validator: (v) =>
+                  //     v!.isEmpty ? 'Please enter an address' : null,
                 ),
                 const SizedBox(height: 16),
-                DropdownButtonFormField<String>(
-                  autovalidateMode: AutovalidateMode.onUserInteraction,
-                  value: controller.selectedRoleId,
-                  decoration: InputDecoration(
-                    labelText: 'Role',
-                    labelStyle: Styles.txtGreyColorW40014,
-                    floatingLabelStyle: const TextStyle(
-                      color: ColorsValue.primary,
-                    ),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(color: Colors.grey.shade300),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(color: Colors.grey.shade300),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(
-                        color: ColorsValue.primary,
-                        width: 1.5,
-                      ),
-                    ),
-                    prefixIcon: Icon(
-                      Icons.admin_panel_settings_outlined,
-                      color: ColorsValue.primary.withValues(alpha: 0.8),
-                    ),
-                  ),
-                  items: controller.roles.map((role) {
-                    return DropdownMenuItem(
-                      value: role.id,
-                      child: Text(role.rolename),
-                    );
-                  }).toList(),
-                  onChanged: (val) {
-                    controller.selectedRoleId = val;
-                  },
-                  validator: (v) => v == null ? 'Please select a role' : null,
-                ),
-                const SizedBox(height: 24),
+                // DropdownButtonFormField<String>(
+                //   autovalidateMode: AutovalidateMode.onUserInteraction,
+                //   value: controller.selectedRoleId,
+                //   decoration: InputDecoration(
+                //     labelText: 'Role',
+                //     labelStyle: Styles.txtGreyColorW40014,
+                //     floatingLabelStyle: const TextStyle(
+                //       color: ColorsValue.primary,
+                //     ),
+                //     border: OutlineInputBorder(
+                //       borderRadius: BorderRadius.circular(12),
+                //       borderSide: BorderSide(color: Colors.grey.shade300),
+                //     ),
+                //     enabledBorder: OutlineInputBorder(
+                //       borderRadius: BorderRadius.circular(12),
+                //       borderSide: BorderSide(color: Colors.grey.shade300),
+                //     ),
+                //     focusedBorder: OutlineInputBorder(
+                //       borderRadius: BorderRadius.circular(12),
+                //       borderSide: const BorderSide(
+                //         color: ColorsValue.primary,
+                //         width: 1.5,
+                //       ),
+                //     ),
+                //     prefixIcon: Icon(
+                //       Icons.admin_panel_settings_outlined,
+                //       color: ColorsValue.primary.withValues(alpha: 0.8),
+                //     ),
+                //   ),
+                //   items: controller.roles.map((role) {
+                //     return DropdownMenuItem(
+                //       value: role.id,
+                //       child: Text(role.rolename),
+                //     );
+                //   }).toList(),
+                //   onChanged: (val) {
+                //     controller.selectedRoleId = val;
+                //   },
+                //   validator: (v) => v == null ? 'Please select a role' : null,
+                // ),
+                // const SizedBox(height: 24),
                 ElevatedButton(
                   onPressed: () {
                     if (controller.addFormKey.currentState!.validate()) {

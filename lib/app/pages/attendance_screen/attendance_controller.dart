@@ -30,7 +30,7 @@ class AttendanceController extends GetxController {
 
   String? roleName;
   void loadRoleName() async {
-    roleName = await Get.find<Repository>().getSecureValue(LocalKeys.roleName);
+    roleName = Get.find<Repository>().getStringValue(LocalKeys.roleHiveName);
     update();
   }
 
@@ -62,9 +62,7 @@ class AttendanceController extends GetxController {
   }
 
   Future<void> checkAdminRole() async {
-    final role = await Get.find<Repository>().getSecureValue(
-      LocalKeys.roleName,
-    );
+    final role = Get.find<Repository>().getStringValue(LocalKeys.roleHiveName);
     isAdmin = role.toLowerCase() == 'admin';
     update();
   }
@@ -96,17 +94,18 @@ class AttendanceController extends GetxController {
     }
     update();
 
+    var userId = await Utility.getSecureValue(LocalKeys.distributorId);
+    var role = Get.find<Repository>().getStringValue(LocalKeys.roleHiveName);
+
     try {
       final response = await Get.find<Repository>().getAttendanceListApi(
         page: currentPage,
         limit: limit,
         search: searchQuery,
-        fromDate: filterDate != null
+        date: filterDate != null
             ? DateFormat('yyyy-MM-dd').format(filterDate!)
             : "",
-        toDate: filterDate != null
-            ? DateFormat('yyyy-MM-dd').format(filterDate!)
-            : "",
+        userid: role == "Admin" ? "" : userId,
         status: filterStatus ?? "",
         isLoading: isRefresh,
       );
