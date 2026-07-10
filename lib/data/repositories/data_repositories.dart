@@ -548,13 +548,15 @@ class DataRepository extends DomainRepository {
   Future<ResponseModel> postSalaryListApi({
     required int page,
     required int limit,
-    required String date,
+    required String month,
+    required String year,
     required String branchId,
     bool isLoading = false,
   }) async => connectHelper.postSalaryListApi(
     page: page,
     limit: limit,
-    date: date,
+    month: month,
+    year: year,
     branchId: branchId,
     isLoading: isLoading,
   );

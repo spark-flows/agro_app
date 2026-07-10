@@ -303,14 +303,11 @@ class TasksController extends GetxController {
         ...uploadedUrls,
       ];
 
-      final List<String> assignees = [];
-      if (selectedAssignedToIds.isNotEmpty) {
-        assignees.add(selectedAssignedToIds.first);
-      }
+      final List<String> assignees = List.from(selectedAssignedToIds);
       final String loggedInUserId = await Get.find<Repository>().getSecureValue(
         LocalKeys.distributorId,
       );
-      if (loggedInUserId.isNotEmpty) {
+      if (loggedInUserId.isNotEmpty && !assignees.contains(loggedInUserId)) {
         assignees.add(loggedInUserId);
       }
 

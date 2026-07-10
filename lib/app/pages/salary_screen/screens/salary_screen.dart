@@ -661,37 +661,33 @@ class _SalaryScreenState extends State<SalaryScreen> {
     BuildContext context,
     SalaryController controller,
   ) {
-    DateTime? tempDate = controller.filterDate;
+    String? tempMonth = controller.filterMonth;
+    String? tempYear = controller.filterYear;
     String? tempPaymentStatus = controller.filterPaymentStatus;
 
-    String formatDate(DateTime d) =>
-        '${d.day.toString().padLeft(2, '0')}/${d.month.toString().padLeft(2, '0')}/${d.year}';
+    final List<String> monthsList = [
+      'January',
+      'February',
+      'March',
+      'April',
+      'May',
+      'June',
+      'July',
+      'August',
+      'September',
+      'October',
+      'November',
+      'December',
+    ];
+
+    final List<String> yearsList = List.generate(
+      5,
+      (index) => (DateTime.now().year - index).toString(),
+    );
 
     Get.bottomSheet(
       StatefulBuilder(
         builder: (context, setSheetState) {
-          Future<void> pickDate() async {
-            final picked = await showDatePicker(
-              context: context,
-              initialDate: tempDate ?? DateTime.now(),
-              firstDate: DateTime(2020),
-              lastDate: DateTime(2030),
-              builder: (context, child) {
-                return Theme(
-                  data: Theme.of(context).copyWith(
-                    colorScheme: const ColorScheme.light(
-                      primary: ColorsValue.primary,
-                    ),
-                  ),
-                  child: child!,
-                );
-              },
-            );
-            if (picked != null) {
-              setSheetState(() => tempDate = picked);
-            }
-          }
-
           return Container(
             padding: const EdgeInsets.all(24),
             decoration: const BoxDecoration(
@@ -719,55 +715,51 @@ class _SalaryScreenState extends State<SalaryScreen> {
                   Text('Filter Salary', style: Styles.txtBlackColorW70020),
                   const SizedBox(height: 20),
 
-                  // ── Date Filter ─────────────────────────────────────────
-                  Text('Date', style: Styles.txtBlackColorW60014),
+                  // ── Month Filter ─────────────────────────────────────────
+                  Text('Month', style: Styles.txtBlackColorW60014),
                   const SizedBox(height: 8),
-                  InkWell(
-                    onTap: pickDate,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 14,
+                  _buildDropdownField<String?>(
+                    label: 'Month',
+                    icon: Icons.calendar_today,
+                    value: tempMonth,
+                    hint: 'Select Month',
+                    items: [
+                      const DropdownMenuItem<String?>(
+                        value: null,
+                        child: Text('All Months'),
                       ),
-                      decoration: BoxDecoration(
-                        border: Border.all(color: Colors.grey.shade300),
-                        borderRadius: BorderRadius.circular(12),
+                      ...monthsList.map(
+                        (m) =>
+                            DropdownMenuItem<String?>(value: m, child: Text(m)),
                       ),
-                      child: Row(
-                        children: [
-                          const Icon(
-                            Icons.calendar_today,
-                            size: 16,
-                            color: ColorsValue.primary,
-                          ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: Text(
-                              tempDate != null
-                                  ? formatDate(tempDate!)
-                                  : 'Select Date',
-                              style: TextStyle(
-                                color: tempDate != null
-                                    ? Colors.black87
-                                    : Colors.grey.shade500,
-                                fontSize: 13,
-                              ),
-                            ),
-                          ),
-                          if (tempDate != null)
-                            InkWell(
-                              onTap: () {
-                                setSheetState(() => tempDate = null);
-                              },
-                              child: Icon(
-                                Icons.close,
-                                size: 18,
-                                color: Colors.grey.shade500,
-                              ),
-                            ),
-                        ],
+                    ],
+                    onChanged: (val) {
+                      setSheetState(() => tempMonth = val);
+                    },
+                  ),
+                  const SizedBox(height: 16),
+
+                  // ── Year Filter ──────────────────────────────────────────
+                  Text('Year', style: Styles.txtBlackColorW60014),
+                  const SizedBox(height: 8),
+                  _buildDropdownField<String?>(
+                    label: 'Year',
+                    icon: Icons.date_range,
+                    value: tempYear,
+                    hint: 'Select Year',
+                    items: [
+                      const DropdownMenuItem<String?>(
+                        value: null,
+                        child: Text('All Years'),
                       ),
-                    ),
+                      ...yearsList.map(
+                        (y) =>
+                            DropdownMenuItem<String?>(value: y, child: Text(y)),
+                      ),
+                    ],
+                    onChanged: (val) {
+                      setSheetState(() => tempYear = val);
+                    },
                   ),
                   const SizedBox(height: 20),
 
@@ -828,7 +820,8 @@ class _SalaryScreenState extends State<SalaryScreen> {
                       Expanded(
                         child: ElevatedButton(
                           onPressed: () {
-                            controller.filterDate = tempDate;
+                            controller.filterMonth = tempMonth;
+                            controller.filterYear = tempYear;
                             controller.filterPaymentStatus = tempPaymentStatus;
                             controller.applyFilters();
                             Get.back();
@@ -858,43 +851,6 @@ class _SalaryScreenState extends State<SalaryScreen> {
         },
       ),
       isScrollControlled: true,
-    );
-  }
-
-  /// Small filter chip with remove button
-  Widget _buildFilterChip({
-    required String label,
-    required VoidCallback onRemove,
-  }) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-      decoration: BoxDecoration(
-        color: ColorsValue.primary.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: ColorsValue.primary.withValues(alpha: 0.3)),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(
-            label,
-            style: const TextStyle(
-              color: ColorsValue.primary,
-              fontSize: 12,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-          const SizedBox(width: 4),
-          InkWell(
-            onTap: onRemove,
-            child: const Icon(
-              Icons.close,
-              size: 14,
-              color: ColorsValue.primary,
-            ),
-          ),
-        ],
-      ),
     );
   }
 
@@ -937,6 +893,50 @@ class _SalaryScreenState extends State<SalaryScreen> {
           ],
         ),
       ),
+    );
+  }
+
+  /// Dropdown Field Builder
+  Widget _buildDropdownField<T>({
+    required String label,
+    required IconData icon,
+    required T? value,
+    required List<DropdownMenuItem<T>> items,
+    required String hint,
+    required ValueChanged<T?> onChanged,
+  }) {
+    return DropdownButtonFormField<T>(
+      value: value,
+      items: items,
+      onChanged: onChanged,
+      isExpanded: true,
+      decoration: InputDecoration(
+        labelText: label,
+        labelStyle: Styles.txtGreyColorW40014,
+        floatingLabelStyle: const TextStyle(color: ColorsValue.primary),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: Colors.grey.shade200),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: Colors.grey.shade200),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: ColorsValue.primary, width: 1.5),
+        ),
+        prefixIcon: Icon(icon, color: ColorsValue.primary, size: 20),
+        filled: true,
+        fillColor: Colors.white,
+      ),
+      hint: Text(
+        hint,
+        style: TextStyle(color: Colors.grey.shade500, fontSize: 14),
+      ),
+      dropdownColor: Colors.white,
+      borderRadius: BorderRadius.circular(12),
+      icon: Icon(Icons.keyboard_arrow_down, color: Colors.grey.shade600),
     );
   }
 }

@@ -11,6 +11,13 @@ class SalaryController extends GetxController {
 
   final SalaryPresenter salaryPresenter;
 
+  @override
+  void onInit() {
+    super.onInit();
+    filterMonth = DateFormat('MMMM').format(DateTime.now());
+    filterYear = DateTime.now().year.toString();
+  }
+
   GlobalKey<FormState> salaryKey = GlobalKey<FormState>();
   TextEditingController dateController = TextEditingController();
   TextEditingController salaryMonthController = TextEditingController();
@@ -34,10 +41,12 @@ class SalaryController extends GetxController {
 
   // ── Search & Filter ──────────────────────────────────────────────────────
   String searchQuery = '';
-  DateTime? filterDate;
+  String? filterMonth;
+  String? filterYear;
   String? filterPaymentStatus;
 
-  bool get isFilterActive => filterDate != null || filterPaymentStatus != null;
+  bool get isFilterActive =>
+      filterMonth != null || filterYear != null || filterPaymentStatus != null;
 
   void searchSalary(String query) {
     searchQuery = query;
@@ -52,7 +61,8 @@ class SalaryController extends GetxController {
 
   void clearFilters() {
     searchQuery = '';
-    filterDate = null;
+    filterMonth = null;
+    filterYear = null;
     filterPaymentStatus = null;
     salaryPagingController.refresh();
     update();
@@ -77,7 +87,7 @@ class SalaryController extends GetxController {
       selectPaymentStatus = null;
     } else {
       editingSalaryId = salary.id ?? '';
-      
+
       if (salary.date != null && salary.date!.isNotEmpty) {
         try {
           final parsed = DateTime.parse(salary.date!);
@@ -110,8 +120,9 @@ class SalaryController extends GetxController {
       remarkController.text = salary.remark ?? '';
       selectUser = salary.userid?.id;
       selectPaymentMode = salary.paymentmode;
-      selectPaymentStatus = salary.paymentstatus != null 
-          ? (salary.paymentstatus![0].toUpperCase() + salary.paymentstatus!.substring(1).toLowerCase())
+      selectPaymentStatus = salary.paymentstatus != null
+          ? (salary.paymentstatus![0].toUpperCase() +
+                salary.paymentstatus!.substring(1).toLowerCase())
           : null;
     }
     update();
@@ -155,7 +166,8 @@ class SalaryController extends GetxController {
     var response = await salaryPresenter.postSalaryListApi(
       page: pageKey,
       limit: 10,
-      date: DateFormat("yyyy-MM-dd").format(DateTime.now()),
+      month: filterMonth ?? "",
+      year: filterYear ?? "",
       branchId: savedBranchId,
       isLoading: true,
     );
@@ -174,21 +186,6 @@ class SalaryController extends GetxController {
           final remark = (s.remark ?? '').toLowerCase();
           final mode = (s.paymentmode ?? '').toLowerCase();
           return name.contains(q) || remark.contains(q) || mode.contains(q);
-        }).toList();
-      }
-
-      // ── Client-side date filter ──
-      if (filterDate != null) {
-        final filterStr = DateFormat('yyyy-MM-dd').format(filterDate!);
-        salaryDocList = salaryDocList.where((s) {
-          if (s.date == null) return false;
-          try {
-            final d = DateTime.parse(s.date!);
-            final dStr = DateFormat('yyyy-MM-dd').format(d);
-            return dStr == filterStr;
-          } catch (_) {
-            return false;
-          }
         }).toList();
       }
 

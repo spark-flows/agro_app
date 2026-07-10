@@ -1185,7 +1185,7 @@ class Repository {
         branchId: branchId,
         userid: userid,
         date: date,
-        status:status,
+        status: status,
         isLoading: isLoading,
       );
       if (response.hasError) {
@@ -1415,7 +1415,8 @@ class Repository {
   Future<SalaryModel?> postSalaryListApi({
     required int page,
     required int limit,
-    required String date,
+    required String month,
+    required String year,
     required String branchId,
     bool isLoading = false,
   }) async {
@@ -1423,7 +1424,8 @@ class Repository {
       var response = await _dataRepository.postSalaryListApi(
         page: page,
         limit: limit,
-        date: date,
+        month: month,
+        year: year,
         branchId: branchId,
         isLoading: isLoading,
       );

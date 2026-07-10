@@ -1,5 +1,7 @@
 import 'package:agro_app/app/pages/tasks_screen/tasks_controller.dart';
 import 'package:agro_app/app/theme/theme.dart';
+import 'package:agro_app/domain/models/getAll_tasks_model.dart'
+    as task_list_model;
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
@@ -223,6 +225,56 @@ class _TaskFormPageState extends State<TaskFormPage> {
                 _sectionHeader('Assignment & Status'),
                 const SizedBox(height: 16),
 
+                if (controller.isLoadingUsers) ...[
+                  const SizedBox(
+                    height: 56,
+                    child: Center(
+                      child: CircularProgressIndicator(
+                        color: ColorsValue.primary,
+                      ),
+                    ),
+                  ),
+                ] else ...[
+                  InkWell(
+                    onTap: () =>
+                        _showAssigneesSelectionSheet(context, controller),
+                    borderRadius: BorderRadius.circular(12),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 16,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: Colors.grey.shade300),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(
+                            Icons.person_outline,
+                            color: ColorsValue.primary,
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Text(
+                              controller.selectedAssignedToIds.isEmpty
+                                  ? 'Select Assignees'
+                                  : '${controller.selectedAssignedToIds.length} assignees selected',
+                              style: controller.selectedAssignedToIds.isEmpty
+                                  ? Styles.txtGreyColorW40014
+                                  : Styles.txtBlackColorW50014,
+                            ),
+                          ),
+                          Icon(
+                            Icons.arrow_drop_down,
+                            color: Colors.grey.shade600,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
                 if (controller.currentAssignees.isNotEmpty) ...[
                   Wrap(
                     spacing: 8,
@@ -231,91 +283,38 @@ class _TaskFormPageState extends State<TaskFormPage> {
                       return Chip(
                         avatar: const CircleAvatar(
                           backgroundColor: ColorsValue.primary,
-                          child: Icon(Icons.person, size: 12, color: Colors.white),
+                          child: Icon(
+                            Icons.person,
+                            size: 12,
+                            color: Colors.white,
+                          ),
                         ),
                         label: Text(
                           user.name ?? 'Unknown',
-                          style: const TextStyle(fontSize: 12, color: Colors.black87),
+                          style: const TextStyle(
+                            fontSize: 12,
+                            color: Colors.black87,
+                          ),
                         ),
                         backgroundColor: Colors.grey.shade100,
                         side: BorderSide(color: Colors.grey.shade300),
-                        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 4,
+                          vertical: 2,
+                        ),
+                        onDeleted: () {
+                          controller.currentAssignees.remove(user);
+                          controller.selectedAssignedToIds.remove(user.id);
+                          controller.update();
+                        },
+                        deleteIcon: Icon(Icons.close),
                       );
                     }).toList(),
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 15),
+                ] else ...[
+                  const SizedBox(height: 20),
                 ],
-
-                if (controller.isLoadingUsers)
-                  const SizedBox(
-                    height: 56,
-                    child: Center(
-                      child: CircularProgressIndicator(
-                        color: ColorsValue.primary,
-                      ),
-                    ),
-                  )
-                else
-                  DropdownButtonFormField<String>(
-                    autovalidateMode: AutovalidateMode.onUserInteraction,
-                    initialValue: (controller.selectedAssignedToIds.isNotEmpty &&
-                            controller.usersList
-                                .where((user) => user.roleid.rolename?.toLowerCase() != 'admin')
-                                .any((user) => user.id == controller.selectedAssignedToIds.first))
-                        ? controller.selectedAssignedToIds.first
-                        : '',
-                    decoration: InputDecoration(
-                      labelText: 'Assign To',
-                      labelStyle: Styles.txtGreyColorW40014,
-                      floatingLabelStyle: const TextStyle(
-                        color: ColorsValue.primary,
-                      ),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(color: Colors.grey.shade300),
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(color: Colors.grey.shade300),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: const BorderSide(
-                          color: ColorsValue.primary,
-                          width: 1.5,
-                        ),
-                      ),
-                      prefixIcon: const Icon(
-                        Icons.person_outline,
-                        color: ColorsValue.primary,
-                      ),
-                      filled: true,
-                      fillColor: Colors.white,
-                    ),
-                    items: [
-                      const DropdownMenuItem<String>(
-                        value: '',
-                        child: Text('Select Assignee'),
-                      ),
-                      ...controller.usersList
-                          .where((user) => user.roleid.rolename?.toLowerCase() != 'admin')
-                          .map((user) {
-                        return DropdownMenuItem(
-                          value: user.id,
-                          child: Text(user.name),
-                        );
-                      }),
-                    ],
-                    onChanged: (val) {
-                      if (val != null && val.isNotEmpty) {
-                        controller.selectedAssignedToIds = [val];
-                      } else {
-                        controller.selectedAssignedToIds = [];
-                      }
-                      controller.update();
-                    },
-                  ),
-                const SizedBox(height: 20),
 
                 // ── Status Dropdown ──────────────────────────────────────────
                 DropdownButtonFormField<String>(
@@ -716,6 +715,222 @@ class _TaskFormPageState extends State<TaskFormPage> {
         ),
       ),
       validator: validator,
+    );
+  }
+
+  void _showAssigneesSelectionSheet(
+    BuildContext context,
+    TasksController controller,
+  ) {
+    List<String> tempSelectedIds = List.from(controller.selectedAssignedToIds);
+    String sheetSearchQuery = '';
+
+    Get.bottomSheet(
+      StatefulBuilder(
+        builder: (context, setSheetState) {
+          final filteredUsers = controller.usersList
+              .where((user) => user.roleid.rolename?.toLowerCase() != 'admin')
+              .where((user) {
+                if (sheetSearchQuery.isEmpty) return true;
+                return user.name.toLowerCase().contains(
+                  sheetSearchQuery.toLowerCase(),
+                );
+              })
+              .toList();
+
+          return Container(
+            constraints: BoxConstraints(
+              maxHeight: MediaQuery.of(context).size.height * 0.8,
+            ),
+            padding: const EdgeInsets.all(24),
+            decoration: const BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Center(
+                  child: Container(
+                    width: 40,
+                    height: 5,
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade300,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 10),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text('Select Assignees', style: Styles.txtBlackColorW70020),
+                    IconButton(
+                      onPressed: () {
+                        Get.back();
+                      },
+                      icon: Icon(Icons.close),
+                    ),
+                  ],
+                ),
+                TextField(
+                  onChanged: (val) {
+                    setSheetState(() {
+                      sheetSearchQuery = val;
+                    });
+                  },
+                  decoration: InputDecoration(
+                    hintText: 'Search assignee...',
+                    hintStyle: Styles.txtGreyColorW40014,
+                    prefixIcon: const Icon(
+                      Icons.search,
+                      color: ColorsValue.primary,
+                    ),
+                    filled: true,
+                    fillColor: Colors.grey.shade50,
+                    contentPadding: const EdgeInsets.symmetric(
+                      vertical: 0,
+                      horizontal: 12,
+                    ),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(color: Colors.grey.shade200),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(color: Colors.grey.shade200),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(
+                        color: ColorsValue.primary,
+                        width: 1.5,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Flexible(
+                  child: filteredUsers.isEmpty
+                      ? const Center(
+                          child: Padding(
+                            padding: EdgeInsets.symmetric(vertical: 24),
+                            child: Text('No assignees found'),
+                          ),
+                        )
+                      : ListView.builder(
+                          shrinkWrap: true,
+                          itemCount: filteredUsers.length,
+                          itemBuilder: (context, idx) {
+                            final user = filteredUsers[idx];
+                            final isChecked = tempSelectedIds.contains(user.id);
+                            return CheckboxListTile(
+                              visualDensity: VisualDensity(
+                                horizontal: Dimens.zero,
+                                vertical: Dimens.zero,
+                              ),
+                              materialTapTargetSize:
+                                  MaterialTapTargetSize.shrinkWrap,
+                              dense: true,
+                              activeColor: ColorsValue.primary,
+                              title: Text(
+                                user.name,
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.w500,
+                                  fontSize: 14,
+                                ),
+                              ),
+                              subtitle: Text(
+                                user.roleid.rolename ?? '',
+                                style: TextStyle(
+                                  color: Colors.grey.shade500,
+                                  fontSize: 12,
+                                ),
+                              ),
+                              value: isChecked,
+                              onChanged: (bool? checked) {
+                                setSheetState(() {
+                                  if (checked == true) {
+                                    tempSelectedIds.add(user.id);
+                                  } else {
+                                    tempSelectedIds.remove(user.id);
+                                  }
+                                });
+                              },
+                              contentPadding: EdgeInsets.zero,
+                            );
+                          },
+                        ),
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: () {
+                          setSheetState(() {
+                            tempSelectedIds.clear();
+                          });
+                        },
+                        style: OutlinedButton.styleFrom(
+                          side: BorderSide(color: Colors.grey.shade300),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                        ),
+                        child: Text(
+                          'Clear All',
+                          style: TextStyle(color: Colors.grey.shade600),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: () {
+                          controller.selectedAssignedToIds = List.from(
+                            tempSelectedIds,
+                          );
+                          controller.currentAssignees = controller.usersList
+                              .where((u) => tempSelectedIds.contains(u.id))
+                              .map(
+                                (u) => task_list_model.Assignedto(
+                                  id: u.id,
+                                  name: u.name,
+                                  mobile: u.mobile,
+                                  email: u.email,
+                                ),
+                              )
+                              .toList();
+                          controller.update();
+                          Get.back();
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: ColorsValue.primary,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                        ),
+                        child: const Text(
+                          'Done',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          );
+        },
+      ),
+      isScrollControlled: true,
     );
   }
 }

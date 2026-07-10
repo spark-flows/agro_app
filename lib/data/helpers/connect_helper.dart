@@ -989,7 +989,11 @@ class ConnectHelper {
       "limit": limit,
       "serch": search.isNotEmpty ? {"taskname": search} : {},
       "branchid": branchId.isNotEmpty ? [branchId] : [],
-      "assignedto": [assignedto],
+      "assignedto":
+          Get.find<Repository>().getStringValue(LocalKeys.roleHiveName) ==
+              "Admin"
+          ? []
+          : [assignedto],
       "date": (fromDate.isNotEmpty && toDate.isNotEmpty)
           ? [fromDate, toDate]
           : [],
@@ -1170,7 +1174,7 @@ class ConnectHelper {
       "page": page,
       "limit": limit,
       "search": search.isNotEmpty ? {"remark": search} : {},
-      "date": [date],
+      "date": date,
       "branchid": [resolvedBranchId],
       "userid": userid.isNotEmpty ? [userid] : [],
       "sortfield": "date",
@@ -1361,17 +1365,17 @@ class ConnectHelper {
   Future<ResponseModel> postSalaryListApi({
     required int page,
     required int limit,
-    required String date,
+    required String month,
+    required String year,
     required String branchId,
     bool isLoading = false,
   }) async {
     var data = {
       "page": page,
       "limit": limit,
-      // "search": {},
-      "date": [date],
-      "month": [],
-      "year": [],
+      "date": [],
+      "month": [month],
+      "year": [year],
       "userid": [],
       "sortfield": "date",
       "branchid": [branchId],
@@ -1427,7 +1431,7 @@ class ConnectHelper {
 
   Future<ResponseModel> getUserList({bool isLoading = false}) async {
     var response = await apiWrapper.makeRequest(
-      "${EndPoints.usersApi}?role=admin&branchid=${Get.find<Repository>().getSecureValue(LocalKeys.selectedBranchId)}",
+      "${EndPoints.usersApi}?role=${Get.find<Repository>().getStringValue(LocalKeys.roleHiveName)}&branchid=${Get.find<Repository>().getSecureValue(LocalKeys.selectedBranchId)}",
       Request.get,
       null,
       isLoading,
