@@ -134,10 +134,26 @@ class SalaryController extends GetxController {
   }
 
   Future<void> getUserList() async {
-    var response = await salaryPresenter.getUserList(isLoading: true);
+    var response = await Get.find<Repository>().getUsersListApi(
+      page: 1,
+      limit: 1000,
+      type: 'user',
+      isLoading: true,
+    );
     userDataList.clear();
     if (response?.data != null) {
-      userDataList = response?.data ?? [];
+      userDataList = response!.data.docs
+          .map(
+            (doc) => UserData(
+              id: doc.id,
+              name: doc.name,
+              surname: doc.surname,
+              fathername: doc.fathername,
+              email: doc.email,
+              mobile: doc.mobile,
+            ),
+          )
+          .toList();
       update();
     }
   }
@@ -229,17 +245,35 @@ class SalaryController extends GetxController {
   }
 
   Future<void> getSalaryApi(int pageKey) async {
+    String targetMonth = DateTime.now().month.toString();
+    String targetYear = DateTime.now().year.toString();
+    if (salaryMonthController.text.isNotEmpty) {
+      try {
+        final parsed = DateFormat(
+          'MMMM, yyyy',
+        ).parse(salaryMonthController.text);
+        targetMonth = parsed.month.toString();
+        targetYear = parsed.year.toString();
+      } catch (_) {}
+    }
+
     var response = await salaryPresenter.getSalaryApi(
       userid: selectUser,
-      month: DateTime.now().month.toString(),
-      year: DateTime.now().year.toString(),
+      month: targetMonth,
+      year: targetYear,
+      workdays: workDayController.text.trim(),
       isLoading: true,
     );
     getSalaryList.clear();
     if (response?.data != null) {
       basicSalaryController.text =
           response?.data?.basicsalary?.toString() ?? "0";
-      workDayController.text = response?.data?.presentdays?.toString() ?? "0";
+      if (response?.data?.presentdays != null &&
+          response?.data?.presentdays != 0) {
+        workDayController.text = response!.data!.presentdays!.toString();
+      } else if (workDayController.text.trim().isEmpty) {
+        workDayController.text = "0";
+      }
       workingHours = response?.data?.workinghours ?? 0;
       calculateNetSalary();
       update();

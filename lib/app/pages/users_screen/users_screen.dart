@@ -381,11 +381,53 @@ class _UsersScreenState extends State<UsersScreen> {
                   controller: controller.addressCtrl,
                   label: 'Address',
                   icon: Icons.home_outlined,
-                  action: TextInputAction.done,
+                  action: TextInputAction.next,
                   // validator: (v) =>
                   //     v!.isEmpty ? 'Please enter an address' : null,
                 ),
                 const SizedBox(height: 16),
+                _buildField(
+                  controller: controller.salaryCtrl,
+                  label: 'Salary',
+                  icon: Icons.currency_rupee,
+                  keyboardType: TextInputType.number,
+                  inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                  action: TextInputAction.next,
+                ),
+                const SizedBox(height: 16),
+                _buildField(
+                  controller: controller.allowanceCtrl,
+                  label: 'Allowance',
+                  icon: Icons.money_outlined,
+                  keyboardType: TextInputType.number,
+                  inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                  action: TextInputAction.done,
+                ),
+                const SizedBox(height: 16),
+                Obx(
+                  () => SwitchListTile(
+                    title: const Text('Live Tracking'),
+                    secondary: const Icon(Icons.location_on_outlined, color: ColorsValue.primary),
+                    value: controller.liveTracking.value,
+                    activeColor: ColorsValue.primary,
+                    onChanged: (bool val) {
+                      controller.liveTracking.value = val;
+                    },
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Obx(
+                  () => SwitchListTile(
+                    title: const Text('Odometer'),
+                    secondary: const Icon(Icons.speed_outlined, color: ColorsValue.primary),
+                    value: controller.odometer.value,
+                    activeColor: ColorsValue.primary,
+                    onChanged: (bool val) {
+                      controller.odometer.value = val;
+                    },
+                  ),
+                ),
+                const SizedBox(height: 24),
                 // DropdownButtonFormField<String>(
                 //   autovalidateMode: AutovalidateMode.onUserInteraction,
                 //   value: controller.selectedRoleId,

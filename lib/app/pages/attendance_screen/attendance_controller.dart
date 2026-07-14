@@ -1,4 +1,9 @@
 import 'dart:async';
+import 'dart:io';
+import 'package:flutter/services.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:agro_app/app/theme/theme.dart';
 import 'package:agro_app/app/utils/utility.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -54,11 +59,18 @@ class AttendanceController extends GetxController {
   Timer? _searchTimer;
   bool isLocationLoading = false;
 
+  final RxString selfiePath = "".obs;
+  final RxString odometerPhotoPath = "".obs;
+  final RxBool isOdometerUploading = false.obs;
+  final odometerReadingCtrl = TextEditingController();
+  Timer? _trackingTimer;
+
   @override
   void onInit() {
     super.onInit();
     fetchAttendance(isRefresh: true);
     checkAdminRole();
+    _resumeTrackingIfActive();
   }
 
   Future<void> checkAdminRole() async {
@@ -70,6 +82,7 @@ class AttendanceController extends GetxController {
   @override
   void onClose() {
     _searchTimer?.cancel();
+    _trackingTimer?.cancel();
     dateCtrl.dispose();
     timeInCtrl.dispose();
     timeOutCtrl.dispose();
@@ -78,6 +91,7 @@ class AttendanceController extends GetxController {
     remarkCtrl.dispose();
     latitudeCtrl.dispose();
     longitudeCtrl.dispose();
+    odometerReadingCtrl.dispose();
     super.onClose();
   }
 
@@ -528,37 +542,432 @@ class AttendanceController extends GetxController {
   Future<void> quickClockIn() async {
     try {
       Utility.showLoader();
+      final profile = await Get.find<Repository>().getProfileApi(
+        isLoading: false,
+      );
       final todayStr = DateFormat('yyyy-MM-dd').format(DateTime.now());
       final timeStr = DateFormat('hh:mm a').format(DateTime.now());
       final coordinates = await _getCurrentCoordinates();
+
+      bool requiresOdometer = false;
+      if (profile != null &&
+          profile.isSuccess == true &&
+          profile.data != null) {
+        requiresOdometer = profile.data.userData.odometer ?? false;
+      }
+
+      Utility.closeLoader();
 
       List<Map<String, String>> punchingPayload = [
         {"timein": timeStr, "timeout": "00:00"},
       ];
 
-      final response = await Get.find<Repository>().createAttendanceApi(
-        date: todayStr,
-        timein: timeStr,
-        timeout: '',
-        coordinates: coordinates,
-        breakstart: '',
-        breakend: '',
-        remark: '',
-        status: 'present',
-        punching: punchingPayload,
-        breaks: [],
-        isLoading: false,
-      );
+      if (requiresOdometer) {
+        _showOdometerVerificationDialog(
+          todayStr: todayStr,
+          timeStr: timeStr,
+          coordinates: coordinates,
+          punchingPayload: punchingPayload,
+        );
+      } else {
+        Utility.showLoader();
+        final response = await Get.find<Repository>().createAttendanceApi(
+          date: todayStr,
+          timein: timeStr,
+          timeout: '',
+          coordinates: coordinates,
+          breakstart: '',
+          breakend: '',
+          remark: '',
+          status: 'present',
+          punching: punchingPayload,
+          breaks: [],
+          isLoading: false,
+        );
 
-      Utility.closeLoader();
-      if (response != null && response.isSuccess == true) {
-        fetchAttendance(isRefresh: true);
-        Utility.snacBar('Clocked in successfully', Colors.green);
+        Utility.closeLoader();
+        if (response != null && response.isSuccess == true) {
+          fetchAttendance(isRefresh: true);
+          Utility.snacBar('Clocked in successfully', Colors.green);
+          _triggerStartTracking(coordinates);
+        }
       }
     } catch (e) {
       Utility.closeLoader();
       debugPrint('[AttendanceController] quickClockIn error: $e');
     }
+  }
+
+  void _showOdometerVerificationDialog({
+    required String todayStr,
+    required String timeStr,
+    required Map<String, String> coordinates,
+    required List<Map<String, String>> punchingPayload,
+  }) {
+    selfiePath.value = "";
+    odometerReadingCtrl.clear();
+    isOdometerUploading.value = false;
+
+    Get.dialog<void>(
+      Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        backgroundColor: Colors.white,
+        child: Padding(
+          padding: const EdgeInsets.all(24.0),
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: ColorsValue.primary.withOpacity(0.1),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.speed_outlined,
+                        color: ColorsValue.primary,
+                        size: 24,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            "Odometer Verification",
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: ColorsValue.txtBlackColor,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            "Daily Punch-In Verification",
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: ColorsValue.txtGreyColor,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 24),
+
+                // ── Selfie Photo Box (Only Selfie, No Odometer Photo) ──
+                Obx(() {
+                  final hasImage = selfiePath.value.isNotEmpty;
+                  return GestureDetector(
+                    onTap: () async {
+                      final picker = ImagePicker();
+                      final file = await picker.pickImage(
+                        source: ImageSource.camera,
+                        preferredCameraDevice: CameraDevice.front,
+                        imageQuality: 85,
+                      );
+                      if (file != null) {
+                        selfiePath.value = file.path;
+                      }
+                    },
+                    child: Container(
+                      height: 180,
+                      decoration: BoxDecoration(
+                        color: Colors.grey.shade50,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(
+                          color: hasImage
+                              ? ColorsValue.primary
+                              : Colors.grey.shade300,
+                          width: 1.5,
+                        ),
+                      ),
+                      child: hasImage
+                          ? ClipRRect(
+                              borderRadius: BorderRadius.circular(14),
+                              child: Stack(
+                                fit: StackFit.expand,
+                                children: [
+                                  kIsWeb
+                                      ? Image.network(
+                                          selfiePath.value,
+                                          fit: BoxFit.cover,
+                                        )
+                                      : Image.file(
+                                          File(selfiePath.value),
+                                          fit: BoxFit.cover,
+                                        ),
+                                  Positioned(
+                                    right: 6,
+                                    top: 6,
+                                    child: GestureDetector(
+                                      onTap: () => selfiePath.value = "",
+                                      child: Container(
+                                        padding: const EdgeInsets.all(4),
+                                        decoration: const BoxDecoration(
+                                          color: Colors.black54,
+                                          shape: BoxShape.circle,
+                                        ),
+                                        child: const Icon(
+                                          Icons.close,
+                                          color: Colors.white,
+                                          size: 16,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            )
+                          : Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                const Icon(
+                                  Icons.camera_front_outlined,
+                                  color: ColorsValue.primary,
+                                  size: 32,
+                                ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  "Take Selfie",
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w600,
+                                    color: ColorsValue.txtBlackColor,
+                                  ),
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  "Front Camera",
+                                  style: TextStyle(
+                                    fontSize: 10,
+                                    color: ColorsValue.txtGreyColor,
+                                  ),
+                                ),
+                              ],
+                            ),
+                    ),
+                  );
+                }),
+                const SizedBox(height: 24),
+
+                // ── Odometer Reading Input ─────────────────────────────
+                TextField(
+                  controller: odometerReadingCtrl,
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: ColorsValue.txtBlackColor,
+                  ),
+                  decoration: InputDecoration(
+                    labelText: "Odometer Reading (KM)",
+                    labelStyle: TextStyle(
+                      color: ColorsValue.txtGreyColor,
+                      fontSize: 14,
+                    ),
+                    prefixIcon: const Icon(
+                      Icons.speed_outlined,
+                      color: ColorsValue.primary,
+                    ),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(14),
+                      borderSide: BorderSide(color: Colors.grey.shade300),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(14),
+                      borderSide: BorderSide(color: Colors.grey.shade300),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(14),
+                      borderSide: const BorderSide(
+                        color: ColorsValue.primary,
+                        width: 1.5,
+                      ),
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 16,
+                    ),
+                  ),
+                  keyboardType: TextInputType.number,
+                  inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                ),
+                const SizedBox(height: 28),
+
+                // ── Action Buttons ────────────────────────────────────
+                Obx(
+                  () => isOdometerUploading.value
+                      ? const Center(
+                          child: Padding(
+                            padding: EdgeInsets.symmetric(vertical: 8.0),
+                            child: CircularProgressIndicator(
+                              color: ColorsValue.primary,
+                            ),
+                          ),
+                        )
+                      : Row(
+                          children: [
+                            Expanded(
+                              child: OutlinedButton(
+                                onPressed: () => Get.back(),
+                                style: OutlinedButton.styleFrom(
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 14,
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  side: BorderSide(color: Colors.grey.shade300),
+                                  foregroundColor: ColorsValue.txtGreyColor,
+                                ),
+                                child: const Text(
+                                  "Cancel",
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 14),
+                            Expanded(
+                              child: ElevatedButton(
+                                onPressed: () async {
+                                  if (selfiePath.value.isEmpty) {
+                                    Utility.errorMessage(
+                                      "Please capture a Selfie",
+                                    );
+                                    return;
+                                  }
+                                  if (odometerReadingCtrl.text.trim().isEmpty) {
+                                    Utility.errorMessage(
+                                      "Please enter Odometer Reading",
+                                    );
+                                    return;
+                                  }
+
+                                  isOdometerUploading.value = true;
+
+                                  // Upload selfie file
+                                  final selfieUrl = await Get.find<Repository>()
+                                      .uploadAttendanceMediaApi(
+                                        selfiePath.value,
+                                      );
+
+                                  if (selfieUrl == null) {
+                                    isOdometerUploading.value = false;
+                                    Utility.errorMessage(
+                                      "Failed to upload verification photo",
+                                    );
+                                    return;
+                                  }
+
+                                  final odoValue =
+                                      int.tryParse(
+                                        odometerReadingCtrl.text.trim(),
+                                      ) ??
+                                      0;
+
+                                  // Call the API with the selfieUrl as photo and odoValue as odometer
+                                  final response = await Get.find<Repository>()
+                                      .createAttendanceApi(
+                                        date: todayStr,
+                                        timein: timeStr,
+                                        timeout: '',
+                                        coordinates: coordinates,
+                                        breakstart: '',
+                                        breakend: '',
+                                        remark: '',
+                                        status: 'present',
+                                        punching: punchingPayload,
+                                        breaks: [],
+                                        photo: selfieUrl,
+                                        odometer: odoValue,
+                                        isLoading: false,
+                                      );
+
+                                  isOdometerUploading.value = false;
+                                  Get.back(); // close dialog
+
+                                  if (response != null &&
+                                      response.isSuccess == true) {
+                                    fetchAttendance(isRefresh: true);
+                                    Utility.snacBar(
+                                      'Clocked in successfully',
+                                      Colors.green,
+                                    );
+                                    Get.find<Repository>().saveValue(
+                                      LocalKeys.lastOdometer,
+                                      odoValue.toString(),
+                                    );
+                                    Get.find<Repository>().saveValue(
+                                      LocalKeys.lastSelfieUrl,
+                                      selfieUrl,
+                                    );
+                                    _triggerStartTracking(coordinates);
+                                  } else {
+                                    Utility.errorMessage("Failed to Clock In");
+                                  }
+                                },
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: ColorsValue.primary,
+                                  foregroundColor: Colors.white,
+                                  elevation: 0,
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 14,
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                ),
+                                child: const Text(
+                                  "Submit",
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+      barrierDismissible: false,
+    );
+  }
+
+  Future<Map<String, dynamic>> _getSavedOdometerData() async {
+    final profile = await Get.find<Repository>().getProfileApi(
+      isLoading: false,
+    );
+    bool requiresOdometer = false;
+    if (profile != null && profile.isSuccess == true && profile.data != null) {
+      requiresOdometer = profile.data.userData.odometer ?? false;
+    }
+    if (requiresOdometer) {
+      final odoStr = Get.find<Repository>().getStringValue(
+        LocalKeys.lastOdometer,
+      );
+      final selfieUrl = Get.find<Repository>().getStringValue(
+        LocalKeys.lastSelfieUrl,
+      );
+      return {
+        "photo": selfieUrl.isNotEmpty ? selfieUrl : null,
+        "odometer": int.tryParse(odoStr),
+      };
+    }
+    return {};
   }
 
   Future<void> quickClockOut(get_all_model.GetAllAttendanceDoc record) async {
@@ -593,6 +1002,8 @@ class AttendanceController extends GetxController {
         "longitude": record.coordinates?.longitude ?? '',
       };
 
+      final odoData = await _getSavedOdometerData();
+
       final response = await Get.find<Repository>().createAttendanceApi(
         attendanceid: record.id,
         date: todayStr,
@@ -605,6 +1016,8 @@ class AttendanceController extends GetxController {
         status: 'present',
         punching: punchingPayload,
         breaks: breaksPayload,
+        photo: odoData['photo'] as String?,
+        odometer: odoData['odometer'] as int?,
         isLoading: false,
       );
 
@@ -612,6 +1025,7 @@ class AttendanceController extends GetxController {
       if (response != null && response.isSuccess == true) {
         fetchAttendance(isRefresh: true);
         Utility.snacBar('Clocked out successfully', Colors.green);
+        _triggerStopTracking(coordinates);
       }
     } catch (e) {
       Utility.closeLoader();
@@ -651,6 +1065,8 @@ class AttendanceController extends GetxController {
         "longitude": record.coordinates?.longitude ?? '',
       };
 
+      final odoData = await _getSavedOdometerData();
+
       final response = await Get.find<Repository>().createAttendanceApi(
         attendanceid: record.id,
         date: todayStr,
@@ -663,13 +1079,16 @@ class AttendanceController extends GetxController {
         status: 'present',
         punching: punchingPayload,
         breaks: breaksPayload,
+        photo: odoData['photo'] as String?,
+        odometer: odoData['odometer'] as int?,
         isLoading: false,
       );
 
       Utility.closeLoader();
       if (response != null && response.isSuccess == true) {
         fetchAttendance(isRefresh: true);
-        Utility.snacBar('Break started successfully', Colors.green);
+        Utility.snacBar('Shift paused successfully', Colors.green);
+        _triggerStopTracking(coordinates);
       }
     } catch (e) {
       Utility.closeLoader();
@@ -709,6 +1128,8 @@ class AttendanceController extends GetxController {
         "longitude": record.coordinates?.longitude ?? '',
       };
 
+      final odoData = await _getSavedOdometerData();
+
       final response = await Get.find<Repository>().createAttendanceApi(
         attendanceid: record.id,
         date: todayStr,
@@ -721,17 +1142,102 @@ class AttendanceController extends GetxController {
         status: 'present',
         punching: punchingPayload,
         breaks: breaksPayload,
+        photo: odoData['photo'] as String?,
+        odometer: odoData['odometer'] as int?,
         isLoading: false,
       );
 
       Utility.closeLoader();
       if (response != null && response.isSuccess == true) {
         fetchAttendance(isRefresh: true);
-        Utility.snacBar('Break ended successfully', Colors.green);
+        Utility.snacBar('Shift resumed successfully', Colors.green);
+        _triggerStartTracking(coordinates);
       }
     } catch (e) {
       Utility.closeLoader();
       debugPrint('[AttendanceController] quickBreakOut error: $e');
+    }
+  }
+
+  void _startPeriodicLocationUpdates(String trackingId) {
+    _trackingTimer?.cancel();
+    _trackingTimer = Timer.periodic(const Duration(seconds: 30), (timer) async {
+      final coordinates = await _getCurrentCoordinates();
+      final lat = double.tryParse(coordinates['latitude'] ?? '0') ?? 0.0;
+      final lng = double.tryParse(coordinates['longitude'] ?? '0') ?? 0.0;
+      if (lat != 0.0 && lng != 0.0) {
+        final timestamp = DateTime.now().toUtc().toIso8601String();
+        await Get.find<Repository>().updateLocationApi(
+          trackingId: trackingId,
+          latitude: lat,
+          longitude: lng,
+          timestamp: timestamp,
+        );
+      }
+    });
+  }
+
+  void _stopPeriodicLocationUpdates() {
+    _trackingTimer?.cancel();
+    _trackingTimer = null;
+  }
+
+  void _resumeTrackingIfActive() async {
+    await Future.delayed(const Duration(seconds: 2));
+    final record = getTodayRecord();
+    final isClockedIn = isClockedInToday(record);
+    final isClockedOut = isClockedOutToday(record);
+    if (isClockedIn && !isClockedOut) {
+      final storedTrackingId = Get.find<Repository>().getStringValue(
+        LocalKeys.trackingId,
+      );
+      if (storedTrackingId.isNotEmpty) {
+        _startPeriodicLocationUpdates(storedTrackingId);
+      }
+    }
+  }
+
+  Future<void> _triggerStartTracking(Map<String, String> coordinates) async {
+    try {
+      final userId = await Utility.getSecureValue(LocalKeys.distributorId);
+      final lat = double.tryParse(coordinates['latitude'] ?? '0') ?? 0.0;
+      final lng = double.tryParse(coordinates['longitude'] ?? '0') ?? 0.0;
+      final timeStr = DateTime.now().toUtc().toIso8601String();
+
+      final trackingId = await Get.find<Repository>().startTrackingApi(
+        userId: userId,
+        latitude: lat,
+        longitude: lng,
+        time: timeStr,
+      );
+
+      if (trackingId != null && trackingId.isNotEmpty) {
+        Get.find<Repository>().saveValue(LocalKeys.trackingId, trackingId);
+        _startPeriodicLocationUpdates(trackingId);
+      }
+    } catch (e) {
+      debugPrint('[AttendanceController] start tracking error: $e');
+    }
+  }
+
+  Future<void> _triggerStopTracking(Map<String, String> coordinates) async {
+    try {
+      _stopPeriodicLocationUpdates();
+      final userId = await Utility.getSecureValue(LocalKeys.distributorId);
+      final lat = double.tryParse(coordinates['latitude'] ?? '0') ?? 0.0;
+      final lng = double.tryParse(coordinates['longitude'] ?? '0') ?? 0.0;
+      final timeStr = DateTime.now().toUtc().toIso8601String();
+
+      await Get.find<Repository>().stopTrackingApi(
+        userId: userId,
+        latitude: lat,
+        longitude: lng,
+        time: timeStr,
+      );
+
+      Get.find<Repository>().saveValue(LocalKeys.trackingId, "");
+    } catch (e) {
+      debugPrint('[AttendanceController] stop tracking error: $e');
     }
   }
 }

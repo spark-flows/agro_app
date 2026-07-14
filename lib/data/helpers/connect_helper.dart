@@ -7,9 +7,11 @@ import 'package:agro_app/data/data.dart';
 import 'package:agro_app/domain/domain.dart';
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:dio/dio.dart';
-import 'package:get/get.dart';
+import 'package:get/get.dart' hide FormData, MultipartFile;
 import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart' as media_type;
+import 'package:flutter/foundation.dart';
+import 'package:image_picker/image_picker.dart';
 
 /// The helper class which will connect to the world to get the data.
 class ConnectHelper {
@@ -17,7 +19,7 @@ class ConnectHelper {
     _init();
   }
 
-  late Dio dio;
+  late Dio dio = Dio();
 
   /// Api wrapper initialization
   final apiWrapper = ApiWrapper();
@@ -36,12 +38,12 @@ class ConnectHelper {
   // coverage:ignore-start
   /// initialize the andorid device information
   void _init() async {
+    if (kIsWeb) return;
     if (GetPlatform.isAndroid) {
       androidDeviceInfo = await deviceinfo.androidInfo;
-    } else {
+    } else if (GetPlatform.isIOS) {
       iosDeviceInfo = await deviceinfo.iosInfo;
     }
-    dio = Dio();
   }
 
   // coverage:ignore-end
@@ -763,6 +765,10 @@ class ConnectHelper {
     String? bankname,
     String? bankaccountnumber,
     String? bankifsscode,
+    int? salary,
+    int? allowance,
+    bool? liveTracking,
+    bool? odometer,
     bool isLoading = false,
   }) async {
     final String branchId = await _resolveBranchId();
@@ -785,6 +791,10 @@ class ConnectHelper {
         "bankaccountnumber": bankaccountnumber,
       if (bankifsscode != null && bankifsscode.isNotEmpty)
         "bankifsscode": bankifsscode,
+      "salary": salary ?? 0,
+      "allowance": allowance ?? 0,
+      "liveTracking": liveTracking ?? false,
+      "odometer": odometer ?? false,
     };
     var response = await apiWrapper.makeRequest(
       EndPoints.createUsersApi,
@@ -1203,6 +1213,8 @@ class ConnectHelper {
     required String status,
     List<Map<String, String>>? punching,
     List<Map<String, String>>? breaks,
+    String? photo,
+    int? odometer,
     bool isLoading = false,
   }) async {
     final String branchId = await _resolveBranchId();
@@ -1224,6 +1236,8 @@ class ConnectHelper {
         "break": breaks ?? [],
         "remark": remark,
         "status": "present",
+        if (photo != null) "photo": photo,
+        if (odometer != null) "odometer": odometer,
       };
     } else {
       data = {
@@ -1238,6 +1252,8 @@ class ConnectHelper {
         "breakend": breakend,
         "remark": remark,
         "status": status,
+        if (photo != null) "photo": photo,
+        if (odometer != null) "odometer": odometer,
       };
     }
     var response = await apiWrapper.makeRequest(
@@ -1404,9 +1420,14 @@ class ConnectHelper {
     required String? userid,
     required String? month,
     required String? year,
+    String? workdays,
   }) async {
+    String url = "${EndPoints.getSalaryApi}?userid=$userid&month=$month&year=$year";
+    if (workdays != null && workdays.isNotEmpty) {
+      url += "&workdays=$workdays";
+    }
     var response = await apiWrapper.makeRequest(
-      "${EndPoints.getSalaryApi}?userid=$userid&month=$month&year=$year",
+      url,
       Request.get,
       null,
       isLoading,
@@ -1438,6 +1459,123 @@ class ConnectHelper {
       await Utility.commonHeader(),
     );
     return response;
+  }
+
+  Future<ResponseModel> uploadAttendanceMediaApi(String filePath, {bool isLoading = false}) async {
+    try {
+      final headers = await Utility.commonHeader();
+      headers.remove('Content-Type');
+
+      final FormData formData;
+      if (kIsWeb) {
+        final bytes = await XFile(filePath).readAsBytes();
+        formData = FormData.fromMap({
+          'image': MultipartFile.fromBytes(
+            bytes,
+            filename: filePath.split('/').last,
+          ),
+        });
+      } else {
+        formData = FormData.fromMap({
+          'image': await MultipartFile.fromFile(
+            filePath,
+            filename: filePath.split('/').last,
+          ),
+        });
+      }
+
+      final response = await dio.post(
+        '${ApiWrapper.api}${EndPoints.uploadAttendanceApi}',
+        data: formData,
+        options: Options(headers: headers),
+      );
+
+      if (response.statusCode == 200) {
+        return ResponseModel(
+          data: json.encode(response.data),
+          hasError: false,
+          statusCode: response.statusCode ?? 200,
+        );
+      } else {
+        return ResponseModel(
+          data: response.statusMessage ?? 'Failed to upload image',
+          hasError: true,
+          statusCode: response.statusCode ?? 500,
+        );
+      }
+    } catch (e) {
+      return ResponseModel(
+        data: e.toString(),
+        hasError: true,
+        statusCode: 500,
+      );
+    }
+  }
+
+  Future<ResponseModel> startTrackingApi({
+    required String userId,
+    required double latitude,
+    required double longitude,
+    required String time,
+    bool isLoading = false,
+  }) async {
+    final Map<String, dynamic> data = {
+      "userId": userId,
+      "latitude": latitude,
+      "longitude": longitude,
+      "time": time,
+    };
+    return apiWrapper.makeRequest(
+      EndPoints.startTrackingApi,
+      Request.post,
+      data,
+      isLoading,
+      await Utility.commonHeader(),
+    );
+  }
+
+  Future<ResponseModel> stopTrackingApi({
+    required String userId,
+    required double latitude,
+    required double longitude,
+    required String time,
+    bool isLoading = false,
+  }) async {
+    final Map<String, dynamic> data = {
+      "userId": userId,
+      "latitude": latitude,
+      "longitude": longitude,
+      "time": time,
+    };
+    return apiWrapper.makeRequest(
+      EndPoints.stopTrackingApi,
+      Request.post,
+      data,
+      isLoading,
+      await Utility.commonHeader(),
+    );
+  }
+
+  Future<ResponseModel> updateLocationApi({
+    required String trackingId,
+    required double latitude,
+    required double longitude,
+    required String timestamp,
+    bool isLoading = false,
+  }) async {
+    final Map<String, dynamic> data = {
+      "trackingId": trackingId,
+      "latitude": latitude,
+      "longitude": longitude,
+      "timestamp": timestamp,
+    };
+    return apiWrapper.makeRequest(
+      EndPoints.updateLocationApi,
+      Request.post,
+      data,
+      isLoading,
+      await Utility.commonHeader(),
+    );
   }
 }
 

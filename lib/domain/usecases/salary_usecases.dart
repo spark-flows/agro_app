@@ -64,10 +64,12 @@ class SalaryUsecases {
     required String? userid,
     required String? month,
     required String? year,
+    String? workdays,
   }) async => await repository.getSalaryApi(
     userid: userid,
     month: month,
     year: year,
+    workdays: workdays,
     isLoading: isLoading,
   );
 

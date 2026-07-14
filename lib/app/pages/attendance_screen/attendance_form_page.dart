@@ -173,7 +173,7 @@ class _AttendanceFormPageState extends State<AttendanceFormPage> {
                 ),
                 const SizedBox(height: 20),
 
-                // ── Break Start & Break End Row ───────────────────────────────
+                // ── Pause & Resume Time Row ───────────────────────────────
                 Row(
                   children: [
                     Expanded(
@@ -182,8 +182,8 @@ class _AttendanceFormPageState extends State<AttendanceFormPage> {
                         child: IgnorePointer(
                           child: _buildField(
                             fieldController: controller.breakStartCtrl,
-                            label: 'Break Start *',
-                            icon: Icons.free_breakfast_outlined,
+                            label: 'Pause Time *',
+                            icon: Icons.pause_circle_outline,
                             validator: (v) =>
                                 v!.trim().isEmpty ? 'Required' : null,
                           ),
@@ -197,8 +197,8 @@ class _AttendanceFormPageState extends State<AttendanceFormPage> {
                         child: IgnorePointer(
                           child: _buildField(
                             fieldController: controller.breakEndCtrl,
-                            label: 'Break End *',
-                            icon: Icons.restaurant_outlined,
+                            label: 'Resume Time *',
+                            icon: Icons.play_circle_outline,
                             validator: (v) =>
                                 v!.trim().isEmpty ? 'Required' : null,
                           ),

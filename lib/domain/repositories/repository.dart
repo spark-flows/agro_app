@@ -898,6 +898,10 @@ class Repository {
     String? bankname,
     String? bankaccountnumber,
     String? bankifsscode,
+    int? salary,
+    int? allowance,
+    bool? liveTracking,
+    bool? odometer,
     bool isLoading = false,
   }) async {
     try {
@@ -917,6 +921,10 @@ class Repository {
         bankname: bankname,
         bankaccountnumber: bankaccountnumber,
         bankifsscode: bankifsscode,
+        salary: salary,
+        allowance: allowance,
+        liveTracking: liveTracking,
+        odometer: odometer,
         isLoading: isLoading,
       );
       if (!response.hasError) {
@@ -1225,6 +1233,8 @@ class Repository {
     required String status,
     List<Map<String, String>>? punching,
     List<Map<String, String>>? breaks,
+    String? photo,
+    int? odometer,
     bool isLoading = false,
   }) async {
     try {
@@ -1240,6 +1250,8 @@ class Repository {
         status: status,
         punching: punching,
         breaks: breaks,
+        photo: photo,
+        odometer: odometer,
         isLoading: isLoading,
       );
       if (response.hasError) {
@@ -1447,12 +1459,14 @@ class Repository {
     required String? userid,
     required String? month,
     required String? year,
+    String? workdays,
   }) async {
     try {
       var response = await _dataRepository.getSalaryApi(
         userid: userid,
         month: month,
         year: year,
+        workdays: workdays,
         isLoading: isLoading,
       );
       var productListModel = getSalaryModelFromJson(response.data);
@@ -1498,6 +1512,118 @@ class Repository {
       Utility.closeDialog();
       UnimplementedError();
       return null;
+    }
+  }
+
+  Future<String?> uploadAttendanceMediaApi(
+    String filePath, {
+    bool isLoading = false,
+  }) async {
+    try {
+      var response = await _dataRepository.uploadAttendanceMediaApi(
+        filePath,
+        isLoading: isLoading,
+      );
+      if (response.hasError) {
+        Utility.errorMessage(response.data.toString());
+        return null;
+      }
+      final decoded = json.decode(response.data);
+      if (decoded == null) return null;
+      final data = decoded['Data'] ?? decoded['data'];
+      if (data is String) {
+        return data;
+      } else if (data is Map) {
+        return (data['url'] ??
+                data['imageUrl'] ??
+                data['image'] ??
+                data['path'])
+            ?.toString();
+      }
+      return (decoded['url'] ??
+              decoded['imageUrl'] ??
+              decoded['image'] ??
+              decoded['path'])
+          ?.toString();
+    } catch (e, st) {
+      print('uploadAttendanceMediaApi error: $e\n$st');
+      Utility.errorMessage('Upload error: $e');
+      return null;
+    }
+  }
+
+  Future<String?> startTrackingApi({
+    required String userId,
+    required double latitude,
+    required double longitude,
+    required String time,
+    bool isLoading = false,
+  }) async {
+    try {
+      var response = await _dataRepository.startTrackingApi(
+        userId: userId,
+        latitude: latitude,
+        longitude: longitude,
+        time: time,
+        isLoading: isLoading,
+      );
+      if (response.hasError) {
+        return null;
+      }
+      final decoded = json.decode(response.data);
+      final data = decoded['Data'] ?? decoded['data'];
+      if (data != null) {
+        if (data is String) return data;
+        return (data['trackingId'] ?? data['_id'] ?? data['id'])?.toString();
+      }
+      return (decoded['trackingId'] ?? decoded['_id'] ?? decoded['id'])?.toString();
+    } catch (e) {
+      print('startTrackingApi error: $e');
+      return null;
+    }
+  }
+
+  Future<bool> stopTrackingApi({
+    required String userId,
+    required double latitude,
+    required double longitude,
+    required String time,
+    bool isLoading = false,
+  }) async {
+    try {
+      var response = await _dataRepository.stopTrackingApi(
+        userId: userId,
+        latitude: latitude,
+        longitude: longitude,
+        time: time,
+        isLoading: isLoading,
+      );
+      return !response.hasError;
+    } catch (e) {
+      print('stopTrackingApi error: $e');
+      return false;
+    }
+  }
+
+  Future<bool> updateLocationApi({
+    required String trackingId,
+    required double latitude,
+    required double longitude,
+    required String timestamp,
+    bool isLoading = false,
+  }) async {
+    try {
+      var response = await _dataRepository.updateLocationApi(
+        trackingId: trackingId,
+        latitude: latitude,
+        longitude: longitude,
+        timestamp: timestamp,
+        isLoading: isLoading,
+      );
+      return !response.hasError;
+    } catch (e) {
+      print('updateLocationApi error: $e');
+      return false;
     }
   }
 }

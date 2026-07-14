@@ -29,6 +29,10 @@ abstract class Utility {
       return false;
     }
 
+    if (kIsWeb) {
+      return true;
+    }
+
     try {
       // Try a DNS lookup to confirm internet access
       final result = await InternetAddress.lookup('google.com');

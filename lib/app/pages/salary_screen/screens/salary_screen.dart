@@ -401,6 +401,27 @@ class _SalaryScreenState extends State<SalaryScreen> {
                                             ),
                                           ],
                                         ),
+                                        const SizedBox(height: 8),
+
+                                        // ── Overtime Info Row ──
+                                        Row(
+                                          children: [
+                                            _buildInfoChip(
+                                              icon: Icons.access_time_outlined,
+                                              label: 'OT Hours',
+                                              value:
+                                                  '${salary.totalothours ?? 0} hrs',
+                                              color: Colors.blue,
+                                            ),
+                                            const SizedBox(width: 8),
+                                            _buildInfoChip(
+                                              icon: Icons.add_circle_outline,
+                                              label: 'OT Salary',
+                                              value: '₹${salary.otsalary ?? 0}',
+                                              color: Colors.green,
+                                            ),
+                                          ],
+                                        ),
                                         const SizedBox(height: 12),
 
                                         // ── Net Salary & Work Days Container ──

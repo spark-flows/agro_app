@@ -33,6 +33,8 @@ class GetSalaryData {
   int? basicsalary;
   int? presentdays;
   int? workinghours;
+  int? totalothours;
+  int? otsalary;
 
   GetSalaryData({
     this.userid,
@@ -41,6 +43,8 @@ class GetSalaryData {
     this.basicsalary,
     this.presentdays,
     this.workinghours,
+    this.totalothours,
+    this.otsalary,
   });
 
   factory GetSalaryData.fromJson(Map<String, dynamic> json) => GetSalaryData(
@@ -50,6 +54,8 @@ class GetSalaryData {
     basicsalary: json["basicsalary"],
     presentdays: json["presentdays"],
     workinghours: json["workinghours"],
+    totalothours: json["totalothours"],
+    otsalary: json["otsalary"],
   );
 
   Map<String, dynamic> toJson() => {
@@ -59,5 +65,7 @@ class GetSalaryData {
     "basicsalary": basicsalary,
     "presentdays": presentdays,
     "workinghours": workinghours,
+    "totalothours": totalothours,
+    "otsalary": otsalary,
   };
 }

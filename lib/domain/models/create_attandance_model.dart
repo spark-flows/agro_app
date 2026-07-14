@@ -54,6 +54,8 @@ class CreateAttendanceData {
     String? createdAt;
     String? updatedAt;
     int? v;
+    String? photo;
+    int? odometer;
 
     CreateAttendanceData({
         this.coordinates,
@@ -73,6 +75,8 @@ class CreateAttendanceData {
         this.createdAt,
         this.updatedAt,
         this.v,
+        this.photo,
+        this.odometer,
     });
 
     factory CreateAttendanceData.fromJson(Map<String, dynamic> json) => CreateAttendanceData(
@@ -93,6 +97,8 @@ class CreateAttendanceData {
         createdAt: json["createdAt"],
         updatedAt: json["updatedAt"],
         v: json["__v"],
+        photo: json["photo"],
+        odometer: json["odometer"],
     );
 
     Map<String, dynamic> toJson() => {
@@ -113,6 +119,8 @@ class CreateAttendanceData {
         "createdAt": createdAt,
         "updatedAt": updatedAt,
         "__v": v,
+        "photo": photo,
+        "odometer": odometer,
     };
 }
 

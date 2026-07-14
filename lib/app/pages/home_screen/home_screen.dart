@@ -141,7 +141,8 @@ class HomeScreen extends StatelessWidget {
                     crossAxisSpacing: 4,
                     mainAxisSpacing: 4,
                     children: [
-                      if (RoleUtils.isAdmin(controller.roleName))
+                      if (RoleUtils.isAdmin(controller.roleName) &&
+                          controller.roleName.toLowerCase().trim() != 'user')
                         _buildMenuCard(
                           title: 'Users',
                           icon: Icons.manage_accounts,

@@ -164,6 +164,19 @@ class _AddSalaryScreenState extends State<AddSalaryScreen> {
                 ),
                 const SizedBox(height: 20),
 
+                // ── Work Days ──────────────────────────────────────────
+                _buildField(
+                  fieldController: controller.workDayController,
+                  label: 'Work Days',
+                  icon: Icons.work_outline,
+                  keyboardType: TextInputType.number,
+                  inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                  validator: (v) =>
+                      v!.trim().isEmpty ? 'Enter work days' : null,
+                  onChanged: (_) => controller.calculateNetSalary(),
+                ),
+                const SizedBox(height: 20),
+
                 // ── User ───────────────────────────────────────────────
                 _buildDropdownField<UserData>(
                   label: 'User',
@@ -195,19 +208,6 @@ class _AddSalaryScreenState extends State<AddSalaryScreen> {
                     }
                     controller.update();
                   },
-                ),
-                const SizedBox(height: 20),
-
-                // ── Work Days ──────────────────────────────────────────
-                _buildField(
-                  fieldController: controller.workDayController,
-                  label: 'Work Days',
-                  icon: Icons.work_outline,
-                  keyboardType: TextInputType.number,
-                  inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                  validator: (v) =>
-                      v!.trim().isEmpty ? 'Enter work days' : null,
-                  onChanged: (_) => controller.calculateNetSalary(),
                 ),
                 const SizedBox(height: 20),
 

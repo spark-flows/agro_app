@@ -105,6 +105,8 @@ class SalaryDoc {
   String? remark;
   bool? isDeleted;
   String? createdAt;
+  int? totalothours;
+  int? otsalary;
 
   SalaryDoc({
     this.id,
@@ -125,6 +127,8 @@ class SalaryDoc {
     this.remark,
     this.isDeleted,
     this.createdAt,
+    this.totalothours,
+    this.otsalary,
   });
 
   factory SalaryDoc.fromJson(Map<String, dynamic> json) => SalaryDoc(
@@ -148,6 +152,8 @@ class SalaryDoc {
     remark: json["remark"],
     isDeleted: json["isDeleted"],
     createdAt: json["createdAt"],
+    totalothours: json["totalothours"],
+    otsalary: json["otsalary"],
   );
 
   Map<String, dynamic> toJson() => {
@@ -169,6 +175,8 @@ class SalaryDoc {
     "remark": remark,
     "isDeleted": isDeleted,
     "createdAt": createdAt,
+    "totalothours": totalothours,
+    "otsalary": otsalary,
   };
 }
 

@@ -36,13 +36,18 @@ class EndPoints {
   static String uploadTaskAttachmentApi = 'api/task/attachment';
 
   static String attendanceListApi = 'api/attendance';
-  static String createAttendanceApi = 'api/attendance/create';
+  static String createAttendanceApi = 'api/attendance/punching';
   static String getOneAttendanceApi = 'api/attendance/getone';
   static String deleteAttendanceApi = 'api/attendance/delete';
   static String changeAttendanceStatusApi = 'api/attendance/changestatus';
+  static String uploadAttendanceApi = 'api/attendance/upload';
 
   static String postCreateSalaryApi = 'api/salary/create';
   static String postSalaryListApi = 'api/salary';
   static String getSalaryApi = 'api/salary/getsalary';
   static String deleteSalaryApi = 'api/salary/delete';
+
+  static String startTrackingApi = 'api/tracking/start';
+  static String stopTrackingApi = 'api/tracking/stop';
+  static String updateLocationApi = 'api/tracking/location';
 }

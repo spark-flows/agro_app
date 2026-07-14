@@ -854,10 +854,10 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
 
     if (isClockedIn && !isClockedOut) {
       if (isOnBreak) {
-        title = "On Break";
+        title = "Paused";
         subtitle =
-            "Break started at $displayBreakStart. Click Break Out to resume.";
-        headerIcon = Icons.coffee_outlined;
+            "Shift paused at $displayBreakStart. Click Resume to resume work.";
+        headerIcon = Icons.pause_circle_outline;
         statusColor = Colors.orange;
       } else {
         title = "Clocked In";
@@ -971,14 +971,14 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                             ? Colors.orange
                             : ColorsValue.primary,
                       ),
-                      icon: Icon(
+                       icon: Icon(
                         isOnBreak
                             ? Icons.play_arrow_outlined
-                            : Icons.coffee_outlined,
+                            : Icons.pause_circle_outline,
                         size: 18,
                       ),
                       label: Text(
-                        isOnBreak ? "Break Out" : "Break In",
+                        isOnBreak ? "Resume" : "Pause",
                         style: const TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.bold,
@@ -1096,11 +1096,11 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
         _buildTimeInfo('In', timeInVal, Icons.login),
         _buildTimeInfo('Out', timeOutVal, Icons.logout),
         _buildTimeInfo(
-          'Break Start',
+          'Pause',
           breakStartVal,
-          Icons.free_breakfast_outlined,
+          Icons.pause_circle_outline,
         ),
-        _buildTimeInfo('Break End', breakEndVal, Icons.restaurant_outlined),
+        _buildTimeInfo('Resume', breakEndVal, Icons.play_circle_outline),
       ],
     );
   }

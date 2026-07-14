@@ -54,6 +54,10 @@ class Data {
   String? bankname;
   String? bankaccountnumber;
   String? bankifsscode;
+  int? salary;
+  int? allowance;
+  bool? liveTracking;
+  bool? odometer;
 
   Data({
     this.id,
@@ -75,6 +79,10 @@ class Data {
     this.bankname,
     this.bankaccountnumber,
     this.bankifsscode,
+    this.salary,
+    this.allowance,
+    this.liveTracking,
+    this.odometer,
   });
 
   factory Data.fromJson(Map<String, dynamic> json) => Data(
@@ -97,6 +105,10 @@ class Data {
     bankname: json["bankname"]?.toString(),
     bankaccountnumber: json["bankaccountnumber"]?.toString(),
     bankifsscode: (json["bankifsscode"] ?? json["bankifscode"])?.toString(),
+    salary: json["salary"] is num ? (json["salary"] as num).toInt() : null,
+    allowance: json["allowance"] is num ? (json["allowance"] as num).toInt() : null,
+    liveTracking: json["liveTracking"] is bool ? json["liveTracking"] : null,
+    odometer: json["odometer"] is bool ? json["odometer"] : null,
   );
 
   Map<String, dynamic> toJson() => {
@@ -119,6 +131,10 @@ class Data {
     "bankname": bankname,
     "bankaccountnumber": bankaccountnumber,
     "bankifsscode": bankifsscode,
+    "salary": salary,
+    "allowance": allowance,
+    "liveTracking": liveTracking,
+    "odometer": odometer,
   };
 }
 

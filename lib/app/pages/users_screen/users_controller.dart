@@ -23,6 +23,10 @@ class UsersController extends GetxController {
   final phoneCtrl = TextEditingController();
   final passwordCtrl = TextEditingController();
   final addressCtrl = TextEditingController();
+  final salaryCtrl = TextEditingController();
+  final allowanceCtrl = TextEditingController();
+  final RxBool liveTracking = false.obs;
+  final RxBool odometer = false.obs;
 
   final RxString editingUserId = "".obs;
   final RxBool isPasswordHidden = true.obs;
@@ -54,6 +58,8 @@ class UsersController extends GetxController {
     phoneCtrl.dispose();
     passwordCtrl.dispose();
     addressCtrl.dispose();
+    salaryCtrl.dispose();
+    allowanceCtrl.dispose();
     super.onClose();
   }
 
@@ -110,7 +116,11 @@ class UsersController extends GetxController {
     phoneCtrl.clear();
     passwordCtrl.clear();
     addressCtrl.clear();
-    selectedRoleId = null;
+    salaryCtrl.clear();
+    allowanceCtrl.clear();
+    liveTracking.value = false;
+    odometer.value = false;
+    selectedRoleId = "b8fbadff-5201-4fce-9038-0873bc3a93c1";
     isPasswordHidden.value = true;
     update();
   }
@@ -124,6 +134,10 @@ class UsersController extends GetxController {
     addressCtrl.text = user.address ?? '';
     selectedRoleId = user.roleid.id;
     isPasswordHidden.value = true;
+    salaryCtrl.clear();
+    allowanceCtrl.clear();
+    liveTracking.value = false;
+    odometer.value = false;
     update();
 
     Utility.showLoader();
@@ -138,6 +152,10 @@ class UsersController extends GetxController {
         passwordCtrl.text = data.password ?? '';
         addressCtrl.text = data.location ?? '';
         selectedRoleId = data.roleid?.id;
+        salaryCtrl.text = data.salary?.toString() ?? '';
+        allowanceCtrl.text = data.allowance?.toString() ?? '';
+        liveTracking.value = data.liveTracking ?? false;
+        odometer.value = data.odometer ?? false;
         update();
       }
     } catch (e) {
@@ -161,7 +179,11 @@ class UsersController extends GetxController {
       mobile: phoneCtrl.text.trim(),
       password: passwordCtrl.text.trim(),
       address: addressCtrl.text.trim(),
-      roleid: "b8fbadff-5201-4fce-9038-0873bc3a93c1",
+      roleid: selectedRoleId!,
+      salary: salaryCtrl.text.trim().isEmpty ? 0 : int.tryParse(salaryCtrl.text.trim()) ?? 0,
+      allowance: allowanceCtrl.text.trim().isEmpty ? 0 : int.tryParse(allowanceCtrl.text.trim()) ?? 0,
+      liveTracking: liveTracking.value,
+      odometer: odometer.value,
       isLoading: true,
     );
 

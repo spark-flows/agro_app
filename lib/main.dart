@@ -9,6 +9,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:upgrader/upgrader.dart';
+import 'package:flutter/foundation.dart';
 import 'firebase_options.dart';
 
 // Admin
@@ -22,7 +23,9 @@ import 'firebase_options.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-  FirebaseApi.initilizeNotification();
+  if (!kIsWeb) {
+    FirebaseApi.initilizeNotification();
+  }
   await initServices();
   await Upgrader.clearSavedSettings();
   SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);

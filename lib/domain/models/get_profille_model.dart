@@ -75,6 +75,7 @@ class ProfileDataUserData {
   String currencyCode;
   String fcmToken;
   ProfileBranch? branchid;
+  bool? odometer;
 
   ProfileDataUserData({
     required this.id,
@@ -101,6 +102,7 @@ class ProfileDataUserData {
     required this.currencyCode,
     required this.fcmToken,
     this.branchid,
+    this.odometer,
   });
 
   factory ProfileDataUserData.fromJson(Map<String, dynamic> json) =>
@@ -141,6 +143,7 @@ class ProfileDataUserData {
         branchid: json["branchid"] != null
             ? ProfileBranch.fromJson(json["branchid"] as Map<String, dynamic>)
             : null,
+        odometer: json["odometer"] as bool? ?? false,
       );
 
   Map<String, dynamic> toJson() => {
@@ -168,6 +171,7 @@ class ProfileDataUserData {
     "currencyCode": currencyCode,
     "fcm_token": fcmToken,
     "branchid": branchid?.toJson(),
+    "odometer": odometer,
   };
 }
 
