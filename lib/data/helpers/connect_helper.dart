@@ -1422,7 +1422,8 @@ class ConnectHelper {
     required String? year,
     String? workdays,
   }) async {
-    String url = "${EndPoints.getSalaryApi}?userid=$userid&month=$month&year=$year";
+    String url =
+        "${EndPoints.getSalaryApi}?userid=$userid&month=$month&year=$year";
     if (workdays != null && workdays.isNotEmpty) {
       url += "&workdays=$workdays";
     }
@@ -1461,7 +1462,10 @@ class ConnectHelper {
     return response;
   }
 
-  Future<ResponseModel> uploadAttendanceMediaApi(String filePath, {bool isLoading = false}) async {
+  Future<ResponseModel> uploadAttendanceMediaApi(
+    String filePath, {
+    bool isLoading = false,
+  }) async {
     try {
       final headers = await Utility.commonHeader();
       headers.remove('Content-Type');
@@ -1472,14 +1476,14 @@ class ConnectHelper {
         formData = FormData.fromMap({
           'image': MultipartFile.fromBytes(
             bytes,
-            filename: filePath.split('/').last,
+            filename: filePath.split(RegExp(r'[/\\]')).last,
           ),
         });
       } else {
         formData = FormData.fromMap({
           'image': await MultipartFile.fromFile(
             filePath,
-            filename: filePath.split('/').last,
+            filename: filePath.split(RegExp(r'[/\\]')).last,
           ),
         });
       }
@@ -1504,11 +1508,7 @@ class ConnectHelper {
         );
       }
     } catch (e) {
-      return ResponseModel(
-        data: e.toString(),
-        hasError: true,
-        statusCode: 500,
-      );
+      return ResponseModel(data: e.toString(), hasError: true, statusCode: 500);
     }
   }
 

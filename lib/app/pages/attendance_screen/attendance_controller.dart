@@ -558,9 +558,29 @@ class AttendanceController extends GetxController {
 
       Utility.closeLoader();
 
-      List<Map<String, String>> punchingPayload = [
-        {"timein": timeStr, "timeout": "00:00"},
-      ];
+      final record = getTodayRecord();
+      List<Map<String, String>> punchingPayload = [];
+      if (record != null && record.punching != null) {
+        for (var p in record.punching!) {
+          punchingPayload.add({
+            "timein": p.timein ?? "00:00",
+            "timeout": (p.timeout == null || p.timeout!.isEmpty)
+                ? "00:00"
+                : p.timeout!,
+          });
+        }
+      }
+      punchingPayload.add({"timein": timeStr, "timeout": "00:00"});
+
+      final List<Map<String, String>> breaksPayload = [];
+      if (record != null && record.breaks != null) {
+        for (var b in record.breaks!) {
+          breaksPayload.add({
+            "breakstart": b.breakstart ?? "00:00",
+            "breakend": b.breakend ?? "00:00",
+          });
+        }
+      }
 
       if (requiresOdometer) {
         _showOdometerVerificationDialog(
@@ -572,6 +592,7 @@ class AttendanceController extends GetxController {
       } else {
         Utility.showLoader();
         final response = await Get.find<Repository>().createAttendanceApi(
+          attendanceid: record?.id,
           date: todayStr,
           timein: timeStr,
           timeout: '',
@@ -581,7 +602,7 @@ class AttendanceController extends GetxController {
           remark: '',
           status: 'present',
           punching: punchingPayload,
-          breaks: [],
+          breaks: breaksPayload,
           isLoading: false,
         );
 
@@ -874,9 +895,21 @@ class AttendanceController extends GetxController {
                                       ) ??
                                       0;
 
+                                   final record = getTodayRecord();
+                                  final List<Map<String, String>> breaksPayload = [];
+                                  if (record != null && record.breaks != null) {
+                                    for (var b in record.breaks!) {
+                                      breaksPayload.add({
+                                        "breakstart": b.breakstart ?? "00:00",
+                                        "breakend": b.breakend ?? "00:00",
+                                      });
+                                    }
+                                  }
+
                                   // Call the API with the selfieUrl as photo and odoValue as odometer
                                   final response = await Get.find<Repository>()
                                       .createAttendanceApi(
+                                        attendanceid: record?.id,
                                         date: todayStr,
                                         timein: timeStr,
                                         timeout: '',
@@ -886,7 +919,7 @@ class AttendanceController extends GetxController {
                                         remark: '',
                                         status: 'present',
                                         punching: punchingPayload,
-                                        breaks: [],
+                                        breaks: breaksPayload,
                                         photo: selfieUrl,
                                         odometer: odoValue,
                                         isLoading: false,
@@ -981,7 +1014,9 @@ class AttendanceController extends GetxController {
         for (var p in record.punching!) {
           punchingPayload.add({
             "timein": p.timein ?? "00:00",
-            "timeout": p.timeout ?? "00:00",
+            "timeout": (p.timeout == null || p.timeout!.isEmpty)
+                ? "00:00"
+                : p.timeout!,
           });
         }
       }
@@ -1044,7 +1079,9 @@ class AttendanceController extends GetxController {
         for (var p in record.punching!) {
           punchingPayload.add({
             "timein": p.timein ?? "00:00",
-            "timeout": p.timeout ?? "00:00",
+            "timeout": (p.timeout == null || p.timeout!.isEmpty)
+                ? "00:00"
+                : p.timeout!,
           });
         }
       }
@@ -1107,7 +1144,9 @@ class AttendanceController extends GetxController {
         for (var p in record.punching!) {
           punchingPayload.add({
             "timein": p.timein ?? "00:00",
-            "timeout": p.timeout ?? "00:00",
+            "timeout": (p.timeout == null || p.timeout!.isEmpty)
+                ? "00:00"
+                : p.timeout!,
           });
         }
       }

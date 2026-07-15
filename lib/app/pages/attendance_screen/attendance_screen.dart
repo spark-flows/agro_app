@@ -945,82 +945,100 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                   "Clock In",
                   style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
                 ),
-                onPressed: isClockedOut
-                    ? null // Disable if already clocked out for today
-                    : () => controller.quickClockIn(),
+                onPressed: () => controller.quickClockIn(),
               ),
             )
           else ...[
-            Row(
-              children: [
-                Expanded(
-                  child: SizedBox(
-                    height: 48,
-                    child: OutlinedButton.icon(
-                      style: OutlinedButton.styleFrom(
-                        side: BorderSide(
-                          color: isOnBreak
-                              ? Colors.orange
-                              : ColorsValue.primary,
-                          width: 1.5,
+            if (isOnBreak)
+              SizedBox(
+                width: double.infinity,
+                height: 48,
+                child: ElevatedButton.icon(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.orange,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    elevation: 0,
+                  ),
+                  icon: const Icon(
+                    Icons.play_arrow_outlined,
+                    size: 18,
+                  ),
+                  label: const Text(
+                    "Resume",
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  onPressed: () {
+                    controller.quickBreakOut(record!);
+                  },
+                ),
+              )
+            else
+              Row(
+                children: [
+                  Expanded(
+                    child: SizedBox(
+                      height: 48,
+                      child: OutlinedButton.icon(
+                        style: OutlinedButton.styleFrom(
+                          side: const BorderSide(
+                            color: ColorsValue.primary,
+                            width: 1.5,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          foregroundColor: ColorsValue.primary,
                         ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
+                        icon: const Icon(
+                          Icons.pause_circle_outline,
+                          size: 18,
                         ),
-                        foregroundColor: isOnBreak
-                            ? Colors.orange
-                            : ColorsValue.primary,
-                      ),
-                       icon: Icon(
-                        isOnBreak
-                            ? Icons.play_arrow_outlined
-                            : Icons.pause_circle_outline,
-                        size: 18,
-                      ),
-                      label: Text(
-                        isOnBreak ? "Resume" : "Pause",
-                        style: const TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.bold,
+                        label: const Text(
+                          "Pause",
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
-                      ),
-                      onPressed: () {
-                        if (isOnBreak) {
-                          controller.quickBreakOut(record!);
-                        } else {
+                        onPressed: () {
                           controller.quickBreakIn(record!);
-                        }
-                      },
+                        },
+                      ),
                     ),
                   ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: SizedBox(
-                    height: 48,
-                    child: ElevatedButton.icon(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.red,
-                        foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: SizedBox(
+                      height: 48,
+                      child: ElevatedButton.icon(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.red,
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          elevation: 0,
                         ),
-                        elevation: 0,
-                      ),
-                      icon: const Icon(Icons.logout, size: 18),
-                      label: const Text(
-                        "Clock Out",
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.bold,
+                        icon: const Icon(Icons.logout, size: 18),
+                        label: const Text(
+                          "Clock Out",
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
+                        onPressed: () => controller.quickClockOut(record!),
                       ),
-                      onPressed: () => controller.quickClockOut(record!),
                     ),
                   ),
-                ),
-              ],
-            ),
+                ],
+              ),
           ],
         ],
       ),

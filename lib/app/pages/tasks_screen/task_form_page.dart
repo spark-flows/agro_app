@@ -455,7 +455,9 @@ class _TaskFormPageState extends State<TaskFormPage> {
                         ) {
                           final idx = entry.key;
                           final file = entry.value;
-                          final fileName = file.path.split('/').last;
+                          final fileName = file.path
+                              .split(RegExp(r'[/\\]'))
+                              .last;
                           return Container(
                             margin: const EdgeInsets.only(bottom: 8),
                             padding: const EdgeInsets.symmetric(
