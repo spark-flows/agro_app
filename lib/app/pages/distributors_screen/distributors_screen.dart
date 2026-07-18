@@ -1,6 +1,7 @@
 import 'package:agro_app/app/pages/distributors_screen/distributors_controller.dart';
 import 'package:agro_app/app/theme/theme.dart';
 import 'package:agro_app/app/utils/utility.dart';
+import 'package:agro_app/domain/models/get_all_users_model.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
@@ -143,9 +144,8 @@ class _DistributorsScreenState extends State<DistributorsScreen> {
                                   borderRadius: BorderRadius.circular(12),
                                 ),
                                 child: InkWell(
-                                  onTap: () async {
-                                    await controller.setupEdit(user);
-                                    Get.toNamed<void>('/distributorForm');
+                                  onTap: () {
+                                    _showUserProfileSheet(context, user, controller);
                                   },
                                   borderRadius: BorderRadius.circular(12),
                                   child: ListTile(
@@ -228,6 +228,232 @@ class _DistributorsScreenState extends State<DistributorsScreen> {
           ),
         );
       },
+    );
+  }
+
+  // ─── User Profile + Clock In/Out Bottom Sheet ──────────────────────────────
+
+  void _showUserProfileSheet(
+    BuildContext context,
+    Doc user,
+    DistributorsController controller,
+  ) {
+    const bool showAttendance = true;
+
+    Get.bottomSheet<void>(
+      StatefulBuilder(
+        builder: (ctx, setState) {
+          return Container(
+            decoration: const BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+            ),
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // ── Drag handle
+                  const SizedBox(height: 12),
+                  Center(
+                    child: Container(
+                      width: 40,
+                      height: 5,
+                      decoration: BoxDecoration(
+                        color: Colors.grey.shade300,
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+
+                  // ── Avatar + Name
+                  CircleAvatar(
+                    radius: 36,
+                    backgroundColor: ColorsValue.primary.withValues(alpha: 0.12),
+                    child: Text(
+                      user.name.isNotEmpty ? user.name[0].toUpperCase() : '?',
+                      style: const TextStyle(
+                        fontSize: 28,
+                        fontWeight: FontWeight.bold,
+                        color: ColorsValue.primary,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  Text(
+                    '${user.name}${user.surname != null && user.surname!.isNotEmpty ? " ${user.surname}" : ""}',
+                    style: Styles.txtBlackColorW70020,
+                  ),
+                  const SizedBox(height: 4),
+                  Text(user.email, style: Styles.txtGreyColorW40014),
+                  const SizedBox(height: 4),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: ColorsValue.primary.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Text(
+                      (user.roleid.rolename ?? '').isNotEmpty
+                          ? user.roleid.rolename!
+                          : 'Member',
+                      style: const TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        color: ColorsValue.primary,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+
+                  // ── Attendance Actions Panel ─────────────────────────────
+                  if (showAttendance) ...([
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Container(
+                                width: 4,
+                                height: 16,
+                                decoration: BoxDecoration(
+                                  color: ColorsValue.primary,
+                                  borderRadius: BorderRadius.circular(2),
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Text(
+                                'Attendance Actions',
+                                style: Styles.txtBlackColorW60014,
+                              ),
+                            ],
+                          ),
+                          GetBuilder<DistributorsController>(
+                            builder: (distCtrl) {
+                              final currentUser = distCtrl.users.firstWhere(
+                                (u) => u.id == user.id,
+                                orElse: () => user,
+                              );
+                              final isClockedIn = currentUser.isClockedIn;
+
+                              return Column(
+                                children: [
+                                  // ── Row 1: Clock In / Clock Out
+                                  Row(
+                                    children: [
+                                      // Clock In button
+                                      Expanded(
+                                        child: _attendanceButton(
+                                          label: 'Clock In',
+                                          icon: Icons.login_rounded,
+                                          color: Colors.green,
+                                          enabled: !isClockedIn,
+                                          onTap: () {
+                                            distCtrl.clockInDistributor(currentUser);
+                                          },
+                                        ),
+                                      ),
+                                      const SizedBox(width: 10),
+                                      // Clock Out button
+                                      Expanded(
+                                        child: _attendanceButton(
+                                          label: 'Clock Out',
+                                          icon: Icons.logout_rounded,
+                                          color: Colors.red,
+                                          enabled: isClockedIn,
+                                          onTap: () {
+                                            distCtrl.clockOutDistributor(currentUser);
+                                          },
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              );
+                            },
+                          ),
+                          const SizedBox(height: 16),
+                          Divider(color: Colors.grey.shade100),
+                        ],
+                      ),
+                    ),
+                  ]),
+
+                  // ── Edit / View Button ───────────────────────────────────
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 8, 20, 8),
+                    child: ElevatedButton.icon(
+                      onPressed: () async {
+                        Get.back();
+                        await controller.setupEdit(user);
+                        Get.toNamed<void>('/distributorForm');
+                      },
+                      icon: const Icon(Icons.edit_outlined, size: 18),
+                      label: const Text('Edit Profile'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: ColorsValue.primary,
+                        foregroundColor: Colors.white,
+                        minimumSize: const Size(double.infinity, 48),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                    ),
+                  ),
+                  SizedBox(height: MediaQuery.of(context).padding.bottom + 12),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+    );
+  }
+
+  // ── Attendance action button helper ────────────────────────────────────────
+  Widget _attendanceButton({
+    required String label,
+    required IconData icon,
+    required Color color,
+    required bool enabled,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: enabled ? onTap : null,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(vertical: 14),
+        decoration: BoxDecoration(
+          color: enabled ? color.withValues(alpha: 0.1) : Colors.grey.shade100,
+          border: Border.all(
+            color: enabled ? color.withValues(alpha: 0.4) : Colors.grey.shade200,
+          ),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              icon,
+              color: enabled ? color : Colors.grey.shade400,
+              size: 26,
+            ),
+            const SizedBox(height: 4),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: enabled ? color : Colors.grey.shade400,
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -457,7 +683,7 @@ class _DistributorsScreenState extends State<DistributorsScreen> {
                 // ── Role Dropdown
                 DropdownButtonFormField<String>(
                   autovalidateMode: AutovalidateMode.onUserInteraction,
-                  value: controller.selectedRoleId,
+                  value: controller.selectedRoleId.value,
                   decoration: InputDecoration(
                     labelText: 'Role',
                     labelStyle: Styles.txtGreyColorW40014,
@@ -491,7 +717,7 @@ class _DistributorsScreenState extends State<DistributorsScreen> {
                     );
                   }).toList(),
                   onChanged: (val) {
-                    controller.selectedRoleId = val;
+                    controller.selectedRoleId.value = val;
                   },
                   validator: (v) => v == null ? 'Please select a role' : null,
                 ),

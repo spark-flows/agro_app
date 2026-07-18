@@ -1572,6 +1572,19 @@ class ConnectHelper {
       await Utility.commonHeader(),
     );
   }
+
+  Future<ResponseModel> pauseTrackingApi({
+    required Map<String, dynamic> body,
+    bool isLoading = false,
+  }) async {
+    return apiWrapper.makeRequest(
+      EndPoints.pauseTrackingApi,
+      Request.post,
+      body,
+      isLoading,
+      await Utility.commonHeader(),
+    );
+  }
 }
 
 class FileUrl {

@@ -264,6 +264,110 @@ class DistributorFormPage extends StatelessWidget {
                 // ),
                 // const SizedBox(height: 32),
 
+                // ── Attendance Settings (User role only) ──────────────────
+                Obx(() {
+                  final selectedRole = controller.roles.firstWhereOrNull(
+                    (r) => r.id == controller.selectedRoleId.value,
+                  );
+                  final isUserRole =
+                      selectedRole?.rolename.toLowerCase() == 'user';
+                  if (!isUserRole) return const SizedBox.shrink();
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _sectionHeader('Attendance Settings'),
+                      const SizedBox(height: 4),
+                      Container(
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: Colors.grey.shade200),
+                        ),
+                        child: Column(
+                          children: [
+                            Obx(
+                              () => SwitchListTile(
+                                secondary: Container(
+                                  padding: const EdgeInsets.all(6),
+                                  decoration: BoxDecoration(
+                                    color: ColorsValue.primary.withValues(
+                                      alpha: 0.1,
+                                    ),
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: const Icon(
+                                    Icons.punch_clock_outlined,
+                                    color: ColorsValue.primary,
+                                    size: 20,
+                                  ),
+                                ),
+                                title: const Text(
+                                  'Clock In / Clock Out',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 14,
+                                  ),
+                                ),
+                                subtitle: const Text(
+                                  'Enable live location tracking during shifts',
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    color: Colors.grey,
+                                  ),
+                                ),
+                                value: controller.liveTracking.value,
+                                activeColor: ColorsValue.primary,
+                                onChanged: (val) {
+                                  controller.liveTracking.value = val;
+                                },
+                              ),
+                            ),
+                            Divider(height: 1, color: Colors.grey.shade100),
+                            Obx(
+                              () => SwitchListTile(
+                                secondary: Container(
+                                  padding: const EdgeInsets.all(6),
+                                  decoration: BoxDecoration(
+                                    color: ColorsValue.primary.withValues(
+                                      alpha: 0.1,
+                                    ),
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: const Icon(
+                                    Icons.speed_outlined,
+                                    color: ColorsValue.primary,
+                                    size: 20,
+                                  ),
+                                ),
+                                title: const Text(
+                                  'Odometer',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 14,
+                                  ),
+                                ),
+                                subtitle: const Text(
+                                  'Require selfie & odometer reading on punch',
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    color: Colors.grey,
+                                  ),
+                                ),
+                                value: controller.odometer.value,
+                                activeColor: ColorsValue.primary,
+                                onChanged: (val) {
+                                  controller.odometer.value = val;
+                                },
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+                    ],
+                  );
+                }),
+
                 // ── Save Button ────────────────────────────────────────────
                 ElevatedButton(
                   onPressed: () {

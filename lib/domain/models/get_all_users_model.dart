@@ -111,6 +111,12 @@ class Doc {
   String? surname;
   String? fathername;
 
+  // Distributor shift / clock states (totally separate)
+  bool isClockedIn;
+  bool isClockedOut;
+  String? clockInTime;
+  String? clockOutTime;
+
   Doc({
     required this.id,
     required this.code,
@@ -128,6 +134,10 @@ class Doc {
     required this.deletedBy,
     this.surname,
     this.fathername,
+    this.isClockedIn = false,
+    this.isClockedOut = false,
+    this.clockInTime,
+    this.clockOutTime,
   });
 
   factory Doc.fromJson(Map<String, dynamic> json) => Doc(
@@ -159,6 +169,10 @@ class Doc {
         : DeletedBy(),
     surname: json["surname"]?.toString(),
     fathername: json["fathername"]?.toString(),
+    isClockedIn: json["isClockedIn"] is bool ? json["isClockedIn"] : false,
+    isClockedOut: json["isClockedOut"] is bool ? json["isClockedOut"] : false,
+    clockInTime: json["clockInTime"]?.toString(),
+    clockOutTime: json["clockOutTime"]?.toString(),
   );
 
   Map<String, dynamic> toJson() => {
@@ -178,6 +192,10 @@ class Doc {
     "deletedBy": deletedBy.toJson(),
     "surname": surname,
     "fathername": fathername,
+    "isClockedIn": isClockedIn,
+    "isClockedOut": isClockedOut,
+    "clockInTime": clockInTime,
+    "clockOutTime": clockOutTime,
   };
 }
 

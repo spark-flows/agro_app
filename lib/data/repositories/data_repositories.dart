@@ -643,4 +643,13 @@ class DataRepository extends DomainRepository {
         timestamp: timestamp,
         isLoading: isLoading,
       );
+
+  Future<ResponseModel> pauseTrackingApi({
+    required Map<String, dynamic> body,
+    bool isLoading = false,
+  }) async =>
+      connectHelper.pauseTrackingApi(
+        body: body,
+        isLoading: isLoading,
+      );
 }

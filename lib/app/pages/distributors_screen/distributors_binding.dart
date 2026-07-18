@@ -4,6 +4,9 @@ import 'package:get/get.dart';
 class DistributorsBinding extends Bindings {
   @override
   void dependencies() {
-    Get.lazyPut<DistributorsController>(() => DistributorsController());
+    Get.lazyPut<DistributorsController>(
+      () => DistributorsController(),
+      fenix: true,
+    );
   }
 }

@@ -1626,4 +1626,20 @@ class Repository {
       return false;
     }
   }
+
+  Future<bool> pauseTrackingApi({
+    required Map<String, dynamic> body,
+    bool isLoading = false,
+  }) async {
+    try {
+      var response = await _dataRepository.pauseTrackingApi(
+        body: body,
+        isLoading: isLoading,
+      );
+      return !response.hasError;
+    } catch (e) {
+      print('pauseTrackingApi error: $e');
+      return false;
+    }
+  }
 }

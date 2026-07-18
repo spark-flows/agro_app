@@ -50,4 +50,5 @@ class EndPoints {
   static String startTrackingApi = 'api/tracking/start';
   static String stopTrackingApi = 'api/tracking/stop';
   static String updateLocationApi = 'api/tracking/location';
+  static String pauseTrackingApi = 'api/tracking/pause';
 }

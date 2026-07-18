@@ -216,7 +216,20 @@ abstract class Utility {
   static void closeDialog() {
     if (Get.isDialogOpen == true) {
       Get.back<void>();
+    } else {
+      _closeDialogWithRetry(0);
     }
+  }
+
+  static void _closeDialogWithRetry(int retryCount) {
+    if (retryCount >= 15) return;
+    Future.delayed(const Duration(milliseconds: 50), () {
+      if (Get.isDialogOpen == true) {
+        Get.back<void>();
+      } else {
+        _closeDialogWithRetry(retryCount + 1);
+      }
+    });
   }
 
   static String capitalizeFirst(String text) {

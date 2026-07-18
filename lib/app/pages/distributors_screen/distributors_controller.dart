@@ -1,9 +1,12 @@
+import 'dart:convert';
 import 'package:agro_app/domain/models/get_all_roll_model.dart';
 import 'package:agro_app/domain/models/get_all_users_model.dart';
 import 'package:agro_app/domain/models/get_one_user_model.dart';
 import 'package:agro_app/domain/repositories/repository.dart';
+import 'package:agro_app/domain/repositories/local_storage_keys.dart';
 import 'package:agro_app/app/utils/utility.dart';
 import 'package:flutter/material.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:get/get.dart';
 
 class DistributorsController extends GetxController {
@@ -37,7 +40,9 @@ class DistributorsController extends GetxController {
 
   final RxString editingUserId = "".obs;
   final RxBool isPasswordHidden = true.obs;
-  String? selectedRoleId;
+  final RxBool liveTracking = false.obs;
+  final RxBool odometer = false.obs;
+  final RxnString selectedRoleId = RxnString();
   List<GetAllRolesDatum> roles = [];
 
   // Distributor role ID — fixed filter for this screen
@@ -142,8 +147,10 @@ class DistributorsController extends GetxController {
     banknameCtrl.clear();
     bankaccountnumberCtrl.clear();
     bankifscodeCtrl.clear();
-    selectedRoleId = _distributorRoleId;
+    selectedRoleId.value = _distributorRoleId;
     isPasswordHidden.value = true;
+    liveTracking.value = false;
+    odometer.value = false;
     update();
   }
 
@@ -162,7 +169,7 @@ class DistributorsController extends GetxController {
     banknameCtrl.clear();
     bankaccountnumberCtrl.clear();
     bankifscodeCtrl.clear();
-    selectedRoleId = user.roleid.id;
+    selectedRoleId.value = user.roleid.id;
     isPasswordHidden.value = true;
     update();
 
@@ -184,7 +191,9 @@ class DistributorsController extends GetxController {
         banknameCtrl.text = data.bankname ?? '';
         bankaccountnumberCtrl.text = data.bankaccountnumber ?? '';
         bankifscodeCtrl.text = data.bankifsscode ?? '';
-        selectedRoleId = data.roleid?.id;
+        selectedRoleId.value = data.roleid?.id;
+        liveTracking.value = data.liveTracking ?? false;
+        odometer.value = data.odometer ?? false;
         update();
       }
     } catch (e) {
@@ -195,7 +204,7 @@ class DistributorsController extends GetxController {
   }
 
   Future<void> saveUser() async {
-    if (selectedRoleId == null) {
+    if (selectedRoleId.value == null) {
       Utility.errorMessage('Please select a role');
       return;
     }
@@ -208,7 +217,7 @@ class DistributorsController extends GetxController {
       mobile: phoneCtrl.text.trim(),
       password: passwordCtrl.text.trim(),
       address: addressCtrl.text.trim(),
-      roleid: 'cf4527b2-86df-4470-a14d-37288a536e37', // selectedRoleId!,
+      roleid: 'cf4527b2-86df-4470-a14d-37288a536e37', // selectedRoleId.value!,
       surname: surnameCtrl.text.trim(),
       fathername: fathernameCtrl.text.trim(),
       gstnumber: gstnumberCtrl.text.trim(),
@@ -216,6 +225,8 @@ class DistributorsController extends GetxController {
       bankname: banknameCtrl.text.trim(),
       bankaccountnumber: bankaccountnumberCtrl.text.trim(),
       bankifsscode: bankifscodeCtrl.text.trim(),
+      liveTracking: liveTracking.value,
+      odometer: odometer.value,
       isLoading: true,
     );
 
@@ -230,6 +241,113 @@ class DistributorsController extends GetxController {
       fetchUsers(isRefresh: true);
     } else {
       Utility.errorMessage(errorMsg);
+    }
+  }
+
+  // ── Distributor shift actions (Separate from Attendance) ───────────────────
+  Future<void> clockInDistributor(Doc user) async {
+    double lat = 0.0;
+    double lon = 0.0;
+    try {
+      bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (serviceEnabled) {
+        LocationPermission permission = await Geolocator.checkPermission();
+        if (permission == LocationPermission.denied) {
+          permission = await Geolocator.requestPermission();
+        }
+        if (permission != LocationPermission.denied &&
+            permission != LocationPermission.deniedForever) {
+          final position = await Geolocator.getCurrentPosition(
+            desiredAccuracy: LocationAccuracy.high,
+            timeLimit: const Duration(seconds: 5),
+          );
+          lat = position.latitude;
+          lon = position.longitude;
+        }
+      }
+    } catch (e) {
+      debugPrint('[DistributorsController] geolocator error: $e');
+    }
+
+    String userId = await Get.find<Repository>().getSecureValue(LocalKeys.userIds);
+    if (userId.trim().isEmpty) {
+      userId = await Get.find<Repository>().getSecureValue(LocalKeys.distributorId);
+    }
+    if (userId.trim().isEmpty) {
+      try {
+        final profileJson = await Get.find<Repository>().getSecureValue(LocalKeys.profileData);
+        if (profileJson.isNotEmpty) {
+          final decoded = json.decode(profileJson);
+          final userData = decoded['userData'] ?? decoded['UserData'] ?? decoded;
+          userId = (userData['_id'] ?? userData['id'] ?? '')?.toString() ?? '';
+        }
+      } catch (_) {}
+    }
+
+    final String timein = DateTime.now().toUtc().toIso8601String();
+
+    final Map<String, dynamic> body = {
+      "userId": userId,
+      "delearId": user.id,
+      "latitude": lat,
+      "longitude": lon,
+      "timein": timein,
+    };
+
+    debugPrint('[DistributorsController] clockInDistributor payload: $body');
+
+    Utility.showLoader();
+    bool success = await Get.find<Repository>().pauseTrackingApi(body: body, isLoading: false);
+    Utility.closeLoader();
+
+    if (success) {
+      user.isClockedIn = true;
+      user.isClockedOut = false;
+      user.clockInTime = timein;
+      update();
+      Utility.snacBar('Clocked in successfully', Colors.green);
+    } else {
+      Utility.errorMessage('Clock In failed. Please try again.');
+    }
+  }
+
+  Future<void> clockOutDistributor(Doc user) async {
+    String userId = await Get.find<Repository>().getSecureValue(LocalKeys.userIds);
+    if (userId.trim().isEmpty) {
+      userId = await Get.find<Repository>().getSecureValue(LocalKeys.distributorId);
+    }
+    if (userId.trim().isEmpty) {
+      try {
+        final profileJson = await Get.find<Repository>().getSecureValue(LocalKeys.profileData);
+        if (profileJson.isNotEmpty) {
+          final decoded = json.decode(profileJson);
+          final userData = decoded['userData'] ?? decoded['UserData'] ?? decoded;
+          userId = (userData['_id'] ?? userData['id'] ?? '')?.toString() ?? '';
+        }
+      } catch (_) {}
+    }
+
+    final String timeout = DateTime.now().toUtc().toIso8601String();
+
+    final Map<String, dynamic> body = {
+      "userId": userId,
+      "timeout": timeout,
+    };
+
+    debugPrint('[DistributorsController] clockOutDistributor payload: $body');
+
+    Utility.showLoader();
+    bool success = await Get.find<Repository>().pauseTrackingApi(body: body, isLoading: false);
+    Utility.closeLoader();
+
+    if (success) {
+      user.isClockedOut = true;
+      user.isClockedIn = false;
+      user.clockOutTime = timeout;
+      update();
+      Utility.snacBar('Clocked out successfully', Colors.green);
+    } else {
+      Utility.errorMessage('Clock Out failed. Please try again.');
     }
   }
 }
