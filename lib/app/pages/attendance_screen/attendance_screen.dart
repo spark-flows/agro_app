@@ -974,7 +974,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                     ),
                   ),
                   onPressed: () {
-                    controller.quickBreakOut(record!);
+                    controller.quickBreakOut(record);
                   },
                 ),
               )
@@ -1007,7 +1007,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                           ),
                         ),
                         onPressed: () {
-                          controller.quickBreakIn(record!);
+                          controller.quickBreakIn(record);
                         },
                       ),
                     ),
@@ -1033,7 +1033,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                             fontWeight: FontWeight.bold,
                           ),
                         ),
-                        onPressed: () => controller.quickClockOut(record!),
+                        onPressed: () => controller.quickClockOut(record),
                       ),
                     ),
                   ),

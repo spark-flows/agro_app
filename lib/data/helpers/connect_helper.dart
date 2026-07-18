@@ -1227,17 +1227,12 @@ class ConnectHelper {
     Map<String, dynamic> data;
     if (isUser) {
       data = {
-        "attendanceid": attendanceid ?? "",
+        "userid": distributorId,
         "date": date,
         "branchid": branchId,
-        "userid": distributorId,
+        "photo": photo,
+        "odometer": odometer,
         "coordinates": coordinates,
-        "punching": punching ?? [],
-        "break": breaks ?? [],
-        "remark": remark,
-        "status": "present",
-        if (photo != null) "photo": photo,
-        if (odometer != null) "odometer": odometer,
       };
     } else {
       data = {

@@ -486,7 +486,27 @@ class AttendanceController extends GetxController {
     return null;
   }
 
+  String getLocalAttendanceStatus() {
+    final todayStr = DateFormat('yyyy-MM-dd').format(DateTime.now());
+    final savedDate = Get.find<Repository>().getStringValue('attendance_date');
+    if (savedDate == todayStr) {
+      return Get.find<Repository>().getStringValue('attendance_status');
+    }
+    return 'none';
+  }
+
+  void setLocalAttendanceStatus(String status) {
+    final todayStr = DateFormat('yyyy-MM-dd').format(DateTime.now());
+    Get.find<Repository>().saveValue('attendance_date', todayStr);
+    Get.find<Repository>().saveValue('attendance_status', status);
+    update();
+  }
+
   bool isClockedInToday(get_all_model.GetAllAttendanceDoc? record) {
+    final localStatus = getLocalAttendanceStatus();
+    if (localStatus != 'none') {
+      return localStatus == 'clocked_in' || localStatus == 'paused';
+    }
     if (record == null) return false;
     if (record.timein != null &&
         record.timein!.isNotEmpty &&
@@ -506,6 +526,10 @@ class AttendanceController extends GetxController {
   }
 
   bool isClockedOutToday(get_all_model.GetAllAttendanceDoc? record) {
+    final localStatus = getLocalAttendanceStatus();
+    if (localStatus != 'none') {
+      return localStatus == 'clocked_out';
+    }
     if (record == null) return false;
     if (record.timeout != null && record.timeout!.isNotEmpty) {
       return true;
@@ -521,6 +545,10 @@ class AttendanceController extends GetxController {
   }
 
   bool isOnBreakToday(get_all_model.GetAllAttendanceDoc? record) {
+    final localStatus = getLocalAttendanceStatus();
+    if (localStatus != 'none') {
+      return localStatus == 'paused';
+    }
     if (record == null) return false;
     if (record.breakstart != null &&
         record.breakstart!.isNotEmpty &&
@@ -608,6 +636,7 @@ class AttendanceController extends GetxController {
 
         Utility.closeLoader();
         if (response != null && response.isSuccess == true) {
+          setLocalAttendanceStatus('clocked_in');
           fetchAttendance(isRefresh: true);
           Utility.snacBar('Clocked in successfully', Colors.green);
           _triggerStartTracking(coordinates);
@@ -895,8 +924,9 @@ class AttendanceController extends GetxController {
                                       ) ??
                                       0;
 
-                                   final record = getTodayRecord();
-                                  final List<Map<String, String>> breaksPayload = [];
+                                  final record = getTodayRecord();
+                                  final List<Map<String, String>>
+                                  breaksPayload = [];
                                   if (record != null && record.breaks != null) {
                                     for (var b in record.breaks!) {
                                       breaksPayload.add({
@@ -930,6 +960,7 @@ class AttendanceController extends GetxController {
 
                                   if (response != null &&
                                       response.isSuccess == true) {
+                                    setLocalAttendanceStatus('clocked_in');
                                     fetchAttendance(isRefresh: true);
                                     Utility.snacBar(
                                       'Clocked in successfully',
@@ -1003,14 +1034,14 @@ class AttendanceController extends GetxController {
     return {};
   }
 
-  Future<void> quickClockOut(get_all_model.GetAllAttendanceDoc record) async {
+  Future<void> quickClockOut(get_all_model.GetAllAttendanceDoc? record) async {
     try {
       Utility.showLoader();
       final todayStr = DateFormat('yyyy-MM-dd').format(DateTime.now());
       final timeStr = DateFormat('hh:mm a').format(DateTime.now());
 
       final List<Map<String, String>> punchingPayload = [];
-      if (record.punching != null) {
+      if (record != null && record.punching != null) {
         for (var p in record.punching!) {
           punchingPayload.add({
             "timein": p.timein ?? "00:00",
@@ -1023,7 +1054,7 @@ class AttendanceController extends GetxController {
       punchingPayload.add({"timein": "00:00", "timeout": timeStr});
 
       final List<Map<String, String>> breaksPayload = [];
-      if (record.breaks != null) {
+      if (record != null && record.breaks != null) {
         for (var b in record.breaks!) {
           breaksPayload.add({
             "breakstart": b.breakstart ?? "00:00",
@@ -1032,22 +1063,24 @@ class AttendanceController extends GetxController {
         }
       }
 
-      final Map<String, String> coordinates = {
-        "latitude": record.coordinates?.latitude ?? '',
-        "longitude": record.coordinates?.longitude ?? '',
-      };
+      final Map<String, String> coordinates = record != null
+          ? {
+              "latitude": record.coordinates?.latitude ?? '',
+              "longitude": record.coordinates?.longitude ?? '',
+            }
+          : await _getCurrentCoordinates();
 
       final odoData = await _getSavedOdometerData();
 
       final response = await Get.find<Repository>().createAttendanceApi(
-        attendanceid: record.id,
+        attendanceid: record?.id,
         date: todayStr,
-        timein: record.timein ?? '',
+        timein: record?.timein ?? '',
         timeout: timeStr,
         coordinates: coordinates,
-        breakstart: record.breakstart ?? '',
-        breakend: record.breakend ?? '',
-        remark: record.remark ?? '',
+        breakstart: record?.breakstart ?? '',
+        breakend: record?.breakend ?? '',
+        remark: record?.remark ?? '',
         status: 'present',
         punching: punchingPayload,
         breaks: breaksPayload,
@@ -1058,6 +1091,7 @@ class AttendanceController extends GetxController {
 
       Utility.closeLoader();
       if (response != null && response.isSuccess == true) {
+        setLocalAttendanceStatus('clocked_out');
         fetchAttendance(isRefresh: true);
         Utility.snacBar('Clocked out successfully', Colors.green);
         _triggerStopTracking(coordinates);
@@ -1068,14 +1102,14 @@ class AttendanceController extends GetxController {
     }
   }
 
-  Future<void> quickBreakIn(get_all_model.GetAllAttendanceDoc record) async {
+  Future<void> quickBreakIn(get_all_model.GetAllAttendanceDoc? record) async {
     try {
       Utility.showLoader();
       final todayStr = DateFormat('yyyy-MM-dd').format(DateTime.now());
       final timeStr = DateFormat('hh:mm a').format(DateTime.now());
 
       final List<Map<String, String>> punchingPayload = [];
-      if (record.punching != null) {
+      if (record != null && record.punching != null) {
         for (var p in record.punching!) {
           punchingPayload.add({
             "timein": p.timein ?? "00:00",
@@ -1087,7 +1121,7 @@ class AttendanceController extends GetxController {
       }
 
       final List<Map<String, String>> breaksPayload = [];
-      if (record.breaks != null) {
+      if (record != null && record.breaks != null) {
         for (var b in record.breaks!) {
           breaksPayload.add({
             "breakstart": b.breakstart ?? "00:00",
@@ -1097,22 +1131,24 @@ class AttendanceController extends GetxController {
       }
       breaksPayload.add({"breakstart": timeStr, "breakend": "00:00"});
 
-      final Map<String, String> coordinates = {
-        "latitude": record.coordinates?.latitude ?? '',
-        "longitude": record.coordinates?.longitude ?? '',
-      };
+      final Map<String, String> coordinates = record != null
+          ? {
+              "latitude": record.coordinates?.latitude ?? '',
+              "longitude": record.coordinates?.longitude ?? '',
+            }
+          : await _getCurrentCoordinates();
 
       final odoData = await _getSavedOdometerData();
 
       final response = await Get.find<Repository>().createAttendanceApi(
-        attendanceid: record.id,
+        attendanceid: record?.id,
         date: todayStr,
-        timein: record.timein ?? '',
-        timeout: record.timeout ?? '',
+        timein: record?.timein ?? '',
+        timeout: record?.timeout ?? '',
         coordinates: coordinates,
         breakstart: timeStr,
         breakend: '',
-        remark: record.remark ?? '',
+        remark: record?.remark ?? '',
         status: 'present',
         punching: punchingPayload,
         breaks: breaksPayload,
@@ -1123,6 +1159,7 @@ class AttendanceController extends GetxController {
 
       Utility.closeLoader();
       if (response != null && response.isSuccess == true) {
+        setLocalAttendanceStatus('paused');
         fetchAttendance(isRefresh: true);
         Utility.snacBar('Shift paused successfully', Colors.green);
         _triggerStopTracking(coordinates);
@@ -1133,14 +1170,14 @@ class AttendanceController extends GetxController {
     }
   }
 
-  Future<void> quickBreakOut(get_all_model.GetAllAttendanceDoc record) async {
+  Future<void> quickBreakOut(get_all_model.GetAllAttendanceDoc? record) async {
     try {
       Utility.showLoader();
       final todayStr = DateFormat('yyyy-MM-dd').format(DateTime.now());
       final timeStr = DateFormat('hh:mm a').format(DateTime.now());
 
       final List<Map<String, String>> punchingPayload = [];
-      if (record.punching != null) {
+      if (record != null && record.punching != null) {
         for (var p in record.punching!) {
           punchingPayload.add({
             "timein": p.timein ?? "00:00",
@@ -1152,7 +1189,7 @@ class AttendanceController extends GetxController {
       }
 
       final List<Map<String, String>> breaksPayload = [];
-      if (record.breaks != null) {
+      if (record != null && record.breaks != null) {
         for (var b in record.breaks!) {
           breaksPayload.add({
             "breakstart": b.breakstart ?? "00:00",
@@ -1162,22 +1199,24 @@ class AttendanceController extends GetxController {
       }
       breaksPayload.add({"breakstart": "00:00", "breakend": timeStr});
 
-      final Map<String, String> coordinates = {
-        "latitude": record.coordinates?.latitude ?? '',
-        "longitude": record.coordinates?.longitude ?? '',
-      };
+      final Map<String, String> coordinates = record != null
+          ? {
+              "latitude": record.coordinates?.latitude ?? '',
+              "longitude": record.coordinates?.longitude ?? '',
+            }
+          : await _getCurrentCoordinates();
 
       final odoData = await _getSavedOdometerData();
 
       final response = await Get.find<Repository>().createAttendanceApi(
-        attendanceid: record.id,
+        attendanceid: record?.id,
         date: todayStr,
-        timein: record.timein ?? '',
-        timeout: record.timeout ?? '',
+        timein: record?.timein ?? '',
+        timeout: record?.timeout ?? '',
         coordinates: coordinates,
-        breakstart: record.breakstart ?? '',
+        breakstart: record?.breakstart ?? '',
         breakend: timeStr,
-        remark: record.remark ?? '',
+        remark: record?.remark ?? '',
         status: 'present',
         punching: punchingPayload,
         breaks: breaksPayload,
@@ -1188,6 +1227,7 @@ class AttendanceController extends GetxController {
 
       Utility.closeLoader();
       if (response != null && response.isSuccess == true) {
+        setLocalAttendanceStatus('clocked_in');
         fetchAttendance(isRefresh: true);
         Utility.snacBar('Shift resumed successfully', Colors.green);
         _triggerStartTracking(coordinates);
