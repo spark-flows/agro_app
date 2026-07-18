@@ -76,6 +76,7 @@ class ProfileDataUserData {
   String fcmToken;
   ProfileBranch? branchid;
   bool? odometer;
+  bool? liveTracking;
 
   ProfileDataUserData({
     required this.id,
@@ -103,6 +104,7 @@ class ProfileDataUserData {
     required this.fcmToken,
     this.branchid,
     this.odometer,
+    this.liveTracking,
   });
 
   factory ProfileDataUserData.fromJson(Map<String, dynamic> json) =>
@@ -144,6 +146,7 @@ class ProfileDataUserData {
             ? ProfileBranch.fromJson(json["branchid"] as Map<String, dynamic>)
             : null,
         odometer: json["odometer"] as bool? ?? false,
+        liveTracking: json["liveTracking"] as bool? ?? false,
       );
 
   Map<String, dynamic> toJson() => {
@@ -172,6 +175,7 @@ class ProfileDataUserData {
     "fcm_token": fcmToken,
     "branchid": branchid?.toJson(),
     "odometer": odometer,
+    "liveTracking": liveTracking,
   };
 }
 
