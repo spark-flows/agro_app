@@ -92,7 +92,12 @@ class _AddSalaryScreenState extends State<AddSalaryScreen> {
           'MMMM, yyyy',
         ).format(picked);
       });
-      controller.update();
+      if (controller.selectUser != null &&
+          controller.selectUser!.isNotEmpty) {
+        controller.getSalaryApi(0);
+      } else {
+        controller.update();
+      }
     }
   }
 
@@ -191,13 +196,20 @@ class _AddSalaryScreenState extends State<AddSalaryScreen> {
                       : null,
                   items: controller.userDataList
                       .map(
-                        (user) => DropdownMenuItem<UserData>(
-                          value: user,
-                          child: Text(
-                            user.name ?? '',
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
+                        (user) {
+                          final fullName = [user.name, user.surname]
+                              .where((s) => s != null && s.trim().isNotEmpty)
+                              .join(' ');
+                          return DropdownMenuItem<UserData>(
+                            value: user,
+                            child: Text(
+                              fullName.isNotEmpty
+                                  ? fullName
+                                  : (user.name ?? ''),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          );
+                        },
                       )
                       .toList(),
                   hint: 'Select User',
@@ -205,8 +217,15 @@ class _AddSalaryScreenState extends State<AddSalaryScreen> {
                     controller.selectUser = user?.id;
                     if (user?.id != null) {
                       controller.getSalaryApi(0);
+                    } else {
+                      controller.basicSalaryController.clear();
+                      controller.workDayController.clear();
+                      controller.bounsController.clear();
+                      controller.deductionController.clear();
+                      controller.netSalaryController.clear();
+                      controller.workingHours = 0;
+                      controller.update();
                     }
-                    controller.update();
                   },
                 ),
                 const SizedBox(height: 20),

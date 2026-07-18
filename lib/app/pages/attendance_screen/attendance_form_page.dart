@@ -18,7 +18,11 @@ class _AttendanceFormPageState extends State<AttendanceFormPage> {
     try {
       initialDate = DateFormat('dd-MM-yyyy').parse(controller.dateCtrl.text);
     } catch (_) {
-      initialDate = DateTime.now();
+      try {
+        initialDate = DateTime.parse(controller.dateCtrl.text);
+      } catch (_) {
+        initialDate = DateTime.now();
+      }
     }
 
     final DateTime? picked = await showDatePicker(
@@ -56,14 +60,20 @@ class _AttendanceFormPageState extends State<AttendanceFormPage> {
         initialTime = TimeOfDay(hour: parsedDate.hour, minute: parsedDate.minute);
       } catch (_) {
         try {
-          final parts = ctrl.text.split(':');
-          if (parts.length == 2) {
-            initialTime = TimeOfDay(
-              hour: int.parse(parts[0]),
-              minute: int.parse(parts[1]),
-            );
-          }
-        } catch (_) {}
+          final parsedDate = DateFormat('HH:mm').parse(ctrl.text);
+          initialTime = TimeOfDay(hour: parsedDate.hour, minute: parsedDate.minute);
+        } catch (_) {
+          try {
+            final parts = ctrl.text.trim().split(':');
+            if (parts.length >= 2) {
+              int hour = int.parse(parts[0]);
+              int minute = int.parse(parts[1].split(' ')[0]);
+              if (ctrl.text.toLowerCase().contains('pm') && hour < 12) hour += 12;
+              if (ctrl.text.toLowerCase().contains('am') && hour == 12) hour = 0;
+              initialTime = TimeOfDay(hour: hour, minute: minute);
+            }
+          } catch (_) {}
+        }
       }
     }
 
@@ -122,9 +132,7 @@ class _AttendanceFormPageState extends State<AttendanceFormPage> {
 
                 // ── Date Picker ──────────────────────────────────────────────
                 InkWell(
-                  onTap: controller.editingAttendanceId.isNotEmpty
-                      ? () => _selectDate(context, controller)
-                      : null,
+                  onTap: () => _selectDate(context, controller),
                   child: IgnorePointer(
                     child: _buildField(
                       fieldController: controller.dateCtrl,

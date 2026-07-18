@@ -3,6 +3,7 @@
 //     final getAttendanceModel = getAttendanceModelFromJson(jsonString);
 
 import 'dart:convert';
+import 'get_all_attandance_model.dart';
 
 GetAttendanceModel getAttendanceModelFromJson(String str) =>
     GetAttendanceModel.fromJson(json.decode(str));
@@ -53,6 +54,8 @@ class GetAttendanceData {
   bool? isDeleted;
   String? createdAt;
   String? updatedAt;
+  List<Punching>? punching;
+  List<BreakObj>? breaks;
 
   GetAttendanceData({
     this.id,
@@ -71,6 +74,8 @@ class GetAttendanceData {
     this.isDeleted,
     this.createdAt,
     this.updatedAt,
+    this.punching,
+    this.breaks,
   });
 
   factory GetAttendanceData.fromJson(Map<String, dynamic> json) =>
@@ -99,6 +104,16 @@ class GetAttendanceData {
         isDeleted: json["isDeleted"],
         createdAt: json["createdAt"],
         updatedAt: json["updatedAt"],
+        punching: json["punching"] == null
+            ? []
+            : List<Punching>.from(
+                json["punching"]!.map((x) => Punching.fromJson(x)),
+              ),
+        breaks: json["break"] == null
+            ? []
+            : List<BreakObj>.from(
+                json["break"]!.map((x) => BreakObj.fromJson(x)),
+              ),
       );
 
   Map<String, dynamic> toJson() => {
@@ -118,6 +133,12 @@ class GetAttendanceData {
     "isDeleted": isDeleted,
     "createdAt": createdAt,
     "updatedAt": updatedAt,
+    "punching": punching == null
+        ? []
+        : List<dynamic>.from(punching!.map((x) => x.toJson())),
+    "break": breaks == null
+        ? []
+        : List<dynamic>.from(breaks!.map((x) => x.toJson())),
   };
 }
 

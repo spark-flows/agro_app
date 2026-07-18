@@ -224,6 +224,15 @@ class SalaryController extends GetxController {
     }
   }
 
+  UserData? get selectedUserData {
+    if (selectUser == null || selectUser!.isEmpty) return null;
+    try {
+      return userDataList.firstWhere((u) => u.id == selectUser);
+    } catch (_) {
+      return null;
+    }
+  }
+
   List<GetSalaryData> getSalaryList = [];
   int workingHours = 0;
 
@@ -233,18 +242,23 @@ class SalaryController extends GetxController {
     double bonus = double.tryParse(bounsController.text) ?? 0.0;
     double deduction = double.tryParse(deductionController.text) ?? 0.0;
 
-    if (workDays > 0) {
+    double calculatedSalary = 0.0;
+    if (workingHours > 0 && workDays > 0) {
       double ans = basic / workDays / 8;
-      double calculatedSalary = ans * workingHours;
-      double netSalary = calculatedSalary + bonus - deduction;
-      netSalaryController.text = netSalary.round().toString();
+      calculatedSalary = ans * workingHours;
     } else {
-      netSalaryController.text = "0";
+      calculatedSalary = basic;
     }
+
+    double netSalary = calculatedSalary + bonus - deduction;
+    if (netSalary < 0) netSalary = 0;
+    netSalaryController.text = netSalary.round().toString();
     update();
   }
 
   Future<void> getSalaryApi(int pageKey) async {
+    if (selectUser == null || selectUser!.isEmpty) return;
+
     String targetMonth = DateTime.now().month.toString();
     String targetYear = DateTime.now().year.toString();
     if (salaryMonthController.text.isNotEmpty) {
@@ -266,18 +280,36 @@ class SalaryController extends GetxController {
     );
     getSalaryList.clear();
     if (response?.data != null) {
-      basicSalaryController.text =
-          response?.data?.basicsalary?.toString() ?? "0";
-      if (response?.data?.presentdays != null &&
-          response?.data?.presentdays != 0) {
+      int basicSalary = response?.data?.basicsalary ?? 0;
+      if (basicSalary == 0) {
+        final u = selectedUserData;
+        if (u?.salary != null && u!.salary! > 0) {
+          basicSalary = u.salary!;
+        }
+      }
+      basicSalaryController.text = basicSalary.toString();
+
+      if (response?.data?.presentdays != null) {
         workDayController.text = response!.data!.presentdays!.toString();
       } else if (workDayController.text.trim().isEmpty) {
         workDayController.text = "0";
       }
       workingHours = response?.data?.workinghours ?? 0;
       calculateNetSalary();
-      update();
+    } else {
+      final u = selectedUserData;
+      if (u?.salary != null && u!.salary! > 0) {
+        basicSalaryController.text = u.salary!.toString();
+      } else {
+        basicSalaryController.text = "0";
+      }
+      if (workDayController.text.trim().isEmpty) {
+        workDayController.text = "0";
+      }
+      workingHours = 0;
+      calculateNetSalary();
     }
+    update();
   }
 
   Future<void> postCreateSalaryApi() async {

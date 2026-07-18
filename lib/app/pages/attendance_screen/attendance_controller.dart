@@ -239,12 +239,36 @@ class AttendanceController extends GetxController {
     update();
   }
 
+  String formatTo12Hour(String? timeStr) {
+    if (timeStr == null || timeStr.trim().isEmpty || timeStr == "00:00") {
+      return '';
+    }
+    try {
+      if (timeStr.toLowerCase().contains('am') ||
+          timeStr.toLowerCase().contains('pm')) {
+        return timeStr;
+      }
+      if (timeStr.contains('T')) {
+        final parsed = DateTime.parse(timeStr).toLocal();
+        return DateFormat('hh:mm a').format(parsed);
+      }
+      final parts = timeStr.trim().split(':');
+      if (parts.length >= 2) {
+        final hour = int.parse(parts[0]);
+        final minute = int.parse(parts[1].split(' ')[0]);
+        final dt = DateTime(2026, 1, 1, hour, minute);
+        return DateFormat('hh:mm a').format(dt);
+      }
+    } catch (_) {}
+    return timeStr;
+  }
+
   // ── Setup Form State ───────────────────────────────────────────────────────
   void setupForm(get_one_model.GetAttendanceData? attendance) {
     if (attendance == null) {
       editingAttendanceId = '';
       dateCtrl.text = DateFormat('dd-MM-yyyy').format(DateTime.now());
-      timeInCtrl.clear();
+      timeInCtrl.text = DateFormat('hh:mm a').format(DateTime.now());
       timeOutCtrl.clear();
       breakStartCtrl.clear();
       breakEndCtrl.clear();
@@ -258,10 +282,63 @@ class AttendanceController extends GetxController {
       editingAttendanceId = attendance.id ?? '';
       remarkCtrl.text = attendance.remark ?? '';
       selectedStatus = attendance.status ?? 'present';
-      timeInCtrl.text = attendance.timein ?? '';
-      timeOutCtrl.text = attendance.timeout ?? '';
-      breakStartCtrl.text = attendance.breakstart ?? '';
-      breakEndCtrl.text = attendance.breakend ?? '';
+
+      String? rawTimeIn = attendance.timein;
+      if ((rawTimeIn == null || rawTimeIn.isEmpty) &&
+          attendance.punching != null &&
+          attendance.punching!.isNotEmpty) {
+        for (var p in attendance.punching!) {
+          if (p.timein != null && p.timein != "00:00" && p.timein!.isNotEmpty) {
+            rawTimeIn = p.timein;
+            break;
+          }
+        }
+      }
+
+      String? rawTimeOut = attendance.timeout;
+      if ((rawTimeOut == null || rawTimeOut.isEmpty) &&
+          attendance.punching != null &&
+          attendance.punching!.isNotEmpty) {
+        for (var p in attendance.punching!.reversed) {
+          if (p.timeout != null && p.timeout != "00:00" && p.timeout!.isNotEmpty) {
+            rawTimeOut = p.timeout;
+            break;
+          }
+        }
+      }
+
+      String? rawBreakStart = attendance.breakstart;
+      if ((rawBreakStart == null || rawBreakStart.isEmpty) &&
+          attendance.breaks != null &&
+          attendance.breaks!.isNotEmpty) {
+        for (var b in attendance.breaks!) {
+          if (b.breakstart != null &&
+              b.breakstart != "00:00" &&
+              b.breakstart!.isNotEmpty) {
+            rawBreakStart = b.breakstart;
+            break;
+          }
+        }
+      }
+
+      String? rawBreakEnd = attendance.breakend;
+      if ((rawBreakEnd == null || rawBreakEnd.isEmpty) &&
+          attendance.breaks != null &&
+          attendance.breaks!.isNotEmpty) {
+        for (var b in attendance.breaks!.reversed) {
+          if (b.breakend != null &&
+              b.breakend != "00:00" &&
+              b.breakend!.isNotEmpty) {
+            rawBreakEnd = b.breakend;
+            break;
+          }
+        }
+      }
+
+      timeInCtrl.text = formatTo12Hour(rawTimeIn);
+      timeOutCtrl.text = formatTo12Hour(rawTimeOut);
+      breakStartCtrl.text = formatTo12Hour(rawBreakStart);
+      breakEndCtrl.text = formatTo12Hour(rawBreakEnd);
 
       // Format Date
       if (attendance.date != null && attendance.date!.isNotEmpty) {
@@ -277,7 +354,7 @@ class AttendanceController extends GetxController {
           }
         }
       } else {
-        dateCtrl.text = '';
+        dateCtrl.text = DateFormat('dd-MM-yyyy').format(DateTime.now());
       }
 
       // Format coordinates
