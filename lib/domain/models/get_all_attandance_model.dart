@@ -171,17 +171,40 @@ class GetAllAttendanceDoc {
 class Punching {
   String? timein;
   String? timeout;
+  String? timeinphoto;
+  int? timeinodometer;
+  String? timeoutphoto;
+  int? timeoutodometer;
 
-  Punching({this.timein, this.timeout});
+  Punching({
+    this.timein,
+    this.timeout,
+    this.timeinphoto,
+    this.timeinodometer,
+    this.timeoutphoto,
+    this.timeoutodometer,
+  });
 
   factory Punching.fromJson(Map<String, dynamic> json) => Punching(
         timein: json["timein"]?.toString(),
         timeout: json["timeout"]?.toString(),
+        timeinphoto: json["timeinphoto"]?.toString(),
+        timeinodometer: json["timeinodometer"] != null
+            ? int.tryParse(json["timeinodometer"].toString())
+            : null,
+        timeoutphoto: json["timeoutphoto"]?.toString(),
+        timeoutodometer: json["timeoutodometer"] != null
+            ? int.tryParse(json["timeoutodometer"].toString())
+            : null,
       );
 
   Map<String, dynamic> toJson() => {
         "timein": timein,
         "timeout": timeout,
+        "timeinphoto": timeinphoto,
+        "timeinodometer": timeinodometer,
+        "timeoutphoto": timeoutphoto,
+        "timeoutodometer": timeoutodometer,
       };
 }
 

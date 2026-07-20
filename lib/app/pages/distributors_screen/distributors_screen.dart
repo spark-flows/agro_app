@@ -2,6 +2,8 @@ import 'package:agro_app/app/pages/distributors_screen/distributors_controller.d
 import 'package:agro_app/app/theme/theme.dart';
 import 'package:agro_app/app/utils/utility.dart';
 import 'package:agro_app/domain/models/get_all_users_model.dart';
+import 'package:agro_app/domain/repositories/repository.dart';
+import 'package:agro_app/domain/repositories/local_storage_keys.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
@@ -145,7 +147,11 @@ class _DistributorsScreenState extends State<DistributorsScreen> {
                                 ),
                                 child: InkWell(
                                   onTap: () {
-                                    _showUserProfileSheet(context, user, controller);
+                                    _showUserProfileSheet(
+                                      context,
+                                      user,
+                                      controller,
+                                    );
                                   },
                                   borderRadius: BorderRadius.circular(12),
                                   child: ListTile(
@@ -238,7 +244,9 @@ class _DistributorsScreenState extends State<DistributorsScreen> {
     Doc user,
     DistributorsController controller,
   ) {
-    const bool showAttendance = true;
+    final bool showAttendance =
+        Get.find<Repository>().getStringValue(LocalKeys.roleHiveName) !=
+            "Admin";
 
     Get.bottomSheet<void>(
       StatefulBuilder(
@@ -269,7 +277,9 @@ class _DistributorsScreenState extends State<DistributorsScreen> {
                   // ── Avatar + Name
                   CircleAvatar(
                     radius: 36,
-                    backgroundColor: ColorsValue.primary.withValues(alpha: 0.12),
+                    backgroundColor: ColorsValue.primary.withValues(
+                      alpha: 0.12,
+                    ),
                     child: Text(
                       user.name.isNotEmpty ? user.name[0].toUpperCase() : '?',
                       style: const TextStyle(
@@ -288,7 +298,10 @@ class _DistributorsScreenState extends State<DistributorsScreen> {
                   Text(user.email, style: Styles.txtGreyColorW40014),
                   const SizedBox(height: 4),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 4,
+                    ),
                     decoration: BoxDecoration(
                       color: ColorsValue.primary.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(20),
@@ -307,79 +320,67 @@ class _DistributorsScreenState extends State<DistributorsScreen> {
                   const SizedBox(height: 20),
 
                   // ── Attendance Actions Panel ─────────────────────────────
-                  if (showAttendance) ...([
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 20),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              Container(
-                                width: 4,
-                                height: 16,
-                                decoration: BoxDecoration(
-                                  color: ColorsValue.primary,
-                                  borderRadius: BorderRadius.circular(2),
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              Text(
-                                'Attendance Actions',
-                                style: Styles.txtBlackColorW60014,
-                              ),
-                            ],
-                          ),
-                          GetBuilder<DistributorsController>(
-                            builder: (distCtrl) {
-                              final currentUser = distCtrl.users.firstWhere(
-                                (u) => u.id == user.id,
-                                orElse: () => user,
-                              );
-                              final isClockedIn = currentUser.isClockedIn;
+                  if (showAttendance)
+                    ...([
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 20),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            GetBuilder<DistributorsController>(
+                              builder: (distCtrl) {
+                                final currentUser = distCtrl.users.firstWhere(
+                                  (u) => u.id == user.id,
+                                  orElse: () => user,
+                                );
+                                final isClockedIn = currentUser.isClockedIn;
 
-                              return Column(
-                                children: [
-                                  // ── Row 1: Clock In / Clock Out
-                                  Row(
-                                    children: [
-                                      // Clock In button
-                                      Expanded(
-                                        child: _attendanceButton(
-                                          label: 'Clock In',
-                                          icon: Icons.login_rounded,
-                                          color: Colors.green,
-                                          enabled: !isClockedIn,
-                                          onTap: () {
-                                            distCtrl.clockInDistributor(currentUser);
-                                          },
+                                return Column(
+                                  children: [
+                                    // ── Row 1: Clock In / Clock Out
+                                    Row(
+                                      children: [
+                                        // Clock In button
+                                        Expanded(
+                                          child: _attendanceButton(
+                                            label: 'Clock In',
+                                            icon: Icons.login_rounded,
+                                            color: Colors.green,
+                                            enabled: !isClockedIn,
+                                            onTap: () {
+                                              distCtrl.clockInDistributor(
+                                                currentUser,
+                                              );
+                                            },
+                                          ),
                                         ),
-                                      ),
-                                      const SizedBox(width: 10),
-                                      // Clock Out button
-                                      Expanded(
-                                        child: _attendanceButton(
-                                          label: 'Clock Out',
-                                          icon: Icons.logout_rounded,
-                                          color: Colors.red,
-                                          enabled: isClockedIn,
-                                          onTap: () {
-                                            distCtrl.clockOutDistributor(currentUser);
-                                          },
+                                        const SizedBox(width: 10),
+                                        // Clock Out button
+                                        Expanded(
+                                          child: _attendanceButton(
+                                            label: 'Clock Out',
+                                            icon: Icons.logout_rounded,
+                                            color: Colors.red,
+                                            enabled: isClockedIn,
+                                            onTap: () {
+                                              distCtrl.clockOutDistributor(
+                                                currentUser,
+                                              );
+                                            },
+                                          ),
                                         ),
-                                      ),
-                                    ],
-                                  ),
-                                ],
-                              );
-                            },
-                          ),
-                          const SizedBox(height: 16),
-                          Divider(color: Colors.grey.shade100),
-                        ],
+                                      ],
+                                    ),
+                                  ],
+                                );
+                              },
+                            ),
+                            const SizedBox(height: 16),
+                            Divider(color: Colors.grey.shade100),
+                          ],
+                        ),
                       ),
-                    ),
-                  ]),
+                    ]),
 
                   // ── Edit / View Button ───────────────────────────────────
                   Padding(
@@ -430,18 +431,16 @@ class _DistributorsScreenState extends State<DistributorsScreen> {
         decoration: BoxDecoration(
           color: enabled ? color.withValues(alpha: 0.1) : Colors.grey.shade100,
           border: Border.all(
-            color: enabled ? color.withValues(alpha: 0.4) : Colors.grey.shade200,
+            color: enabled
+                ? color.withValues(alpha: 0.4)
+                : Colors.grey.shade200,
           ),
           borderRadius: BorderRadius.circular(12),
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(
-              icon,
-              color: enabled ? color : Colors.grey.shade400,
-              size: 26,
-            ),
+            Icon(icon, color: enabled ? color : Colors.grey.shade400, size: 26),
             const SizedBox(height: 4),
             Text(
               label,

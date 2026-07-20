@@ -126,6 +126,7 @@ class DistributorsController extends GetxController {
         users.addAll(response.data.docs);
       }
       totalPages = response.data.totalPages;
+      _applySavedClockStates();
     }
 
     isLoading = false;
@@ -246,39 +247,39 @@ class DistributorsController extends GetxController {
 
   // ── Distributor shift actions (Separate from Attendance) ───────────────────
   Future<void> clockInDistributor(Doc user) async {
+    final hasPermission = await Utility.handleLocationPermission();
+    if (!hasPermission) return;
+
     double lat = 0.0;
     double lon = 0.0;
     try {
-      bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
-      if (serviceEnabled) {
-        LocationPermission permission = await Geolocator.checkPermission();
-        if (permission == LocationPermission.denied) {
-          permission = await Geolocator.requestPermission();
-        }
-        if (permission != LocationPermission.denied &&
-            permission != LocationPermission.deniedForever) {
-          final position = await Geolocator.getCurrentPosition(
-            desiredAccuracy: LocationAccuracy.high,
-            timeLimit: const Duration(seconds: 5),
-          );
-          lat = position.latitude;
-          lon = position.longitude;
-        }
-      }
+      final position = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.high,
+        timeLimit: const Duration(seconds: 5),
+      );
+      lat = position.latitude;
+      lon = position.longitude;
     } catch (e) {
       debugPrint('[DistributorsController] geolocator error: $e');
     }
 
-    String userId = await Get.find<Repository>().getSecureValue(LocalKeys.userIds);
+    String userId = await Get.find<Repository>().getSecureValue(
+      LocalKeys.userIds,
+    );
     if (userId.trim().isEmpty) {
-      userId = await Get.find<Repository>().getSecureValue(LocalKeys.distributorId);
+      userId = await Get.find<Repository>().getSecureValue(
+        LocalKeys.distributorId,
+      );
     }
     if (userId.trim().isEmpty) {
       try {
-        final profileJson = await Get.find<Repository>().getSecureValue(LocalKeys.profileData);
+        final profileJson = await Get.find<Repository>().getSecureValue(
+          LocalKeys.profileData,
+        );
         if (profileJson.isNotEmpty) {
           final decoded = json.decode(profileJson);
-          final userData = decoded['userData'] ?? decoded['UserData'] ?? decoded;
+          final userData =
+              decoded['userData'] ?? decoded['UserData'] ?? decoded;
           userId = (userData['_id'] ?? userData['id'] ?? '')?.toString() ?? '';
         }
       } catch (_) {}
@@ -288,7 +289,7 @@ class DistributorsController extends GetxController {
 
     final Map<String, dynamic> body = {
       "userId": userId,
-      "delearId": user.id,
+      "dealerId": user.id,
       "latitude": lat,
       "longitude": lon,
       "timein": timein,
@@ -297,13 +298,22 @@ class DistributorsController extends GetxController {
     debugPrint('[DistributorsController] clockInDistributor payload: $body');
 
     Utility.showLoader();
-    bool success = await Get.find<Repository>().pauseTrackingApi(body: body, isLoading: false);
+    bool success = await Get.find<Repository>().pauseTrackingApi(
+      body: body,
+      isLoading: false,
+    );
     Utility.closeLoader();
 
     if (success) {
       user.isClockedIn = true;
       user.isClockedOut = false;
       user.clockInTime = timein;
+      _saveClockState(
+        user.id,
+        isClockedIn: true,
+        isClockedOut: false,
+        clockInTime: timein,
+      );
       update();
       Utility.snacBar('Clocked in successfully', Colors.green);
     } else {
@@ -312,16 +322,26 @@ class DistributorsController extends GetxController {
   }
 
   Future<void> clockOutDistributor(Doc user) async {
-    String userId = await Get.find<Repository>().getSecureValue(LocalKeys.userIds);
+    final hasPermission = await Utility.handleLocationPermission();
+    if (!hasPermission) return;
+
+    String userId = await Get.find<Repository>().getSecureValue(
+      LocalKeys.userIds,
+    );
     if (userId.trim().isEmpty) {
-      userId = await Get.find<Repository>().getSecureValue(LocalKeys.distributorId);
+      userId = await Get.find<Repository>().getSecureValue(
+        LocalKeys.distributorId,
+      );
     }
     if (userId.trim().isEmpty) {
       try {
-        final profileJson = await Get.find<Repository>().getSecureValue(LocalKeys.profileData);
+        final profileJson = await Get.find<Repository>().getSecureValue(
+          LocalKeys.profileData,
+        );
         if (profileJson.isNotEmpty) {
           final decoded = json.decode(profileJson);
-          final userData = decoded['userData'] ?? decoded['UserData'] ?? decoded;
+          final userData =
+              decoded['userData'] ?? decoded['UserData'] ?? decoded;
           userId = (userData['_id'] ?? userData['id'] ?? '')?.toString() ?? '';
         }
       } catch (_) {}
@@ -329,25 +349,81 @@ class DistributorsController extends GetxController {
 
     final String timeout = DateTime.now().toUtc().toIso8601String();
 
-    final Map<String, dynamic> body = {
-      "userId": userId,
-      "timeout": timeout,
-    };
+    final Map<String, dynamic> body = {"userId": userId, "timeout": timeout};
 
     debugPrint('[DistributorsController] clockOutDistributor payload: $body');
 
     Utility.showLoader();
-    bool success = await Get.find<Repository>().pauseTrackingApi(body: body, isLoading: false);
+    bool success = await Get.find<Repository>().pauseTrackingApi(
+      body: body,
+      isLoading: false,
+    );
     Utility.closeLoader();
 
     if (success) {
       user.isClockedOut = true;
       user.isClockedIn = false;
       user.clockOutTime = timeout;
+      _saveClockState(
+        user.id,
+        isClockedIn: false,
+        isClockedOut: true,
+        clockOutTime: timeout,
+      );
       update();
       Utility.snacBar('Clocked out successfully', Colors.green);
     } else {
       Utility.errorMessage('Clock Out failed. Please try again.');
+    }
+  }
+
+  static const String _clockStateKey = "distributor_clock_states";
+
+  Map<String, dynamic> _getSavedClockStates() {
+    try {
+      final jsonStr = Get.find<Repository>().getStringValue(_clockStateKey);
+      if (jsonStr.isNotEmpty) {
+        return json.decode(jsonStr) as Map<String, dynamic>;
+      }
+    } catch (e) {
+      debugPrint('[DistributorsController] _getSavedClockStates error: $e');
+    }
+    return {};
+  }
+
+  void _saveClockState(
+    String dealerId, {
+    required bool isClockedIn,
+    required bool isClockedOut,
+    String? clockInTime,
+    String? clockOutTime,
+  }) {
+    try {
+      final states = _getSavedClockStates();
+      states[dealerId] = {
+        "isClockedIn": isClockedIn,
+        "isClockedOut": isClockedOut,
+        "clockInTime": clockInTime,
+        "clockOutTime": clockOutTime,
+      };
+      Get.find<Repository>().saveValue(_clockStateKey, json.encode(states));
+    } catch (e) {
+      debugPrint('[DistributorsController] _saveClockState error: $e');
+    }
+  }
+
+  void _applySavedClockStates() {
+    final states = _getSavedClockStates();
+    if (states.isEmpty) return;
+
+    for (var user in users) {
+      if (states.containsKey(user.id)) {
+        final state = states[user.id] as Map<String, dynamic>;
+        user.isClockedIn = state["isClockedIn"] == true;
+        user.isClockedOut = state["isClockedOut"] == true;
+        user.clockInTime = state["clockInTime"]?.toString();
+        user.clockOutTime = state["clockOutTime"]?.toString();
+      }
     }
   }
 }

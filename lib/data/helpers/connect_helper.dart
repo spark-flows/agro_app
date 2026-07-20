@@ -609,7 +609,7 @@ class ConnectHelper {
 
   Future<ResponseModel> uploadCustomerOrderApi(
     File image, {
-    bool isLoading = false,
+    bool isLoading = true,
   }) async {
     try {
       if (isLoading) {
@@ -999,11 +999,11 @@ class ConnectHelper {
       "limit": limit,
       "serch": search.isNotEmpty ? {"taskname": search} : {},
       "branchid": branchId.isNotEmpty ? [branchId] : [],
-      "assignedto":
-          Get.find<Repository>().getStringValue(LocalKeys.roleHiveName) ==
-              "Admin"
-          ? []
-          : [assignedto],
+      // "assignedto":
+      //     Get.find<Repository>().getStringValue(LocalKeys.roleHiveName) ==
+      //         "Admin"
+      //     ? []
+      //     : [assignedto],
       "date": (fromDate.isNotEmpty && toDate.isNotEmpty)
           ? [fromDate, toDate]
           : [],
@@ -1067,7 +1067,7 @@ class ConnectHelper {
 
   Future<ResponseModel> uploadTaskAttachmentApi(
     List<File> files, {
-    bool isLoading = false,
+    bool isLoading = true,
   }) async {
     try {
       if (isLoading) {
@@ -1215,6 +1215,10 @@ class ConnectHelper {
     List<Map<String, String>>? breaks,
     String? photo,
     int? odometer,
+    String? timeinphoto,
+    int? timeinodometer,
+    String? timeoutphoto,
+    int? timeoutodometer,
     bool isLoading = false,
   }) async {
     final String branchId = await _resolveBranchId();
@@ -1232,7 +1236,13 @@ class ConnectHelper {
         "branchid": branchId,
         "photo": photo,
         "odometer": odometer,
+        "timeinphoto": timeinphoto,
+        "timeinodometer": timeinodometer,
+        "timeoutphoto": timeoutphoto,
+        "timeoutodometer": timeoutodometer,
         "coordinates": coordinates,
+        if (punching != null) "punching": punching,
+        if (breaks != null) "breaks": breaks,
       };
     } else {
       data = {
@@ -1249,6 +1259,12 @@ class ConnectHelper {
         "status": status,
         if (photo != null) "photo": photo,
         if (odometer != null) "odometer": odometer,
+        if (timeinphoto != null) "timeinphoto": timeinphoto,
+        if (timeinodometer != null) "timeinodometer": timeinodometer,
+        if (timeoutphoto != null) "timeoutphoto": timeoutphoto,
+        if (timeoutodometer != null) "timeoutodometer": timeoutodometer,
+        if (punching != null) "punching": punching,
+        if (breaks != null) "breaks": breaks,
       };
     }
     var response = await apiWrapper.makeRequest(
@@ -1459,9 +1475,16 @@ class ConnectHelper {
 
   Future<ResponseModel> uploadAttendanceMediaApi(
     String filePath, {
-    bool isLoading = false,
+    bool isLoading = true,
   }) async {
     try {
+      if (isLoading) {
+        if (Get.isSnackbarOpen) {
+          await Get.closeCurrentSnackbar();
+        }
+        Utility.showLoader();
+      }
+
       final headers = await Utility.commonHeader();
       headers.remove('Content-Type');
 
@@ -1489,6 +1512,8 @@ class ConnectHelper {
         options: Options(headers: headers),
       );
 
+      if (isLoading) Utility.closeDialog();
+
       if (response.statusCode == 200) {
         return ResponseModel(
           data: json.encode(response.data),
@@ -1503,6 +1528,7 @@ class ConnectHelper {
         );
       }
     } catch (e) {
+      if (isLoading) Utility.closeDialog();
       return ResponseModel(data: e.toString(), hasError: true, statusCode: 500);
     }
   }

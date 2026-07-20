@@ -63,6 +63,10 @@ class AttendanceController extends GetxController {
   final RxString odometerPhotoPath = "".obs;
   final RxBool isOdometerUploading = false.obs;
   final odometerReadingCtrl = TextEditingController();
+  final RxString timeinPhoto = "".obs;
+  final RxString timeoutPhoto = "".obs;
+  final timeinOdometerCtrl = TextEditingController();
+  final timeoutOdometerCtrl = TextEditingController();
   Timer? _trackingTimer;
 
   @override
@@ -278,10 +282,57 @@ class AttendanceController extends GetxController {
       existingLatitude = '';
       existingLongitude = '';
       selectedStatus = 'present';
+      odometerReadingCtrl.clear();
+      selfiePath.value = '';
+      timeinOdometerCtrl.clear();
+      timeoutOdometerCtrl.clear();
+      timeinPhoto.value = '';
+      timeoutPhoto.value = '';
     } else {
       editingAttendanceId = attendance.id ?? '';
       remarkCtrl.text = attendance.remark ?? '';
       selectedStatus = attendance.status ?? 'present';
+      odometerReadingCtrl.text = attendance.odometer != null
+          ? attendance.odometer.toString()
+          : '';
+      selfiePath.value = attendance.photo ?? '';
+
+      String? parsedTimeInPhoto;
+      int? parsedTimeInOdometer;
+      String? parsedTimeOutPhoto;
+      int? parsedTimeOutOdometer;
+
+      if (attendance.punching != null && attendance.punching!.isNotEmpty) {
+        for (var p in attendance.punching!) {
+          if (p.timeinphoto != null && p.timeinphoto!.isNotEmpty) {
+            parsedTimeInPhoto = p.timeinphoto;
+          }
+          if (p.timeinodometer != null && p.timeinodometer != 0) {
+            parsedTimeInOdometer = p.timeinodometer;
+          }
+          if (p.timeoutphoto != null && p.timeoutphoto!.isNotEmpty) {
+            parsedTimeOutPhoto = p.timeoutphoto;
+          }
+          if (p.timeoutodometer != null && p.timeoutodometer != 0) {
+            parsedTimeOutOdometer = p.timeoutodometer;
+          }
+        }
+      }
+
+      timeinPhoto.value =
+          parsedTimeInPhoto ??
+          (attendance.timeinphoto ?? (attendance.photo ?? ''));
+      if (timeinPhoto.value.trim().isEmpty) timeinPhoto.value = '';
+
+      int? timeInOdo = parsedTimeInOdometer ?? (attendance.timeinodometer ?? attendance.odometer);
+      timeinOdometerCtrl.text = (timeInOdo != null && timeInOdo != 0) ? timeInOdo.toString() : '';
+
+      timeoutPhoto.value =
+          parsedTimeOutPhoto ?? (attendance.timeoutphoto ?? '');
+      if (timeoutPhoto.value.trim().isEmpty) timeoutPhoto.value = '';
+
+      int? timeOutOdo = parsedTimeOutOdometer ?? attendance.timeoutodometer;
+      timeoutOdometerCtrl.text = (timeOutOdo != null && timeOutOdo != 0) ? timeOutOdo.toString() : '';
 
       String? rawTimeIn = attendance.timein;
       if ((rawTimeIn == null || rawTimeIn.isEmpty) &&
@@ -436,6 +487,18 @@ class AttendanceController extends GetxController {
         breakend: breakEndCtrl.text.trim(),
         remark: remarkCtrl.text.trim(),
         status: selectedStatus,
+        photo: selfiePath.value.isNotEmpty ? selfiePath.value : null,
+        odometer: odometerReadingCtrl.text.isNotEmpty
+            ? int.tryParse(odometerReadingCtrl.text)
+            : null,
+        timeinphoto: timeinPhoto.value.isNotEmpty ? timeinPhoto.value : null,
+        timeinodometer: timeinOdometerCtrl.text.isNotEmpty
+            ? int.tryParse(timeinOdometerCtrl.text)
+            : null,
+        timeoutphoto: timeoutPhoto.value.isNotEmpty ? timeoutPhoto.value : null,
+        timeoutodometer: timeoutOdometerCtrl.text.isNotEmpty
+            ? int.tryParse(timeoutOdometerCtrl.text)
+            : null,
         isLoading: false,
       );
 
@@ -669,6 +732,8 @@ class AttendanceController extends GetxController {
   }
 
   Future<void> quickClockIn() async {
+    final hasPermission = await Utility.handleLocationPermission();
+    if (!hasPermission) return;
     try {
       Utility.showLoader();
       final profile = await Get.find<Repository>().getProfileApi(
@@ -1163,6 +1228,8 @@ class AttendanceController extends GetxController {
   }
 
   Future<void> quickClockOut(get_all_model.GetAllAttendanceDoc? record) async {
+    final hasPermission = await Utility.handleLocationPermission();
+    if (!hasPermission) return;
     try {
       Utility.showLoader();
       final profile = await Get.find<Repository>().getProfileApi(

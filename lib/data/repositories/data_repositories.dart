@@ -254,7 +254,7 @@ class DataRepository extends DomainRepository {
 
   Future<ResponseModel> uploadCustomerOrderApi(
     File image, {
-    bool isLoading = false,
+    bool isLoading = true,
   }) async {
     return await connectHelper.uploadCustomerOrderApi(
       image,
@@ -417,7 +417,7 @@ class DataRepository extends DomainRepository {
 
   Future<ResponseModel> uploadTaskAttachmentApi(
     List<File> files, {
-    bool isLoading = false,
+    bool isLoading = true,
   }) async =>
       connectHelper.uploadTaskAttachmentApi(files, isLoading: isLoading);
 
@@ -475,6 +475,10 @@ class DataRepository extends DomainRepository {
     List<Map<String, String>>? breaks,
     String? photo,
     int? odometer,
+    String? timeinphoto,
+    int? timeinodometer,
+    String? timeoutphoto,
+    int? timeoutodometer,
     bool isLoading = false,
   }) async => connectHelper.createAttendanceApi(
     attendanceid: attendanceid,
@@ -490,6 +494,10 @@ class DataRepository extends DomainRepository {
     breaks: breaks,
     photo: photo,
     odometer: odometer,
+    timeinphoto: timeinphoto,
+    timeinodometer: timeinodometer,
+    timeoutphoto: timeoutphoto,
+    timeoutodometer: timeoutodometer,
     isLoading: isLoading,
   );
 
@@ -596,7 +604,7 @@ class DataRepository extends DomainRepository {
   Future<ResponseModel> getUserList({bool isLoading = false}) async =>
       connectHelper.getUserList(isLoading: isLoading);
 
-  Future<ResponseModel> uploadAttendanceMediaApi(String filePath, {bool isLoading = false}) async =>
+  Future<ResponseModel> uploadAttendanceMediaApi(String filePath, {bool isLoading = true}) async =>
       connectHelper.uploadAttendanceMediaApi(filePath, isLoading: isLoading);
 
   Future<ResponseModel> startTrackingApi({

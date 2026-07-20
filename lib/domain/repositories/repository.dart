@@ -300,7 +300,7 @@ class Repository {
 
   Future<UploadImageResponse?> uploadCustomerOrderApi(
     File image, {
-    bool isLoading = false,
+    bool isLoading = true,
   }) async {
     try {
       var response = await _dataRepository.uploadCustomerOrderApi(
@@ -1081,7 +1081,7 @@ class Repository {
 
   Future<ResponseModel> uploadTaskAttachmentApi(
     List<File> files, {
-    bool isLoading = false,
+    bool isLoading = true,
   }) async =>
       _dataRepository.uploadTaskAttachmentApi(files, isLoading: isLoading);
 
@@ -1235,6 +1235,10 @@ class Repository {
     List<Map<String, String>>? breaks,
     String? photo,
     int? odometer,
+    String? timeinphoto,
+    int? timeinodometer,
+    String? timeoutphoto,
+    int? timeoutodometer,
     bool isLoading = false,
   }) async {
     try {
@@ -1252,6 +1256,10 @@ class Repository {
         breaks: breaks,
         photo: photo,
         odometer: odometer,
+        timeinphoto: timeinphoto,
+        timeinodometer: timeinodometer,
+        timeoutphoto: timeoutphoto,
+        timeoutodometer: timeoutodometer,
         isLoading: isLoading,
       );
       if (response.hasError) {
@@ -1517,7 +1525,7 @@ class Repository {
 
   Future<String?> uploadAttendanceMediaApi(
     String filePath, {
-    bool isLoading = false,
+    bool isLoading = true,
   }) async {
     try {
       var response = await _dataRepository.uploadAttendanceMediaApi(

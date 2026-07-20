@@ -19,6 +19,7 @@ import 'package:open_filex/open_filex.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:geolocator/geolocator.dart';
 
 abstract class Utility {
   //Internet Connection Checker
@@ -436,6 +437,73 @@ abstract class Utility {
       snackStyle: SnackStyle.FLOATING,
       snackPosition: SnackPosition.TOP,
     );
+  }
+
+  static Future<bool> handleLocationPermission() async {
+    bool serviceEnabled;
+    LocationPermission permission;
+
+    serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    if (!serviceEnabled) {
+      Get.dialog(
+        AlertDialog(
+          title: const Text('Location Services Disabled'),
+          content: const Text(
+            'Location services (GPS) are turned off. Please enable location services in your device settings to Clock In/Out.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Get.back(),
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () {
+                Get.back();
+                Geolocator.openLocationSettings();
+              },
+              child: const Text('Open Settings'),
+            ),
+          ],
+        ),
+      );
+      return false;
+    }
+
+    permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+      if (permission == LocationPermission.denied) {
+        errorMessage('Location permission is required to Clock In/Out. Please allow it.');
+        return false;
+      }
+    }
+
+    if (permission == LocationPermission.deniedForever) {
+      Get.dialog(
+        AlertDialog(
+          title: const Text('Location Permission Required'),
+          content: const Text(
+            'Location permissions are permanently denied. Please enable them in your app settings to proceed.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Get.back(),
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () {
+                Get.back();
+                Geolocator.openAppSettings();
+              },
+              child: const Text('Open Settings'),
+            ),
+          ],
+        ),
+      );
+      return false;
+    }
+
+    return true;
   }
 
   // Error Message

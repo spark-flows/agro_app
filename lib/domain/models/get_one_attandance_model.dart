@@ -56,6 +56,12 @@ class GetAttendanceData {
   String? updatedAt;
   List<Punching>? punching;
   List<BreakObj>? breaks;
+  String? photo;
+  int? odometer;
+  String? timeinphoto;
+  int? timeinodometer;
+  String? timeoutphoto;
+  int? timeoutodometer;
 
   GetAttendanceData({
     this.id,
@@ -76,6 +82,12 @@ class GetAttendanceData {
     this.updatedAt,
     this.punching,
     this.breaks,
+    this.photo,
+    this.odometer,
+    this.timeinphoto,
+    this.timeinodometer,
+    this.timeoutphoto,
+    this.timeoutodometer,
   });
 
   factory GetAttendanceData.fromJson(Map<String, dynamic> json) =>
@@ -114,6 +126,18 @@ class GetAttendanceData {
             : List<BreakObj>.from(
                 json["break"]!.map((x) => BreakObj.fromJson(x)),
               ),
+        photo: json["photo"]?.toString(),
+        odometer: json["odometer"] != null
+            ? int.tryParse(json["odometer"].toString())
+            : null,
+        timeinphoto: json["timeinphoto"]?.toString(),
+        timeinodometer: json["timeinodometer"] != null
+            ? int.tryParse(json["timeinodometer"].toString())
+            : null,
+        timeoutphoto: json["timeoutphoto"]?.toString(),
+        timeoutodometer: json["timeoutodometer"] != null
+            ? int.tryParse(json["timeoutodometer"].toString())
+            : null,
       );
 
   Map<String, dynamic> toJson() => {
@@ -139,6 +163,12 @@ class GetAttendanceData {
     "break": breaks == null
         ? []
         : List<dynamic>.from(breaks!.map((x) => x.toJson())),
+    "photo": photo,
+    "odometer": odometer,
+    "timeinphoto": timeinphoto,
+    "timeinodometer": timeinodometer,
+    "timeoutphoto": timeoutphoto,
+    "timeoutodometer": timeoutodometer,
   };
 }
 

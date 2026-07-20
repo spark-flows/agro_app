@@ -3,6 +3,7 @@ import 'package:agro_app/app/theme/theme.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
 class AttendanceFormPage extends StatefulWidget {
   const AttendanceFormPage({super.key});
@@ -13,7 +14,9 @@ class AttendanceFormPage extends StatefulWidget {
 
 class _AttendanceFormPageState extends State<AttendanceFormPage> {
   Future<void> _selectDate(
-      BuildContext context, AttendanceController controller) async {
+    BuildContext context,
+    AttendanceController controller,
+  ) async {
     DateTime initialDate;
     try {
       initialDate = DateFormat('dd-MM-yyyy').parse(controller.dateCtrl.text);
@@ -52,24 +55,34 @@ class _AttendanceFormPageState extends State<AttendanceFormPage> {
   }
 
   Future<void> _selectTime(
-      BuildContext context, TextEditingController ctrl) async {
+    BuildContext context,
+    TextEditingController ctrl,
+  ) async {
     TimeOfDay initialTime = TimeOfDay.now();
     if (ctrl.text.isNotEmpty) {
       try {
         final parsedDate = DateFormat('hh:mm a').parse(ctrl.text);
-        initialTime = TimeOfDay(hour: parsedDate.hour, minute: parsedDate.minute);
+        initialTime = TimeOfDay(
+          hour: parsedDate.hour,
+          minute: parsedDate.minute,
+        );
       } catch (_) {
         try {
           final parsedDate = DateFormat('HH:mm').parse(ctrl.text);
-          initialTime = TimeOfDay(hour: parsedDate.hour, minute: parsedDate.minute);
+          initialTime = TimeOfDay(
+            hour: parsedDate.hour,
+            minute: parsedDate.minute,
+          );
         } catch (_) {
           try {
             final parts = ctrl.text.trim().split(':');
             if (parts.length >= 2) {
               int hour = int.parse(parts[0]);
               int minute = int.parse(parts[1].split(' ')[0]);
-              if (ctrl.text.toLowerCase().contains('pm') && hour < 12) hour += 12;
-              if (ctrl.text.toLowerCase().contains('am') && hour == 12) hour = 0;
+              if (ctrl.text.toLowerCase().contains('pm') && hour < 12)
+                hour += 12;
+              if (ctrl.text.toLowerCase().contains('am') && hour == 12)
+                hour = 0;
               initialTime = TimeOfDay(hour: hour, minute: minute);
             }
           } catch (_) {}
@@ -96,7 +109,13 @@ class _AttendanceFormPageState extends State<AttendanceFormPage> {
 
     if (picked != null) {
       final now = DateTime.now();
-      final dt = DateTime(now.year, now.month, now.day, picked.hour, picked.minute);
+      final dt = DateTime(
+        now.year,
+        now.month,
+        now.day,
+        picked.hour,
+        picked.minute,
+      );
       final formattedTime = DateFormat('hh:mm a').format(dt);
       setState(() {
         ctrl.text = formattedTime;
@@ -150,14 +169,16 @@ class _AttendanceFormPageState extends State<AttendanceFormPage> {
                   children: [
                     Expanded(
                       child: InkWell(
-                        onTap: () => _selectTime(context, controller.timeInCtrl),
+                        onTap: () =>
+                            _selectTime(context, controller.timeInCtrl),
                         child: IgnorePointer(
                           child: _buildField(
                             fieldController: controller.timeInCtrl,
                             label: 'Time In *',
                             icon: Icons.login,
-                            validator: (v) =>
-                                v!.trim().isEmpty ? 'Time In is required' : null,
+                            validator: (v) => v!.trim().isEmpty
+                                ? 'Time In is required'
+                                : null,
                           ),
                         ),
                       ),
@@ -165,14 +186,16 @@ class _AttendanceFormPageState extends State<AttendanceFormPage> {
                     const SizedBox(width: 16),
                     Expanded(
                       child: InkWell(
-                        onTap: () => _selectTime(context, controller.timeOutCtrl),
+                        onTap: () =>
+                            _selectTime(context, controller.timeOutCtrl),
                         child: IgnorePointer(
                           child: _buildField(
                             fieldController: controller.timeOutCtrl,
                             label: 'Time Out *',
                             icon: Icons.logout,
-                            validator: (v) =>
-                                v!.trim().isEmpty ? 'Time Out is required' : null,
+                            validator: (v) => v!.trim().isEmpty
+                                ? 'Time Out is required'
+                                : null,
                           ),
                         ),
                       ),
@@ -186,7 +209,8 @@ class _AttendanceFormPageState extends State<AttendanceFormPage> {
                   children: [
                     Expanded(
                       child: InkWell(
-                        onTap: () => _selectTime(context, controller.breakStartCtrl),
+                        onTap: () =>
+                            _selectTime(context, controller.breakStartCtrl),
                         child: IgnorePointer(
                           child: _buildField(
                             fieldController: controller.breakStartCtrl,
@@ -201,7 +225,8 @@ class _AttendanceFormPageState extends State<AttendanceFormPage> {
                     const SizedBox(width: 16),
                     Expanded(
                       child: InkWell(
-                        onTap: () => _selectTime(context, controller.breakEndCtrl),
+                        onTap: () =>
+                            _selectTime(context, controller.breakEndCtrl),
                         child: IgnorePointer(
                           child: _buildField(
                             fieldController: controller.breakEndCtrl,
@@ -217,7 +242,6 @@ class _AttendanceFormPageState extends State<AttendanceFormPage> {
                 ),
                 const SizedBox(height: 24),
 
-
                 _sectionHeader('Status & Feedback'),
                 const SizedBox(height: 16),
 
@@ -227,8 +251,9 @@ class _AttendanceFormPageState extends State<AttendanceFormPage> {
                   decoration: InputDecoration(
                     labelText: 'Status *',
                     labelStyle: Styles.txtGreyColorW40014,
-                    floatingLabelStyle:
-                        const TextStyle(color: ColorsValue.primary),
+                    floatingLabelStyle: const TextStyle(
+                      color: ColorsValue.primary,
+                    ),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                       borderSide: BorderSide(color: Colors.grey.shade300),
@@ -275,6 +300,98 @@ class _AttendanceFormPageState extends State<AttendanceFormPage> {
                   action: TextInputAction.newline,
                   maxLines: 3,
                 ),
+                const SizedBox(height: 20),
+
+                if (controller.timeinPhoto.value.isNotEmpty) ...[
+                  _sectionHeader('Time In Photo'),
+                  const SizedBox(height: 12),
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(12),
+                    child: CachedNetworkImage(
+                      imageUrl: controller.timeinPhoto.value,
+                      height: 200,
+                      width: double.infinity,
+                      fit: BoxFit.cover,
+                      placeholder: (context, url) => Container(
+                        height: 200,
+                        color: Colors.grey.shade100,
+                        child: const Center(
+                          child: CircularProgressIndicator(
+                            color: ColorsValue.primary,
+                          ),
+                        ),
+                      ),
+                      errorWidget: (context, url, error) => Container(
+                        height: 200,
+                        color: Colors.grey.shade100,
+                        child: const Icon(
+                          Icons.broken_image_outlined,
+                          size: 40,
+                          color: Colors.grey,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                ],
+
+                if (controller.timeinOdometerCtrl.text.isNotEmpty) ...[
+                  _sectionHeader('Time In Odometer Details'),
+                  const SizedBox(height: 12),
+                  _buildField(
+                    fieldController: controller.timeinOdometerCtrl,
+                    label: 'Time In Odometer',
+                    icon: Icons.speed_outlined,
+                    keyboardType: TextInputType.number,
+                  ),
+                  const SizedBox(height: 20),
+                ],
+
+                if (controller.timeoutPhoto.value.isNotEmpty) ...[
+                  _sectionHeader('Time Out Photo'),
+                  const SizedBox(height: 12),
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(12),
+                    child: CachedNetworkImage(
+                      imageUrl: controller.timeoutPhoto.value,
+                      height: 200,
+                      width: double.infinity,
+                      fit: BoxFit.cover,
+                      placeholder: (context, url) => Container(
+                        height: 200,
+                        color: Colors.grey.shade100,
+                        child: const Center(
+                          child: CircularProgressIndicator(
+                            color: ColorsValue.primary,
+                          ),
+                        ),
+                      ),
+                      errorWidget: (context, url, error) => Container(
+                        height: 200,
+                        color: Colors.grey.shade100,
+                        child: const Icon(
+                          Icons.broken_image_outlined,
+                          size: 40,
+                          color: Colors.grey,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                ],
+
+                if (controller.timeoutOdometerCtrl.text.isNotEmpty) ...[
+                  _sectionHeader('Time Out Odometer Details'),
+                  const SizedBox(height: 12),
+                  _buildField(
+                    fieldController: controller.timeoutOdometerCtrl,
+                    label: 'Time Out Odometer',
+                    icon: Icons.speed_outlined,
+                    keyboardType: TextInputType.number,
+                  ),
+                  const SizedBox(height: 20),
+                ],
+
                 const SizedBox(height: 32),
 
                 // ── Form Action Buttons ──────────────────────────────────────
@@ -370,10 +487,7 @@ class _AttendanceFormPageState extends State<AttendanceFormPage> {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(
-            color: ColorsValue.primary,
-            width: 1.5,
-          ),
+          borderSide: const BorderSide(color: ColorsValue.primary, width: 1.5),
         ),
         prefixIcon: Icon(icon, color: ColorsValue.primary),
         filled: true,

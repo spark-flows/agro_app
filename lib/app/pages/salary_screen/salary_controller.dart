@@ -61,8 +61,8 @@ class SalaryController extends GetxController {
 
   void clearFilters() {
     searchQuery = '';
-    filterMonth = null;
-    filterYear = null;
+    filterMonth = DateFormat('MMMM').format(DateTime.now());
+    filterYear = DateTime.now().year.toString();
     filterPaymentStatus = null;
     salaryPagingController.refresh();
     update();

@@ -284,55 +284,55 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                                                 ),
                                               ],
                                             ),
-                                            if (controller.isAdmin) ...[
-                                              IconButton(
-                                                onPressed: () {
-                                                  final lat = record
-                                                      .coordinates
-                                                      ?.latitude;
-                                                  final lng = record
-                                                      .coordinates
-                                                      ?.longitude;
-                                                  if (lat != null &&
-                                                      lat.trim().isNotEmpty &&
-                                                      lng != null &&
-                                                      lng.trim().isNotEmpty) {
-                                                    final url =
-                                                        "https://www.google.com/maps/search/?api=1&query=$lat,$lng";
-                                                    Utility.launchLinkURL(url);
-                                                  } else {
-                                                    Utility.snacBar(
-                                                      'Location coordinates not available.',
-                                                      Colors.red,
-                                                    );
-                                                  }
-                                                },
-                                                icon: Icon(
-                                                  Icons.location_on,
-                                                  color:
-                                                      (record
-                                                                  .coordinates
-                                                                  ?.latitude !=
-                                                              null &&
-                                                          record
-                                                              .coordinates!
-                                                              .latitude!
-                                                              .trim()
-                                                              .isNotEmpty &&
-                                                          record
-                                                                  .coordinates
-                                                                  ?.longitude !=
-                                                              null &&
-                                                          record
-                                                              .coordinates!
-                                                              .longitude!
-                                                              .trim()
-                                                              .isNotEmpty)
-                                                      ? Colors.redAccent
-                                                      : Colors.grey,
-                                                ),
-                                              ),
-                                            ],
+                                            // if (controller.isAdmin) ...[
+                                            //   IconButton(
+                                            //     onPressed: () {
+                                            //       final lat = record
+                                            //           .coordinates
+                                            //           ?.latitude;
+                                            //       final lng = record
+                                            //           .coordinates
+                                            //           ?.longitude;
+                                            //       if (lat != null &&
+                                            //           lat.trim().isNotEmpty &&
+                                            //           lng != null &&
+                                            //           lng.trim().isNotEmpty) {
+                                            //         final url =
+                                            //             "https://www.google.com/maps/search/?api=1&query=$lat,$lng";
+                                            //         Utility.launchLinkURL(url);
+                                            //       } else {
+                                            //         Utility.snacBar(
+                                            //           'Location coordinates not available.',
+                                            //           Colors.red,
+                                            //         );
+                                            //       }
+                                            //     },
+                                            //     icon: Icon(
+                                            //       Icons.location_on,
+                                            //       color:
+                                            //           (record
+                                            //                       .coordinates
+                                            //                       ?.latitude !=
+                                            //                   null &&
+                                            //               record
+                                            //                   .coordinates!
+                                            //                   .latitude!
+                                            //                   .trim()
+                                            //                   .isNotEmpty &&
+                                            //               record
+                                            //                       .coordinates
+                                            //                       ?.longitude !=
+                                            //                   null &&
+                                            //               record
+                                            //                   .coordinates!
+                                            //                   .longitude!
+                                            //                   .trim()
+                                            //                   .isNotEmpty)
+                                            //           ? Colors.redAccent
+                                            //           : Colors.grey,
+                                            //     ),
+                                            //   ),
+                                            // ],
                                           ],
                                         ),
                                       const SizedBox(height: 12),
@@ -962,16 +962,10 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                     ),
                     elevation: 0,
                   ),
-                  icon: const Icon(
-                    Icons.play_arrow_outlined,
-                    size: 18,
-                  ),
+                  icon: const Icon(Icons.play_arrow_outlined, size: 18),
                   label: const Text(
                     "Resume",
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.bold,
-                    ),
+                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
                   ),
                   onPressed: () {
                     controller.quickBreakOut(record);
@@ -995,10 +989,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                           ),
                           foregroundColor: ColorsValue.primary,
                         ),
-                        icon: const Icon(
-                          Icons.pause_circle_outline,
-                          size: 18,
-                        ),
+                        icon: const Icon(Icons.pause_circle_outline, size: 18),
                         label: const Text(
                           "Pause",
                           style: TextStyle(
@@ -1113,11 +1104,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
       children: [
         _buildTimeInfo('In', timeInVal, Icons.login),
         _buildTimeInfo('Out', timeOutVal, Icons.logout),
-        _buildTimeInfo(
-          'Pause',
-          breakStartVal,
-          Icons.pause_circle_outline,
-        ),
+        _buildTimeInfo('Pause', breakStartVal, Icons.pause_circle_outline),
         _buildTimeInfo('Resume', breakEndVal, Icons.play_circle_outline),
       ],
     );
