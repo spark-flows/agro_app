@@ -1,20 +1,21 @@
 import 'dart:async';
 import 'dart:io';
-import 'package:flutter/services.dart';
-import 'package:image_picker/image_picker.dart';
-import 'package:flutter/foundation.dart' show kIsWeb;
+
 import 'package:agro_app/app/theme/theme.dart';
 import 'package:agro_app/app/utils/utility.dart';
-import 'package:flutter/material.dart';
-import 'package:get/get.dart';
-import 'package:intl/intl.dart';
-import 'package:geolocator/geolocator.dart';
 import 'package:agro_app/domain/models/get_all_attandance_model.dart'
     as get_all_model;
 import 'package:agro_app/domain/models/get_one_attandance_model.dart'
     as get_one_model;
 import 'package:agro_app/domain/repositories/local_storage_keys.dart';
 import 'package:agro_app/domain/repositories/repository.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:get/get.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:intl/intl.dart';
 
 class AttendanceController extends GetxController {
   // ── List & Pagination State ───────────────────────────────────────────────
@@ -324,15 +325,21 @@ class AttendanceController extends GetxController {
           (attendance.timeinphoto ?? (attendance.photo ?? ''));
       if (timeinPhoto.value.trim().isEmpty) timeinPhoto.value = '';
 
-      int? timeInOdo = parsedTimeInOdometer ?? (attendance.timeinodometer ?? attendance.odometer);
-      timeinOdometerCtrl.text = (timeInOdo != null && timeInOdo != 0) ? timeInOdo.toString() : '';
+      int? timeInOdo =
+          parsedTimeInOdometer ??
+          (attendance.timeinodometer ?? attendance.odometer);
+      timeinOdometerCtrl.text = (timeInOdo != null && timeInOdo != 0)
+          ? timeInOdo.toString()
+          : '';
 
       timeoutPhoto.value =
           parsedTimeOutPhoto ?? (attendance.timeoutphoto ?? '');
       if (timeoutPhoto.value.trim().isEmpty) timeoutPhoto.value = '';
 
       int? timeOutOdo = parsedTimeOutOdometer ?? attendance.timeoutodometer;
-      timeoutOdometerCtrl.text = (timeOutOdo != null && timeOutOdo != 0) ? timeOutOdo.toString() : '';
+      timeoutOdometerCtrl.text = (timeOutOdo != null && timeOutOdo != 0)
+          ? timeOutOdo.toString()
+          : '';
 
       String? rawTimeIn = attendance.timein;
       if ((rawTimeIn == null || rawTimeIn.isEmpty) &&
@@ -617,10 +624,12 @@ class AttendanceController extends GetxController {
       }
     } catch (_) {}
     if (record != null) {
-      return {
-        "latitude": record.coordinates?.latitude ?? '',
-        "longitude": record.coordinates?.longitude ?? '',
-      };
+      return await _getCurrentCoordinates();
+
+      // return {
+      //   "latitude": record.coordinates?.latitude ?? '',
+      //   "longitude": record.coordinates?.longitude ?? '',
+      // };
     }
     return await _getCurrentCoordinates();
   }
@@ -740,7 +749,7 @@ class AttendanceController extends GetxController {
         isLoading: false,
       );
       final todayStr = DateFormat('yyyy-MM-dd').format(DateTime.now());
-      final timeStr = DateFormat('hh:mm a').format(DateTime.now());
+      final timeStr = DateFormat('hh:mm ax').format(DateTime.now());
       final record = getTodayRecord();
       final coordinates = await _getResolvedCoordinates(record);
 
@@ -1375,7 +1384,7 @@ class AttendanceController extends GetxController {
         setLocalAttendanceStatus('paused');
         fetchAttendance(isRefresh: true);
         Utility.snacBar('Shift paused successfully', Colors.green);
-        _triggerStopTracking(coordinates);
+        // _triggerStopTracking(coordinates);
       }
     } catch (e) {
       Utility.closeLoader();
@@ -1440,7 +1449,7 @@ class AttendanceController extends GetxController {
         setLocalAttendanceStatus('clocked_in');
         fetchAttendance(isRefresh: true);
         Utility.snacBar('Shift resumed successfully', Colors.green);
-        _triggerStartTracking(coordinates);
+        // _triggerStartTracking(coordinates);
       }
     } catch (e) {
       Utility.closeLoader();
@@ -1450,14 +1459,17 @@ class AttendanceController extends GetxController {
 
   void _startPeriodicLocationUpdates(String trackingId) {
     _trackingTimer?.cancel();
-    _trackingTimer = Timer.periodic(const Duration(seconds: 30), (timer) async {
+    _trackingTimer = Timer.periodic(const Duration(seconds: 15), (timer) async {
       final coordinates = await _getCurrentCoordinates();
       final lat = double.tryParse(coordinates['latitude'] ?? '0') ?? 0.0;
       final lng = double.tryParse(coordinates['longitude'] ?? '0') ?? 0.0;
+      final userId = await Utility.getSecureValue(LocalKeys.distributorId);
+
       if (lat != 0.0 && lng != 0.0) {
         final timestamp = DateTime.now().toUtc().toIso8601String();
         await Get.find<Repository>().updateLocationApi(
-          trackingId: trackingId,
+          // trackingId: trackingId,
+          userId: userId,
           latitude: lat,
           longitude: lng,
           timestamp: timestamp,

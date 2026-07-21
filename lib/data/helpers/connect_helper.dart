@@ -7,10 +7,10 @@ import 'package:agro_app/data/data.dart';
 import 'package:agro_app/domain/domain.dart';
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import 'package:get/get.dart' hide FormData, MultipartFile;
 import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart' as media_type;
-import 'package:flutter/foundation.dart';
 import 'package:image_picker/image_picker.dart';
 
 /// The helper class which will connect to the world to get the data.
@@ -1578,17 +1578,19 @@ class ConnectHelper {
   }
 
   Future<ResponseModel> updateLocationApi({
-    required String trackingId,
+    required String userId,
+    // required String trackingId,
     required double latitude,
     required double longitude,
     required String timestamp,
     bool isLoading = false,
   }) async {
     final Map<String, dynamic> data = {
-      "trackingId": trackingId,
+      // "trackingId": trackingId,
+      "userId": userId,
       "latitude": latitude,
       "longitude": longitude,
-      "timestamp": timestamp,
+      "time": timestamp,
     };
     return apiWrapper.makeRequest(
       EndPoints.updateLocationApi,

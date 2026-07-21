@@ -6,30 +6,16 @@ import 'package:agro_app/app/utils/utility.dart';
 import 'package:agro_app/data/data.dart';
 import 'package:agro_app/device/device.dart';
 import 'package:agro_app/domain/domain.dart';
-import 'package:agro_app/domain/entities/enums.dart';
 import 'package:agro_app/domain/models/auth_model.dart';
-import 'package:agro_app/domain/models/create_attandance_model.dart';
-import 'package:agro_app/domain/models/create_customer_model.dart';
-import 'package:agro_app/domain/models/create_order_model.dart';
-import 'package:agro_app/domain/models/customer_order_model.dart';
-import 'package:agro_app/domain/models/get_all_attandance_model.dart';
-import 'package:agro_app/domain/models/get_all_category_model.dart';
-import 'package:agro_app/domain/models/get_all_customers_model.dart';
-import 'package:agro_app/domain/models/get_all_order_model.dart';
-import 'package:agro_app/domain/models/get_all_product_model.dart';
-import 'package:agro_app/domain/models/get_all_unit_model.dart';
-import 'package:agro_app/domain/models/get_all_roll_model.dart';
-import 'package:agro_app/domain/models/get_all_users_model.dart';
-import 'package:agro_app/domain/models/get_one_attandance_model.dart';
-import 'package:agro_app/domain/models/get_one_order_model.dart';
-import 'package:agro_app/domain/models/get_one_user_model.dart';
-import 'package:agro_app/domain/models/get_profille_model.dart';
-import 'package:agro_app/domain/models/get_all_branches_model.dart';
-import 'package:agro_app/domain/models/getAll_tasks_model.dart';
 import 'package:agro_app/domain/models/create_task_model.dart';
+import 'package:agro_app/domain/models/getAll_tasks_model.dart';
+import 'package:agro_app/domain/models/get_all_branches_model.dart';
+import 'package:agro_app/domain/models/get_all_category_model.dart';
+import 'package:agro_app/domain/models/get_all_roll_model.dart';
+import 'package:agro_app/domain/models/get_all_unit_model.dart';
+import 'package:agro_app/domain/models/get_all_users_model.dart';
 import 'package:agro_app/domain/models/get_one_task_model.dart';
-import 'package:agro_app/domain/models/response_model.dart';
-import 'package:agro_app/domain/models/get_salary_model.dart';
+import 'package:agro_app/domain/models/get_one_user_model.dart';
 
 /// The main repository which will get the data from [DeviceRepository] or the
 /// [DataRepository].
@@ -1584,7 +1570,8 @@ class Repository {
         if (data is String) return data;
         return (data['trackingId'] ?? data['_id'] ?? data['id'])?.toString();
       }
-      return (decoded['trackingId'] ?? decoded['_id'] ?? decoded['id'])?.toString();
+      return (decoded['trackingId'] ?? decoded['_id'] ?? decoded['id'])
+          ?.toString();
     } catch (e) {
       print('startTrackingApi error: $e');
       return null;
@@ -1614,7 +1601,8 @@ class Repository {
   }
 
   Future<bool> updateLocationApi({
-    required String trackingId,
+    // required String trackingId,
+    required String userId,
     required double latitude,
     required double longitude,
     required String timestamp,
@@ -1622,11 +1610,12 @@ class Repository {
   }) async {
     try {
       var response = await _dataRepository.updateLocationApi(
-        trackingId: trackingId,
+        // trackingId: trackingId,
         latitude: latitude,
         longitude: longitude,
         timestamp: timestamp,
         isLoading: isLoading,
+        userId: userId
       );
       return !response.hasError;
     } catch (e) {

@@ -604,7 +604,10 @@ class DataRepository extends DomainRepository {
   Future<ResponseModel> getUserList({bool isLoading = false}) async =>
       connectHelper.getUserList(isLoading: isLoading);
 
-  Future<ResponseModel> uploadAttendanceMediaApi(String filePath, {bool isLoading = true}) async =>
+  Future<ResponseModel> uploadAttendanceMediaApi(
+    String filePath, {
+    bool isLoading = true,
+  }) async =>
       connectHelper.uploadAttendanceMediaApi(filePath, isLoading: isLoading);
 
   Future<ResponseModel> startTrackingApi({
@@ -613,14 +616,13 @@ class DataRepository extends DomainRepository {
     required double longitude,
     required String time,
     bool isLoading = false,
-  }) async =>
-      connectHelper.startTrackingApi(
-        userId: userId,
-        latitude: latitude,
-        longitude: longitude,
-        time: time,
-        isLoading: isLoading,
-      );
+  }) async => connectHelper.startTrackingApi(
+    userId: userId,
+    latitude: latitude,
+    longitude: longitude,
+    time: time,
+    isLoading: isLoading,
+  );
 
   Future<ResponseModel> stopTrackingApi({
     required String userId,
@@ -628,36 +630,32 @@ class DataRepository extends DomainRepository {
     required double longitude,
     required String time,
     bool isLoading = false,
-  }) async =>
-      connectHelper.stopTrackingApi(
-        userId: userId,
-        latitude: latitude,
-        longitude: longitude,
-        time: time,
-        isLoading: isLoading,
-      );
+  }) async => connectHelper.stopTrackingApi(
+    userId: userId,
+    latitude: latitude,
+    longitude: longitude,
+    time: time,
+    isLoading: isLoading,
+  );
 
   Future<ResponseModel> updateLocationApi({
-    required String trackingId,
+    // required String trackingId,
+    required String userId,
     required double latitude,
     required double longitude,
     required String timestamp,
     bool isLoading = false,
-  }) async =>
-      connectHelper.updateLocationApi(
-        trackingId: trackingId,
-        latitude: latitude,
-        longitude: longitude,
-        timestamp: timestamp,
-        isLoading: isLoading,
-      );
+  }) async => connectHelper.updateLocationApi(
+    // trackingId: trackingId,
+    userId: userId,
+    latitude: latitude,
+    longitude: longitude,
+    timestamp: timestamp,
+    isLoading: isLoading,
+  );
 
   Future<ResponseModel> pauseTrackingApi({
     required Map<String, dynamic> body,
     bool isLoading = false,
-  }) async =>
-      connectHelper.pauseTrackingApi(
-        body: body,
-        isLoading: isLoading,
-      );
+  }) async => connectHelper.pauseTrackingApi(body: body, isLoading: isLoading);
 }
