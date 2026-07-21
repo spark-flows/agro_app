@@ -17,7 +17,7 @@ import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 
-class AttendanceController extends GetxController {
+class AttendanceController extends GetxController with WidgetsBindingObserver {
   // ── List & Pagination State ───────────────────────────────────────────────
   List<get_all_model.GetAllAttendanceDoc> attendanceRecords = [];
   bool isLoading = false;
@@ -50,11 +50,10 @@ class AttendanceController extends GetxController {
   final remarkCtrl = TextEditingController();
   final latitudeCtrl = TextEditingController();
   final longitudeCtrl = TextEditingController();
+  final searchCtrl = TextEditingController();
   String selectedStatus = 'present'; // Default: present
-
   String existingLatitude = '';
   String existingLongitude = '';
-
   bool isAdmin = false;
   String editingAttendanceId = '';
   Timer? _searchTimer;
@@ -73,6 +72,7 @@ class AttendanceController extends GetxController {
   @override
   void onInit() {
     super.onInit();
+    WidgetsBinding.instance.addObserver(this);
     fetchAttendance(isRefresh: true);
     checkAdminRole();
     _resumeTrackingIfActive();
@@ -86,6 +86,7 @@ class AttendanceController extends GetxController {
 
   @override
   void onClose() {
+    WidgetsBinding.instance.removeObserver(this);
     _searchTimer?.cancel();
     _trackingTimer?.cancel();
     dateCtrl.dispose();
@@ -1329,130 +1330,20 @@ class AttendanceController extends GetxController {
 
   Future<void> quickBreakIn(get_all_model.GetAllAttendanceDoc? record) async {
     try {
-      Utility.showLoader();
-      final todayStr = DateFormat('yyyy-MM-dd').format(DateTime.now());
-      final timeStr = DateFormat('hh:mm a').format(DateTime.now());
-
-      final List<Map<String, String>> punchingPayload = [];
-      if (record != null && record.punching != null) {
-        for (var p in record.punching!) {
-          punchingPayload.add({
-            "timein": p.timein ?? "00:00",
-            "timeout": (p.timeout == null || p.timeout!.isEmpty)
-                ? "00:00"
-                : p.timeout!,
-          });
-        }
-      }
-
-      final List<Map<String, String>> breaksPayload = [];
-      if (record != null && record.breaks != null) {
-        for (var b in record.breaks!) {
-          breaksPayload.add({
-            "breakstart": b.breakstart ?? "00:00",
-            "breakend": b.breakend ?? "00:00",
-          });
-        }
-      }
-      breaksPayload.add({"breakstart": timeStr, "breakend": "00:00"});
-
-      final Map<String, String> coordinates = await _getResolvedCoordinates(
-        record,
-      );
-
-      final odoData = await _getSavedOdometerData();
-
-      final response = await Get.find<Repository>().createAttendanceApi(
-        attendanceid: record?.id,
-        date: todayStr,
-        timein: record?.timein ?? '',
-        timeout: record?.timeout ?? '',
-        coordinates: coordinates,
-        breakstart: timeStr,
-        breakend: '',
-        remark: record?.remark ?? '',
-        status: 'present',
-        punching: punchingPayload,
-        breaks: breaksPayload,
-        photo: odoData['photo'] as String?,
-        odometer: odoData['odometer'] as int?,
-        isLoading: false,
-      );
-
-      Utility.closeLoader();
-      if (response != null && response.isSuccess == true) {
-        setLocalAttendanceStatus('paused');
-        fetchAttendance(isRefresh: true);
-        Utility.snacBar('Shift paused successfully', Colors.green);
-        // _triggerStopTracking(coordinates);
-      }
+      setLocalAttendanceStatus('paused');
+      fetchAttendance(isRefresh: true);
+      Utility.snacBar('Shift paused successfully', Colors.green);
     } catch (e) {
-      Utility.closeLoader();
       debugPrint('[AttendanceController] quickBreakIn error: $e');
     }
   }
 
   Future<void> quickBreakOut(get_all_model.GetAllAttendanceDoc? record) async {
     try {
-      Utility.showLoader();
-      final todayStr = DateFormat('yyyy-MM-dd').format(DateTime.now());
-      final timeStr = DateFormat('hh:mm a').format(DateTime.now());
-
-      final List<Map<String, String>> punchingPayload = [];
-      if (record != null && record.punching != null) {
-        for (var p in record.punching!) {
-          punchingPayload.add({
-            "timein": p.timein ?? "00:00",
-            "timeout": (p.timeout == null || p.timeout!.isEmpty)
-                ? "00:00"
-                : p.timeout!,
-          });
-        }
-      }
-
-      final List<Map<String, String>> breaksPayload = [];
-      if (record != null && record.breaks != null) {
-        for (var b in record.breaks!) {
-          breaksPayload.add({
-            "breakstart": b.breakstart ?? "00:00",
-            "breakend": b.breakend ?? "00:00",
-          });
-        }
-      }
-      breaksPayload.add({"breakstart": "00:00", "breakend": timeStr});
-
-      final Map<String, String> coordinates = await _getResolvedCoordinates(
-        record,
-      );
-
-      final odoData = await _getSavedOdometerData();
-
-      final response = await Get.find<Repository>().createAttendanceApi(
-        attendanceid: record?.id,
-        date: todayStr,
-        timein: record?.timein ?? '',
-        timeout: record?.timeout ?? '',
-        coordinates: coordinates,
-        breakstart: record?.breakstart ?? '',
-        breakend: timeStr,
-        remark: record?.remark ?? '',
-        status: 'present',
-        punching: punchingPayload,
-        breaks: breaksPayload,
-        photo: odoData['photo'] as String?,
-        odometer: odoData['odometer'] as int?,
-        isLoading: false,
-      );
-
-      Utility.closeLoader();
-      if (response != null && response.isSuccess == true) {
-        setLocalAttendanceStatus('clocked_in');
-        fetchAttendance(isRefresh: true);
-        Utility.snacBar('Shift resumed successfully', Colors.green);
-        // _triggerStartTracking(coordinates);
-      }
+      setLocalAttendanceStatus('clocked_in');
+      fetchAttendance(isRefresh: true);
+      Utility.snacBar('Shift resumed successfully', Colors.green);
     } catch (e) {
-      Utility.closeLoader();
       debugPrint('[AttendanceController] quickBreakOut error: $e');
     }
   }
@@ -1468,7 +1359,6 @@ class AttendanceController extends GetxController {
       if (lat != 0.0 && lng != 0.0) {
         final timestamp = DateTime.now().toUtc().toIso8601String();
         await Get.find<Repository>().updateLocationApi(
-          // trackingId: trackingId,
           userId: userId,
           latitude: lat,
           longitude: lng,
@@ -1567,6 +1457,16 @@ class AttendanceController extends GetxController {
       Get.find<Repository>().saveValue(LocalKeys.trackingId, "");
     } catch (e) {
       debugPrint('[AttendanceController] stop tracking error: $e');
+    }
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      debugPrint(
+        '[AttendanceController] App resumed to foreground, checking and resuming tracking if active...',
+      );
+      _resumeTrackingIfActive();
     }
   }
 }

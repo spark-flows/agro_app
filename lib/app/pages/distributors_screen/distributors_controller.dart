@@ -8,6 +8,8 @@ import 'package:agro_app/app/utils/utility.dart';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:get/get.dart';
+import 'package:intl/intl.dart';
+import 'package:agro_app/app/pages/attendance_screen/attendance_controller.dart';
 
 class DistributorsController extends GetxController {
   List<Doc> users = [];
@@ -53,21 +55,31 @@ class DistributorsController extends GetxController {
   Worker? _searchWorker;
 
   bool loggedUserLiveTracking = true;
+  bool loggedUserOdometer = false;
 
   Future<void> checkLoggedUserLiveTracking() async {
     try {
-      final localData = await Get.find<Repository>().getSecureValue(LocalKeys.profileData);
+      final localData = await Get.find<Repository>().getSecureValue(
+        LocalKeys.profileData,
+      );
       if (localData.isNotEmpty) {
         final decoded = json.decode(localData);
         loggedUserLiveTracking = decoded['liveTracking'] as bool? ?? false;
+        loggedUserOdometer = decoded['odometer'] as bool? ?? false;
       } else {
-        final profile = await Get.find<Repository>().getProfileApi(isLoading: false);
+        final profile = await Get.find<Repository>().getProfileApi(
+          isLoading: false,
+        );
         if (profile?.data?.userData != null) {
-          loggedUserLiveTracking = profile?.data?.userData?.liveTracking ?? false;
+          loggedUserLiveTracking =
+              profile?.data?.userData?.liveTracking ?? false;
+          loggedUserOdometer =
+              profile?.data?.userData?.odometer ?? false;
         }
       }
     } catch (_) {
       loggedUserLiveTracking = true;
+      loggedUserOdometer = false;
     }
     update();
   }
@@ -268,6 +280,31 @@ class DistributorsController extends GetxController {
 
   // ── Distributor shift actions (Separate from Attendance) ───────────────────
   Future<void> clockInDistributor(Doc user) async {
+    if (loggedUserLiveTracking && loggedUserOdometer) {
+      bool isClockedIn = false;
+      try {
+        if (Get.isRegistered<AttendanceController>()) {
+          final attendanceController = Get.find<AttendanceController>();
+          final record = attendanceController.getTodayRecord();
+          isClockedIn = attendanceController.isClockedInToday(record);
+        } else {
+          final todayStr = DateFormat('yyyy-MM-dd').format(DateTime.now());
+          final savedDate = Get.find<Repository>().getStringValue('attendance_date');
+          if (savedDate == todayStr) {
+            final savedStatus = Get.find<Repository>().getStringValue('attendance_status');
+            isClockedIn = (savedStatus == 'clocked_in' || savedStatus == 'paused');
+          }
+        }
+      } catch (e) {
+        debugPrint('[DistributorsController] Error checking attendance clock-in: $e');
+      }
+
+      if (!isClockedIn) {
+        Utility.errorMessage('First you need to Clock In in the Attendance Screen.');
+        return;
+      }
+    }
+
     final hasPermission = await Utility.handleLocationPermission();
     if (!hasPermission) return;
 
@@ -281,7 +318,23 @@ class DistributorsController extends GetxController {
       lat = position.latitude;
       lon = position.longitude;
     } catch (e) {
-      debugPrint('[DistributorsController] geolocator error: $e');
+      debugPrint('[DistributorsController] geolocator high accuracy error: $e');
+      try {
+        final lastPosition = await Geolocator.getLastKnownPosition();
+        if (lastPosition != null) {
+          lat = lastPosition.latitude;
+          lon = lastPosition.longitude;
+        } else {
+          final position = await Geolocator.getCurrentPosition(
+            desiredAccuracy: LocationAccuracy.medium,
+            timeLimit: const Duration(seconds: 5),
+          );
+          lat = position.latitude;
+          lon = position.longitude;
+        }
+      } catch (ex) {
+        debugPrint('[DistributorsController] geolocator fallback error: $ex');
+      }
     }
 
     String userId = await Get.find<Repository>().getSecureValue(

@@ -68,6 +68,8 @@ dependencies:
   validators: ^3.0.0
   video_player: 
   video_thumbnail: ^0.5.3
+  flutter_map: ^8.3.1
+  latlong2: ^0.10.1
 
 dev_dependencies:
   flutter_test:

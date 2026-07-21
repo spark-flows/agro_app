@@ -1228,45 +1228,27 @@ class ConnectHelper {
     final String role = await Utility.getSecureValue(LocalKeys.roleName);
     final bool isUser = role.toLowerCase() != 'admin';
 
-    Map<String, dynamic> data;
-    if (isUser) {
-      data = {
-        "userid": distributorId,
-        "date": date,
-        "branchid": branchId,
-        "photo": photo,
-        "odometer": odometer,
-        "timeinphoto": timeinphoto,
-        "timeinodometer": timeinodometer,
-        "timeoutphoto": timeoutphoto,
-        "timeoutodometer": timeoutodometer,
-        "coordinates": coordinates,
-        if (punching != null) "punching": punching,
-        if (breaks != null) "breaks": breaks,
-      };
-    } else {
-      data = {
-        "attendanceid": attendanceid ?? "",
-        "date": date,
-        "branchid": branchId,
-        "userid": distributorId,
-        "timein": timein,
-        "timeout": timeout,
-        "coordinates": coordinates,
-        "breakstart": breakstart,
-        "breakend": breakend,
-        "remark": remark,
-        "status": status,
-        if (photo != null) "photo": photo,
-        if (odometer != null) "odometer": odometer,
-        if (timeinphoto != null) "timeinphoto": timeinphoto,
-        if (timeinodometer != null) "timeinodometer": timeinodometer,
-        if (timeoutphoto != null) "timeoutphoto": timeoutphoto,
-        if (timeoutodometer != null) "timeoutodometer": timeoutodometer,
-        if (punching != null) "punching": punching,
-        if (breaks != null) "breaks": breaks,
-      };
-    }
+    Map<String, dynamic> data = {
+      "attendanceid": attendanceid ?? "",
+      "userid": distributorId,
+      "date": date,
+      "branchid": branchId,
+      "timein": timein,
+      "timeout": timeout,
+      "coordinates": coordinates,
+      "breakstart": breakstart,
+      "breakend": breakend,
+      "remark": remark,
+      "status": status,
+      if (photo != null) "photo": photo,
+      if (odometer != null) "odometer": odometer,
+      if (timeinphoto != null) "timeinphoto": timeinphoto,
+      if (timeinodometer != null) "timeinodometer": timeinodometer,
+      if (timeoutphoto != null) "timeoutphoto": timeoutphoto,
+      if (timeoutodometer != null) "timeoutodometer": timeoutodometer,
+      if (punching != null) "punching": punching,
+      if (breaks != null) "breaks": breaks,
+    };
     var response = await apiWrapper.makeRequest(
       EndPoints.createAttendanceApi,
       Request.post,

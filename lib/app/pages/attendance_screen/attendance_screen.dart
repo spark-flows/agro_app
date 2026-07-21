@@ -1,7 +1,9 @@
 import 'package:agro_app/app/pages/attendance_screen/attendance_controller.dart';
+import 'package:agro_app/app/pages/attendance_screen/attendance_map_page.dart';
 import 'package:agro_app/app/theme/theme.dart';
 import 'package:agro_app/app/utils/utility.dart';
 import 'package:flutter/material.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:agro_app/domain/models/get_all_attandance_model.dart'
@@ -284,55 +286,227 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                                                 ),
                                               ],
                                             ),
-                                            // if (controller.isAdmin) ...[
-                                            //   IconButton(
-                                            //     onPressed: () {
-                                            //       final lat = record
-                                            //           .coordinates
-                                            //           ?.latitude;
-                                            //       final lng = record
-                                            //           .coordinates
-                                            //           ?.longitude;
-                                            //       if (lat != null &&
-                                            //           lat.trim().isNotEmpty &&
-                                            //           lng != null &&
-                                            //           lng.trim().isNotEmpty) {
-                                            //         final url =
-                                            //             "https://www.google.com/maps/search/?api=1&query=$lat,$lng";
-                                            //         Utility.launchLinkURL(url);
-                                            //       } else {
-                                            //         Utility.snacBar(
-                                            //           'Location coordinates not available.',
-                                            //           Colors.red,
-                                            //         );
-                                            //       }
-                                            //     },
-                                            //     icon: Icon(
-                                            //       Icons.location_on,
-                                            //       color:
-                                            //           (record
-                                            //                       .coordinates
-                                            //                       ?.latitude !=
-                                            //                   null &&
-                                            //               record
-                                            //                   .coordinates!
-                                            //                   .latitude!
-                                            //                   .trim()
-                                            //                   .isNotEmpty &&
-                                            //               record
-                                            //                       .coordinates
-                                            //                       ?.longitude !=
-                                            //                   null &&
-                                            //               record
-                                            //                   .coordinates!
-                                            //                   .longitude!
-                                            //                   .trim()
-                                            //                   .isNotEmpty)
-                                            //           ? Colors.redAccent
-                                            //           : Colors.grey,
-                                            //     ),
-                                            //   ),
-                                            // ],
+                                            if (controller.isAdmin) ...[
+                                              IconButton(
+                                                onPressed: () async {
+                                                  String? startLat;
+                                                  String? startLng;
+                                                  String? endLat;
+                                                  String? endLng;
+
+                                                  if (record.punching != null &&
+                                                      record
+                                                          .punching!
+                                                          .isNotEmpty) {
+                                                    for (var p
+                                                        in record.punching!) {
+                                                      if (p
+                                                                  .timeincoordinates
+                                                                  ?.latitude !=
+                                                              null &&
+                                                          p
+                                                              .timeincoordinates!
+                                                              .latitude!
+                                                              .trim()
+                                                              .isNotEmpty &&
+                                                          p
+                                                                  .timeincoordinates
+                                                                  ?.longitude !=
+                                                              null &&
+                                                          p
+                                                              .timeincoordinates!
+                                                              .longitude!
+                                                              .trim()
+                                                              .isNotEmpty) {
+                                                        startLat = p
+                                                            .timeincoordinates!
+                                                            .latitude;
+                                                        startLng = p
+                                                            .timeincoordinates!
+                                                            .longitude;
+                                                        break;
+                                                      }
+                                                    }
+                                                    for (var p
+                                                        in record
+                                                            .punching!
+                                                            .reversed) {
+                                                      if (p
+                                                                  .timeoutcoordinates
+                                                                  ?.latitude !=
+                                                              null &&
+                                                          p
+                                                              .timeoutcoordinates!
+                                                              .latitude!
+                                                              .trim()
+                                                              .isNotEmpty &&
+                                                          p
+                                                                  .timeoutcoordinates
+                                                                  ?.longitude !=
+                                                              null &&
+                                                          p
+                                                              .timeoutcoordinates!
+                                                              .longitude!
+                                                              .trim()
+                                                              .isNotEmpty) {
+                                                        endLat = p
+                                                            .timeoutcoordinates!
+                                                            .latitude;
+                                                        endLng = p
+                                                            .timeoutcoordinates!
+                                                            .longitude;
+                                                        break;
+                                                      }
+                                                    }
+                                                  }
+
+                                                  if (startLat == null ||
+                                                      startLng == null) {
+                                                    startLat = record
+                                                        .coordinates
+                                                        ?.latitude;
+                                                    startLng = record
+                                                        .coordinates
+                                                        ?.longitude;
+                                                  }
+                                                  if (endLat == null ||
+                                                      endLng == null) {
+                                                    endLat = record
+                                                        .coordinates
+                                                        ?.latitude;
+                                                    endLng = record
+                                                        .coordinates
+                                                        ?.longitude;
+                                                  }
+
+                                                  if (startLat != null &&
+                                                      startLat
+                                                          .trim()
+                                                          .isNotEmpty &&
+                                                      startLng != null &&
+                                                      startLng
+                                                          .trim()
+                                                          .isNotEmpty) {
+                                                    final double sLat =
+                                                        double.tryParse(
+                                                          startLat,
+                                                        ) ??
+                                                        0.0;
+                                                    final double sLng =
+                                                        double.tryParse(
+                                                          startLng,
+                                                        ) ??
+                                                        0.0;
+                                                    final double? eLat =
+                                                        endLat != null &&
+                                                            endLat
+                                                                .trim()
+                                                                .isNotEmpty
+                                                        ? double.tryParse(
+                                                            endLat,
+                                                          )
+                                                        : null;
+                                                    final double? eLng =
+                                                        endLng != null &&
+                                                            endLng
+                                                                .trim()
+                                                                .isNotEmpty
+                                                        ? double.tryParse(
+                                                            endLng,
+                                                          )
+                                                        : null;
+
+                                                    Get.to(
+                                                      () => AttendanceMapPage(
+                                                        startLat: sLat,
+                                                        startLng: sLng,
+                                                        endLat: eLat,
+                                                        endLng: eLng,
+                                                      ),
+                                                    );
+                                                  } else {
+                                                    Utility.snacBar(
+                                                      'Location coordinates not available.',
+                                                      Colors.red,
+                                                    );
+                                                  }
+                                                },
+                                                icon: Icon(
+                                                  Icons.location_on,
+                                                  color: (() {
+                                                    if (record.punching !=
+                                                        null) {
+                                                      for (var p
+                                                          in record.punching!) {
+                                                        if (p
+                                                                    .timeincoordinates
+                                                                    ?.latitude !=
+                                                                null &&
+                                                            p
+                                                                .timeincoordinates!
+                                                                .latitude!
+                                                                .trim()
+                                                                .isNotEmpty &&
+                                                            p
+                                                                    .timeincoordinates
+                                                                    ?.longitude !=
+                                                                null &&
+                                                            p
+                                                                .timeincoordinates!
+                                                                .longitude!
+                                                                .trim()
+                                                                .isNotEmpty) {
+                                                          return Colors
+                                                              .redAccent;
+                                                        }
+                                                        if (p
+                                                                    .timeoutcoordinates
+                                                                    ?.latitude !=
+                                                                null &&
+                                                            p
+                                                                .timeoutcoordinates!
+                                                                .latitude!
+                                                                .trim()
+                                                                .isNotEmpty &&
+                                                            p
+                                                                    .timeoutcoordinates
+                                                                    ?.longitude !=
+                                                                null &&
+                                                            p
+                                                                .timeoutcoordinates!
+                                                                .longitude!
+                                                                .trim()
+                                                                .isNotEmpty) {
+                                                          return Colors
+                                                              .redAccent;
+                                                        }
+                                                      }
+                                                    }
+                                                    if (record
+                                                                .coordinates
+                                                                ?.latitude !=
+                                                            null &&
+                                                        record
+                                                            .coordinates!
+                                                            .latitude!
+                                                            .trim()
+                                                            .isNotEmpty &&
+                                                        record
+                                                                .coordinates
+                                                                ?.longitude !=
+                                                            null &&
+                                                        record
+                                                            .coordinates!
+                                                            .longitude!
+                                                            .trim()
+                                                            .isNotEmpty) {
+                                                      return Colors.redAccent;
+                                                    }
+                                                    return Colors.grey;
+                                                  })(),
+                                                ),
+                                              ),
+                                            ],
                                           ],
                                         ),
                                       const SizedBox(height: 12),

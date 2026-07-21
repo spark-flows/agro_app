@@ -21,7 +21,9 @@ class GetAllAttendanceModel {
   factory GetAllAttendanceModel.fromJson(Map<String, dynamic> json) =>
       GetAllAttendanceModel(
         message: json["Message"],
-        data: json["Data"] == null ? null : GetAllAttendanceData.fromJson(json["Data"]),
+        data: json["Data"] == null
+            ? null
+            : GetAllAttendanceData.fromJson(json["Data"]),
         status: json["Status"],
         isSuccess: json["IsSuccess"],
       );
@@ -63,7 +65,9 @@ class GetAllAttendanceData {
       GetAllAttendanceData(
         docs: json["docs"] == null
             ? []
-            : List<GetAllAttendanceDoc>.from(json["docs"]!.map((x) => GetAllAttendanceDoc.fromJson(x))),
+            : List<GetAllAttendanceDoc>.from(
+                json["docs"]!.map((x) => GetAllAttendanceDoc.fromJson(x)),
+              ),
         totalDocs: json["totalDocs"],
         limit: json["limit"],
         totalPages: json["totalPages"],
@@ -131,7 +135,9 @@ class GetAllAttendanceDoc {
             ? null
             : GetAllAttendanceBranchid.fromJson(json["branchid"]),
         date: json["date"],
-        userid: json["userid"] == null ? null : GetAllAttendanceUserid.fromJson(json["userid"]),
+        userid: json["userid"] == null
+            ? null
+            : GetAllAttendanceUserid.fromJson(json["userid"]),
         timein: json["timein"],
         timeout: json["timeout"],
         coordinates: json["coordinates"] == null
@@ -144,10 +150,14 @@ class GetAllAttendanceDoc {
         createdBy: json["createdBy"],
         punching: json["punching"] == null
             ? []
-            : List<Punching>.from(json["punching"]!.map((x) => Punching.fromJson(x))),
+            : List<Punching>.from(
+                json["punching"]!.map((x) => Punching.fromJson(x)),
+              ),
         breaks: json["break"] == null
             ? []
-            : List<BreakObj>.from(json["break"]!.map((x) => BreakObj.fromJson(x))),
+            : List<BreakObj>.from(
+                json["break"]!.map((x) => BreakObj.fromJson(x)),
+              ),
       );
 
   Map<String, dynamic> toJson() => {
@@ -163,8 +173,12 @@ class GetAllAttendanceDoc {
     "remark": remark,
     "status": status,
     "createdBy": createdBy,
-    "punching": punching == null ? [] : List<dynamic>.from(punching!.map((x) => x.toJson())),
-    "break": breaks == null ? [] : List<dynamic>.from(breaks!.map((x) => x.toJson())),
+    "punching": punching == null
+        ? []
+        : List<dynamic>.from(punching!.map((x) => x.toJson())),
+    "break": breaks == null
+        ? []
+        : List<dynamic>.from(breaks!.map((x) => x.toJson())),
   };
 }
 
@@ -175,6 +189,8 @@ class Punching {
   int? timeinodometer;
   String? timeoutphoto;
   int? timeoutodometer;
+  GetAllAttendanceCoordinates? timeincoordinates;
+  GetAllAttendanceCoordinates? timeoutcoordinates;
 
   Punching({
     this.timein,
@@ -183,29 +199,39 @@ class Punching {
     this.timeinodometer,
     this.timeoutphoto,
     this.timeoutodometer,
+    this.timeincoordinates,
+    this.timeoutcoordinates,
   });
 
   factory Punching.fromJson(Map<String, dynamic> json) => Punching(
-        timein: json["timein"]?.toString(),
-        timeout: json["timeout"]?.toString(),
-        timeinphoto: json["timeinphoto"]?.toString(),
-        timeinodometer: json["timeinodometer"] != null
-            ? int.tryParse(json["timeinodometer"].toString())
-            : null,
-        timeoutphoto: json["timeoutphoto"]?.toString(),
-        timeoutodometer: json["timeoutodometer"] != null
-            ? int.tryParse(json["timeoutodometer"].toString())
-            : null,
-      );
+    timein: json["timein"]?.toString(),
+    timeout: json["timeout"]?.toString(),
+    timeinphoto: json["timeinphoto"]?.toString(),
+    timeinodometer: json["timeinodometer"] != null
+        ? int.tryParse(json["timeinodometer"].toString())
+        : null,
+    timeoutphoto: json["timeoutphoto"]?.toString(),
+    timeoutodometer: json["timeoutodometer"] != null
+        ? int.tryParse(json["timeoutodometer"].toString())
+        : null,
+    timeincoordinates: json["timeincoordinates"] == null
+        ? null
+        : GetAllAttendanceCoordinates.fromJson(json["timeincoordinates"]),
+    timeoutcoordinates: json["timeoutcoordinates"] == null
+        ? null
+        : GetAllAttendanceCoordinates.fromJson(json["timeoutcoordinates"]),
+  );
 
   Map<String, dynamic> toJson() => {
-        "timein": timein,
-        "timeout": timeout,
-        "timeinphoto": timeinphoto,
-        "timeinodometer": timeinodometer,
-        "timeoutphoto": timeoutphoto,
-        "timeoutodometer": timeoutodometer,
-      };
+    "timein": timein,
+    "timeout": timeout,
+    "timeinphoto": timeinphoto,
+    "timeinodometer": timeinodometer,
+    "timeoutphoto": timeoutphoto,
+    "timeoutodometer": timeoutodometer,
+    "timeincoordinates": timeincoordinates?.toJson(),
+    "timeoutcoordinates": timeoutcoordinates?.toJson(),
+  };
 }
 
 class BreakObj {
@@ -215,14 +241,14 @@ class BreakObj {
   BreakObj({this.breakstart, this.breakend});
 
   factory BreakObj.fromJson(Map<String, dynamic> json) => BreakObj(
-        breakstart: json["breakstart"]?.toString(),
-        breakend: json["breakend"]?.toString(),
-      );
+    breakstart: json["breakstart"]?.toString(),
+    breakend: json["breakend"]?.toString(),
+  );
 
   Map<String, dynamic> toJson() => {
-        "breakstart": breakstart,
-        "breakend": breakend,
-      };
+    "breakstart": breakstart,
+    "breakend": breakend,
+  };
 }
 
 class GetAllAttendanceBranchid {
