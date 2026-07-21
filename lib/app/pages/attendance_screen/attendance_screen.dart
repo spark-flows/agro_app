@@ -800,8 +800,9 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
 
     final String displayTimeIn = (() {
       if (record == null) return '';
-      if (record.timein != null && record.timein!.isNotEmpty)
+      if (record.timein != null && record.timein!.isNotEmpty) {
         return record.timein!;
+      }
       if (record.punching != null && record.punching!.isNotEmpty) {
         for (var p in record.punching!.reversed) {
           if (p.timein != null && p.timein != "00:00" && p.timein!.isNotEmpty) {

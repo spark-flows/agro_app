@@ -52,11 +52,32 @@ class DistributorsController extends GetxController {
   // To debounce search calls
   Worker? _searchWorker;
 
+  bool loggedUserLiveTracking = true;
+
+  Future<void> checkLoggedUserLiveTracking() async {
+    try {
+      final localData = await Get.find<Repository>().getSecureValue(LocalKeys.profileData);
+      if (localData.isNotEmpty) {
+        final decoded = json.decode(localData);
+        loggedUserLiveTracking = decoded['liveTracking'] as bool? ?? false;
+      } else {
+        final profile = await Get.find<Repository>().getProfileApi(isLoading: false);
+        if (profile?.data?.userData != null) {
+          loggedUserLiveTracking = profile?.data?.userData?.liveTracking ?? false;
+        }
+      }
+    } catch (_) {
+      loggedUserLiveTracking = true;
+    }
+    update();
+  }
+
   @override
   void onInit() {
     super.onInit();
     fetchUsers();
     fetchRoles();
+    checkLoggedUserLiveTracking();
 
     // Initialize search worker
     _searchWorker = debounce(

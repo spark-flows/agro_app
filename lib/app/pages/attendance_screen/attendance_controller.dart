@@ -1459,7 +1459,7 @@ class AttendanceController extends GetxController {
 
   void _startPeriodicLocationUpdates(String trackingId) {
     _trackingTimer?.cancel();
-    _trackingTimer = Timer.periodic(const Duration(seconds: 15), (timer) async {
+    _trackingTimer = Timer.periodic(const Duration(seconds: 3), (timer) async {
       final coordinates = await _getCurrentCoordinates();
       final lat = double.tryParse(coordinates['latitude'] ?? '0') ?? 0.0;
       final lng = double.tryParse(coordinates['longitude'] ?? '0') ?? 0.0;

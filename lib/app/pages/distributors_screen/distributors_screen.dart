@@ -321,66 +321,64 @@ class _DistributorsScreenState extends State<DistributorsScreen> {
 
                   // ── Attendance Actions Panel ─────────────────────────────
                   if (showAttendance)
-                    ...([
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 20),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            GetBuilder<DistributorsController>(
-                              builder: (distCtrl) {
-                                final currentUser = distCtrl.users.firstWhere(
-                                  (u) => u.id == user.id,
-                                  orElse: () => user,
-                                );
-                                final isClockedIn = currentUser.isClockedIn;
+                    GetBuilder<DistributorsController>(
+                      builder: (distCtrl) {
+                        if (!distCtrl.loggedUserLiveTracking) {
+                          return const SizedBox.shrink();
+                        }
 
-                                return Column(
-                                  children: [
-                                    // ── Row 1: Clock In / Clock Out
-                                    Row(
-                                      children: [
-                                        // Clock In button
-                                        Expanded(
-                                          child: _attendanceButton(
-                                            label: 'Clock In',
-                                            icon: Icons.login_rounded,
-                                            color: Colors.green,
-                                            enabled: !isClockedIn,
-                                            onTap: () {
-                                              distCtrl.clockInDistributor(
-                                                currentUser,
-                                              );
-                                            },
-                                          ),
-                                        ),
-                                        const SizedBox(width: 10),
-                                        // Clock Out button
-                                        Expanded(
-                                          child: _attendanceButton(
-                                            label: 'Clock Out',
-                                            icon: Icons.logout_rounded,
-                                            color: Colors.red,
-                                            enabled: isClockedIn,
-                                            onTap: () {
-                                              distCtrl.clockOutDistributor(
-                                                currentUser,
-                                              );
-                                            },
-                                          ),
-                                        ),
-                                      ],
+                        final currentUser = distCtrl.users.firstWhere(
+                          (u) => u.id == user.id,
+                          orElse: () => user,
+                        );
+                        final isClockedIn = currentUser.isClockedIn;
+
+                        return Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 20),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              // ── Row 1: Clock In / Clock Out
+                              Row(
+                                children: [
+                                  // Clock In button
+                                  Expanded(
+                                    child: _attendanceButton(
+                                      label: 'Clock In',
+                                      icon: Icons.login_rounded,
+                                      color: Colors.green,
+                                      enabled: !isClockedIn,
+                                      onTap: () {
+                                        distCtrl.clockInDistributor(
+                                          currentUser,
+                                        );
+                                      },
                                     ),
-                                  ],
-                                );
-                              },
-                            ),
-                            const SizedBox(height: 16),
-                            Divider(color: Colors.grey.shade100),
-                          ],
-                        ),
-                      ),
-                    ]),
+                                  ),
+                                  const SizedBox(width: 10),
+                                  // Clock Out button
+                                  Expanded(
+                                    child: _attendanceButton(
+                                      label: 'Clock Out',
+                                      icon: Icons.logout_rounded,
+                                      color: Colors.red,
+                                      enabled: isClockedIn,
+                                      onTap: () {
+                                        distCtrl.clockOutDistributor(
+                                          currentUser,
+                                        );
+                                      },
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 16),
+                              Divider(color: Colors.grey.shade100),
+                            ],
+                          ),
+                        );
+                      },
+                    ),
 
                   // ── Edit / View Button ───────────────────────────────────
                   Padding(
