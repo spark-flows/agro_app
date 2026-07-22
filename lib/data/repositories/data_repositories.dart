@@ -181,12 +181,14 @@ class DataRepository extends DomainRepository {
     required List<Map<String, dynamic>> items,
     required num totalamount,
     String? deliverydate,
+    String? distributorid,
     bool isLoading = false,
   }) async => connectHelper.createOrderApi(
     orderid: orderid,
     items: items,
     totalamount: totalamount,
     deliverydate: deliverydate,
+    distributorid: distributorid,
     isLoading: isLoading,
   );
 

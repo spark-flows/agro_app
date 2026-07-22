@@ -43,8 +43,14 @@ class OrdersController extends GetxController {
 
   List<GetAllCustomerDoc> customers = [];
   String selectedCustomerId = '';
+  String selectedDistributorId = '';
+  String userRole = '';
   bool isPlacingOrder = false;
   String? editingOrderId;
+
+  bool get isDealerRole =>
+      userRole.toLowerCase().trim() == 'dealer' ||
+      userRole.toLowerCase().trim() == 'distributor';
 
   List<GetAllOrderDoc> customerOrders = [];
   bool isFetchingOrders = false;
@@ -278,10 +284,11 @@ class OrdersController extends GetxController {
         } catch (_) {}
       }
     }
+    userRole = role;
     isAdmin = RoleUtils.isAdmin(role);
     update();
 
-    if (isAdmin) {
+    if (!isDealerRole || isAdmin) {
       fetchDistributors();
     }
   }
@@ -290,7 +297,7 @@ class OrdersController extends GetxController {
     try {
       var response = await Get.find<Repository>().getUsersListApi(
         page: 1,
-        limit: 10,
+        limit: 100,
         type: 'dealer',
         isLoading: false,
       );
@@ -484,11 +491,15 @@ class OrdersController extends GetxController {
       p.quantity = 0;
     }
     selectedCustomerId = historyCustomerId ?? '';
+    selectedDistributorId = '';
     editingOrderId = null; // Clear edit mode
     searchQuery = '';
     searchController.clear();
     titleController.clear();
     deliveryDateController.clear();
+    if (!isDealerRole && distributors.isEmpty) {
+      fetchDistributors();
+    }
     update();
   }
 
@@ -504,6 +515,17 @@ class OrdersController extends GetxController {
       historyCustomerId = details.customerid?.toString();
     }
     selectedCustomerId = historyCustomerId ?? '';
+
+    if (details.distributorid != null) {
+      if (details.distributorid is GetOneOrderDistributor) {
+        selectedDistributorId = details.distributorid?.id ?? '';
+      } else if (details.distributorid is Map) {
+        selectedDistributorId =
+            (details.distributorid as Map)["_id"]?.toString() ?? '';
+      } else {
+        selectedDistributorId = details.distributorid.toString();
+      }
+    }
 
     titleController.text = details.orderno ?? '';
     deliveryDateController.text = details.deliverydate?.split('T').first ?? '';
@@ -534,6 +556,16 @@ class OrdersController extends GetxController {
       return;
     }
 
+    if (!isDealerRole && selectedDistributorId.isEmpty) {
+      Utility.errorMessage('Please select a dealer');
+      return;
+    }
+
+    if (deliveryDateController.text.trim().isEmpty) {
+      Utility.errorMessage('Please select a delivery date');
+      return;
+    }
+
     final itemsPayload = cartItems
         .map(
           (p) => {
@@ -548,6 +580,7 @@ class OrdersController extends GetxController {
     update();
     var response = await Get.find<Repository>().createOrderApi(
       orderid: editingOrderId, // Use the database ID if editing
+      distributorid: !isDealerRole ? selectedDistributorId : null,
       items: itemsPayload,
       totalamount: cartTotal,
       deliverydate: deliveryDateController.text.trim(),
@@ -570,6 +603,7 @@ class OrdersController extends GetxController {
         fetchAllOrders();
       }
       selectedCustomerId = '';
+      selectedDistributorId = '';
       editingOrderId = null; // Clear edit mode after success
       titleController.clear();
       deliveryDateController.clear();

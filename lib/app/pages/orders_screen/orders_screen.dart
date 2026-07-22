@@ -236,25 +236,23 @@ class _OrdersScreenState extends State<OrdersScreen> {
               ],
             ),
           ),
-          floatingActionButton: !RoleUtils.isAdmin(homeController.roleName)
-              ? FloatingActionButton.extended(
-                  onPressed: () async {
-                    if (Get.isSnackbarOpen) await Get.closeCurrentSnackbar();
-                    // Reset order state (clear cart/fields) and pre-select customer
-                    controller.resetOrderFlow();
-                    Get.to(() => NewOrderScreen(controller: controller));
-                  },
-                  backgroundColor: ColorsValue.primary,
-                  icon: const Icon(Icons.add, color: Colors.white),
-                  label: const Text(
-                    'New Distributor Order',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                )
-              : null,
+          floatingActionButton: FloatingActionButton.extended(
+            onPressed: () async {
+              if (Get.isSnackbarOpen) await Get.closeCurrentSnackbar();
+              // Reset order state (clear cart/fields) and pre-select customer
+              controller.resetOrderFlow();
+              Get.to(() => NewOrderScreen(controller: controller));
+            },
+            backgroundColor: ColorsValue.primary,
+            icon: const Icon(Icons.add, color: Colors.white),
+            label: const Text(
+              'Create Order',
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
         );
       },
     );
@@ -979,26 +977,56 @@ void _showCartBottomSheet(
                   style: Styles.txtBlackColorW70020,
                   textAlign: TextAlign.center,
                 ),
-                // const SizedBox(height: 16),
-                // Text(
-                //   'Total Amount: ₹${controller.cartTotal}',
-                //   style: Styles.txtBlackColorW70016.copyWith(
-                //     color: ColorsValue.primary,
-                //   ),
-                //   textAlign: TextAlign.center,
-                // ),
                 const SizedBox(height: 16),
-                // const SizedBox(height: 16),
-                // TextField(
-                //   controller: controller.titleController,
-                //   decoration: InputDecoration(
-                //     labelText: 'Order Title / ID',
-                //     border: OutlineInputBorder(
-                //       borderRadius: BorderRadius.circular(12),
-                //     ),
-                //   ),
-                // ),
-                // const SizedBox(height: 16),
+                if (!controller.isDealerRole) ...[
+                  Builder(
+                    builder: (context) {
+                      final Map<String, dynamic> uniqueDistributors = {};
+                      for (var dist in controller.distributors) {
+                        if (dist.id.isNotEmpty) {
+                          uniqueDistributors[dist.id] = dist;
+                        }
+                      }
+                      final String? selectedValue =
+                          uniqueDistributors.containsKey(
+                            controller.selectedDistributorId,
+                          )
+                          ? controller.selectedDistributorId
+                          : null;
+
+                      return DropdownButtonFormField<String>(
+                        value: selectedValue,
+                        decoration: InputDecoration(
+                          labelText: 'Select Dealer',
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          prefixIcon: const Icon(Icons.storefront_outlined),
+                        ),
+                        items: uniqueDistributors.values
+                            .map(
+                              (dist) => DropdownMenuItem<String>(
+                                value: dist.id,
+                                child: Text(
+                                  (dist.name != null && dist.name.isNotEmpty)
+                                      ? dist.name
+                                      : 'Unknown Dealer',
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            )
+                            .toList(),
+                        onChanged: (val) {
+                          if (val != null) {
+                            controller.selectedDistributorId = val;
+                            controller.update();
+                          }
+                        },
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 16),
+                ],
                 TextField(
                   controller: controller.deliveryDateController,
                   decoration: InputDecoration(

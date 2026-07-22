@@ -445,13 +445,19 @@ class ConnectHelper {
     required List<Map<String, dynamic>> items,
     required num totalamount,
     String? deliverydate,
+    String? distributorid,
     bool isLoading = false,
   }) async {
-    var distributorId = await Utility.getSecureValue(LocalKeys.distributorId);
+    var loggedInDistributorId =
+        await Utility.getSecureValue(LocalKeys.distributorId);
     final String branchId = await _resolveBranchId();
+    final String finalDistributorId =
+        (distributorid != null && distributorid.isNotEmpty)
+            ? distributorid
+            : loggedInDistributorId;
     var data = {
       "orderid": orderid ?? "",
-      "distributorid": distributorId,
+      "distributorid": finalDistributorId,
       "items": items,
       "deliverydate": deliverydate ?? "",
       "totalamount": totalamount.toString(),

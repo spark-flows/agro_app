@@ -624,6 +624,7 @@ class Repository {
     required List<Map<String, dynamic>> items,
     required num totalamount,
     String? deliverydate,
+    String? distributorid,
     bool isLoading = false,
   }) async {
     try {
@@ -632,6 +633,7 @@ class Repository {
         items: items,
         totalamount: totalamount,
         deliverydate: deliverydate,
+        distributorid: distributorid,
         isLoading: isLoading,
       );
       if (response.hasError) {

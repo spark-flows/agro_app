@@ -8,7 +8,7 @@ import 'package:flutter_background_service_android/flutter_background_service_an
 import 'package:geolocator/geolocator.dart';
 import 'package:http/http.dart' as http;
 
-/// Background location service that sends GPS coordinates every 3 seconds
+/// Background location service that sends GPS coordinates every 30 seconds
 /// even when the app is minimized or closed.
 class BackgroundLocationService {
   static const String _baseUrl = 'https://api.japexim.co.in/';
@@ -120,43 +120,38 @@ Future<void> _onStart(ServiceInstance service) async {
 
       // Cancel existing timer and start new one
       locationTimer?.cancel();
-      locationTimer = Timer.periodic(
-        const Duration(seconds: 3),
-        (timer) async {
-          if (!isTracking || userId == null || authToken == null) {
-            timer.cancel();
-            return;
-          }
+      locationTimer = Timer.periodic(const Duration(seconds: 30), (
+        timer,
+      ) async {
+        if (!isTracking || userId == null || authToken == null) {
+          timer.cancel();
+          return;
+        }
 
-          try {
-            final position = await Geolocator.getCurrentPosition(
-              desiredAccuracy: LocationAccuracy.high,
-              timeLimit: const Duration(seconds: 5),
+        try {
+          final position = await Geolocator.getCurrentPosition(
+            desiredAccuracy: LocationAccuracy.high,
+            timeLimit: const Duration(seconds: 5),
+          );
+
+          final lat = position.latitude;
+          final lng = position.longitude;
+
+          if (lat != 0.0 && lng != 0.0) {
+            final timestamp = DateTime.now().toUtc().toIso8601String();
+            await _sendLocationUpdate(
+              userId: userId!,
+              authToken: authToken!,
+              latitude: lat,
+              longitude: lng,
+              timestamp: timestamp,
             );
-
-            final lat = position.latitude;
-            final lng = position.longitude;
-
-            if (lat != 0.0 && lng != 0.0) {
-              final timestamp = DateTime.now().toUtc().toIso8601String();
-              await _sendLocationUpdate(
-                userId: userId!,
-                authToken: authToken!,
-                latitude: lat,
-                longitude: lng,
-                timestamp: timestamp,
-              );
-              debugPrint(
-                '[BackgroundLocationService] Location sent: $lat, $lng',
-              );
-            }
-          } catch (e) {
-            debugPrint(
-              '[BackgroundLocationService] Location update error: $e',
-            );
+            debugPrint('[BackgroundLocationService] Location sent: $lat, $lng');
           }
-        },
-      );
+        } catch (e) {
+          debugPrint('[BackgroundLocationService] Location update error: $e');
+        }
+      });
     }
   });
 
