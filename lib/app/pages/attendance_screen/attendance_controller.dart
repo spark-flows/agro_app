@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:agro_app/app/services/background_location_service.dart';
+
 import 'package:agro_app/app/theme/theme.dart';
 import 'package:agro_app/app/utils/utility.dart';
 import 'package:agro_app/domain/models/get_all_attandance_model.dart'
@@ -37,6 +39,7 @@ class AttendanceController extends GetxController with WidgetsBindingObserver {
   String? roleName;
   void loadRoleName() async {
     roleName = Get.find<Repository>().getStringValue(LocalKeys.roleHiveName);
+    isAdmin = roleName?.toLowerCase() == 'admin';
     update();
   }
 
@@ -1348,8 +1351,29 @@ class AttendanceController extends GetxController with WidgetsBindingObserver {
     }
   }
 
-  void _startPeriodicLocationUpdates(String trackingId) {
+  void _startPeriodicLocationUpdates(String trackingId) async {
     _trackingTimer?.cancel();
+
+    // Start background service for tracking when app is minimized/closed
+    try {
+      final userId = await Utility.getSecureValue(LocalKeys.distributorId);
+      final authToken = await Get.find<Repository>().getSecureValue(
+        LocalKeys.authToken,
+      );
+      await BackgroundLocationService.startTracking(
+        userId: userId,
+        authToken: authToken,
+      );
+      debugPrint(
+        '[AttendanceController] Background location service started',
+      );
+    } catch (e) {
+      debugPrint(
+        '[AttendanceController] Failed to start background service: $e',
+      );
+    }
+
+    // Also keep foreground timer as fallback when app is in foreground
     _trackingTimer = Timer.periodic(const Duration(seconds: 3), (timer) async {
       final coordinates = await _getCurrentCoordinates();
       final lat = double.tryParse(coordinates['latitude'] ?? '0') ?? 0.0;
@@ -1368,9 +1392,21 @@ class AttendanceController extends GetxController with WidgetsBindingObserver {
     });
   }
 
-  void _stopPeriodicLocationUpdates() {
+  void _stopPeriodicLocationUpdates() async {
     _trackingTimer?.cancel();
     _trackingTimer = null;
+
+    // Stop background service
+    try {
+      await BackgroundLocationService.stopTracking();
+      debugPrint(
+        '[AttendanceController] Background location service stopped',
+      );
+    } catch (e) {
+      debugPrint(
+        '[AttendanceController] Failed to stop background service: $e',
+      );
+    }
   }
 
   void _resumeTrackingIfActive() async {
@@ -1396,6 +1432,12 @@ class AttendanceController extends GetxController with WidgetsBindingObserver {
       );
       if (storedTrackingId.isNotEmpty) {
         _startPeriodicLocationUpdates(storedTrackingId);
+      }
+    } else {
+      // User is not clocked in or already clocked out, stop background service
+      final isRunning = await BackgroundLocationService.isRunning();
+      if (isRunning) {
+        await BackgroundLocationService.stopTracking();
       }
     }
   }
@@ -1467,6 +1509,14 @@ class AttendanceController extends GetxController with WidgetsBindingObserver {
         '[AttendanceController] App resumed to foreground, checking and resuming tracking if active...',
       );
       _resumeTrackingIfActive();
+    } else if (state == AppLifecycleState.paused ||
+        state == AppLifecycleState.detached) {
+      debugPrint(
+        '[AttendanceController] App going to background/closing, background service will continue tracking...',
+      );
+      // Cancel foreground timer - background service handles it from here
+      _trackingTimer?.cancel();
+      _trackingTimer = null;
     }
   }
 }

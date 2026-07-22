@@ -1,4 +1,5 @@
 import 'package:agro_app/app/app.dart';
+import 'package:agro_app/app/services/background_location_service.dart';
 import 'package:agro_app/data/data.dart';
 import 'package:agro_app/device/device.dart';
 import 'package:agro_app/domain/domain.dart';
@@ -25,6 +26,7 @@ void main() async {
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   if (!kIsWeb) {
     FirebaseApi.initilizeNotification();
+    await BackgroundLocationService.initialize();
   }
   await initServices();
   await Upgrader.clearSavedSettings();
