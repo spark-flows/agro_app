@@ -58,6 +58,8 @@ class Data {
   int? allowance;
   bool? liveTracking;
   bool? odometer;
+  List<String>? permissionbranchid;
+  String? mapcolor;
 
   Data({
     this.id,
@@ -83,6 +85,8 @@ class Data {
     this.allowance,
     this.liveTracking,
     this.odometer,
+    this.permissionbranchid,
+    this.mapcolor,
   });
 
   factory Data.fromJson(Map<String, dynamic> json) => Data(
@@ -109,6 +113,20 @@ class Data {
     allowance: json["allowance"] is num ? (json["allowance"] as num).toInt() : null,
     liveTracking: json["liveTracking"] is bool ? json["liveTracking"] : null,
     odometer: json["odometer"] is bool ? json["odometer"] : null,
+    mapcolor: (json["mapcolor"] ?? json["mapColor"])?.toString(),
+    permissionbranchid: (json["permissionbranchid"] ?? json["permissionbranchId"] ?? json["permissionbranch"]) == null
+        ? []
+        : (json["permissionbranchid"] ?? json["permissionbranchId"] ?? json["permissionbranch"]) is List
+            ? ((json["permissionbranchid"] ?? json["permissionbranchId"] ?? json["permissionbranch"]) as List)
+                .map((x) {
+                  if (x is Map) {
+                    return (x["_id"] ?? x["id"] ?? "").toString();
+                  }
+                  return x.toString();
+                })
+                .where((x) => x.isNotEmpty)
+                .toList()
+            : [],
   );
 
   Map<String, dynamic> toJson() => {
@@ -135,6 +153,8 @@ class Data {
     "allowance": allowance,
     "liveTracking": liveTracking,
     "odometer": odometer,
+    "permissionbranchid": permissionbranchid,
+    "mapcolor": mapcolor,
   };
 }
 

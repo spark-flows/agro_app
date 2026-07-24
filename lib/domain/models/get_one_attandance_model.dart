@@ -93,18 +93,22 @@ class GetAttendanceData {
   factory GetAttendanceData.fromJson(Map<String, dynamic> json) =>
       GetAttendanceData(
         id: json["_id"],
-        branchid: json["branchid"] == null
-            ? null
-            : GetAttendanceBranchid.fromJson(json["branchid"]),
+        branchid: json["branchid"] is Map<String, dynamic>
+            ? GetAttendanceBranchid.fromJson(json["branchid"])
+            : (json["branchid"] != null
+                ? GetAttendanceBranchid(id: json["branchid"].toString())
+                : null),
         date: json["date"],
-        userid: json["userid"] == null
-            ? null
-            : GetAttendanceUserid.fromJson(json["userid"]),
+        userid: json["userid"] is Map<String, dynamic>
+            ? GetAttendanceUserid.fromJson(json["userid"])
+            : (json["userid"] != null
+                ? GetAttendanceUserid(id: json["userid"].toString())
+                : null),
         timein: json["timein"],
         timeout: json["timeout"],
-        coordinates: json["coordinates"] == null
-            ? null
-            : GetAttendanceCoordinates.fromJson(json["coordinates"]),
+        coordinates: json["coordinates"] is Map<String, dynamic>
+            ? GetAttendanceCoordinates.fromJson(json["coordinates"])
+            : null,
         breakstart: json["breakstart"],
         breakend: json["breakend"],
         remark: json["remark"],
@@ -201,8 +205,8 @@ class GetAttendanceCoordinates {
 
   factory GetAttendanceCoordinates.fromJson(Map<String, dynamic> json) =>
       GetAttendanceCoordinates(
-        latitude: json["latitude"],
-        longitude: json["longitude"],
+        latitude: json["latitude"]?.toString(),
+        longitude: json["longitude"]?.toString(),
       );
 
   Map<String, dynamic> toJson() => {

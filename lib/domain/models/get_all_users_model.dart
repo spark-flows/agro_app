@@ -138,7 +138,12 @@ class Doc {
     this.isClockedOut = false,
     this.clockInTime,
     this.clockOutTime,
+    this.permissionbranchid,
+    this.mapcolor,
   });
+
+  List<String>? permissionbranchid;
+  String? mapcolor;
 
   factory Doc.fromJson(Map<String, dynamic> json) => Doc(
     id: json["_id"]?.toString() ?? '',
@@ -173,6 +178,15 @@ class Doc {
     isClockedOut: json["isClockedOut"] is bool ? json["isClockedOut"] : false,
     clockInTime: json["clockInTime"]?.toString(),
     clockOutTime: json["clockOutTime"]?.toString(),
+    mapcolor: (json["mapcolor"] ?? json["mapColor"])?.toString(),
+    permissionbranchid: (json["permissionbranchid"] ?? json["permissionbranchId"] ?? json["permissionbranch"]) == null
+        ? []
+        : (json["permissionbranchid"] ?? json["permissionbranchId"] ?? json["permissionbranch"]) is List
+            ? ((json["permissionbranchid"] ?? json["permissionbranchId"] ?? json["permissionbranch"]) as List)
+                .map((x) => x is Map ? (x["_id"] ?? x["id"] ?? "").toString() : x.toString())
+                .where((x) => x.isNotEmpty)
+                .toList()
+            : [],
   );
 
   Map<String, dynamic> toJson() => {
@@ -196,6 +210,8 @@ class Doc {
     "isClockedOut": isClockedOut,
     "clockInTime": clockInTime,
     "clockOutTime": clockOutTime,
+    "permissionbranchid": permissionbranchid,
+    "mapcolor": mapcolor,
   };
 }
 

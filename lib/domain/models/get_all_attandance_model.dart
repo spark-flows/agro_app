@@ -131,18 +131,22 @@ class GetAllAttendanceDoc {
   factory GetAllAttendanceDoc.fromJson(Map<String, dynamic> json) =>
       GetAllAttendanceDoc(
         id: json["_id"],
-        branchid: json["branchid"] == null
-            ? null
-            : GetAllAttendanceBranchid.fromJson(json["branchid"]),
+        branchid: json["branchid"] is Map<String, dynamic>
+            ? GetAllAttendanceBranchid.fromJson(json["branchid"])
+            : (json["branchid"] != null
+                ? GetAllAttendanceBranchid(id: json["branchid"].toString())
+                : null),
         date: json["date"],
-        userid: json["userid"] == null
-            ? null
-            : GetAllAttendanceUserid.fromJson(json["userid"]),
+        userid: json["userid"] is Map<String, dynamic>
+            ? GetAllAttendanceUserid.fromJson(json["userid"])
+            : (json["userid"] != null
+                ? GetAllAttendanceUserid(id: json["userid"].toString())
+                : null),
         timein: json["timein"],
         timeout: json["timeout"],
-        coordinates: json["coordinates"] == null
-            ? null
-            : GetAllAttendanceCoordinates.fromJson(json["coordinates"]),
+        coordinates: json["coordinates"] is Map<String, dynamic>
+            ? GetAllAttendanceCoordinates.fromJson(json["coordinates"])
+            : null,
         breakstart: json["breakstart"],
         breakend: json["breakend"],
         remark: json["remark"],
@@ -214,12 +218,12 @@ class Punching {
     timeoutodometer: json["timeoutodometer"] != null
         ? int.tryParse(json["timeoutodometer"].toString())
         : null,
-    timeincoordinates: json["timeincoordinates"] == null
-        ? null
-        : GetAllAttendanceCoordinates.fromJson(json["timeincoordinates"]),
-    timeoutcoordinates: json["timeoutcoordinates"] == null
-        ? null
-        : GetAllAttendanceCoordinates.fromJson(json["timeoutcoordinates"]),
+    timeincoordinates: json["timeincoordinates"] is Map<String, dynamic>
+        ? GetAllAttendanceCoordinates.fromJson(json["timeincoordinates"])
+        : null,
+    timeoutcoordinates: json["timeoutcoordinates"] is Map<String, dynamic>
+        ? GetAllAttendanceCoordinates.fromJson(json["timeoutcoordinates"])
+        : null,
   );
 
   Map<String, dynamic> toJson() => {
@@ -271,8 +275,8 @@ class GetAllAttendanceCoordinates {
 
   factory GetAllAttendanceCoordinates.fromJson(Map<String, dynamic> json) =>
       GetAllAttendanceCoordinates(
-        latitude: json["latitude"],
-        longitude: json["longitude"],
+        latitude: json["latitude"]?.toString(),
+        longitude: json["longitude"]?.toString(),
       );
 
   Map<String, dynamic> toJson() => {

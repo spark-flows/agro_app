@@ -134,8 +134,8 @@ class CreateAttendanceCoordinates {
     });
 
     factory CreateAttendanceCoordinates.fromJson(Map<String, dynamic> json) => CreateAttendanceCoordinates(
-        latitude: json["latitude"],
-        longitude: json["longitude"],
+        latitude: json["latitude"]?.toString(),
+        longitude: json["longitude"]?.toString(),
     );
 
     Map<String, dynamic> toJson() => {

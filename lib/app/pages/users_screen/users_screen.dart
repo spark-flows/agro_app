@@ -404,6 +404,8 @@ class _UsersScreenState extends State<UsersScreen> {
                   action: TextInputAction.done,
                 ),
                 const SizedBox(height: 16),
+                _buildBranchMultiSelect(context, controller),
+                const SizedBox(height: 16),
                 Obx(
                   () => SwitchListTile(
                     title: const Text('Live Tracking'),
@@ -415,6 +417,7 @@ class _UsersScreenState extends State<UsersScreen> {
                     },
                   ),
                 ),
+                _buildMapColorPicker(context, controller),
                 const SizedBox(height: 8),
                 Obx(
                   () => SwitchListTile(
@@ -548,5 +551,326 @@ class _UsersScreenState extends State<UsersScreen> {
       ),
       validator: validator,
     );
+  }
+
+  Widget _buildBranchMultiSelect(
+      BuildContext context, UsersController controller) {
+    return Obx(() {
+      final selectedIds = controller.selectedPermissionBranchIds;
+      final selectedNames = controller.branches
+          .where((b) => b.id != null && selectedIds.contains(b.id))
+          .map((b) => b.name ?? '')
+          .where((name) => name.isNotEmpty)
+          .toList();
+
+      String displayText;
+      if (selectedIds.isEmpty) {
+        displayText = 'Select Permission Branches';
+      } else if (selectedNames.isNotEmpty) {
+        displayText = selectedNames.join(', ');
+      } else {
+        displayText = '${selectedIds.length} branches selected';
+      }
+
+      return InkWell(
+        onTap: () {
+          _showBranchSelectionDialog(context, controller);
+        },
+        borderRadius: BorderRadius.circular(12),
+        child: InputDecorator(
+          decoration: InputDecoration(
+            labelText: 'Permission Branches',
+            labelStyle: Styles.txtGreyColorW40014,
+            floatingLabelStyle: const TextStyle(color: ColorsValue.primary),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: Colors.grey.shade300),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: Colors.grey.shade300),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: ColorsValue.primary, width: 1.5),
+            ),
+            prefixIcon: Icon(
+              Icons.store_outlined,
+              color: ColorsValue.primary.withValues(alpha: 0.8),
+            ),
+            suffixIcon: const Icon(
+              Icons.arrow_drop_down,
+              color: Colors.grey,
+            ),
+          ),
+          child: Text(
+            displayText,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: selectedIds.isEmpty
+                ? Styles.txtGreyColorW40014
+                : Styles.txtBlackColorW50014,
+          ),
+        ),
+      );
+    });
+  }
+
+  void _showBranchSelectionDialog(
+      BuildContext context, UsersController controller) {
+    if (controller.branches.isEmpty && !controller.isBranchesLoading) {
+      controller.fetchBranches();
+    }
+
+    Get.dialog(
+      Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        child: Container(
+          width: MediaQuery.of(context).size.width * 0.9,
+          constraints: BoxConstraints(
+            maxHeight: MediaQuery.of(context).size.height * 0.7,
+          ),
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Expanded(
+                    child: Text(
+                      'Select Permission Branches',
+                      style: Styles.txtBlackColorW70020.copyWith(fontSize: 16),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  Obx(() {
+                    final validBranches = controller.branches;
+                    final allSelected = validBranches.isNotEmpty &&
+                        validBranches.every((b) =>
+                            b.id != null &&
+                            controller.selectedPermissionBranchIds
+                                .contains(b.id));
+                    return TextButton(
+                      style: TextButton.styleFrom(
+                        padding: EdgeInsets.zero,
+                        minimumSize: Size.zero,
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      ),
+                      onPressed: () {
+                        if (allSelected) {
+                          controller.selectedPermissionBranchIds.clear();
+                        } else {
+                          controller.selectedPermissionBranchIds.assignAll(
+                            validBranches
+                                .map((b) => b.id)
+                                .whereType<String>()
+                                .toList(),
+                          );
+                        }
+                      },
+                      child: Text(
+                        allSelected ? 'Deselect All' : 'Select All',
+                        style: const TextStyle(
+                          color: ColorsValue.primary,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 13,
+                        ),
+                      ),
+                    );
+                  }),
+                ],
+              ),
+              const SizedBox(height: 8),
+              const Divider(height: 1),
+              const SizedBox(height: 8),
+              Expanded(
+                child: GetBuilder<UsersController>(
+                  builder: (ctrl) {
+                    if (ctrl.isBranchesLoading) {
+                      return const Center(
+                        child: CircularProgressIndicator(
+                          color: ColorsValue.primary,
+                        ),
+                      );
+                    }
+                    if (ctrl.branches.isEmpty) {
+                      return const Center(
+                        child: Text('No branches available'),
+                      );
+                    }
+                    return ListView.builder(
+                      shrinkWrap: true,
+                      itemCount: ctrl.branches.length,
+                      itemBuilder: (context, index) {
+                        final branch = ctrl.branches[index];
+                        final branchId = branch.id ?? '';
+                        return Obx(() {
+                          final isSelected = ctrl.selectedPermissionBranchIds
+                              .contains(branchId);
+                          return CheckboxListTile(
+                            contentPadding: EdgeInsets.zero,
+                            value: isSelected,
+                            activeColor: ColorsValue.primary,
+                            title: Text(
+                              branch.name ?? 'Unnamed Branch',
+                              style: Styles.txtBlackColorW50014,
+                            ),
+                            onChanged: (bool? checked) {
+                              if (checked == true) {
+                                if (!ctrl.selectedPermissionBranchIds
+                                    .contains(branchId)) {
+                                  ctrl.selectedPermissionBranchIds.add(branchId);
+                                }
+                              } else {
+                                ctrl.selectedPermissionBranchIds
+                                    .remove(branchId);
+                              }
+                            },
+                          );
+                        });
+                      },
+                    );
+                  },
+                ),
+              ),
+              const SizedBox(height: 16),
+              ElevatedButton(
+                onPressed: () => Get.back(),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: ColorsValue.primary,
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                child: const Text(
+                  'Done',
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMapColorPicker(
+      BuildContext context, UsersController controller) {
+    final List<Map<String, dynamic>> presetColors = [
+      {'hex': '#4CAF50', 'color': const Color(0xFF4CAF50)},
+      {'hex': '#2196F3', 'color': const Color(0xFF2196F3)},
+      {'hex': '#E91E63', 'color': const Color(0xFFE91E63)},
+      {'hex': '#9C27B0', 'color': const Color(0xFF9C27B0)},
+      {'hex': '#F44336', 'color': const Color(0xFFF44336)},
+      {'hex': '#FF9800', 'color': const Color(0xFFFF9800)},
+      {'hex': '#00BCD4', 'color': const Color(0xFF00BCD4)},
+      {'hex': '#009688', 'color': const Color(0xFF009688)},
+      {'hex': '#3F51B5', 'color': const Color(0xFF3F51B5)},
+      {'hex': '#607D8B', 'color': const Color(0xFF607D8B)},
+    ];
+
+    return Obx(() {
+      if (!controller.liveTracking.value) return const SizedBox.shrink();
+
+      return AnimatedContainer(
+        duration: const Duration(milliseconds: 300),
+        margin: const EdgeInsets.only(top: 8, bottom: 8),
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: Colors.grey.shade50,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.grey.shade200),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                const Icon(
+                  Icons.palette_outlined,
+                  size: 20,
+                  color: ColorsValue.primary,
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  'Map Marker Color',
+                  style: Styles.txtBlackColorW60014,
+                ),
+                const Spacer(),
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(6),
+                    border: Border.all(color: Colors.grey.shade300),
+                  ),
+                  child: Text(
+                    controller.mapColor.value,
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 12,
+                      color: Colors.grey.shade800,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Wrap(
+              spacing: 10,
+              runSpacing: 10,
+              children: presetColors.map((c) {
+                final String hex = c['hex'];
+                final Color color = c['color'];
+                final bool isSelected =
+                    controller.mapColor.value.toUpperCase() == hex.toUpperCase();
+
+                return GestureDetector(
+                  onTap: () {
+                    controller.mapColor.value = hex;
+                  },
+                  child: Container(
+                    width: 34,
+                    height: 34,
+                    decoration: BoxDecoration(
+                      color: color,
+                      shape: BoxShape.circle,
+                      boxShadow: isSelected
+                          ? [
+                              BoxShadow(
+                                color: color.withValues(alpha: 0.4),
+                                blurRadius: 6,
+                                spreadRadius: 2,
+                              ),
+                            ]
+                          : null,
+                      border: Border.all(
+                        color: isSelected ? Colors.black87 : Colors.transparent,
+                        width: isSelected ? 2.5 : 0,
+                      ),
+                    ),
+                    child: isSelected
+                        ? const Icon(
+                            Icons.check,
+                            color: Colors.white,
+                            size: 18,
+                          )
+                        : null,
+                  ),
+                );
+              }).toList(),
+            ),
+          ],
+        ),
+      );
+    });
   }
 }

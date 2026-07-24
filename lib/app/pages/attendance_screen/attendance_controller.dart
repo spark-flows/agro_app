@@ -18,6 +18,7 @@ import 'package:geolocator/geolocator.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 class AttendanceController extends GetxController with WidgetsBindingObserver {
   // ── List & Pagination State ───────────────────────────────────────────────
@@ -71,6 +72,7 @@ class AttendanceController extends GetxController with WidgetsBindingObserver {
   final timeinOdometerCtrl = TextEditingController();
   final timeoutOdometerCtrl = TextEditingController();
   Timer? _trackingTimer;
+  bool _isResumingTracking = false;
 
   @override
   void onInit() {
@@ -753,7 +755,7 @@ class AttendanceController extends GetxController with WidgetsBindingObserver {
         isLoading: false,
       );
       final todayStr = DateFormat('yyyy-MM-dd').format(DateTime.now());
-      final timeStr = DateFormat('hh:mm ax').format(DateTime.now());
+      final timeStr = DateFormat('hh:mm a').format(DateTime.now());
       final record = getTodayRecord();
       final coordinates = await _getResolvedCoordinates(record);
 
@@ -900,6 +902,9 @@ class AttendanceController extends GetxController with WidgetsBindingObserver {
                   final hasImage = selfiePath.value.isNotEmpty;
                   return GestureDetector(
                     onTap: () async {
+                      final hasPermission =
+                          await Utility.cameraPermissionCheack(Get.context!);
+                      if (!hasPermission) return;
                       final picker = ImagePicker();
                       final file = await picker.pickImage(
                         source: ImageSource.camera,
@@ -1353,43 +1358,41 @@ class AttendanceController extends GetxController with WidgetsBindingObserver {
 
   void _startPeriodicLocationUpdates(String trackingId) async {
     _trackingTimer?.cancel();
+    _trackingTimer = null;
 
-    // Start background service for tracking when app is minimized/closed
-    try {
-      final userId = await Utility.getSecureValue(LocalKeys.distributorId);
-      final authToken = await Get.find<Repository>().getSecureValue(
-        LocalKeys.authToken,
-      );
-      await BackgroundLocationService.startTracking(
-        userId: userId,
-        authToken: authToken,
-      );
+    final isNotificationGranted = await Permission.notification.isGranted;
+    if (!isNotificationGranted) {
       debugPrint(
-        '[AttendanceController] Background location service started',
+        '[AttendanceController] Notification permission is not granted. Cannot start background service.',
       );
+      return;
+    }
+
+    // Start background service for tracking (runs in its own foreground service isolate)
+    try {
+      final isAlreadyRunning = await BackgroundLocationService.isRunning();
+      if (!isAlreadyRunning) {
+        final userId = await Utility.getSecureValue(LocalKeys.distributorId);
+        final authToken = await Get.find<Repository>().getSecureValue(
+          LocalKeys.authToken,
+        );
+        await BackgroundLocationService.startTracking(
+          userId: userId,
+          authToken: authToken,
+        );
+        debugPrint(
+          '[AttendanceController] Background location service started',
+        );
+      } else {
+        debugPrint(
+          '[AttendanceController] Background location service is already running',
+        );
+      }
     } catch (e) {
       debugPrint(
         '[AttendanceController] Failed to start background service: $e',
       );
     }
-
-    // Also keep foreground timer as fallback when app is in foreground
-    _trackingTimer = Timer.periodic(const Duration(seconds: 3), (timer) async {
-      final coordinates = await _getCurrentCoordinates();
-      final lat = double.tryParse(coordinates['latitude'] ?? '0') ?? 0.0;
-      final lng = double.tryParse(coordinates['longitude'] ?? '0') ?? 0.0;
-      final userId = await Utility.getSecureValue(LocalKeys.distributorId);
-
-      if (lat != 0.0 && lng != 0.0) {
-        final timestamp = DateTime.now().toUtc().toIso8601String();
-        await Get.find<Repository>().updateLocationApi(
-          userId: userId,
-          latitude: lat,
-          longitude: lng,
-          timestamp: timestamp,
-        );
-      }
-    });
   }
 
   void _stopPeriodicLocationUpdates() async {
@@ -1399,9 +1402,7 @@ class AttendanceController extends GetxController with WidgetsBindingObserver {
     // Stop background service
     try {
       await BackgroundLocationService.stopTracking();
-      debugPrint(
-        '[AttendanceController] Background location service stopped',
-      );
+      debugPrint('[AttendanceController] Background location service stopped');
     } catch (e) {
       debugPrint(
         '[AttendanceController] Failed to stop background service: $e',
@@ -1410,35 +1411,42 @@ class AttendanceController extends GetxController with WidgetsBindingObserver {
   }
 
   void _resumeTrackingIfActive() async {
-    await Future.delayed(const Duration(seconds: 2));
+    if (_isResumingTracking) return;
+    _isResumingTracking = true;
+
     try {
-      final profile = await Get.find<Repository>().getProfileApi(
-        isLoading: false,
-      );
-      if (profile == null ||
-          profile.isSuccess != true ||
-          profile.data.userData.liveTracking != true) {
+      await Future.delayed(const Duration(seconds: 2));
+      try {
+        final profile = await Get.find<Repository>().getProfileApi(
+          isLoading: false,
+        );
+        if (profile == null ||
+            profile.isSuccess != true ||
+            profile.data.userData.liveTracking != true) {
+          return;
+        }
+      } catch (_) {
         return;
       }
-    } catch (_) {
-      return;
-    }
-    final record = getTodayRecord();
-    final isClockedIn = isClockedInToday(record);
-    final isClockedOut = isClockedOutToday(record);
-    if (isClockedIn && !isClockedOut) {
-      final storedTrackingId = Get.find<Repository>().getStringValue(
-        LocalKeys.trackingId,
-      );
-      if (storedTrackingId.isNotEmpty) {
-        _startPeriodicLocationUpdates(storedTrackingId);
+      final record = getTodayRecord();
+      final isClockedIn = isClockedInToday(record);
+      final isClockedOut = isClockedOutToday(record);
+      if (isClockedIn && !isClockedOut) {
+        final storedTrackingId = Get.find<Repository>().getStringValue(
+          LocalKeys.trackingId,
+        );
+        if (storedTrackingId.isNotEmpty) {
+          _startPeriodicLocationUpdates(storedTrackingId);
+        }
+      } else {
+        // User is not clocked in or already clocked out, stop background service
+        final isRunning = await BackgroundLocationService.isRunning();
+        if (isRunning) {
+          await BackgroundLocationService.stopTracking();
+        }
       }
-    } else {
-      // User is not clocked in or already clocked out, stop background service
-      final isRunning = await BackgroundLocationService.isRunning();
-      if (isRunning) {
-        await BackgroundLocationService.stopTracking();
-      }
+    } finally {
+      _isResumingTracking = false;
     }
   }
 

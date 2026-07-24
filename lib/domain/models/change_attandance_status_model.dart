@@ -133,8 +133,8 @@ class ChangeAttendanceStatusCoordinates {
   factory ChangeAttendanceStatusCoordinates.fromJson(
     Map<String, dynamic> json,
   ) => ChangeAttendanceStatusCoordinates(
-    latitude: json["latitude"],
-    longitude: json["longitude"],
+    latitude: json["latitude"]?.toString(),
+    longitude: json["longitude"]?.toString(),
   );
 
   Map<String, dynamic> toJson() => {

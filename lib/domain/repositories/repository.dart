@@ -810,6 +810,7 @@ class Repository {
     int sortoption = -1,
     String roleid = "",
     String type = "",
+    String? assigntoid,
     bool isLoading = false,
   }) async {
     try {
@@ -821,6 +822,7 @@ class Repository {
         sortoption: sortoption,
         roleid: roleid,
         type: type,
+        assigntoid: assigntoid,
         isLoading: isLoading,
       );
       if (response.hasError) {
@@ -890,6 +892,8 @@ class Repository {
     int? allowance,
     bool? liveTracking,
     bool? odometer,
+    List<String>? permissionbranchid,
+    String? mapcolor,
     bool isLoading = false,
   }) async {
     try {
@@ -913,6 +917,8 @@ class Repository {
         allowance: allowance,
         liveTracking: liveTracking,
         odometer: odometer,
+        permissionbranchid: permissionbranchid,
+        mapcolor: mapcolor,
         isLoading: isLoading,
       );
       if (!response.hasError) {
@@ -1617,7 +1623,7 @@ class Repository {
         longitude: longitude,
         timestamp: timestamp,
         isLoading: isLoading,
-        userId: userId
+        userId: userId,
       );
       return !response.hasError;
     } catch (e) {

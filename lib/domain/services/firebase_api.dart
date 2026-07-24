@@ -79,6 +79,18 @@ class FirebaseApi {
           criticalAlerts: true,
           defaultPrivacy: NotificationPrivacy.Public, // ✅ Show on lock screen
         ),
+        NotificationChannel(
+          channelGroupKey: 'high_importance_channel',
+          channelKey: 'agro_location_tracking',
+          channelName: 'Agro Location Tracking',
+          channelDescription: 'Notification channel for tracking user location during shifts.',
+          ledColor: ColorsValue.appColor,
+          importance: NotificationImportance.Low,
+          channelShowBadge: false,
+          playSound: false,
+          onlyAlertOnce: true,
+          defaultPrivacy: NotificationPrivacy.Public,
+        ),
       ],
       channelGroups: [
         NotificationChannelGroup(

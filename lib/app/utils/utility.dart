@@ -1208,11 +1208,10 @@ abstract class Utility {
 
   /// Notification Permission
   static Future<bool> notificationPermissionCheack() async {
-    final status = await Permission.notification.request().isDenied;
-    var permanentlyDenied = await Permission.notification
-        .request()
-        .isPermanentlyDenied;
-    if (status || permanentlyDenied) {
+    final status = await Permission.notification.request();
+    if (status.isGranted || status.isLimited) {
+      return true;
+    } else {
       // ignore: use_build_context_synchronously
       Get.dialog(
         barrierDismissible: false,
@@ -1240,8 +1239,6 @@ abstract class Utility {
         ),
       );
       return false;
-    } else {
-      return true;
     }
   }
 

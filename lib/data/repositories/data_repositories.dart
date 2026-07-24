@@ -291,6 +291,7 @@ class DataRepository extends DomainRepository {
     int sortoption = -1,
     String roleid = "",
     String type = "",
+    String? assigntoid,
     bool isLoading = false,
   }) async => connectHelper.getUsersListApi(
     page: page,
@@ -300,6 +301,7 @@ class DataRepository extends DomainRepository {
     type: type,
     sortoption: sortoption,
     roleid: roleid,
+    assigntoid: assigntoid,
     isLoading: isLoading,
   );
 
@@ -329,6 +331,8 @@ class DataRepository extends DomainRepository {
     int? allowance,
     bool? liveTracking,
     bool? odometer,
+    List<String>? permissionbranchid,
+    String? mapcolor,
     bool isLoading = false,
   }) async => connectHelper.createUserApi(
     userid: userid,
@@ -350,6 +354,8 @@ class DataRepository extends DomainRepository {
     allowance: allowance,
     liveTracking: liveTracking,
     odometer: odometer,
+    permissionbranchid: permissionbranchid,
+    mapcolor: mapcolor,
     isLoading: isLoading,
   );
 

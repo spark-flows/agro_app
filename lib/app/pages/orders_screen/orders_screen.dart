@@ -994,34 +994,45 @@ void _showCartBottomSheet(
                           ? controller.selectedDistributorId
                           : null;
 
-                      return DropdownButtonFormField<String>(
-                        value: selectedValue,
-                        decoration: InputDecoration(
-                          labelText: 'Select Dealer',
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          prefixIcon: const Icon(Icons.storefront_outlined),
-                        ),
-                        items: uniqueDistributors.values
-                            .map(
-                              (dist) => DropdownMenuItem<String>(
-                                value: dist.id,
-                                child: Text(
-                                  (dist.name != null && dist.name.isNotEmpty)
-                                      ? dist.name
-                                      : 'Unknown Dealer',
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ),
-                            )
-                            .toList(),
-                        onChanged: (val) {
-                          if (val != null) {
-                            controller.selectedDistributorId = val;
-                            controller.update();
-                          }
+                      final selectedDistText = selectedValue != null
+                          ? ((uniqueDistributors[selectedValue].name != null &&
+                                    uniqueDistributors[selectedValue]
+                                        .name
+                                        .isNotEmpty)
+                                ? uniqueDistributors[selectedValue].name
+                                : 'Unknown Dealer')
+                          : 'Select Dealer';
+
+                      return InkWell(
+                        onTap: () {
+                          Get.dialog(
+                            _DealerSearchDialog(
+                              controller: controller,
+                              distributors: uniqueDistributors.values.toList(),
+                            ),
+                          );
                         },
+                        borderRadius: BorderRadius.circular(12),
+                        child: InputDecorator(
+                          decoration: InputDecoration(
+                            labelText: 'Select Dealer',
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            prefixIcon: const Icon(Icons.storefront_outlined),
+                            suffixIcon: const Icon(Icons.arrow_drop_down),
+                          ),
+                          child: Text(
+                            selectedDistText,
+                            style: TextStyle(
+                              fontSize: 16,
+                              color: selectedValue != null
+                                  ? ColorsValue.txtBlackColor
+                                  : Colors.grey.shade600,
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
                       );
                     },
                   ),
@@ -1413,4 +1424,136 @@ void _showOrderDetailsDialog(
     ),
     isScrollControlled: true,
   );
+}
+
+class _DealerSearchDialog extends StatefulWidget {
+  final OrdersController controller;
+  final List<dynamic> distributors;
+
+  const _DealerSearchDialog({
+    required this.controller,
+    required this.distributors,
+  });
+
+  @override
+  State<_DealerSearchDialog> createState() => _DealerSearchDialogState();
+}
+
+class _DealerSearchDialogState extends State<_DealerSearchDialog> {
+  final TextEditingController _searchController = TextEditingController();
+  String _searchQuery = '';
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final filtered = widget.distributors.where((dist) {
+      final name = (dist.name ?? '').toLowerCase();
+      return name.contains(_searchQuery.toLowerCase().trim());
+    }).toList();
+
+    return Dialog(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        constraints: BoxConstraints(
+          maxHeight: MediaQuery.of(context).size.height * 0.6,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text('Select Dealer', style: Styles.txtBlackColorW70018),
+                IconButton(
+                  icon: const Icon(Icons.close),
+                  onPressed: () => Get.back(),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            TextField(
+              controller: _searchController,
+              decoration: InputDecoration(
+                hintText: 'Search dealer...',
+                prefixIcon: const Icon(Icons.search),
+                suffixIcon: _searchQuery.isNotEmpty
+                    ? IconButton(
+                        icon: const Icon(Icons.clear),
+                        onPressed: () {
+                          setState(() {
+                            _searchController.clear();
+                            _searchQuery = '';
+                          });
+                        },
+                      )
+                    : null,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
+                ),
+              ),
+              onChanged: (val) {
+                setState(() {
+                  _searchQuery = val;
+                });
+              },
+            ),
+            const SizedBox(height: 16),
+            Expanded(
+              child: filtered.isEmpty
+                  ? const Center(child: Text('No dealers found'))
+                  : ListView.separated(
+                      shrinkWrap: true,
+                      itemCount: filtered.length,
+                      separatorBuilder: (context, index) =>
+                          const Divider(height: 1),
+                      itemBuilder: (context, index) {
+                        final dist = filtered[index];
+                        final name = (dist.name != null && dist.name.isNotEmpty)
+                            ? dist.name
+                            : 'Unknown Dealer';
+                        final isSelected =
+                            widget.controller.selectedDistributorId == dist.id;
+                        return ListTile(
+                          title: Text(
+                            name,
+                            style: TextStyle(
+                              fontWeight: isSelected
+                                  ? FontWeight.bold
+                                  : FontWeight.normal,
+                              color: isSelected
+                                  ? ColorsValue.primary
+                                  : ColorsValue.txtBlackColor,
+                            ),
+                          ),
+                          trailing: isSelected
+                              ? const Icon(
+                                  Icons.check,
+                                  color: ColorsValue.primary,
+                                )
+                              : null,
+                          onTap: () {
+                            widget.controller.selectedDistributorId = dist.id;
+                            widget.controller.update();
+                            Get.back();
+                          },
+                        );
+                      },
+                    ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }

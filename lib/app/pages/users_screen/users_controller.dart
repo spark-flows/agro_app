@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:agro_app/domain/models/get_all_users_model.dart';
 import 'package:agro_app/domain/models/get_one_user_model.dart';
+import 'package:agro_app/domain/models/get_all_branches_model.dart' as branch_model;
 import 'package:agro_app/domain/repositories/repository.dart';
 import 'package:agro_app/app/utils/utility.dart';
 
@@ -27,11 +28,16 @@ class UsersController extends GetxController {
   final allowanceCtrl = TextEditingController();
   final RxBool liveTracking = false.obs;
   final RxBool odometer = false.obs;
+  final RxString mapColor = "#4CAF50".obs;
 
   final RxString editingUserId = "".obs;
   final RxBool isPasswordHidden = true.obs;
   String? selectedRoleId;
   List<GetAllRolesDatum> roles = [];
+
+  List<branch_model.Doc> branches = [];
+  bool isBranchesLoading = false;
+  final RxList<String> selectedPermissionBranchIds = <String>[].obs;
 
   // To debounce search calls
   Worker? _searchWorker;
@@ -41,6 +47,7 @@ class UsersController extends GetxController {
     super.onInit();
     fetchUsers();
     fetchRoles();
+    fetchBranches();
 
     // Initialize search worker
     _searchWorker = debounce(
@@ -65,6 +72,27 @@ class UsersController extends GetxController {
 
   void searchUsers(String query) {
     _searchQuery.value = query;
+  }
+
+  Future<void> fetchBranches() async {
+    isBranchesLoading = true;
+    update();
+    try {
+      final response = await Get.find<Repository>().getAllBranchesApi(
+        limit: 1000,
+        isLoading: false,
+      );
+      if (response != null && response.data?.docs != null) {
+        branches = response.data!.docs!
+            .where((b) => b.isDeleted != true)
+            .toList();
+      }
+    } catch (e) {
+      print("Error fetching branches: $e");
+    } finally {
+      isBranchesLoading = false;
+      update();
+    }
   }
 
   Future<void> fetchRoles() async {
@@ -120,7 +148,9 @@ class UsersController extends GetxController {
     allowanceCtrl.clear();
     liveTracking.value = false;
     odometer.value = false;
+    mapColor.value = "#4CAF50";
     selectedRoleId = "b8fbadff-5201-4fce-9038-0873bc3a93c1";
+    selectedPermissionBranchIds.clear();
     isPasswordHidden.value = true;
     update();
   }
@@ -132,12 +162,22 @@ class UsersController extends GetxController {
     phoneCtrl.text = user.mobile;
     passwordCtrl.text = ''; // Clear password locally initially
     addressCtrl.text = user.address ?? '';
-    selectedRoleId = user.roleid.id;
+    selectedRoleId = (user.roleid.id != null && user.roleid.id!.isNotEmpty)
+        ? user.roleid.id
+        : "b8fbadff-5201-4fce-9038-0873bc3a93c1";
     isPasswordHidden.value = true;
     salaryCtrl.clear();
     allowanceCtrl.clear();
     liveTracking.value = false;
     odometer.value = false;
+    mapColor.value = (user.mapcolor != null && user.mapcolor!.isNotEmpty)
+        ? user.mapcolor!
+        : "#4CAF50";
+    if (user.permissionbranchid != null) {
+      selectedPermissionBranchIds.assignAll(user.permissionbranchid!);
+    } else {
+      selectedPermissionBranchIds.clear();
+    }
     update();
 
     Utility.showLoader();
@@ -151,11 +191,19 @@ class UsersController extends GetxController {
         phoneCtrl.text = data.mobile ?? '';
         passwordCtrl.text = data.password ?? '';
         addressCtrl.text = data.location ?? '';
-        selectedRoleId = data.roleid?.id;
+        if (data.roleid?.id != null && data.roleid!.id!.isNotEmpty) {
+          selectedRoleId = data.roleid!.id;
+        }
         salaryCtrl.text = data.salary?.toString() ?? '';
         allowanceCtrl.text = data.allowance?.toString() ?? '';
         liveTracking.value = data.liveTracking ?? false;
         odometer.value = data.odometer ?? false;
+        if (data.mapcolor != null && data.mapcolor!.isNotEmpty) {
+          mapColor.value = data.mapcolor!;
+        }
+        if (data.permissionbranchid != null && data.permissionbranchid!.isNotEmpty) {
+          selectedPermissionBranchIds.assignAll(data.permissionbranchid!);
+        }
         update();
       }
     } catch (e) {
@@ -166,10 +214,9 @@ class UsersController extends GetxController {
   }
 
   Future<void> saveUser() async {
-    if (selectedRoleId == null) {
-      Utility.errorMessage('Please select a role');
-      return;
-    }
+    final String roleIdToUse = (selectedRoleId != null && selectedRoleId!.isNotEmpty)
+        ? selectedRoleId!
+        : "b8fbadff-5201-4fce-9038-0873bc3a93c1";
 
     final errorMsg = await Get.find<Repository>().createUserApi(
       userid: editingUserId.value.isNotEmpty ? editingUserId.value : null,
@@ -179,11 +226,13 @@ class UsersController extends GetxController {
       mobile: phoneCtrl.text.trim(),
       password: passwordCtrl.text.trim(),
       address: addressCtrl.text.trim(),
-      roleid: selectedRoleId!,
+      roleid: roleIdToUse,
       salary: salaryCtrl.text.trim().isEmpty ? 0 : int.tryParse(salaryCtrl.text.trim()) ?? 0,
       allowance: allowanceCtrl.text.trim().isEmpty ? 0 : int.tryParse(allowanceCtrl.text.trim()) ?? 0,
       liveTracking: liveTracking.value,
       odometer: odometer.value,
+      permissionbranchid: selectedPermissionBranchIds.toList(),
+      mapcolor: liveTracking.value ? mapColor.value : null,
       isLoading: true,
     );
 

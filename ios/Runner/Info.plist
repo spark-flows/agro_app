@@ -49,5 +49,19 @@
 	<string>This app requires access to your location to fetch coordinates for attendance logging.</string>
 	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
 	<string>This app requires access to your location to fetch coordinates for attendance logging.</string>
+	<key>NSLocationAlwaysUsageDescription</key>
+	<string>This app requires constant access to your location to track movement during shifts.</string>
+	<key>NSCameraUsageDescription</key>
+	<string>This app requires access to your camera to capture verification photos for clocking in/out.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>This app requires access to your photo library to select photos for verification.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>This app requires access to your microphone if recording video.</string>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>location</string>
+		<string>fetch</string>
+		<string>processing</string>
+	</array>
 </dict>
 </plist>

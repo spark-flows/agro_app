@@ -457,12 +457,6 @@ class OrdersController extends GetxController {
     final idx = allProducts.indexWhere((p) => p.id == id);
     if (idx != -1) {
       final product = allProducts[idx];
-      if (product.qty != null && product.quantity >= product.qty!) {
-        Utility.errorMessage(
-          'Cannot add more than available quantity (${product.qty})',
-        );
-        return;
-      }
       product.quantity++;
       update();
     }

@@ -448,13 +448,14 @@ class ConnectHelper {
     String? distributorid,
     bool isLoading = false,
   }) async {
-    var loggedInDistributorId =
-        await Utility.getSecureValue(LocalKeys.distributorId);
+    var loggedInDistributorId = await Utility.getSecureValue(
+      LocalKeys.distributorId,
+    );
     final String branchId = await _resolveBranchId();
     final String finalDistributorId =
         (distributorid != null && distributorid.isNotEmpty)
-            ? distributorid
-            : loggedInDistributorId;
+        ? distributorid
+        : loggedInDistributorId;
     var data = {
       "orderid": orderid ?? "",
       "distributorid": finalDistributorId,
@@ -718,9 +719,20 @@ class ConnectHelper {
     int sortoption = -1,
     String roleid = "",
     String type = "",
+    String? assigntoid,
     bool isLoading = false,
   }) async {
     final String branchId = await _resolveBranchId();
+    final String role = await _resolveUserRole();
+    final String currentUserId = await _resolveUserId();
+
+    String? assignToIdToUse = assigntoid;
+    final bool isAdmin = RoleUtils.isAdmin(role);
+    // When logged in as User role (non-admin), send assigntoid in the API payload
+    if (!isAdmin) {
+      assignToIdToUse = currentUserId;
+    }
+
     var data = {
       "page": page,
       "type": type,
@@ -730,6 +742,8 @@ class ConnectHelper {
       "sortoption": sortoption,
       "roleid": roleid,
       "branchid": branchId,
+      if (assignToIdToUse != null && assignToIdToUse.isNotEmpty)
+        "assigntoid": assignToIdToUse,
     };
     var response = await apiWrapper.makeRequest(
       EndPoints.usersApi,
@@ -775,6 +789,8 @@ class ConnectHelper {
     int? allowance,
     bool? liveTracking,
     bool? odometer,
+    List<String>? permissionbranchid,
+    String? mapcolor,
     bool isLoading = false,
   }) async {
     final String branchId = await _resolveBranchId();
@@ -801,6 +817,8 @@ class ConnectHelper {
       "allowance": allowance ?? 0,
       "liveTracking": liveTracking ?? false,
       "odometer": odometer ?? false,
+      if (permissionbranchid != null) "permissionbranchid": permissionbranchid,
+      if (mapcolor != null && mapcolor.isNotEmpty) "mapcolor": mapcolor,
     };
     var response = await apiWrapper.makeRequest(
       EndPoints.createUsersApi,
@@ -833,6 +851,47 @@ class ConnectHelper {
       await Utility.commonHeader(),
     );
     return response;
+  }
+
+  Future<String> _resolveUserId() async {
+    String userId = await Utility.getSecureValue(LocalKeys.userIds);
+    if (userId.isEmpty) {
+      userId = await Utility.getSecureValue(LocalKeys.distributorId);
+    }
+    if (userId.isEmpty) {
+      final profileJson = await Utility.getSecureValue(LocalKeys.profileData);
+      if (profileJson.isNotEmpty) {
+        try {
+          final decoded = json.decode(profileJson);
+          userId =
+              decoded['_id']?.toString() ??
+              decoded['id']?.toString() ??
+              decoded['userData']?['_id']?.toString() ??
+              decoded['userData']?['id']?.toString() ??
+              '';
+        } catch (_) {}
+      }
+    }
+    return userId;
+  }
+
+  Future<String> _resolveUserRole() async {
+    String role = await Utility.getSecureValue(LocalKeys.roleName);
+    if (role.isEmpty) {
+      final profileJson = await Utility.getSecureValue(LocalKeys.profileData);
+      if (profileJson.isNotEmpty) {
+        try {
+          final decoded = json.decode(profileJson);
+          role =
+              decoded['roleid']?['rolename']?.toString() ??
+              decoded['rolename']?.toString() ??
+              decoded['userData']?['roleid']?['rolename']?.toString() ??
+              decoded['userData']?['rolename']?.toString() ??
+              '';
+        } catch (_) {}
+      }
+    }
+    return role;
   }
 
   Future<String> _resolveBranchId() async {
