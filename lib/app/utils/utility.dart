@@ -218,7 +218,19 @@ abstract class Utility {
     if (Get.isDialogOpen == true) {
       Get.back<void>();
     } else {
-      _closeDialogWithRetry(0);
+      bool popped = false;
+      if (Get.overlayContext != null) {
+        try {
+          final nav = Navigator.of(Get.overlayContext!, rootNavigator: true);
+          if (nav.canPop()) {
+            nav.pop();
+            popped = true;
+          }
+        } catch (_) {}
+      }
+      if (!popped) {
+        _closeDialogWithRetry(0);
+      }
     }
   }
 

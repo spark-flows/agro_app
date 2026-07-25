@@ -307,21 +307,25 @@ class CustomersScreen extends StatelessWidget {
   void _showAddDialog(BuildContext context, CustomersController controller) {
     Get.bottomSheet(
       GetBuilder<CustomersController>(
-        builder: (controller) => Container(
+        builder: (controller) => Padding(
           padding: EdgeInsets.only(
-            left: 24,
-            right: 24,
-            top: 24,
-            bottom: MediaQuery.of(Get.context!).viewInsets.bottom + 24,
+            bottom: MediaQuery.of(context).viewInsets.bottom,
           ),
-          decoration: const BoxDecoration(
+          child: Material(
             color: Colors.white,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-          ),
-          child: SingleChildScrollView(
-            child: Form(
-              key: controller.addFormKey,
-              autovalidateMode: AutovalidateMode.onUserInteraction,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+            clipBehavior: Clip.antiAlias,
+            child: Container(
+              constraints: BoxConstraints(
+                maxHeight: MediaQuery.of(context).size.height * 0.85,
+              ),
+              child: SafeArea(
+              top: false,
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(24),
+                child: Form(
+                  key: controller.addFormKey,
+                  autovalidateMode: AutovalidateMode.onUserInteraction,
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -349,6 +353,7 @@ class CustomersScreen extends StatelessWidget {
                   // ── Distributor dropdown (admin only) ────────────────
                   if (controller.isAdminView) ...[
                     DropdownButtonFormField<String>(
+                      isExpanded: true,
                       autovalidateMode: AutovalidateMode.onUserInteraction,
                       value: controller.selectedDistributorId,
                       decoration: InputDecoration(
@@ -484,9 +489,12 @@ class CustomersScreen extends StatelessWidget {
           ),
         ),
       ),
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-    );
+    ),
+  ),
+),
+  isScrollControlled: true,
+  backgroundColor: Colors.transparent,
+);
   }
 
   void _showFeedbackDialog(
@@ -499,19 +507,23 @@ class CustomersScreen extends StatelessWidget {
         : '';
     Get.bottomSheet(
       GetBuilder<CustomersController>(
-        builder: (controller) => Container(
+        builder: (controller) => Padding(
           padding: EdgeInsets.only(
-            left: 24,
-            right: 24,
-            top: 24,
-            bottom: MediaQuery.of(context).viewInsets.bottom + 24,
+            bottom: MediaQuery.of(context).viewInsets.bottom,
           ),
-          decoration: const BoxDecoration(
+          child: Material(
             color: Colors.white,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-          ),
-          child: SingleChildScrollView(
-            child: Column(
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+            clipBehavior: Clip.antiAlias,
+            child: Container(
+              constraints: BoxConstraints(
+                maxHeight: MediaQuery.of(context).size.height * 0.85,
+              ),
+              child: SafeArea(
+              top: false,
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(24),
+                child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
@@ -566,9 +578,12 @@ class CustomersScreen extends StatelessWidget {
           ),
         ),
       ),
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-    );
+    ),
+  ),
+),
+  isScrollControlled: true,
+  backgroundColor: Colors.transparent,
+);
   }
 
   Widget _buildField({

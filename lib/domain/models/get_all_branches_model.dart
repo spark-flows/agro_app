@@ -4,8 +4,16 @@
 
 import 'dart:convert';
 
-GetAllBranchs getAllBranchsFromJson(String str) =>
-    GetAllBranchs.fromJson(json.decode(str));
+GetAllBranchs getAllBranchsFromJson(String str) {
+  final decoded = json.decode(str);
+  if (decoded is List) {
+    return GetAllBranchs(
+      isSuccess: true,
+      data: Data(docs: List<Doc>.from(decoded.map((x) => Doc.fromJson(x)))),
+    );
+  }
+  return GetAllBranchs.fromJson(decoded as Map<String, dynamic>);
+}
 
 String getAllBranchsToJson(GetAllBranchs data) => json.encode(data.toJson());
 
@@ -17,12 +25,27 @@ class GetAllBranchs {
 
   GetAllBranchs({this.message, this.data, this.status, this.isSuccess});
 
-  factory GetAllBranchs.fromJson(Map<String, dynamic> json) => GetAllBranchs(
-    message: json["Message"],
-    data: json["Data"] == null ? null : Data.fromJson(json["Data"]),
-    status: json["Status"],
-    isSuccess: json["IsSuccess"],
-  );
+  factory GetAllBranchs.fromJson(Map<String, dynamic> json) {
+    dynamic rawData = json["Data"] ?? json["data"];
+    Data? parsedData;
+
+    if (rawData != null) {
+      if (rawData is List) {
+        parsedData = Data(
+          docs: List<Doc>.from(rawData.map((x) => Doc.fromJson(x))),
+        );
+      } else if (rawData is Map<String, dynamic>) {
+        parsedData = Data.fromJson(rawData);
+      }
+    }
+
+    return GetAllBranchs(
+      message: json["Message"] ?? json["message"],
+      data: parsedData,
+      status: json["Status"] ?? json["status"],
+      isSuccess: json["IsSuccess"] ?? json["isSuccess"],
+    );
+  }
 
   Map<String, dynamic> toJson() => {
     "Message": message,

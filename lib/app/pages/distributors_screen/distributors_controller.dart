@@ -11,6 +11,9 @@ import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:agro_app/app/pages/attendance_screen/attendance_controller.dart';
 
+import 'package:agro_app/domain/services/enum.dart';
+import 'package:agro_app/app/pages/home_screen/home_controller.dart';
+
 class DistributorsController extends GetxController {
   List<Doc> users = [];
   bool isLoading = false;
@@ -47,6 +50,16 @@ class DistributorsController extends GetxController {
   final RxnString selectedRoleId = RxnString();
   List<GetAllRolesDatum> roles = [];
 
+  // Admin view & assigned users selection
+  final RxBool isAdminView = true.obs;
+  final RxList<Doc> selectableUsers = <Doc>[].obs;
+  final RxBool isUsersLoading = false.obs;
+  final RxList<String> selectedPermissionUserIds = <String>[].obs;
+
+  // Shift action reactive loading states
+  final RxBool isClockInLoading = false.obs;
+  final RxBool isClockOutLoading = false.obs;
+
   // Distributor role ID — fixed filter for this screen
   static const String _distributorRoleId =
       'cf4527b2-86df-4470-a14d-37288a536e37';
@@ -73,8 +86,7 @@ class DistributorsController extends GetxController {
         if (profile?.data?.userData != null) {
           loggedUserLiveTracking =
               profile?.data?.userData?.liveTracking ?? false;
-          loggedUserOdometer =
-              profile?.data?.userData?.odometer ?? false;
+          loggedUserOdometer = profile?.data?.userData?.odometer ?? false;
         }
       }
     } catch (_) {
@@ -90,6 +102,7 @@ class DistributorsController extends GetxController {
     fetchUsers();
     fetchRoles();
     checkLoggedUserLiveTracking();
+    checkAdminRole();
 
     // Initialize search worker
     _searchWorker = debounce(
@@ -127,6 +140,69 @@ class DistributorsController extends GetxController {
       // Deduplicate by ID to avoid DropdownButton assertion errors
       final seen = <String>{};
       roles = response.data.where((r) => seen.add(r.id)).toList();
+      update();
+    }
+  }
+
+  Future<void> checkAdminRole() async {
+    try {
+      String role = '';
+      if (Get.isRegistered<HomeController>()) {
+        role = Get.find<HomeController>().roleName;
+      }
+      if (role.isEmpty) {
+        role = await Get.find<Repository>().getSecureValue(LocalKeys.roleName);
+      }
+      if (role.isEmpty) {
+        final localData = await Get.find<Repository>().getSecureValue(
+          LocalKeys.profileData,
+        );
+        if (localData.isNotEmpty) {
+          final decoded = json.decode(localData);
+          role = (decoded['rolename'] ?? decoded['roleName'] ?? '').toString();
+        }
+      }
+      if (role.isEmpty) {
+        final profile = await Get.find<Repository>().getProfileApi(
+          isLoading: false,
+        );
+        role = profile?.data?.userData?.rolename ?? '';
+      }
+
+      if (role.isNotEmpty) {
+        isAdminView.value =
+            RoleUtils.isAdmin(role) || role.toLowerCase().contains('admin');
+      } else {
+        isAdminView.value = true;
+      }
+    } catch (e) {
+      debugPrint('[DistributorsController] checkAdminRole error: $e');
+      isAdminView.value = true;
+    }
+
+    fetchSelectableUsers();
+    update();
+  }
+
+  Future<void> fetchSelectableUsers() async {
+    isUsersLoading.value = true;
+    update();
+    try {
+      final response = await Get.find<Repository>().getUsersListApi(
+        page: 1,
+        limit: 1000,
+        type: 'user',
+        isLoading: false,
+      );
+      if (response != null && response.isSuccess) {
+        selectableUsers.assignAll(
+          response.data.docs.where((u) => u.status != false).toList(),
+        );
+      }
+    } catch (e) {
+      debugPrint('[DistributorsController] fetchSelectableUsers error: $e');
+    } finally {
+      isUsersLoading.value = false;
       update();
     }
   }
@@ -185,6 +261,7 @@ class DistributorsController extends GetxController {
     isPasswordHidden.value = true;
     liveTracking.value = false;
     odometer.value = false;
+    selectedPermissionUserIds.clear();
     update();
   }
 
@@ -205,6 +282,10 @@ class DistributorsController extends GetxController {
     bankifscodeCtrl.clear();
     selectedRoleId.value = user.roleid.id;
     isPasswordHidden.value = true;
+    selectedPermissionUserIds.clear();
+    if (user.permissionuserid != null && user.permissionuserid!.isNotEmpty) {
+      selectedPermissionUserIds.assignAll(user.permissionuserid!);
+    }
     update();
 
     Utility.showLoader();
@@ -228,6 +309,10 @@ class DistributorsController extends GetxController {
         selectedRoleId.value = data.roleid?.id;
         liveTracking.value = data.liveTracking ?? false;
         odometer.value = data.odometer ?? false;
+        if (data.permissionuserid != null &&
+            data.permissionuserid!.isNotEmpty) {
+          selectedPermissionUserIds.assignAll(data.permissionuserid!);
+        }
         update();
       }
     } catch (e) {
@@ -237,146 +322,199 @@ class DistributorsController extends GetxController {
     }
   }
 
+  bool isSaving = false;
+
   Future<void> saveUser() async {
-    if (selectedRoleId.value == null) {
-      Utility.errorMessage('Please select a role');
-      return;
-    }
+    if (isSaving) return;
+    isSaving = true;
 
-    final errorMsg = await Get.find<Repository>().createUserApi(
-      userid: editingUserId.value.isNotEmpty ? editingUserId.value : null,
-      name: nameCtrl.text.trim(),
-      email: emailCtrl.text.trim(),
-      countrycode: "+91",
-      mobile: phoneCtrl.text.trim(),
-      password: passwordCtrl.text.trim(),
-      address: addressCtrl.text.trim(),
-      roleid: 'cf4527b2-86df-4470-a14d-37288a536e37', // selectedRoleId.value!,
-      surname: surnameCtrl.text.trim(),
-      fathername: fathernameCtrl.text.trim(),
-      gstnumber: gstnumberCtrl.text.trim(),
-      location: locationCtrl.text.trim(),
-      bankname: banknameCtrl.text.trim(),
-      bankaccountnumber: bankaccountnumberCtrl.text.trim(),
-      bankifsscode: bankifscodeCtrl.text.trim(),
-      liveTracking: liveTracking.value,
-      odometer: odometer.value,
-      isLoading: true,
-    );
+    try {
+      if (nameCtrl.text.trim().isEmpty) {
+        Utility.errorMessage('Please enter First Name');
+        return;
+      }
+      if (emailCtrl.text.trim().isEmpty) {
+        Utility.errorMessage('Please enter Email Address');
+        return;
+      }
+      if (!Utility.emailValidation(emailCtrl.text.trim())) {
+        Utility.errorMessage('Please enter a valid Email Address');
+        return;
+      }
+      if (phoneCtrl.text.trim().isEmpty) {
+        Utility.errorMessage('Please enter Phone Number');
+        return;
+      }
+      if (phoneCtrl.text.trim().length != 10) {
+        Utility.errorMessage('Phone number must be exactly 10 digits');
+        return;
+      }
+      if (editingUserId.value.isEmpty && passwordCtrl.text.trim().isEmpty) {
+        Utility.errorMessage('Please enter Password');
+        return;
+      }
 
-    if (errorMsg == null) {
-      Get.back();
-      Utility.snacBar(
-        editingUserId.value.isNotEmpty
-            ? 'Distributor updated'
-            : 'Distributor added',
-        Colors.green,
+      final errorMsg = await Get.find<Repository>().createUserApi(
+        userid: editingUserId.value.isNotEmpty ? editingUserId.value : null,
+        name: nameCtrl.text.trim(),
+        email: emailCtrl.text.trim(),
+        countrycode: "+91",
+        mobile: phoneCtrl.text.trim(),
+        password: passwordCtrl.text.trim(),
+        address: addressCtrl.text.trim(),
+        roleid:
+            'cf4527b2-86df-4470-a14d-37288a536e37', // selectedRoleId.value!,
+        surname: surnameCtrl.text.trim(),
+        fathername: fathernameCtrl.text.trim(),
+        gstnumber: gstnumberCtrl.text.trim(),
+        location: locationCtrl.text.trim(),
+        bankname: banknameCtrl.text.trim(),
+        bankaccountnumber: bankaccountnumberCtrl.text.trim(),
+        bankifsscode: bankifscodeCtrl.text.trim(),
+        liveTracking: liveTracking.value,
+        odometer: odometer.value,
+        assigntoid: isAdminView.value
+            ? selectedPermissionUserIds.toList()
+            : null,
+        isLoading: true,
       );
-      fetchUsers(isRefresh: true);
-    } else {
-      Utility.errorMessage(errorMsg);
+
+      if (errorMsg == null) {
+        Get.back();
+        Utility.snacBar(
+          editingUserId.value.isNotEmpty
+              ? 'Distributor updated'
+              : 'Distributor added',
+          Colors.green,
+        );
+        fetchUsers(isRefresh: true);
+      } else {
+        Utility.errorMessage(errorMsg);
+      }
+    } finally {
+      isSaving = false;
     }
   }
 
   // ── Distributor shift actions (Separate from Attendance) ───────────────────
   Future<void> clockInDistributor(Doc user) async {
-    if (loggedUserLiveTracking && loggedUserOdometer) {
-      bool isClockedIn = false;
-      try {
-        if (Get.isRegistered<AttendanceController>()) {
-          final attendanceController = Get.find<AttendanceController>();
-          final record = attendanceController.getTodayRecord();
-          isClockedIn = attendanceController.isClockedInToday(record);
-        } else {
-          final todayStr = DateFormat('yyyy-MM-dd').format(DateTime.now());
-          final savedDate = Get.find<Repository>().getStringValue('attendance_date');
-          if (savedDate == todayStr) {
-            final savedStatus = Get.find<Repository>().getStringValue('attendance_status');
-            isClockedIn = (savedStatus == 'clocked_in' || savedStatus == 'paused');
-          }
-        }
-      } catch (e) {
-        debugPrint('[DistributorsController] Error checking attendance clock-in: $e');
-      }
+    if (isClockInLoading.value) return;
+    isClockInLoading.value = true;
+    bool success = false;
+    String timein = DateTime.now().toUtc().toIso8601String();
 
-      if (!isClockedIn) {
-        Utility.errorMessage('First you need to Clock In in the Attendance Screen.');
-        return;
-      }
-    }
-
-    final hasPermission = await Utility.handleLocationPermission();
-    if (!hasPermission) return;
-
-    double lat = 0.0;
-    double lon = 0.0;
     try {
-      final position = await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.high,
-        timeLimit: const Duration(seconds: 5),
-      );
-      lat = position.latitude;
-      lon = position.longitude;
-    } catch (e) {
-      debugPrint('[DistributorsController] geolocator high accuracy error: $e');
-      try {
-        final lastPosition = await Geolocator.getLastKnownPosition();
-        if (lastPosition != null) {
-          lat = lastPosition.latitude;
-          lon = lastPosition.longitude;
-        } else {
-          final position = await Geolocator.getCurrentPosition(
-            desiredAccuracy: LocationAccuracy.medium,
-            timeLimit: const Duration(seconds: 5),
+      if (loggedUserLiveTracking && loggedUserOdometer) {
+        bool isClockedIn = false;
+        try {
+          if (Get.isRegistered<AttendanceController>()) {
+            final attendanceController = Get.find<AttendanceController>();
+            final record = attendanceController.getTodayRecord();
+            isClockedIn = attendanceController.isClockedInToday(record);
+          } else {
+            final todayStr = DateFormat('yyyy-MM-dd').format(DateTime.now());
+            final savedDate = Get.find<Repository>().getStringValue(
+              'attendance_date',
+            );
+            if (savedDate == todayStr) {
+              final savedStatus = Get.find<Repository>().getStringValue(
+                'attendance_status',
+              );
+              isClockedIn =
+                  (savedStatus == 'clocked_in' || savedStatus == 'paused');
+            }
+          }
+        } catch (e) {
+          debugPrint(
+            '[DistributorsController] Error checking attendance clock-in: $e',
           );
-          lat = position.latitude;
-          lon = position.longitude;
         }
-      } catch (ex) {
-        debugPrint('[DistributorsController] geolocator fallback error: $ex');
+
+        if (!isClockedIn) {
+          isClockInLoading.value = false;
+          Utility.errorMessage(
+            'First you need to Clock In in the Attendance Screen.',
+          );
+          return;
+        }
       }
-    }
 
-    String userId = await Get.find<Repository>().getSecureValue(
-      LocalKeys.userIds,
-    );
-    if (userId.trim().isEmpty) {
-      userId = await Get.find<Repository>().getSecureValue(
-        LocalKeys.distributorId,
-      );
-    }
-    if (userId.trim().isEmpty) {
+      final hasPermission = await Utility.handleLocationPermission();
+      if (!hasPermission) return;
+
+      double lat = 0.0;
+      double lon = 0.0;
       try {
-        final profileJson = await Get.find<Repository>().getSecureValue(
-          LocalKeys.profileData,
+        final position = await Geolocator.getCurrentPosition(
+          desiredAccuracy: LocationAccuracy.high,
+          timeLimit: const Duration(seconds: 5),
         );
-        if (profileJson.isNotEmpty) {
-          final decoded = json.decode(profileJson);
-          final userData =
-              decoded['userData'] ?? decoded['UserData'] ?? decoded;
-          userId = (userData['_id'] ?? userData['id'] ?? '')?.toString() ?? '';
+        lat = position.latitude;
+        lon = position.longitude;
+      } catch (e) {
+        debugPrint(
+          '[DistributorsController] geolocator high accuracy error: $e',
+        );
+        try {
+          final lastPosition = await Geolocator.getLastKnownPosition();
+          if (lastPosition != null) {
+            lat = lastPosition.latitude;
+            lon = lastPosition.longitude;
+          } else {
+            final position = await Geolocator.getCurrentPosition(
+              desiredAccuracy: LocationAccuracy.medium,
+              timeLimit: const Duration(seconds: 5),
+            );
+            lat = position.latitude;
+            lon = position.longitude;
+          }
+        } catch (ex) {
+          debugPrint('[DistributorsController] geolocator fallback error: $ex');
         }
-      } catch (_) {}
+      }
+
+      String userId = await Get.find<Repository>().getSecureValue(
+        LocalKeys.userIds,
+      );
+      if (userId.trim().isEmpty) {
+        userId = await Get.find<Repository>().getSecureValue(
+          LocalKeys.distributorId,
+        );
+      }
+      if (userId.trim().isEmpty) {
+        try {
+          final profileJson = await Get.find<Repository>().getSecureValue(
+            LocalKeys.profileData,
+          );
+          if (profileJson.isNotEmpty) {
+            final decoded = json.decode(profileJson);
+            final userData =
+                decoded['userData'] ?? decoded['UserData'] ?? decoded;
+            userId =
+                (userData['_id'] ?? userData['id'] ?? '')?.toString() ?? '';
+          }
+        } catch (_) {}
+      }
+
+      final Map<String, dynamic> body = {
+        "userId": userId,
+        "dealerId": user.id,
+        "latitude": lat,
+        "longitude": lon,
+        "timein": timein,
+      };
+
+      debugPrint('[DistributorsController] clockInDistributor payload: $body');
+
+      success = await Get.find<Repository>().pauseTrackingApi(
+        body: body,
+        isLoading: false,
+      );
+    } catch (e) {
+      debugPrint('[DistributorsController] clockInDistributor error: $e');
+    } finally {
+      isClockInLoading.value = false;
     }
-
-    final String timein = DateTime.now().toUtc().toIso8601String();
-
-    final Map<String, dynamic> body = {
-      "userId": userId,
-      "dealerId": user.id,
-      "latitude": lat,
-      "longitude": lon,
-      "timein": timein,
-    };
-
-    debugPrint('[DistributorsController] clockInDistributor payload: $body');
-
-    Utility.showLoader();
-    bool success = await Get.find<Repository>().pauseTrackingApi(
-      body: body,
-      isLoading: false,
-    );
-    Utility.closeLoader();
 
     if (success) {
       user.isClockedIn = true;
@@ -396,43 +534,79 @@ class DistributorsController extends GetxController {
   }
 
   Future<void> clockOutDistributor(Doc user) async {
-    final hasPermission = await Utility.handleLocationPermission();
-    if (!hasPermission) return;
+    if (isClockOutLoading.value) return;
+    isClockOutLoading.value = true;
+    bool success = false;
+    String timeout = DateTime.now().toUtc().toIso8601String();
 
-    String userId = await Get.find<Repository>().getSecureValue(
-      LocalKeys.userIds,
-    );
-    if (userId.trim().isEmpty) {
-      userId = await Get.find<Repository>().getSecureValue(
-        LocalKeys.distributorId,
-      );
-    }
-    if (userId.trim().isEmpty) {
+    try {
+      final hasPermission = await Utility.handleLocationPermission();
+      if (!hasPermission) return;
+
+      double lat = 0.0;
+      double lon = 0.0;
       try {
-        final profileJson = await Get.find<Repository>().getSecureValue(
-          LocalKeys.profileData,
+        final position = await Geolocator.getCurrentPosition(
+          desiredAccuracy: LocationAccuracy.high,
+          timeLimit: const Duration(seconds: 5),
         );
-        if (profileJson.isNotEmpty) {
-          final decoded = json.decode(profileJson);
-          final userData =
-              decoded['userData'] ?? decoded['UserData'] ?? decoded;
-          userId = (userData['_id'] ?? userData['id'] ?? '')?.toString() ?? '';
-        }
-      } catch (_) {}
+        lat = position.latitude;
+        lon = position.longitude;
+      } catch (e) {
+        debugPrint(
+          '[DistributorsController] geolocator high accuracy error: $e',
+        );
+        try {
+          final lastPosition = await Geolocator.getLastKnownPosition();
+          if (lastPosition != null) {
+            lat = lastPosition.latitude;
+            lon = lastPosition.longitude;
+          }
+        } catch (_) {}
+      }
+
+      String userId = await Get.find<Repository>().getSecureValue(
+        LocalKeys.userIds,
+      );
+      if (userId.trim().isEmpty) {
+        userId = await Get.find<Repository>().getSecureValue(
+          LocalKeys.distributorId,
+        );
+      }
+      if (userId.trim().isEmpty) {
+        try {
+          final profileJson = await Get.find<Repository>().getSecureValue(
+            LocalKeys.profileData,
+          );
+          if (profileJson.isNotEmpty) {
+            final decoded = json.decode(profileJson);
+            final userData =
+                decoded['userData'] ?? decoded['UserData'] ?? decoded;
+            userId =
+                (userData['_id'] ?? userData['id'] ?? '')?.toString() ?? '';
+          }
+        } catch (_) {}
+      }
+
+      final Map<String, dynamic> body = {
+        "userId": userId,
+        "dealerId": user.id,
+        "latitude": lat,
+        "longitude": lon,
+        "timeout": timeout,
+      };
+
+      debugPrint('[DistributorsController] clockOutDistributor payload: $body');
+
+      success = await Get.find<Repository>().pauseTrackingApi(
+        body: body,
+        isLoading: false,
+      );
+    } catch (e) {
+      debugPrint('[DistributorsController] clockOutDistributor error: $e');
+    } finally {
+      isClockOutLoading.value = false;
     }
-
-    final String timeout = DateTime.now().toUtc().toIso8601String();
-
-    final Map<String, dynamic> body = {"userId": userId, "timeout": timeout};
-
-    debugPrint('[DistributorsController] clockOutDistributor payload: $body');
-
-    Utility.showLoader();
-    bool success = await Get.find<Repository>().pauseTrackingApi(
-      body: body,
-      isLoading: false,
-    );
-    Utility.closeLoader();
 
     if (success) {
       user.isClockedOut = true;

@@ -729,7 +729,7 @@ class ConnectHelper {
     String? assignToIdToUse = assigntoid;
     final bool isAdmin = RoleUtils.isAdmin(role);
     // When logged in as User role (non-admin), send assigntoid in the API payload
-    if (!isAdmin) {
+    if (isAdmin) {
       assignToIdToUse = currentUserId;
     }
 
@@ -790,6 +790,8 @@ class ConnectHelper {
     bool? liveTracking,
     bool? odometer,
     List<String>? permissionbranchid,
+    List<String>? permissionuserid,
+    List<String>? assigntoid,
     String? mapcolor,
     bool isLoading = false,
   }) async {
@@ -818,6 +820,8 @@ class ConnectHelper {
       "liveTracking": liveTracking ?? false,
       "odometer": odometer ?? false,
       if (permissionbranchid != null) "permissionbranchid": permissionbranchid,
+      if (permissionuserid != null) "permissionuserid": permissionuserid,
+      if (assigntoid != null) "assigntoid": assigntoid,
       if (mapcolor != null && mapcolor.isNotEmpty) "mapcolor": mapcolor,
     };
     var response = await apiWrapper.makeRequest(
@@ -830,23 +834,11 @@ class ConnectHelper {
     return response;
   }
 
-  Future<ResponseModel> getAllBranchesApi({
-    int page = 1,
-    int limit = 10,
-    String search = "",
-    bool isLoading = false,
-  }) async {
-    var data = {
-      "page": page,
-      "limit": limit,
-      "search": search,
-      "sortfield": "_id",
-      "sortoption": 1,
-    };
+  Future<ResponseModel> getAllBranchesApi({bool isLoading = false}) async {
     var response = await apiWrapper.makeRequest(
       EndPoints.branchApi,
-      Request.post,
-      data,
+      Request.get,
+      null,
       isLoading,
       await Utility.commonHeader(),
     );
@@ -1010,8 +1002,16 @@ class ConnectHelper {
         final response = await getAllBranchesApi(isLoading: false);
         if (!response.hasError && response.data.isNotEmpty) {
           final decoded = json.decode(response.data);
-          final docs = decoded['Data']?['docs'];
-          if (docs is List && docs.isNotEmpty) {
+          final rawData = decoded is Map
+              ? (decoded['Data'] ?? decoded['data'])
+              : decoded;
+          List<dynamic>? docs;
+          if (rawData is List) {
+            docs = rawData;
+          } else if (rawData is Map) {
+            docs = rawData['docs'];
+          }
+          if (docs != null && docs.isNotEmpty) {
             dynamic activeBranch;
             for (var b in docs) {
               if (b is Map && b['isDeleted'] != true) {
@@ -1306,7 +1306,7 @@ class ConnectHelper {
       "remark": remark,
       "status": status,
       if (photo != null) "photo": photo,
-      if (odometer != null) "odometer": odometer,
+      "odometer": odometer ?? 0,
       if (timeinphoto != null) "timeinphoto": timeinphoto,
       if (timeinodometer != null) "timeinodometer": timeinodometer,
       if (timeoutphoto != null) "timeoutphoto": timeoutphoto,

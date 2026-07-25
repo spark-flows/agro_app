@@ -139,10 +139,12 @@ class Doc {
     this.clockInTime,
     this.clockOutTime,
     this.permissionbranchid,
+    this.permissionuserid,
     this.mapcolor,
   });
 
   List<String>? permissionbranchid;
+  List<String>? permissionuserid;
   String? mapcolor;
 
   factory Doc.fromJson(Map<String, dynamic> json) => Doc(
@@ -183,6 +185,14 @@ class Doc {
         ? []
         : (json["permissionbranchid"] ?? json["permissionbranchId"] ?? json["permissionbranch"]) is List
             ? ((json["permissionbranchid"] ?? json["permissionbranchId"] ?? json["permissionbranch"]) as List)
+                .map((x) => x is Map ? (x["_id"] ?? x["id"] ?? "").toString() : x.toString())
+                .where((x) => x.isNotEmpty)
+                .toList()
+            : [],
+    permissionuserid: (json["permissionuserid"] ?? json["permissionUserId"] ?? json["permissionuser"] ?? json["assigntoid"]) == null
+        ? []
+        : (json["permissionuserid"] ?? json["permissionUserId"] ?? json["permissionuser"] ?? json["assigntoid"]) is List
+            ? ((json["permissionuserid"] ?? json["permissionUserId"] ?? json["permissionuser"] ?? json["assigntoid"]) as List)
                 .map((x) => x is Map ? (x["_id"] ?? x["id"] ?? "").toString() : x.toString())
                 .where((x) => x.isNotEmpty)
                 .toList()

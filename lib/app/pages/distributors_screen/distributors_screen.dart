@@ -246,7 +246,7 @@ class _DistributorsScreenState extends State<DistributorsScreen> {
   ) {
     final bool showAttendance =
         Get.find<Repository>().getStringValue(LocalKeys.roleHiveName) !=
-            "Admin";
+        "Admin";
 
     Get.bottomSheet<void>(
       StatefulBuilder(
@@ -343,31 +343,39 @@ class _DistributorsScreenState extends State<DistributorsScreen> {
                                 children: [
                                   // Clock In button
                                   Expanded(
-                                    child: _attendanceButton(
-                                      label: 'Clock In',
-                                      icon: Icons.login_rounded,
-                                      color: Colors.green,
-                                      enabled: !isClockedIn,
-                                      onTap: () {
-                                        distCtrl.clockInDistributor(
-                                          currentUser,
-                                        );
-                                      },
+                                    child: Obx(
+                                      () => _attendanceButton(
+                                        label: 'Clock In',
+                                        icon: Icons.login_rounded,
+                                        color: Colors.green,
+                                        enabled: !isClockedIn,
+                                        isLoading:
+                                            distCtrl.isClockInLoading.value,
+                                        onTap: () {
+                                          distCtrl.clockInDistributor(
+                                            currentUser,
+                                          );
+                                        },
+                                      ),
                                     ),
                                   ),
                                   const SizedBox(width: 10),
                                   // Clock Out button
                                   Expanded(
-                                    child: _attendanceButton(
-                                      label: 'Clock Out',
-                                      icon: Icons.logout_rounded,
-                                      color: Colors.red,
-                                      enabled: isClockedIn,
-                                      onTap: () {
-                                        distCtrl.clockOutDistributor(
-                                          currentUser,
-                                        );
-                                      },
+                                    child: Obx(
+                                      () => _attendanceButton(
+                                        label: 'Clock Out',
+                                        icon: Icons.logout_rounded,
+                                        color: Colors.red,
+                                        enabled: isClockedIn,
+                                        isLoading:
+                                            distCtrl.isClockOutLoading.value,
+                                        onTap: () {
+                                          distCtrl.clockOutDistributor(
+                                            currentUser,
+                                          );
+                                        },
+                                      ),
                                     ),
                                   ),
                                 ],
@@ -419,10 +427,11 @@ class _DistributorsScreenState extends State<DistributorsScreen> {
     required IconData icon,
     required Color color,
     required bool enabled,
+    bool isLoading = false,
     required VoidCallback onTap,
   }) {
     return GestureDetector(
-      onTap: enabled ? onTap : null,
+      onTap: (enabled && !isLoading) ? onTap : null,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.symmetric(vertical: 14),
@@ -438,10 +447,24 @@ class _DistributorsScreenState extends State<DistributorsScreen> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, color: enabled ? color : Colors.grey.shade400, size: 26),
+            if (isLoading)
+              SizedBox(
+                height: 26,
+                width: 26,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2.5,
+                  color: color,
+                ),
+              )
+            else
+              Icon(
+                icon,
+                color: enabled ? color : Colors.grey.shade400,
+                size: 26,
+              ),
             const SizedBox(height: 4),
             Text(
-              label,
+              isLoading ? 'Loading...' : label,
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
@@ -458,292 +481,299 @@ class _DistributorsScreenState extends State<DistributorsScreen> {
 
   void _showAddDialog(BuildContext context, DistributorsController controller) {
     Get.bottomSheet(
-      Container(
-        padding: EdgeInsets.only(
-          left: 24,
-          right: 24,
-          top: 24,
-          bottom: MediaQuery.of(context).viewInsets.bottom + 24,
-        ),
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-        ),
-        child: SingleChildScrollView(
-          child: Form(
-            key: controller.addFormKey,
-            autovalidateMode: AutovalidateMode.onUserInteraction,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                // ── Drag handle
-                Center(
-                  child: Container(
-                    width: 40,
-                    height: 5,
-                    decoration: BoxDecoration(
-                      color: Colors.grey.shade300,
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 24),
-
-                // ── Title
-                Obx(
-                  () => Text(
-                    controller.editingUserId.value.isNotEmpty
-                        ? 'Edit Distributor'
-                        : 'Add New Distributor',
-                    style: Styles.txtBlackColorW70020,
-                    textAlign: TextAlign.center,
-                  ),
-                ),
-                const SizedBox(height: 24),
-
-                // ── Section: Personal Info
-                _sectionHeader('Personal Information'),
-                const SizedBox(height: 12),
-
-                // First Name
-                _buildField(
-                  controller: controller.nameCtrl,
-                  label: 'First Name',
-                  icon: Icons.person_outline,
-                  action: TextInputAction.next,
-                  validator: (v) =>
-                      v!.trim().isEmpty ? 'Please enter a name' : null,
-                ),
-                const SizedBox(height: 12),
-
-                // Surname
-                _buildField(
-                  controller: controller.surnameCtrl,
-                  label: 'Surname',
-                  icon: Icons.person_outline,
-                  action: TextInputAction.next,
-                ),
-                const SizedBox(height: 12),
-
-                // Father Name
-                _buildField(
-                  controller: controller.fathernameCtrl,
-                  label: 'Father Name',
-                  icon: Icons.family_restroom_outlined,
-                  action: TextInputAction.next,
-                ),
-                const SizedBox(height: 24),
-
-                // ── Section: Contact Info
-                _sectionHeader('Contact Information'),
-                const SizedBox(height: 12),
-
-                // Email
-                _buildField(
-                  controller: controller.emailCtrl,
-                  label: 'Email Address',
-                  icon: Icons.email_outlined,
-                  keyboardType: TextInputType.emailAddress,
-                  action: TextInputAction.next,
-                  validator: (v) {
-                    if (v == null || v.trim().isEmpty) {
-                      return 'Please enter an email';
-                    } else if (!Utility.emailValidation(v.trim())) {
-                      return 'Please enter a valid email';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 12),
-
-                // Phone
-                _buildField(
-                  controller: controller.phoneCtrl,
-                  label: 'Phone Number',
-                  icon: Icons.phone_outlined,
-                  keyboardType: TextInputType.phone,
-                  action: TextInputAction.next,
-                  maxLength: 10,
-                  inputFormatters: [
-                    FilteringTextInputFormatter.digitsOnly,
-                    LengthLimitingTextInputFormatter(10),
-                  ],
-                  validator: (v) {
-                    if (v == null || v.trim().isEmpty) {
-                      return 'Please enter a phone number';
-                    }
-                    if (v.trim().length != 10) {
-                      return 'Phone number must be exactly 10 digits';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 12),
-
-                // Password
-                Obx(
-                  () => _buildField(
-                    controller: controller.passwordCtrl,
-                    label: 'Password',
-                    icon: Icons.lock_outline,
-                    obscureText: controller.isPasswordHidden.value,
-                    action: TextInputAction.next,
-                    suffixIcon: IconButton(
-                      icon: Icon(
-                        controller.isPasswordHidden.value
-                            ? Icons.visibility_off
-                            : Icons.visibility,
-                        color: Colors.grey,
+      Material(
+        color: Colors.white,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+        clipBehavior: Clip.antiAlias,
+        child: Padding(
+          padding: EdgeInsets.only(
+            left: 24,
+            right: 24,
+            top: 24,
+            bottom: MediaQuery.of(context).viewInsets.bottom + 24,
+          ),
+          child: SingleChildScrollView(
+            child: Form(
+              key: controller.addFormKey,
+              autovalidateMode: AutovalidateMode.onUserInteraction,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  // ── Drag handle
+                  Center(
+                    child: Container(
+                      width: 40,
+                      height: 5,
+                      decoration: BoxDecoration(
+                        color: Colors.grey.shade300,
+                        borderRadius: BorderRadius.circular(10),
                       ),
-                      onPressed: () {
-                        controller.isPasswordHidden.value =
-                            !controller.isPasswordHidden.value;
-                      },
                     ),
+                  ),
+                  const SizedBox(height: 24),
+
+                  // ── Title
+                  Obx(
+                    () => Text(
+                      controller.editingUserId.value.isNotEmpty
+                          ? 'Edit Distributor'
+                          : 'Add New Distributor',
+                      style: Styles.txtBlackColorW70020,
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+
+                  // ── Section: Personal Info
+                  _sectionHeader('Personal Information'),
+                  const SizedBox(height: 12),
+
+                  // First Name
+                  _buildField(
+                    controller: controller.nameCtrl,
+                    label: 'First Name',
+                    icon: Icons.person_outline,
+                    action: TextInputAction.next,
+                    validator: (v) => (v == null || v.trim().isEmpty)
+                        ? 'Please enter a name'
+                        : null,
+                  ),
+                  const SizedBox(height: 12),
+
+                  // Surname
+                  _buildField(
+                    controller: controller.surnameCtrl,
+                    label: 'Surname',
+                    icon: Icons.person_outline,
+                    action: TextInputAction.next,
+                  ),
+                  const SizedBox(height: 12),
+
+                  // Father Name
+                  _buildField(
+                    controller: controller.fathernameCtrl,
+                    label: 'Father Name',
+                    icon: Icons.family_restroom_outlined,
+                    action: TextInputAction.next,
+                  ),
+                  const SizedBox(height: 24),
+
+                  // ── Section: Contact Info
+                  _sectionHeader('Contact Information'),
+                  const SizedBox(height: 12),
+
+                  // Email
+                  _buildField(
+                    controller: controller.emailCtrl,
+                    label: 'Email Address',
+                    icon: Icons.email_outlined,
+                    keyboardType: TextInputType.emailAddress,
+                    action: TextInputAction.next,
                     validator: (v) {
-                      if (controller.editingUserId.value.isEmpty &&
-                          v!.trim().isEmpty) {
-                        return 'Please enter a password';
+                      if (v == null || v.trim().isEmpty) {
+                        return 'Please enter an email';
+                      } else if (!Utility.emailValidation(v.trim())) {
+                        return 'Please enter a valid email';
                       }
                       return null;
                     },
                   ),
-                ),
-                const SizedBox(height: 12),
+                  const SizedBox(height: 12),
 
-                // Address
-                _buildField(
-                  controller: controller.addressCtrl,
-                  label: 'Address',
-                  icon: Icons.home_outlined,
-                  action: TextInputAction.next,
-                  validator: (v) =>
-                      v!.trim().isEmpty ? 'Please enter an address' : null,
-                ),
-                const SizedBox(height: 24),
+                  // Phone
+                  _buildField(
+                    controller: controller.phoneCtrl,
+                    label: 'Phone Number',
+                    icon: Icons.phone_outlined,
+                    keyboardType: TextInputType.phone,
+                    action: TextInputAction.next,
+                    maxLength: 10,
+                    inputFormatters: [
+                      FilteringTextInputFormatter.digitsOnly,
+                      LengthLimitingTextInputFormatter(10),
+                    ],
+                    validator: (v) {
+                      if (v == null || v.trim().isEmpty) {
+                        return 'Please enter a phone number';
+                      }
+                      if (v.trim().length != 10) {
+                        return 'Phone number must be exactly 10 digits';
+                      }
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 12),
 
-                // ── Section: Business Info
-                _sectionHeader('Business Information'),
-                const SizedBox(height: 12),
-
-                // GST Number
-                _buildField(
-                  controller: controller.gstnumberCtrl,
-                  label: 'GST Number',
-                  icon: Icons.receipt_long_outlined,
-                  action: TextInputAction.next,
-                ),
-                const SizedBox(height: 12),
-
-                // Location
-                _buildField(
-                  controller: controller.locationCtrl,
-                  label: 'Location',
-                  icon: Icons.location_on_outlined,
-                  action: TextInputAction.next,
-                ),
-                const SizedBox(height: 24),
-
-                // ── Section: Bank Info
-                _sectionHeader('Bank Information'),
-                const SizedBox(height: 12),
-
-                // Bank Name
-                _buildField(
-                  controller: controller.banknameCtrl,
-                  label: 'Bank Name',
-                  icon: Icons.account_balance_outlined,
-                  action: TextInputAction.next,
-                ),
-                const SizedBox(height: 12),
-
-                // Bank Account Number
-                _buildField(
-                  controller: controller.bankaccountnumberCtrl,
-                  label: 'Bank Account Number',
-                  icon: Icons.credit_card_outlined,
-                  keyboardType: TextInputType.number,
-                  action: TextInputAction.next,
-                ),
-                const SizedBox(height: 12),
-
-                // IFSC Code
-                _buildField(
-                  controller: controller.bankifscodeCtrl,
-                  label: 'IFSC Code',
-                  icon: Icons.code_outlined,
-                  action: TextInputAction.next,
-                ),
-                const SizedBox(height: 24),
-
-                // ── Role Dropdown
-                DropdownButtonFormField<String>(
-                  autovalidateMode: AutovalidateMode.onUserInteraction,
-                  value: controller.selectedRoleId.value,
-                  decoration: InputDecoration(
-                    labelText: 'Role',
-                    labelStyle: Styles.txtGreyColorW40014,
-                    floatingLabelStyle: const TextStyle(
-                      color: ColorsValue.primary,
+                  // Password
+                  Obx(
+                    () => _buildField(
+                      controller: controller.passwordCtrl,
+                      label: 'Password',
+                      icon: Icons.lock_outline,
+                      obscureText: controller.isPasswordHidden.value,
+                      action: TextInputAction.next,
+                      suffixIcon: IconButton(
+                        icon: Icon(
+                          controller.isPasswordHidden.value
+                              ? Icons.visibility_off
+                              : Icons.visibility,
+                          color: Colors.grey,
+                        ),
+                        onPressed: () {
+                          controller.isPasswordHidden.value =
+                              !controller.isPasswordHidden.value;
+                        },
+                      ),
+                      validator: (v) {
+                        if (controller.editingUserId.value.isEmpty &&
+                            (v == null || v.trim().isEmpty)) {
+                          return 'Please enter a password';
+                        }
+                        return null;
+                      },
                     ),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(color: Colors.grey.shade300),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(color: Colors.grey.shade300),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(
+                  ),
+                  const SizedBox(height: 12),
+
+                  // Address
+                  _buildField(
+                    controller: controller.addressCtrl,
+                    label: 'Address',
+                    icon: Icons.home_outlined,
+                    action: TextInputAction.next,
+                    validator: (v) => (v == null || v.trim().isEmpty)
+                        ? 'Please enter an address'
+                        : null,
+                  ),
+                  const SizedBox(height: 24),
+
+                  // ── Section: Business Info
+                  _sectionHeader('Business Information'),
+                  const SizedBox(height: 12),
+
+                  // GST Number
+                  _buildField(
+                    controller: controller.gstnumberCtrl,
+                    label: 'GST Number',
+                    icon: Icons.receipt_long_outlined,
+                    action: TextInputAction.next,
+                  ),
+                  const SizedBox(height: 12),
+
+                  // Location
+                  _buildField(
+                    controller: controller.locationCtrl,
+                    label: 'Location',
+                    icon: Icons.location_on_outlined,
+                    action: TextInputAction.next,
+                  ),
+                  const SizedBox(height: 24),
+
+                  // ── Section: Bank Info
+                  _sectionHeader('Bank Information'),
+                  const SizedBox(height: 12),
+
+                  // Bank Name
+                  _buildField(
+                    controller: controller.banknameCtrl,
+                    label: 'Bank Name',
+                    icon: Icons.account_balance_outlined,
+                    action: TextInputAction.next,
+                  ),
+                  const SizedBox(height: 12),
+
+                  // Bank Account Number
+                  _buildField(
+                    controller: controller.bankaccountnumberCtrl,
+                    label: 'Bank Account Number',
+                    icon: Icons.credit_card_outlined,
+                    keyboardType: TextInputType.number,
+                    action: TextInputAction.next,
+                  ),
+                  const SizedBox(height: 12),
+
+                  // IFSC Code
+                  _buildField(
+                    controller: controller.bankifscodeCtrl,
+                    label: 'IFSC Code',
+                    icon: Icons.code_outlined,
+                    action: TextInputAction.next,
+                  ),
+                  const SizedBox(height: 24),
+
+                  // ── Role Dropdown
+                  DropdownButtonFormField<String>(
+                    autovalidateMode: AutovalidateMode.onUserInteraction,
+                    value: controller.selectedRoleId.value,
+                    decoration: InputDecoration(
+                      labelText: 'Role',
+                      labelStyle: Styles.txtGreyColorW40014,
+                      floatingLabelStyle: const TextStyle(
                         color: ColorsValue.primary,
-                        width: 1.5,
+                      ),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(color: Colors.grey.shade300),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(color: Colors.grey.shade300),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: const BorderSide(
+                          color: ColorsValue.primary,
+                          width: 1.5,
+                        ),
+                      ),
+                      prefixIcon: Icon(
+                        Icons.admin_panel_settings_outlined,
+                        color: ColorsValue.primary.withValues(alpha: 0.8),
                       ),
                     ),
-                    prefixIcon: Icon(
-                      Icons.admin_panel_settings_outlined,
-                      color: ColorsValue.primary.withValues(alpha: 0.8),
-                    ),
+                    items: controller.roles.map((role) {
+                      return DropdownMenuItem(
+                        value: role.id,
+                        child: Text(role.rolename),
+                      );
+                    }).toList(),
+                    onChanged: (val) {
+                      controller.selectedRoleId.value = val;
+                    },
+                    validator: (v) => v == null ? 'Please select a role' : null,
                   ),
-                  items: controller.roles.map((role) {
-                    return DropdownMenuItem(
-                      value: role.id,
-                      child: Text(role.rolename),
-                    );
-                  }).toList(),
-                  onChanged: (val) {
-                    controller.selectedRoleId.value = val;
-                  },
-                  validator: (v) => v == null ? 'Please select a role' : null,
-                ),
-                const SizedBox(height: 24),
+                  const SizedBox(height: 24),
 
-                // ── Save Button
-                ElevatedButton(
-                  onPressed: () {
-                    if (controller.addFormKey.currentState!.validate()) {
-                      controller.saveUser();
-                    }
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: ColorsValue.primary,
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
+                  // ── Assigned Users (Admin Only) ───────────────────────────
+                  _buildUserMultiSelect(context, controller),
+                  const SizedBox(height: 24),
+
+                  // ── Save Button
+                  ElevatedButton(
+                    onPressed: () {
+                      if (controller.addFormKey.currentState!.validate()) {
+                        controller.saveUser();
+                      }
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: ColorsValue.primary,
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    child: const Text(
+                      'Save Distributor',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
                     ),
                   ),
-                  child: const Text(
-                    'Save Distributor',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    ),
-                  ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ),
@@ -754,6 +784,255 @@ class _DistributorsScreenState extends State<DistributorsScreen> {
   }
 
   // ── Helpers ────────────────────────────────────────────────────────────────
+
+  Widget _buildUserMultiSelect(
+    BuildContext context,
+    DistributorsController controller,
+  ) {
+    return Obx(() {
+      if (!controller.isAdminView.value) return const SizedBox.shrink();
+
+      final selectedIds = controller.selectedPermissionUserIds;
+      final selectedNames = controller.selectableUsers
+          .where((u) => u.id.isNotEmpty && selectedIds.contains(u.id))
+          .map((u) => u.name)
+          .where((name) => name.isNotEmpty)
+          .toList();
+
+      String displayText;
+      if (selectedIds.isEmpty) {
+        displayText = 'Select Assigned Users';
+      } else if (selectedNames.isNotEmpty) {
+        displayText = selectedNames.join(', ');
+      } else {
+        displayText = '${selectedIds.length} users selected';
+      }
+
+      return InkWell(
+        onTap: () {
+          _showUserSelectionDialog(context, controller);
+        },
+        borderRadius: BorderRadius.circular(12),
+        child: InputDecorator(
+          decoration: InputDecoration(
+            labelText: 'Assigned Users',
+            labelStyle: Styles.txtGreyColorW40014,
+            floatingLabelStyle: const TextStyle(color: ColorsValue.primary),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: Colors.grey.shade300),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: Colors.grey.shade300),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(
+                color: ColorsValue.primary,
+                width: 1.5,
+              ),
+            ),
+            prefixIcon: Icon(
+              Icons.people_outline,
+              color: ColorsValue.primary.withValues(alpha: 0.8),
+            ),
+            suffixIcon: const Icon(Icons.arrow_drop_down, color: Colors.grey),
+          ),
+          child: Text(
+            displayText,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: selectedIds.isEmpty
+                ? Styles.txtGreyColorW40014
+                : Styles.txtBlackColorW50014,
+          ),
+        ),
+      );
+    });
+  }
+
+  void _showUserSelectionDialog(
+    BuildContext context,
+    DistributorsController controller,
+  ) {
+    if (controller.selectableUsers.isEmpty && !controller.isUsersLoading.value) {
+      controller.fetchSelectableUsers();
+    }
+
+    final searchCtrl = TextEditingController();
+    final RxString searchRx = ''.obs;
+
+    Get.dialog(
+      Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        child: Container(
+          width: MediaQuery.of(context).size.width * 0.9,
+          constraints: BoxConstraints(
+            maxHeight: MediaQuery.of(context).size.height * 0.7,
+          ),
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Expanded(
+                    child: Text(
+                      'Select Assigned Users',
+                      style: Styles.txtBlackColorW70020.copyWith(fontSize: 16),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  Obx(() {
+                    final validUsers = controller.selectableUsers;
+                    final selectedIds = controller.selectedPermissionUserIds;
+                    final allSelected =
+                        validUsers.isNotEmpty &&
+                        validUsers.every(
+                          (u) => u.id.isNotEmpty && selectedIds.contains(u.id),
+                        );
+                    return TextButton(
+                      style: TextButton.styleFrom(
+                        padding: EdgeInsets.zero,
+                        minimumSize: Size.zero,
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      ),
+                      onPressed: () {
+                        if (allSelected) {
+                          controller.selectedPermissionUserIds.clear();
+                        } else {
+                          controller.selectedPermissionUserIds.assignAll(
+                            validUsers.map((u) => u.id).toList(),
+                          );
+                        }
+                      },
+                      child: Text(
+                        allSelected ? 'Deselect All' : 'Select All',
+                        style: const TextStyle(
+                          color: ColorsValue.primary,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 13,
+                        ),
+                      ),
+                    );
+                  }),
+                ],
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: searchCtrl,
+                onChanged: (val) => searchRx.value = val,
+                decoration: InputDecoration(
+                  hintText: 'Search users...',
+                  prefixIcon: const Icon(Icons.search, size: 20),
+                  isDense: true,
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 10,
+                  ),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: BorderSide(color: Colors.grey.shade300),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 8),
+              const Divider(height: 1),
+              const SizedBox(height: 8),
+              Expanded(
+                child: Obx(() {
+                  if (controller.isUsersLoading.value) {
+                    return const Center(
+                      child: CircularProgressIndicator(
+                        color: ColorsValue.primary,
+                      ),
+                    );
+                  }
+                  if (controller.selectableUsers.isEmpty) {
+                    return const Center(child: Text('No users available'));
+                  }
+
+                  final query = searchRx.value.toLowerCase().trim();
+                  final filteredUsers = controller.selectableUsers.where((u) {
+                    if (query.isEmpty) return true;
+                    return u.name.toLowerCase().contains(query) ||
+                        u.mobile.toLowerCase().contains(query);
+                  }).toList();
+
+                  if (filteredUsers.isEmpty) {
+                    return const Center(
+                      child: Text('No matching users found'),
+                    );
+                  }
+
+                  final selectedIds = controller.selectedPermissionUserIds;
+
+                  return ListView.builder(
+                    shrinkWrap: true,
+                    itemCount: filteredUsers.length,
+                    itemBuilder: (context, index) {
+                      final user = filteredUsers[index];
+                      final userId = user.id;
+                      final isSelected = selectedIds.contains(userId);
+                      return CheckboxListTile(
+                        contentPadding: EdgeInsets.zero,
+                        value: isSelected,
+                        activeColor: ColorsValue.primary,
+                        title: Text(
+                          user.name,
+                          style: Styles.txtBlackColorW50014,
+                        ),
+                        subtitle: user.mobile.isNotEmpty
+                            ? Text(
+                                user.mobile,
+                                style: TextStyle(
+                                  color: Colors.grey.shade600,
+                                  fontSize: 12,
+                                ),
+                              )
+                            : null,
+                        onChanged: (bool? checked) {
+                          if (checked == true) {
+                            if (!controller.selectedPermissionUserIds.contains(userId)) {
+                              controller.selectedPermissionUserIds.add(userId);
+                            }
+                          } else {
+                            controller.selectedPermissionUserIds.remove(userId);
+                          }
+                        },
+                      );
+                    },
+                  );
+                }),
+              ),
+              const SizedBox(height: 16),
+              ElevatedButton(
+                onPressed: () => Get.back(),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: ColorsValue.primary,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                child: const Text(
+                  'Done',
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 
   Widget _sectionHeader(String title) {
     return Row(

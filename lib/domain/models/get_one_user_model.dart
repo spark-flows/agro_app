@@ -59,6 +59,7 @@ class Data {
   bool? liveTracking;
   bool? odometer;
   List<String>? permissionbranchid;
+  List<String>? permissionuserid;
   String? mapcolor;
 
   Data({
@@ -86,6 +87,7 @@ class Data {
     this.liveTracking,
     this.odometer,
     this.permissionbranchid,
+    this.permissionuserid,
     this.mapcolor,
   });
 
@@ -118,6 +120,19 @@ class Data {
         ? []
         : (json["permissionbranchid"] ?? json["permissionbranchId"] ?? json["permissionbranch"]) is List
             ? ((json["permissionbranchid"] ?? json["permissionbranchId"] ?? json["permissionbranch"]) as List)
+                .map((x) {
+                  if (x is Map) {
+                    return (x["_id"] ?? x["id"] ?? "").toString();
+                  }
+                  return x.toString();
+                })
+                .where((x) => x.isNotEmpty)
+                .toList()
+            : [],
+    permissionuserid: (json["permissionuserid"] ?? json["permissionUserId"] ?? json["permissionuser"] ?? json["assigntoid"]) == null
+        ? []
+        : (json["permissionuserid"] ?? json["permissionUserId"] ?? json["permissionuser"] ?? json["assigntoid"]) is List
+            ? ((json["permissionuserid"] ?? json["permissionUserId"] ?? json["permissionuser"] ?? json["assigntoid"]) as List)
                 .map((x) {
                   if (x is Map) {
                     return (x["_id"] ?? x["id"] ?? "").toString();

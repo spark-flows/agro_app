@@ -147,20 +147,21 @@ class GetAllAttendanceDoc {
         coordinates: json["coordinates"] is Map<String, dynamic>
             ? GetAllAttendanceCoordinates.fromJson(json["coordinates"])
             : null,
-        breakstart: json["breakstart"],
-        breakend: json["breakend"],
-        remark: json["remark"],
-        status: json["status"],
-        createdBy: json["createdBy"],
+        breakstart: (json["breakstart"] ?? json["breakStart"] ?? json["break_start"])?.toString(),
+        breakend: (json["breakend"] ?? json["breakEnd"] ?? json["break_end"])?.toString(),
+        remark: json["remark"]?.toString(),
+        status: json["status"]?.toString(),
+        createdBy: json["createdBy"]?.toString(),
         punching: json["punching"] == null
             ? []
             : List<Punching>.from(
                 json["punching"]!.map((x) => Punching.fromJson(x)),
               ),
-        breaks: json["break"] == null
+        breaks: (json["break"] ?? json["breaks"] ?? json["break_obj"]) == null
             ? []
             : List<BreakObj>.from(
-                json["break"]!.map((x) => BreakObj.fromJson(x)),
+                (json["break"] ?? json["breaks"] ?? json["break_obj"])!
+                    .map((x) => BreakObj.fromJson(x)),
               ),
       );
 

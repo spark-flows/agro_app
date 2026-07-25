@@ -893,6 +893,8 @@ class Repository {
     bool? liveTracking,
     bool? odometer,
     List<String>? permissionbranchid,
+    List<String>? permissionuserid,
+    List<String>? assigntoid,
     String? mapcolor,
     bool isLoading = false,
   }) async {
@@ -918,6 +920,8 @@ class Repository {
         liveTracking: liveTracking,
         odometer: odometer,
         permissionbranchid: permissionbranchid,
+        permissionuserid: permissionuserid,
+        assigntoid: assigntoid,
         mapcolor: mapcolor,
         isLoading: isLoading,
       );
@@ -948,16 +952,10 @@ class Repository {
   }
 
   Future<GetAllBranchs?> getAllBranchesApi({
-    int page = 1,
-    int limit = 10,
-    String search = "",
     bool isLoading = false,
   }) async {
     try {
       var response = await _dataRepository.getAllBranchesApi(
-        page: page,
-        limit: limit,
-        search: search,
         isLoading: isLoading,
       );
       if (response.hasError) {

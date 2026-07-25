@@ -3,7 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:agro_app/domain/models/get_all_users_model.dart';
 import 'package:agro_app/domain/models/get_one_user_model.dart';
-import 'package:agro_app/domain/models/get_all_branches_model.dart' as branch_model;
+import 'package:agro_app/domain/models/get_all_branches_model.dart'
+    as branch_model;
 import 'package:agro_app/domain/repositories/repository.dart';
 import 'package:agro_app/app/utils/utility.dart';
 
@@ -79,7 +80,6 @@ class UsersController extends GetxController {
     update();
     try {
       final response = await Get.find<Repository>().getAllBranchesApi(
-        limit: 1000,
         isLoading: false,
       );
       if (response != null && response.data?.docs != null) {
@@ -201,7 +201,8 @@ class UsersController extends GetxController {
         if (data.mapcolor != null && data.mapcolor!.isNotEmpty) {
           mapColor.value = data.mapcolor!;
         }
-        if (data.permissionbranchid != null && data.permissionbranchid!.isNotEmpty) {
+        if (data.permissionbranchid != null &&
+            data.permissionbranchid!.isNotEmpty) {
           selectedPermissionBranchIds.assignAll(data.permissionbranchid!);
         }
         update();
@@ -214,7 +215,8 @@ class UsersController extends GetxController {
   }
 
   Future<void> saveUser() async {
-    final String roleIdToUse = (selectedRoleId != null && selectedRoleId!.isNotEmpty)
+    final String roleIdToUse =
+        (selectedRoleId != null && selectedRoleId!.isNotEmpty)
         ? selectedRoleId!
         : "b8fbadff-5201-4fce-9038-0873bc3a93c1";
 
@@ -227,8 +229,12 @@ class UsersController extends GetxController {
       password: passwordCtrl.text.trim(),
       address: addressCtrl.text.trim(),
       roleid: roleIdToUse,
-      salary: salaryCtrl.text.trim().isEmpty ? 0 : int.tryParse(salaryCtrl.text.trim()) ?? 0,
-      allowance: allowanceCtrl.text.trim().isEmpty ? 0 : int.tryParse(allowanceCtrl.text.trim()) ?? 0,
+      salary: salaryCtrl.text.trim().isEmpty
+          ? 0
+          : int.tryParse(salaryCtrl.text.trim()) ?? 0,
+      allowance: allowanceCtrl.text.trim().isEmpty
+          ? 0
+          : int.tryParse(allowanceCtrl.text.trim()) ?? 0,
       liveTracking: liveTracking.value,
       odometer: odometer.value,
       permissionbranchid: selectedPermissionBranchIds.toList(),

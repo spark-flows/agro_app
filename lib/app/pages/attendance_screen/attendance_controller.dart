@@ -818,8 +818,9 @@ class AttendanceController extends GetxController with WidgetsBindingObserver {
 
         Utility.closeLoader();
         if (response != null && response.isSuccess == true) {
+          Get.find<Repository>().saveValue('saved_timein_$todayStr', timeStr);
           setLocalAttendanceStatus('clocked_in');
-          fetchAttendance(isRefresh: true);
+          await fetchAttendance(isRefresh: false);
           Utility.snacBar('Clocked in successfully', Colors.green);
           _triggerStartTracking(coordinates);
         }
@@ -1159,10 +1160,21 @@ class AttendanceController extends GetxController with WidgetsBindingObserver {
 
                                   if (response != null &&
                                       response.isSuccess == true) {
+                                    if (isClockOut) {
+                                      Get.find<Repository>().saveValue(
+                                        'saved_timeout_$todayStr',
+                                        timeStr,
+                                      );
+                                    } else {
+                                      Get.find<Repository>().saveValue(
+                                        'saved_timein_$todayStr',
+                                        timeStr,
+                                      );
+                                    }
                                     setLocalAttendanceStatus(
                                       isClockOut ? 'clocked_out' : 'clocked_in',
                                     );
-                                    fetchAttendance(isRefresh: true);
+                                    await fetchAttendance(isRefresh: false);
                                     Utility.snacBar(
                                       isClockOut
                                           ? 'Clocked out successfully'
@@ -1324,8 +1336,9 @@ class AttendanceController extends GetxController with WidgetsBindingObserver {
 
         Utility.closeLoader();
         if (response != null && response.isSuccess == true) {
+          Get.find<Repository>().saveValue('saved_timeout_$todayStr', timeStr);
           setLocalAttendanceStatus('clocked_out');
-          fetchAttendance(isRefresh: true);
+          await fetchAttendance(isRefresh: false);
           Utility.snacBar('Clocked out successfully', Colors.green);
           _triggerStopTracking(coordinates);
         }
@@ -1337,23 +1350,107 @@ class AttendanceController extends GetxController with WidgetsBindingObserver {
   }
 
   Future<void> quickBreakIn(get_all_model.GetAllAttendanceDoc? record) async {
+    Utility.showLoader();
     try {
+      final nowTime = DateFormat('HH:mm').format(DateTime.now());
+      final todayStr = DateFormat('yyyy-MM-dd').format(DateTime.now());
+
+      Get.find<Repository>().saveValue('saved_breakstart_$todayStr', nowTime);
       setLocalAttendanceStatus('paused');
-      fetchAttendance(isRefresh: true);
-      Utility.snacBar('Shift paused successfully', Colors.green);
+
+      int existingOdometer = 0;
+      if (record?.punching != null && record!.punching!.isNotEmpty) {
+        for (var p in record.punching!) {
+          if (p.timeinodometer != null && p.timeinodometer! > 0) {
+            existingOdometer = p.timeinodometer!;
+            break;
+          }
+          if (p.timeoutodometer != null && p.timeoutodometer! > 0) {
+            existingOdometer = p.timeoutodometer!;
+            break;
+          }
+        }
+      }
+
+      try {
+        await Get.find<Repository>().createAttendanceApi(
+          attendanceid: record?.id,
+          date: todayStr,
+          timein: record?.timein ?? '',
+          timeout: record?.timeout ?? '',
+          coordinates: {"latitude": "", "longitude": ""},
+          breakstart: nowTime,
+          breakend: record?.breakend ?? '',
+          remark: record?.remark ?? '',
+          status: 'present',
+          odometer: existingOdometer,
+          isLoading: false,
+        );
+      } catch (ex) {
+        debugPrint('[AttendanceController] quickBreakIn API call error: $ex');
+      }
+
+      await fetchAttendance(isRefresh: false);
     } catch (e) {
       debugPrint('[AttendanceController] quickBreakIn error: $e');
+    } finally {
+      Utility.closeLoader();
     }
+
+    await Future.delayed(const Duration(milliseconds: 150));
+    Utility.snacBar('Shift paused successfully', Colors.green);
   }
 
   Future<void> quickBreakOut(get_all_model.GetAllAttendanceDoc? record) async {
+    Utility.showLoader();
     try {
+      final nowTime = DateFormat('HH:mm').format(DateTime.now());
+      final todayStr = DateFormat('yyyy-MM-dd').format(DateTime.now());
+
+      Get.find<Repository>().saveValue('saved_breakend_$todayStr', nowTime);
       setLocalAttendanceStatus('clocked_in');
-      fetchAttendance(isRefresh: true);
-      Utility.snacBar('Shift resumed successfully', Colors.green);
+
+      int existingOdometer = 0;
+      if (record?.punching != null && record!.punching!.isNotEmpty) {
+        for (var p in record.punching!) {
+          if (p.timeinodometer != null && p.timeinodometer! > 0) {
+            existingOdometer = p.timeinodometer!;
+            break;
+          }
+          if (p.timeoutodometer != null && p.timeoutodometer! > 0) {
+            existingOdometer = p.timeoutodometer!;
+            break;
+          }
+        }
+      }
+
+      try {
+        await Get.find<Repository>().createAttendanceApi(
+          attendanceid: record?.id,
+          date: todayStr,
+          timein: record?.timein ?? '',
+          timeout: record?.timeout ?? '',
+          coordinates: {"latitude": "", "longitude": ""},
+          breakstart: record?.breakstart ?? '',
+          breakend: nowTime,
+          remark: record?.remark ?? '',
+          status: 'present',
+          odometer: existingOdometer,
+          isLoading: false,
+        );
+      } catch (ex) {
+        debugPrint('[AttendanceController] quickBreakOut API call error: $ex');
+      }
+
+      await fetchAttendance(isRefresh: false);
     } catch (e) {
       debugPrint('[AttendanceController] quickBreakOut error: $e');
+    } finally {
+      Utility.closeLoader();
     }
+
+    await Future.delayed(const Duration(milliseconds: 150));
+    Utility.snacBar('Shift resumed successfully', Colors.green);
   }
 
   void _startPeriodicLocationUpdates(String trackingId) async {

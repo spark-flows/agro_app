@@ -332,6 +332,8 @@ class DataRepository extends DomainRepository {
     bool? liveTracking,
     bool? odometer,
     List<String>? permissionbranchid,
+    List<String>? permissionuserid,
+    List<String>? assigntoid,
     String? mapcolor,
     bool isLoading = false,
   }) async => connectHelper.createUserApi(
@@ -355,19 +357,15 @@ class DataRepository extends DomainRepository {
     liveTracking: liveTracking,
     odometer: odometer,
     permissionbranchid: permissionbranchid,
+    permissionuserid: permissionuserid,
+    assigntoid: assigntoid,
     mapcolor: mapcolor,
     isLoading: isLoading,
   );
 
   Future<ResponseModel> getAllBranchesApi({
-    int page = 1,
-    int limit = 10,
-    String search = "",
     bool isLoading = false,
   }) async => connectHelper.getAllBranchesApi(
-    page: page,
-    limit: limit,
-    search: search,
     isLoading: isLoading,
   );
 

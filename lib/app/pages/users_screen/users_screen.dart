@@ -260,241 +260,259 @@ class _UsersScreenState extends State<UsersScreen> {
 
   void _showAddDialog(BuildContext context, UsersController controller) {
     Get.bottomSheet(
-      Container(
+      Padding(
         padding: EdgeInsets.only(
-          left: 24,
-          right: 24,
-          top: 24,
-          bottom: MediaQuery.of(context).viewInsets.bottom + 24,
+          bottom: MediaQuery.of(context).viewInsets.bottom,
         ),
-        decoration: const BoxDecoration(
+        child: Material(
           color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-        ),
-        child: SingleChildScrollView(
-          child: Form(
-            key: controller.addFormKey,
-            autovalidateMode: AutovalidateMode.onUserInteraction,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Center(
-                  child: Container(
-                    width: 40,
-                    height: 5,
-                    decoration: BoxDecoration(
-                      color: Colors.grey.shade300,
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 24),
-                Obx(
-                  () => Text(
-                    controller.editingUserId.value.isNotEmpty
-                        ? 'Edit User'
-                        : 'Add New User',
-                    style: Styles.txtBlackColorW70020,
-                    textAlign: TextAlign.center,
-                  ),
-                ),
-                const SizedBox(height: 24),
-                _buildField(
-                  controller: controller.nameCtrl,
-                  label: 'Full Name',
-                  icon: Icons.person_outline,
-                  action: TextInputAction.next,
-                  validator: (v) => v!.isEmpty ? 'Please enter a name' : null,
-                ),
-                const SizedBox(height: 16),
-                _buildField(
-                  controller: controller.emailCtrl,
-                  label: 'Email Address',
-                  icon: Icons.email_outlined,
-                  keyboardType: TextInputType.emailAddress,
-                  action: TextInputAction.next,
-                  validator: (v) {
-                    if (v == null || v.trim().isEmpty) {
-                      return 'Please enter an email';
-                    } else if (!Utility.emailValidation(v.trim())) {
-                      return 'Please enter a valid email';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 16),
-                _buildField(
-                  controller: controller.phoneCtrl,
-                  label: 'Phone Number',
-                  icon: Icons.phone_outlined,
-                  keyboardType: TextInputType.phone,
-                  action: TextInputAction.next,
-                  maxLength: 10,
-                  inputFormatters: [
-                    FilteringTextInputFormatter.digitsOnly,
-                    LengthLimitingTextInputFormatter(10),
-                  ],
-                  validator: (v) {
-                    if (v == null || v.trim().isEmpty) {
-                      return 'Please enter a phone number';
-                    }
-                    if (v.trim().length != 10) {
-                      return 'Phone number must be exactly 10 digits';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 16),
-                Obx(
-                  () => _buildField(
-                    controller: controller.passwordCtrl,
-                    label: controller.editingUserId.value.isNotEmpty
-                        ? 'Password (leave blank to keep)'
-                        : 'Password',
-                    icon: Icons.lock_outline,
-                    obscureText: controller.isPasswordHidden.value,
-                    action: TextInputAction.done,
-                    suffixIcon: IconButton(
-                      icon: Icon(
-                        controller.isPasswordHidden.value
-                            ? Icons.visibility_off
-                            : Icons.visibility,
-                        color: Colors.grey,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+          clipBehavior: Clip.antiAlias,
+          child: Container(
+            constraints: BoxConstraints(
+              maxHeight: MediaQuery.of(context).size.height * 0.85,
+            ),
+            child: SafeArea(
+              top: false,
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(24),
+                child: Form(
+                  key: controller.addFormKey,
+                  autovalidateMode: AutovalidateMode.onUserInteraction,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Center(
+                        child: Container(
+                          width: 40,
+                          height: 5,
+                          decoration: BoxDecoration(
+                            color: Colors.grey.shade300,
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
                       ),
-                      onPressed: () {
-                        controller.isPasswordHidden.value =
-                            !controller.isPasswordHidden.value;
-                      },
-                    ),
-                    validator: (v) {
-                      if (controller.editingUserId.value.isEmpty &&
-                          v!.isEmpty) {
-                        return 'Please enter a password';
-                      }
-                      return null;
-                    },
+                      const SizedBox(height: 24),
+                      Obx(
+                        () => Text(
+                          controller.editingUserId.value.isNotEmpty
+                              ? 'Edit User'
+                              : 'Add New User',
+                          style: Styles.txtBlackColorW70020,
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+                      _buildField(
+                        controller: controller.nameCtrl,
+                        label: 'Full Name',
+                        icon: Icons.person_outline,
+                        action: TextInputAction.next,
+                        validator: (v) =>
+                            v!.isEmpty ? 'Please enter a name' : null,
+                      ),
+                      const SizedBox(height: 16),
+                      _buildField(
+                        controller: controller.emailCtrl,
+                        label: 'Email Address',
+                        icon: Icons.email_outlined,
+                        keyboardType: TextInputType.emailAddress,
+                        action: TextInputAction.next,
+                        validator: (v) {
+                          if (v == null || v.trim().isEmpty) {
+                            return 'Please enter an email';
+                          } else if (!Utility.emailValidation(v.trim())) {
+                            return 'Please enter a valid email';
+                          }
+                          return null;
+                        },
+                      ),
+                      const SizedBox(height: 16),
+                      _buildField(
+                        controller: controller.phoneCtrl,
+                        label: 'Phone Number',
+                        icon: Icons.phone_outlined,
+                        keyboardType: TextInputType.phone,
+                        action: TextInputAction.next,
+                        maxLength: 10,
+                        inputFormatters: [
+                          FilteringTextInputFormatter.digitsOnly,
+                          LengthLimitingTextInputFormatter(10),
+                        ],
+                        validator: (v) {
+                          if (v == null || v.trim().isEmpty) {
+                            return 'Please enter a phone number';
+                          }
+                          if (v.trim().length != 10) {
+                            return 'Phone number must be exactly 10 digits';
+                          }
+                          return null;
+                        },
+                      ),
+                      const SizedBox(height: 16),
+                      Obx(
+                        () => _buildField(
+                          controller: controller.passwordCtrl,
+                          label: controller.editingUserId.value.isNotEmpty
+                              ? 'Password (leave blank to keep)'
+                              : 'Password',
+                          icon: Icons.lock_outline,
+                          obscureText: controller.isPasswordHidden.value,
+                          action: TextInputAction.done,
+                          suffixIcon: IconButton(
+                            icon: Icon(
+                              controller.isPasswordHidden.value
+                                  ? Icons.visibility_off
+                                  : Icons.visibility,
+                              color: Colors.grey,
+                            ),
+                            onPressed: () {
+                              controller.isPasswordHidden.value =
+                                  !controller.isPasswordHidden.value;
+                            },
+                          ),
+                          validator: (v) {
+                            if (controller.editingUserId.value.isEmpty &&
+                                v!.isEmpty) {
+                              return 'Please enter a password';
+                            }
+                            return null;
+                          },
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      _buildField(
+                        controller: controller.addressCtrl,
+                        label: 'Address',
+                        icon: Icons.home_outlined,
+                        action: TextInputAction.next,
+                        // validator: (v) =>
+                        //     v!.isEmpty ? 'Please enter an address' : null,
+                      ),
+                      const SizedBox(height: 16),
+                      _buildField(
+                        controller: controller.salaryCtrl,
+                        label: 'Salary',
+                        icon: Icons.currency_rupee,
+                        keyboardType: TextInputType.number,
+                        inputFormatters: [
+                          FilteringTextInputFormatter.digitsOnly,
+                        ],
+                        action: TextInputAction.next,
+                      ),
+                      const SizedBox(height: 16),
+                      _buildField(
+                        controller: controller.allowanceCtrl,
+                        label: 'Allowance',
+                        icon: Icons.money_outlined,
+                        keyboardType: TextInputType.number,
+                        inputFormatters: [
+                          FilteringTextInputFormatter.digitsOnly,
+                        ],
+                        action: TextInputAction.done,
+                      ),
+                      const SizedBox(height: 16),
+                      _buildBranchMultiSelect(context, controller),
+                      const SizedBox(height: 16),
+                      Obx(
+                        () => SwitchListTile(
+                          title: const Text('Live Tracking'),
+                          secondary: const Icon(
+                            Icons.location_on_outlined,
+                            color: ColorsValue.primary,
+                          ),
+                          value: controller.liveTracking.value,
+                          activeColor: ColorsValue.primary,
+                          onChanged: (bool val) {
+                            controller.liveTracking.value = val;
+                          },
+                        ),
+                      ),
+                      _buildMapColorPicker(context, controller),
+                      const SizedBox(height: 8),
+                      Obx(
+                        () => SwitchListTile(
+                          title: const Text('Odometer'),
+                          secondary: const Icon(
+                            Icons.speed_outlined,
+                            color: ColorsValue.primary,
+                          ),
+                          value: controller.odometer.value,
+                          activeColor: ColorsValue.primary,
+                          onChanged: (bool val) {
+                            controller.odometer.value = val;
+                          },
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+                      // DropdownButtonFormField<String>(
+                      //   autovalidateMode: AutovalidateMode.onUserInteraction,
+                      //   value: controller.selectedRoleId,
+                      //   decoration: InputDecoration(
+                      //     labelText: 'Role',
+                      //     labelStyle: Styles.txtGreyColorW40014,
+                      //     floatingLabelStyle: const TextStyle(
+                      //       color: ColorsValue.primary,
+                      //     ),
+                      //     border: OutlineInputBorder(
+                      //       borderRadius: BorderRadius.circular(12),
+                      //       borderSide: BorderSide(color: Colors.grey.shade300),
+                      //     ),
+                      //     enabledBorder: OutlineInputBorder(
+                      //       borderRadius: BorderRadius.circular(12),
+                      //       borderSide: BorderSide(color: Colors.grey.shade300),
+                      //     ),
+                      //     focusedBorder: OutlineInputBorder(
+                      //       borderRadius: BorderRadius.circular(12),
+                      //       borderSide: const BorderSide(
+                      //         color: ColorsValue.primary,
+                      //         width: 1.5,
+                      //       ),
+                      //     ),
+                      //     prefixIcon: Icon(
+                      //       Icons.admin_panel_settings_outlined,
+                      //       color: ColorsValue.primary.withValues(alpha: 0.8),
+                      //     ),
+                      //   ),
+                      //   items: controller.roles.map((role) {
+                      //     return DropdownMenuItem(
+                      //       value: role.id,
+                      //       child: Text(role.rolename),
+                      //     );
+                      //   }).toList(),
+                      //   onChanged: (val) {
+                      //     controller.selectedRoleId = val;
+                      //   },
+                      //   validator: (v) => v == null ? 'Please select a role' : null,
+                      // ),
+                      // const SizedBox(height: 24),
+                      ElevatedButton(
+                        onPressed: () {
+                          if (controller.addFormKey.currentState!.validate()) {
+                            controller.saveUser();
+                          }
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: ColorsValue.primary,
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        child: const Text(
+                          'Save User',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-                const SizedBox(height: 16),
-                _buildField(
-                  controller: controller.addressCtrl,
-                  label: 'Address',
-                  icon: Icons.home_outlined,
-                  action: TextInputAction.next,
-                  // validator: (v) =>
-                  //     v!.isEmpty ? 'Please enter an address' : null,
-                ),
-                const SizedBox(height: 16),
-                _buildField(
-                  controller: controller.salaryCtrl,
-                  label: 'Salary',
-                  icon: Icons.currency_rupee,
-                  keyboardType: TextInputType.number,
-                  inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                  action: TextInputAction.next,
-                ),
-                const SizedBox(height: 16),
-                _buildField(
-                  controller: controller.allowanceCtrl,
-                  label: 'Allowance',
-                  icon: Icons.money_outlined,
-                  keyboardType: TextInputType.number,
-                  inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                  action: TextInputAction.done,
-                ),
-                const SizedBox(height: 16),
-                _buildBranchMultiSelect(context, controller),
-                const SizedBox(height: 16),
-                Obx(
-                  () => SwitchListTile(
-                    title: const Text('Live Tracking'),
-                    secondary: const Icon(Icons.location_on_outlined, color: ColorsValue.primary),
-                    value: controller.liveTracking.value,
-                    activeColor: ColorsValue.primary,
-                    onChanged: (bool val) {
-                      controller.liveTracking.value = val;
-                    },
-                  ),
-                ),
-                _buildMapColorPicker(context, controller),
-                const SizedBox(height: 8),
-                Obx(
-                  () => SwitchListTile(
-                    title: const Text('Odometer'),
-                    secondary: const Icon(Icons.speed_outlined, color: ColorsValue.primary),
-                    value: controller.odometer.value,
-                    activeColor: ColorsValue.primary,
-                    onChanged: (bool val) {
-                      controller.odometer.value = val;
-                    },
-                  ),
-                ),
-                const SizedBox(height: 24),
-                // DropdownButtonFormField<String>(
-                //   autovalidateMode: AutovalidateMode.onUserInteraction,
-                //   value: controller.selectedRoleId,
-                //   decoration: InputDecoration(
-                //     labelText: 'Role',
-                //     labelStyle: Styles.txtGreyColorW40014,
-                //     floatingLabelStyle: const TextStyle(
-                //       color: ColorsValue.primary,
-                //     ),
-                //     border: OutlineInputBorder(
-                //       borderRadius: BorderRadius.circular(12),
-                //       borderSide: BorderSide(color: Colors.grey.shade300),
-                //     ),
-                //     enabledBorder: OutlineInputBorder(
-                //       borderRadius: BorderRadius.circular(12),
-                //       borderSide: BorderSide(color: Colors.grey.shade300),
-                //     ),
-                //     focusedBorder: OutlineInputBorder(
-                //       borderRadius: BorderRadius.circular(12),
-                //       borderSide: const BorderSide(
-                //         color: ColorsValue.primary,
-                //         width: 1.5,
-                //       ),
-                //     ),
-                //     prefixIcon: Icon(
-                //       Icons.admin_panel_settings_outlined,
-                //       color: ColorsValue.primary.withValues(alpha: 0.8),
-                //     ),
-                //   ),
-                //   items: controller.roles.map((role) {
-                //     return DropdownMenuItem(
-                //       value: role.id,
-                //       child: Text(role.rolename),
-                //     );
-                //   }).toList(),
-                //   onChanged: (val) {
-                //     controller.selectedRoleId = val;
-                //   },
-                //   validator: (v) => v == null ? 'Please select a role' : null,
-                // ),
-                // const SizedBox(height: 24),
-                ElevatedButton(
-                  onPressed: () {
-                    if (controller.addFormKey.currentState!.validate()) {
-                      controller.saveUser();
-                    }
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: ColorsValue.primary,
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  child: const Text(
-                    'Save User',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    ),
-                  ),
-                ),
-              ],
+              ),
             ),
           ),
         ),
@@ -554,7 +572,9 @@ class _UsersScreenState extends State<UsersScreen> {
   }
 
   Widget _buildBranchMultiSelect(
-      BuildContext context, UsersController controller) {
+    BuildContext context,
+    UsersController controller,
+  ) {
     return Obx(() {
       final selectedIds = controller.selectedPermissionBranchIds;
       final selectedNames = controller.branches
@@ -592,16 +612,16 @@ class _UsersScreenState extends State<UsersScreen> {
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: ColorsValue.primary, width: 1.5),
+              borderSide: const BorderSide(
+                color: ColorsValue.primary,
+                width: 1.5,
+              ),
             ),
             prefixIcon: Icon(
               Icons.store_outlined,
               color: ColorsValue.primary.withValues(alpha: 0.8),
             ),
-            suffixIcon: const Icon(
-              Icons.arrow_drop_down,
-              color: Colors.grey,
-            ),
+            suffixIcon: const Icon(Icons.arrow_drop_down, color: Colors.grey),
           ),
           child: Text(
             displayText,
@@ -617,7 +637,9 @@ class _UsersScreenState extends State<UsersScreen> {
   }
 
   void _showBranchSelectionDialog(
-      BuildContext context, UsersController controller) {
+    BuildContext context,
+    UsersController controller,
+  ) {
     if (controller.branches.isEmpty && !controller.isBranchesLoading) {
       controller.fetchBranches();
     }
@@ -647,11 +669,15 @@ class _UsersScreenState extends State<UsersScreen> {
                   ),
                   Obx(() {
                     final validBranches = controller.branches;
-                    final allSelected = validBranches.isNotEmpty &&
-                        validBranches.every((b) =>
-                            b.id != null &&
-                            controller.selectedPermissionBranchIds
-                                .contains(b.id));
+                    final allSelected =
+                        validBranches.isNotEmpty &&
+                        validBranches.every(
+                          (b) =>
+                              b.id != null &&
+                              controller.selectedPermissionBranchIds.contains(
+                                b.id,
+                              ),
+                        );
                     return TextButton(
                       style: TextButton.styleFrom(
                         padding: EdgeInsets.zero,
@@ -696,9 +722,7 @@ class _UsersScreenState extends State<UsersScreen> {
                       );
                     }
                     if (ctrl.branches.isEmpty) {
-                      return const Center(
-                        child: Text('No branches available'),
-                      );
+                      return const Center(child: Text('No branches available'));
                     }
                     return ListView.builder(
                       shrinkWrap: true,
@@ -719,13 +743,17 @@ class _UsersScreenState extends State<UsersScreen> {
                             ),
                             onChanged: (bool? checked) {
                               if (checked == true) {
-                                if (!ctrl.selectedPermissionBranchIds
-                                    .contains(branchId)) {
-                                  ctrl.selectedPermissionBranchIds.add(branchId);
+                                if (!ctrl.selectedPermissionBranchIds.contains(
+                                  branchId,
+                                )) {
+                                  ctrl.selectedPermissionBranchIds.add(
+                                    branchId,
+                                  );
                                 }
                               } else {
-                                ctrl.selectedPermissionBranchIds
-                                    .remove(branchId);
+                                ctrl.selectedPermissionBranchIds.remove(
+                                  branchId,
+                                );
                               }
                             },
                           );
@@ -762,7 +790,9 @@ class _UsersScreenState extends State<UsersScreen> {
   }
 
   Widget _buildMapColorPicker(
-      BuildContext context, UsersController controller) {
+    BuildContext context,
+    UsersController controller,
+  ) {
     final List<Map<String, dynamic>> presetColors = [
       {'hex': '#4CAF50', 'color': const Color(0xFF4CAF50)},
       {'hex': '#2196F3', 'color': const Color(0xFF2196F3)},
@@ -799,14 +829,13 @@ class _UsersScreenState extends State<UsersScreen> {
                   color: ColorsValue.primary,
                 ),
                 const SizedBox(width: 8),
-                Text(
-                  'Map Marker Color',
-                  style: Styles.txtBlackColorW60014,
-                ),
+                Text('Map Marker Color', style: Styles.txtBlackColorW60014),
                 const Spacer(),
                 Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(6),
@@ -831,7 +860,8 @@ class _UsersScreenState extends State<UsersScreen> {
                 final String hex = c['hex'];
                 final Color color = c['color'];
                 final bool isSelected =
-                    controller.mapColor.value.toUpperCase() == hex.toUpperCase();
+                    controller.mapColor.value.toUpperCase() ==
+                    hex.toUpperCase();
 
                 return GestureDetector(
                   onTap: () {
@@ -858,11 +888,7 @@ class _UsersScreenState extends State<UsersScreen> {
                       ),
                     ),
                     child: isSelected
-                        ? const Icon(
-                            Icons.check,
-                            color: Colors.white,
-                            size: 18,
-                          )
+                        ? const Icon(Icons.check, color: Colors.white, size: 18)
                         : null,
                   ),
                 );

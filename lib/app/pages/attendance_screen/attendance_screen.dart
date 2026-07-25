@@ -8,6 +8,7 @@ import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:agro_app/domain/models/get_all_attandance_model.dart'
     as get_all_model;
+import 'package:agro_app/domain/repositories/repository.dart';
 
 class AttendanceScreen extends StatefulWidget {
   const AttendanceScreen({super.key});
@@ -1213,7 +1214,9 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
 
   Widget _buildPunchingAndBreaksLogs(get_all_model.GetAllAttendanceDoc record) {
     final String? timeInVal = (() {
-      if (record.timein != null && record.timein!.isNotEmpty) {
+      if (record.timein != null &&
+          record.timein!.isNotEmpty &&
+          record.timein != "00:00") {
         return record.timein;
       }
       if (record.punching != null && record.punching!.isNotEmpty) {
@@ -1223,11 +1226,20 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
           }
         }
       }
+      try {
+        final todayStr = DateFormat('yyyy-MM-dd').format(DateTime.now());
+        final saved = Get.find<Repository>().getStringValue(
+          'saved_timein_$todayStr',
+        );
+        if (saved.isNotEmpty) return saved;
+      } catch (_) {}
       return null;
     })();
 
     final String? timeOutVal = (() {
-      if (record.timeout != null && record.timeout!.isNotEmpty) {
+      if (record.timeout != null &&
+          record.timeout!.isNotEmpty &&
+          record.timeout != "00:00") {
         return record.timeout;
       }
       if (record.punching != null && record.punching!.isNotEmpty) {
@@ -1239,11 +1251,20 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
           }
         }
       }
+      try {
+        final todayStr = DateFormat('yyyy-MM-dd').format(DateTime.now());
+        final saved = Get.find<Repository>().getStringValue(
+          'saved_timeout_$todayStr',
+        );
+        if (saved.isNotEmpty) return saved;
+      } catch (_) {}
       return null;
     })();
 
     final String? breakStartVal = (() {
-      if (record.breakstart != null && record.breakstart!.isNotEmpty) {
+      if (record.breakstart != null &&
+          record.breakstart!.isNotEmpty &&
+          record.breakstart != "00:00") {
         return record.breakstart;
       }
       if (record.breaks != null && record.breaks!.isNotEmpty) {
@@ -1255,11 +1276,20 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
           }
         }
       }
+      try {
+        final todayStr = DateFormat('yyyy-MM-dd').format(DateTime.now());
+        final saved = Get.find<Repository>().getStringValue(
+          'saved_breakstart_$todayStr',
+        );
+        if (saved.isNotEmpty) return saved;
+      } catch (_) {}
       return null;
     })();
 
     final String? breakEndVal = (() {
-      if (record.breakend != null && record.breakend!.isNotEmpty) {
+      if (record.breakend != null &&
+          record.breakend!.isNotEmpty &&
+          record.breakend != "00:00") {
         return record.breakend;
       }
       if (record.breaks != null && record.breaks!.isNotEmpty) {
@@ -1271,6 +1301,13 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
           }
         }
       }
+      try {
+        final todayStr = DateFormat('yyyy-MM-dd').format(DateTime.now());
+        final saved = Get.find<Repository>().getStringValue(
+          'saved_breakend_$todayStr',
+        );
+        if (saved.isNotEmpty) return saved;
+      } catch (_) {}
       return null;
     })();
 
