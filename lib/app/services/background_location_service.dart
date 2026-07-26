@@ -1,13 +1,12 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_background_service/flutter_background_service.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:http/http.dart' as http;
 
-/// Background location service that sends GPS coordinates every 30 seconds
+/// Background location service that sends GPS coordinates every 3 seconds
 /// even when the app is minimized or closed.
 class BackgroundLocationService {
   static const String _baseUrl = 'https://api.japexim.co.in/';
@@ -83,12 +82,14 @@ class BackgroundLocationService {
 @pragma('vm:entry-point')
 Future<void> _onStart(ServiceInstance service) async {
   WidgetsFlutterBinding.ensureInitialized();
-  // DartPluginRegistrant.ensureInitialized();
 
   Timer? locationTimer;
+  StreamSubscription<Position>? positionSubscription;
+  Position? lastPosition;
   String? userId;
   String? authToken;
   bool isTracking = false;
+  bool isUpdating = false;
 
   if (service is AndroidServiceInstance) {
     service.on('setAsForeground').listen((event) {
@@ -97,6 +98,73 @@ Future<void> _onStart(ServiceInstance service) async {
     service.on('setAsBackground').listen((event) {
       service.setAsBackgroundService();
     });
+  }
+
+  Future<void> performLocationUpdate() async {
+    if (!isTracking) {
+      debugPrint(
+        '[BackgroundLocationService] performLocationUpdate skipped: isTracking is false',
+      );
+      return;
+    }
+    if (userId == null || userId!.isEmpty) {
+      debugPrint(
+        '[BackgroundLocationService] performLocationUpdate skipped: userId is empty',
+      );
+      return;
+    }
+    if (authToken == null || authToken!.isEmpty) {
+      debugPrint(
+        '[BackgroundLocationService] performLocationUpdate skipped: authToken is empty',
+      );
+      return;
+    }
+    if (isUpdating) return;
+    isUpdating = true;
+
+    try {
+      Position? position = lastPosition;
+      if (position == null) {
+        try {
+          position = await Geolocator.getLastKnownPosition();
+        } catch (_) {}
+      }
+      if (position == null) {
+        try {
+          position = await Geolocator.getCurrentPosition(
+            desiredAccuracy: LocationAccuracy.high,
+            timeLimit: const Duration(seconds: 3),
+          );
+        } catch (_) {}
+      }
+
+      if (position != null &&
+          position.latitude != 0.0 &&
+          position.longitude != 0.0) {
+        lastPosition = position;
+        final lat = position.latitude;
+        final lng = position.longitude;
+        final timestamp = DateTime.now().toUtc().toIso8601String();
+
+        final success = await _sendLocationUpdate(
+          userId: userId!,
+          authToken: authToken!,
+          latitude: lat,
+          longitude: lng,
+          timestamp: timestamp,
+        );
+
+        debugPrint(
+          '[BackgroundLocationService] Location sent ($lat, $lng) success: $success',
+        );
+      } else {
+        debugPrint('[BackgroundLocationService] Location fix unavailable');
+      }
+    } catch (e) {
+      debugPrint('[BackgroundLocationService] Location update error: $e');
+    } finally {
+      isUpdating = false;
+    }
   }
 
   // Listen for start tracking command from the main app
@@ -118,39 +186,38 @@ Future<void> _onStart(ServiceInstance service) async {
         );
       }
 
-      // Cancel existing timer and start new one
+      // Start continuous position listener to keep location warm
+      positionSubscription?.cancel();
+      try {
+        positionSubscription =
+            Geolocator.getPositionStream(
+              locationSettings: const LocationSettings(
+                accuracy: LocationAccuracy.high,
+                distanceFilter: 0,
+              ),
+            ).listen(
+              (Position pos) {
+                lastPosition = pos;
+              },
+              onError: (e) {
+                debugPrint('[BackgroundLocationService] Stream error: $e');
+              },
+            );
+      } catch (e) {
+        debugPrint('[BackgroundLocationService] Stream init error: $e');
+      }
+
+      // Immediate first update
+      performLocationUpdate();
+
+      // Cancel existing timer and start new one with 3 second interval
       locationTimer?.cancel();
-      locationTimer = Timer.periodic(const Duration(seconds: 30), (
-        timer,
-      ) async {
+      locationTimer = Timer.periodic(const Duration(seconds: 15), (timer) {
         if (!isTracking || userId == null || authToken == null) {
           timer.cancel();
           return;
         }
-
-        try {
-          final position = await Geolocator.getCurrentPosition(
-            desiredAccuracy: LocationAccuracy.high,
-            timeLimit: const Duration(seconds: 5),
-          );
-
-          final lat = position.latitude;
-          final lng = position.longitude;
-
-          if (lat != 0.0 && lng != 0.0) {
-            final timestamp = DateTime.now().toUtc().toIso8601String();
-            await _sendLocationUpdate(
-              userId: userId!,
-              authToken: authToken!,
-              latitude: lat,
-              longitude: lng,
-              timestamp: timestamp,
-            );
-            debugPrint('[BackgroundLocationService] Location sent: $lat, $lng');
-          }
-        } catch (e) {
-          debugPrint('[BackgroundLocationService] Location update error: $e');
-        }
+        performLocationUpdate();
       });
     }
   });
@@ -159,6 +226,9 @@ Future<void> _onStart(ServiceInstance service) async {
   service.on('stop_tracking').listen((event) {
     debugPrint('[BackgroundLocationService] Stop tracking');
     isTracking = false;
+    positionSubscription?.cancel();
+    positionSubscription = null;
+    lastPosition = null;
     locationTimer?.cancel();
     locationTimer = null;
     service.stopSelf();
@@ -167,6 +237,9 @@ Future<void> _onStart(ServiceInstance service) async {
   // Listen for stop service
   service.on('stopService').listen((event) {
     isTracking = false;
+    positionSubscription?.cancel();
+    positionSubscription = null;
+    lastPosition = null;
     locationTimer?.cancel();
     locationTimer = null;
     service.stopSelf();
@@ -192,13 +265,21 @@ Future<bool> _sendLocationUpdate({
       'time': timestamp,
     });
 
+    final authHeader = authToken.startsWith('Bearer ')
+        ? authToken
+        : 'Bearer $authToken';
+
     final response = await http.post(
       uri,
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': 'Bearer $authToken',
+        'Authorization': authHeader,
       },
       body: body,
+    );
+
+    debugPrint(
+      '[BackgroundLocationService] POST updateLocationApi -> Status: ${response.statusCode}, Body: ${response.body}',
     );
 
     return response.statusCode == 200 || response.statusCode == 201;

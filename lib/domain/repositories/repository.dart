@@ -951,9 +951,7 @@ class Repository {
     }
   }
 
-  Future<GetAllBranchs?> getAllBranchesApi({
-    bool isLoading = false,
-  }) async {
+  Future<GetAllBranchs?> getAllBranchesApi({bool isLoading = false}) async {
     try {
       var response = await _dataRepository.getAllBranchesApi(
         isLoading: isLoading,
@@ -1574,10 +1572,14 @@ class Repository {
       final data = decoded['Data'] ?? decoded['data'];
       if (data != null) {
         if (data is String) return data;
-        return (data['trackingId'] ?? data['_id'] ?? data['id'])?.toString();
+        final id = (data['trackingId'] ?? data['_id'] ?? data['id'])
+            ?.toString();
+        if (id != null && id.isNotEmpty) return id;
       }
-      return (decoded['trackingId'] ?? decoded['_id'] ?? decoded['id'])
+      final rootId = (decoded['trackingId'] ?? decoded['_id'] ?? decoded['id'])
           ?.toString();
+      if (rootId != null && rootId.isNotEmpty) return rootId;
+      return "active";
     } catch (e) {
       print('startTrackingApi error: $e');
       return null;

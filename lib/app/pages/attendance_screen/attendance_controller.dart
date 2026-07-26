@@ -9,6 +9,7 @@ import 'package:agro_app/domain/models/get_all_attandance_model.dart'
     as get_all_model;
 import 'package:agro_app/domain/models/get_one_attandance_model.dart'
     as get_one_model;
+import 'package:agro_app/domain/models/get_profille_model.dart';
 import 'package:agro_app/domain/repositories/local_storage_keys.dart';
 import 'package:agro_app/domain/repositories/repository.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
@@ -602,10 +603,16 @@ class AttendanceController extends GetxController with WidgetsBindingObserver {
         }
         if (permission != LocationPermission.denied &&
             permission != LocationPermission.deniedForever) {
-          final position = await Geolocator.getCurrentPosition(
-            desiredAccuracy: LocationAccuracy.high,
-            timeLimit: const Duration(seconds: 5),
-          );
+          Position? position;
+          try {
+            position = await Geolocator.getLastKnownPosition();
+          } catch (_) {}
+          if (position == null) {
+            position = await Geolocator.getCurrentPosition(
+              desiredAccuracy: LocationAccuracy.high,
+              timeLimit: const Duration(seconds: 3),
+            );
+          }
           lat = position.latitude.toString();
           lon = position.longitude.toString();
         }
@@ -620,11 +627,9 @@ class AttendanceController extends GetxController with WidgetsBindingObserver {
     get_all_model.GetAllAttendanceDoc? record,
   ) async {
     try {
-      final profile = await Get.find<Repository>().getProfileApi(
-        isLoading: false,
-      );
+      final profile = await _getProfileWithCache();
       final requiresLiveTracking =
-          profile?.data?.userData?.liveTracking ?? false;
+          profile?.data.userData.liveTracking ?? false;
       if (!requiresLiveTracking) {
         return {"latitude": "", "longitude": ""};
       }
@@ -1453,11 +1458,55 @@ class AttendanceController extends GetxController with WidgetsBindingObserver {
     Utility.snacBar('Shift resumed successfully', Colors.green);
   }
 
+  ProfileDataModel? _cachedProfile;
+  DateTime? _lastProfileFetchTime;
+
+  Future<ProfileDataModel?> _getProfileWithCache({bool forceRefresh = false}) async {
+    if (!forceRefresh &&
+        _cachedProfile != null &&
+        _lastProfileFetchTime != null &&
+        DateTime.now().difference(_lastProfileFetchTime!) <
+            const Duration(minutes: 5)) {
+      return _cachedProfile;
+    }
+    try {
+      final profile = await Get.find<Repository>().getProfileApi(
+        isLoading: false,
+      );
+      if (profile != null) {
+        _cachedProfile = profile;
+        _lastProfileFetchTime = DateTime.now();
+      }
+      return _cachedProfile ?? profile;
+    } catch (_) {
+      return _cachedProfile;
+    }
+  }
+
+  Future<String> _getEffectiveUserId() async {
+    String userId = await Utility.getSecureValue(LocalKeys.distributorId);
+    if (userId.isEmpty) {
+      userId = await Utility.getSecureValue(LocalKeys.userIds);
+    }
+    if (userId.isEmpty) {
+      try {
+        final profile = await _getProfileWithCache();
+        userId = profile?.data.userData.id ?? '';
+      } catch (_) {}
+    }
+    return userId;
+  }
+
   void _startPeriodicLocationUpdates(String trackingId) async {
     _trackingTimer?.cancel();
     _trackingTimer = null;
 
-    final isNotificationGranted = await Permission.notification.isGranted;
+    var isNotificationGranted = await Permission.notification.isGranted;
+    if (!isNotificationGranted) {
+      final status = await Permission.notification.request();
+      isNotificationGranted = status.isGranted;
+    }
+
     if (!isNotificationGranted) {
       debugPrint(
         '[AttendanceController] Notification permission is not granted. Cannot start background service.',
@@ -1467,29 +1516,75 @@ class AttendanceController extends GetxController with WidgetsBindingObserver {
 
     // Start background service for tracking (runs in its own foreground service isolate)
     try {
-      final isAlreadyRunning = await BackgroundLocationService.isRunning();
-      if (!isAlreadyRunning) {
-        final userId = await Utility.getSecureValue(LocalKeys.distributorId);
-        final authToken = await Get.find<Repository>().getSecureValue(
-          LocalKeys.authToken,
-        );
-        await BackgroundLocationService.startTracking(
-          userId: userId,
-          authToken: authToken,
-        );
-        debugPrint(
-          '[AttendanceController] Background location service started',
-        );
-      } else {
-        debugPrint(
-          '[AttendanceController] Background location service is already running',
-        );
-      }
+      final userId = await _getEffectiveUserId();
+      final authToken = await Get.find<Repository>().getSecureValue(
+        LocalKeys.authToken,
+      );
+      debugPrint(
+        '[AttendanceController] Starting background service for userId: $userId',
+      );
+      await BackgroundLocationService.startTracking(
+        userId: userId,
+        authToken: authToken,
+      );
+      debugPrint('[AttendanceController] Background location service started');
     } catch (e) {
       debugPrint(
         '[AttendanceController] Failed to start background service: $e',
       );
     }
+
+    _startForegroundTimer();
+  }
+
+  void _startForegroundTimer() {
+    _trackingTimer?.cancel();
+    _trackingTimer = Timer.periodic(const Duration(seconds: 3), (timer) async {
+      try {
+        final profile = await _getProfileWithCache();
+        if (profile?.data.userData.liveTracking != true) {
+          debugPrint(
+            '[AttendanceController] liveTracking is off, cancelling foreground timer',
+          );
+          timer.cancel();
+          return;
+        }
+        final record = getTodayRecord();
+        if (!isClockedInToday(record) || isClockedOutToday(record)) {
+          debugPrint(
+            '[AttendanceController] User not clocked in, cancelling foreground timer',
+          );
+          timer.cancel();
+          return;
+        }
+
+        final coords = await _getCurrentCoordinates();
+        final lat = double.tryParse(coords['latitude'] ?? '0') ?? 0.0;
+        final lng = double.tryParse(coords['longitude'] ?? '0') ?? 0.0;
+        if (lat != 0.0 && lng != 0.0) {
+          final userId = await _getEffectiveUserId();
+          final timeStr = DateTime.now().toUtc().toIso8601String();
+          final success = await Get.find<Repository>().updateLocationApi(
+            userId: userId,
+            latitude: lat,
+            longitude: lng,
+            timestamp: timeStr,
+            isLoading: false,
+          );
+          debugPrint(
+            '[AttendanceController] Foreground updateLocationApi ($lat, $lng) success: $success',
+          );
+        } else {
+          debugPrint(
+            '[AttendanceController] Coordinates (0,0) - skipping foreground update',
+          );
+        }
+      } catch (e) {
+        debugPrint(
+          '[AttendanceController] Foreground location update error: $e',
+        );
+      }
+    });
   }
 
   void _stopPeriodicLocationUpdates() async {
@@ -1514,9 +1609,7 @@ class AttendanceController extends GetxController with WidgetsBindingObserver {
     try {
       await Future.delayed(const Duration(seconds: 2));
       try {
-        final profile = await Get.find<Repository>().getProfileApi(
-          isLoading: false,
-        );
+        final profile = await _getProfileWithCache();
         if (profile == null ||
             profile.isSuccess != true ||
             profile.data.userData.liveTracking != true) {
@@ -1532,9 +1625,9 @@ class AttendanceController extends GetxController with WidgetsBindingObserver {
         final storedTrackingId = Get.find<Repository>().getStringValue(
           LocalKeys.trackingId,
         );
-        if (storedTrackingId.isNotEmpty) {
-          _startPeriodicLocationUpdates(storedTrackingId);
-        }
+        _startPeriodicLocationUpdates(
+          storedTrackingId.isNotEmpty ? storedTrackingId : "active",
+        );
       } else {
         // User is not clocked in or already clocked out, stop background service
         final isRunning = await BackgroundLocationService.isRunning();
@@ -1549,15 +1642,16 @@ class AttendanceController extends GetxController with WidgetsBindingObserver {
 
   Future<void> _triggerStartTracking(Map<String, String> coordinates) async {
     try {
-      final profile = await Get.find<Repository>().getProfileApi(
-        isLoading: false,
-      );
+      final profile = await _getProfileWithCache(forceRefresh: true);
       if (profile == null ||
           profile.isSuccess != true ||
           profile.data.userData.liveTracking != true) {
+        debugPrint(
+          '[AttendanceController] _triggerStartTracking skipped: liveTracking is false or profile null',
+        );
         return;
       }
-      final userId = await Utility.getSecureValue(LocalKeys.distributorId);
+      final userId = await _getEffectiveUserId();
       final lat = double.tryParse(coordinates['latitude'] ?? '0') ?? 0.0;
       final lng = double.tryParse(coordinates['longitude'] ?? '0') ?? 0.0;
       final timeStr = DateTime.now().toUtc().toIso8601String();
@@ -1569,10 +1663,11 @@ class AttendanceController extends GetxController with WidgetsBindingObserver {
         time: timeStr,
       );
 
-      if (trackingId != null && trackingId.isNotEmpty) {
-        Get.find<Repository>().saveValue(LocalKeys.trackingId, trackingId);
-        _startPeriodicLocationUpdates(trackingId);
-      }
+      final validTrackingId = (trackingId != null && trackingId.isNotEmpty)
+          ? trackingId
+          : "active";
+      Get.find<Repository>().saveValue(LocalKeys.trackingId, validTrackingId);
+      _startPeriodicLocationUpdates(validTrackingId);
     } catch (e) {
       debugPrint('[AttendanceController] start tracking error: $e');
     }
@@ -1581,15 +1676,13 @@ class AttendanceController extends GetxController with WidgetsBindingObserver {
   Future<void> _triggerStopTracking(Map<String, String> coordinates) async {
     try {
       _stopPeriodicLocationUpdates();
-      final profile = await Get.find<Repository>().getProfileApi(
-        isLoading: false,
-      );
+      final profile = await _getProfileWithCache();
       if (profile == null ||
           profile.isSuccess != true ||
           profile.data.userData.liveTracking != true) {
         return;
       }
-      final userId = await Utility.getSecureValue(LocalKeys.distributorId);
+      final userId = await _getEffectiveUserId();
       final lat = double.tryParse(coordinates['latitude'] ?? '0') ?? 0.0;
       final lng = double.tryParse(coordinates['longitude'] ?? '0') ?? 0.0;
       final timeStr = DateTime.now().toUtc().toIso8601String();
