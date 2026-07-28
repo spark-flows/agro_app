@@ -1036,14 +1036,14 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
         headerIcon = Icons.pause_circle_outline;
         statusColor = Colors.orange;
       } else {
-        title = "Clocked In";
-        subtitle = "Clocked in at $displayTimeIn. Have a productive day!";
+        title = "Punch In";
+        subtitle = "Punch In at $displayTimeIn. Have a productive day!";
         headerIcon = Icons.work_history_outlined;
         statusColor = ColorsValue.primary;
       }
     } else if (isClockedOut) {
       title = "Shift Completed";
-      subtitle = "Clocked out at $displayTimeOut. See you tomorrow!";
+      subtitle = "Punch out at $displayTimeOut. See you tomorrow!";
       headerIcon = Icons.task_alt;
       statusColor = Colors.green;
     }
@@ -1118,7 +1118,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                 ),
                 icon: const Icon(Icons.login, size: 18),
                 label: const Text(
-                  "Clock In",
+                  "Punch In",
                   style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
                 ),
                 onPressed: () => controller.quickClockIn(),
@@ -1194,7 +1194,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                         ),
                         icon: const Icon(Icons.logout, size: 18),
                         label: const Text(
-                          "Clock Out",
+                          "Punch Out",
                           style: TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.bold,

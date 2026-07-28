@@ -4,6 +4,7 @@ import 'package:agro_app/app/utils/utility.dart';
 import 'package:agro_app/domain/models/get_all_users_model.dart';
 import 'package:agro_app/domain/repositories/repository.dart';
 import 'package:agro_app/domain/repositories/local_storage_keys.dart';
+import 'package:agro_app/domain/services/enum.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
@@ -746,8 +747,10 @@ class _DistributorsScreenState extends State<DistributorsScreen> {
                   const SizedBox(height: 24),
 
                   // ── Assigned Users (Admin Only) ───────────────────────────
-                  _buildUserMultiSelect(context, controller),
-                  const SizedBox(height: 24),
+                  if (RoleUtils.isAdmin('Admin')) ...[
+                    _buildUserMultiSelect(context, controller),
+                    const SizedBox(height: 24),
+                  ],
 
                   // ── Save Button
                   ElevatedButton(
@@ -967,45 +970,48 @@ class _DistributorsScreenState extends State<DistributorsScreen> {
                     return const Center(child: Text('No matching users found'));
                   }
 
-                  final selectedIds = controller.selectedPermissionUserIds;
-
                   return ListView.builder(
                     shrinkWrap: true,
                     itemCount: filteredUsers.length,
                     itemBuilder: (context, index) {
                       final user = filteredUsers[index];
                       final userId = user.id;
-                      final isSelected = controller.selectedPermissionUserIds
-                          .contains(userId);
-                      return CheckboxListTile(
-                        contentPadding: EdgeInsets.zero,
-                        value: isSelected,
-                        activeColor: ColorsValue.primary,
-                        title: Text(
-                          user.name,
-                          style: Styles.txtBlackColorW50014,
-                        ),
-                        subtitle: user.mobile.isNotEmpty
-                            ? Text(
-                                user.mobile,
-                                style: TextStyle(
-                                  color: Colors.grey.shade600,
-                                  fontSize: 12,
-                                ),
-                              )
-                            : null,
-                        onChanged: (bool? checked) {
-                          if (checked == true) {
-                            if (!controller.selectedPermissionUserIds.contains(
-                              userId,
-                            )) {
-                              controller.selectedPermissionUserIds.add(userId);
+                      return Obx(() {
+                        final isSelected = controller.selectedPermissionUserIds
+                            .contains(userId);
+                        return CheckboxListTile(
+                          contentPadding: EdgeInsets.zero,
+                          value: isSelected,
+                          activeColor: ColorsValue.primary,
+                          title: Text(
+                            user.name,
+                            style: Styles.txtBlackColorW50014,
+                          ),
+                          subtitle: user.mobile.isNotEmpty
+                              ? Text(
+                                  user.mobile,
+                                  style: TextStyle(
+                                    color: Colors.grey.shade600,
+                                    fontSize: 12,
+                                  ),
+                                )
+                              : null,
+                          onChanged: (bool? checked) {
+                            if (checked == true) {
+                              if (!controller.selectedPermissionUserIds
+                                  .contains(userId)) {
+                                controller.selectedPermissionUserIds.add(
+                                  userId,
+                                );
+                              }
+                            } else {
+                              controller.selectedPermissionUserIds.remove(
+                                userId,
+                              );
                             }
-                          } else {
-                            controller.selectedPermissionUserIds.remove(userId);
-                          }
-                        },
-                      );
+                          },
+                        );
+                      });
                     },
                   );
                 }),

@@ -185,10 +185,10 @@ class _ProductsScreenState extends State<ProductsScreen> {
                                   borderRadius: BorderRadius.circular(12),
                                 ),
                                 child: InkWell(
-                                  onTap: () {
-                                    controller.setupEdit(product);
-                                    Get.toNamed<void>('/productForm');
-                                  },
+                                  // onTap: () {
+                                  //   controller.setupEdit(product);
+                                  //   Get.toNamed<void>('/productForm');
+                                  // },
                                   borderRadius: BorderRadius.circular(12),
                                   child: ListTile(
                                     contentPadding: const EdgeInsets.symmetric(
@@ -312,14 +312,14 @@ class _ProductsScreenState extends State<ProductsScreen> {
               ],
             ),
           ),
-          floatingActionButton: FloatingActionButton(
-            backgroundColor: ColorsValue.primary,
-            onPressed: () {
-              controller.clearForm();
-              Get.toNamed<void>('/productForm');
-            },
-            child: const Icon(Icons.add),
-          ),
+          // floatingActionButton: FloatingActionButton(
+          //   backgroundColor: ColorsValue.primary,
+          //   onPressed: () {
+          //     controller.clearForm();
+          //     Get.toNamed<void>('/productForm');
+          //   },
+          //   child: const Icon(Icons.add),
+          // ),
         );
       },
     );

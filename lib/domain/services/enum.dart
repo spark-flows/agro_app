@@ -17,7 +17,6 @@ class RoleUtils {
     return normalizedRole == 'admin' ||
         normalizedRole == 'is_admin' ||
         normalizedRole == 'isadmin' ||
-        normalizedRole == 'user' ||
         normalizedRole == '1' || // Sometimes API returns 1 for admin
         normalizedRole == 'true';
   }
@@ -48,6 +47,17 @@ class RoleUtils {
         normalizedRole == 'isuser' ||
         normalizedRole == 'member' ||
         normalizedRole == 'employee';
+  }
+
+  /// Check if user is dealer/distributor
+  static bool isDealer(String? role) {
+    if (role == null || role.isEmpty) {
+      return false;
+    }
+
+    final normalizedRole = role.toLowerCase().trim();
+
+    return normalizedRole == 'dealer' || normalizedRole == 'distributor';
   }
 
   /// Convert role string to UserRole enum

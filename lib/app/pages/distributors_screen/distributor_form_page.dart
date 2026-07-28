@@ -1,6 +1,7 @@
 import 'package:agro_app/app/pages/distributors_screen/distributors_controller.dart';
 import 'package:agro_app/app/theme/theme.dart';
 import 'package:agro_app/app/utils/utility.dart';
+import 'package:agro_app/domain/domain.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
@@ -42,8 +43,9 @@ class DistributorFormPage extends StatelessWidget {
                   label: 'First Name *',
                   icon: Icons.person_outline,
                   action: TextInputAction.next,
-                  validator: (v) =>
-                      (v == null || v.trim().isEmpty) ? 'Please enter a name' : null,
+                  validator: (v) => (v == null || v.trim().isEmpty)
+                      ? 'Please enter a name'
+                      : null,
                 ),
                 const SizedBox(height: 12),
                 _buildField(
@@ -369,8 +371,10 @@ class DistributorFormPage extends StatelessWidget {
                 }),
 
                 // ── Assigned Users (Admin Only) ───────────────────────────
-                _buildUserMultiSelect(context, controller),
-                const SizedBox(height: 24),
+                if (RoleUtils.isAdmin('Admin')) ...[
+                  _buildUserMultiSelect(context, controller),
+                  const SizedBox(height: 24),
+                ],
 
                 // ── Save Button ────────────────────────────────────────────
                 ElevatedButton(
@@ -475,7 +479,8 @@ class DistributorFormPage extends StatelessWidget {
     BuildContext context,
     DistributorsController controller,
   ) {
-    if (controller.selectableUsers.isEmpty && !controller.isUsersLoading.value) {
+    if (controller.selectableUsers.isEmpty &&
+        !controller.isUsersLoading.value) {
       controller.fetchSelectableUsers();
     }
 
@@ -582,47 +587,51 @@ class DistributorFormPage extends StatelessWidget {
                   }).toList();
 
                   if (filteredUsers.isEmpty) {
-                    return const Center(
-                      child: Text('No matching users found'),
-                    );
+                    return const Center(child: Text('No matching users found'));
                   }
 
-                  final selectedIds = controller.selectedPermissionUserIds;
-
-                    return ListView.builder(
+                  return ListView.builder(
                     shrinkWrap: true,
                     itemCount: filteredUsers.length,
                     itemBuilder: (context, index) {
                       final user = filteredUsers[index];
                       final userId = user.id;
-                      final isSelected = controller.selectedPermissionUserIds.contains(userId);
-                      return CheckboxListTile(
-                        contentPadding: EdgeInsets.zero,
-                        value: isSelected,
-                        activeColor: ColorsValue.primary,
-                        title: Text(
-                          user.name,
-                          style: Styles.txtBlackColorW50014,
-                        ),
-                        subtitle: user.mobile.isNotEmpty
-                            ? Text(
-                                user.mobile,
-                                style: TextStyle(
-                                  color: Colors.grey.shade600,
-                                  fontSize: 12,
-                                ),
-                              )
-                            : null,
-                        onChanged: (bool? checked) {
-                          if (checked == true) {
-                            if (!controller.selectedPermissionUserIds.contains(userId)) {
-                              controller.selectedPermissionUserIds.add(userId);
+                      return Obx(() {
+                        final isSelected = controller.selectedPermissionUserIds
+                            .contains(userId);
+                        return CheckboxListTile(
+                          contentPadding: EdgeInsets.zero,
+                          value: isSelected,
+                          activeColor: ColorsValue.primary,
+                          title: Text(
+                            user.name,
+                            style: Styles.txtBlackColorW50014,
+                          ),
+                          subtitle: user.mobile.isNotEmpty
+                              ? Text(
+                                  user.mobile,
+                                  style: TextStyle(
+                                    color: Colors.grey.shade600,
+                                    fontSize: 12,
+                                  ),
+                                )
+                              : null,
+                          onChanged: (bool? checked) {
+                            if (checked == true) {
+                              if (!controller.selectedPermissionUserIds
+                                  .contains(userId)) {
+                                controller.selectedPermissionUserIds.add(
+                                  userId,
+                                );
+                              }
+                            } else {
+                              controller.selectedPermissionUserIds.remove(
+                                userId,
+                              );
                             }
-                          } else {
-                            controller.selectedPermissionUserIds.remove(userId);
-                          }
-                        },
-                      );
+                          },
+                        );
+                      });
                     },
                   );
                 }),

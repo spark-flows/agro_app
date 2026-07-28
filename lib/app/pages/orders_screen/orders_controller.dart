@@ -470,6 +470,14 @@ class OrdersController extends GetxController {
     }
   }
 
+  void updateQuantity(String id, int quantity) {
+    final idx = allProducts.indexWhere((p) => p.id == id);
+    if (idx != -1) {
+      allProducts[idx].quantity = quantity >= 0 ? quantity : 0;
+      update();
+    }
+  }
+
   int get cartCount => allProducts.where((p) => p.quantity > 0).length;
   num get cartTotal => allProducts
       .where((p) => p.quantity > 0)

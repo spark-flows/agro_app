@@ -320,181 +320,208 @@ class CustomersScreen extends StatelessWidget {
                 maxHeight: MediaQuery.of(context).size.height * 0.85,
               ),
               child: SafeArea(
-              top: false,
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.all(24),
-                child: Form(
-                  key: controller.addFormKey,
-                  autovalidateMode: AutovalidateMode.onUserInteraction,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Center(
-                    child: Container(
-                      width: 40,
-                      height: 5,
-                      decoration: BoxDecoration(
-                        color: Colors.grey.shade300,
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-                  Text(
-                    controller.editingCustomerId.isNotEmpty
-                        ? 'Edit Customer'
-                        : 'Add New Customer',
-                    style: Styles.txtBlackColorW70020,
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 24),
-
-                  // ── Distributor dropdown (admin only) ────────────────
-                  if (controller.isAdminView) ...[
-                    DropdownButtonFormField<String>(
-                      isExpanded: true,
-                      autovalidateMode: AutovalidateMode.onUserInteraction,
-                      value: controller.selectedDistributorId,
-                      decoration: InputDecoration(
-                        labelText: 'Select Distributor',
-                        labelStyle: Styles.txtGreyColorW40014,
-                        floatingLabelStyle: const TextStyle(
-                          color: ColorsValue.primary,
-                        ),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide(color: Colors.grey.shade300),
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide(color: Colors.grey.shade300),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(
-                            color: ColorsValue.primary,
-                            width: 1.5,
+                top: false,
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.all(24),
+                  child: Form(
+                    key: controller.addFormKey,
+                    autovalidateMode: AutovalidateMode.onUserInteraction,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Center(
+                          child: Container(
+                            width: 40,
+                            height: 5,
+                            decoration: BoxDecoration(
+                              color: Colors.grey.shade300,
+                              borderRadius: BorderRadius.circular(10),
+                            ),
                           ),
                         ),
-                        prefixIcon: Icon(
-                          Icons.store_outlined,
-                          color: ColorsValue.primary.withValues(alpha: 0.8),
+                        const SizedBox(height: 24),
+                        Text(
+                          controller.editingCustomerId.isNotEmpty
+                              ? 'Edit Customer'
+                              : 'Add New Customer',
+                          style: Styles.txtBlackColorW70020,
+                          textAlign: TextAlign.center,
                         ),
-                      ),
-                      hint: const Text('Select Distributor'),
-                      items: controller.distributors
-                          .map(
-                            (d) => DropdownMenuItem(
-                              value: d.id,
-                              child: Text(
-                                d.name,
-                                overflow: TextOverflow.ellipsis,
+                        const SizedBox(height: 24),
+
+                        // ── Distributor dropdown (admin only) ────────────────
+                        if (controller.isAdminView) ...[
+                          DropdownButtonFormField<String>(
+                            isExpanded: true,
+                            autovalidateMode:
+                                AutovalidateMode.onUserInteraction,
+                            value: controller.selectedDistributorId,
+                            decoration: InputDecoration(
+                              labelText: 'Select Distributor',
+                              labelStyle: Styles.txtGreyColorW40014,
+                              floatingLabelStyle: const TextStyle(
+                                color: ColorsValue.primary,
+                              ),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: BorderSide(
+                                  color: Colors.grey.shade300,
+                                ),
+                              ),
+                              enabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: BorderSide(
+                                  color: Colors.grey.shade300,
+                                ),
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: const BorderSide(
+                                  color: ColorsValue.primary,
+                                  width: 1.5,
+                                ),
+                              ),
+                              prefixIcon: Icon(
+                                Icons.store_outlined,
+                                color: ColorsValue.primary.withValues(
+                                  alpha: 0.8,
+                                ),
                               ),
                             ),
-                          )
-                          .toList(),
-                      onChanged: (val) {
-                        controller.selectedDistributorId = val;
-                        controller.update();
-                      },
-                      validator: (_) =>
-                          (controller.selectedDistributorId == null ||
-                              controller.selectedDistributorId!.isEmpty)
-                          ? 'Please select a distributor'
-                          : null,
-                    ),
-                    const SizedBox(height: 16),
-                  ],
+                            hint: const Text('Select Distributor'),
+                            items: controller.distributors
+                                .map(
+                                  (d) => DropdownMenuItem(
+                                    value: d.id,
+                                    child: Text(
+                                      d.name,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                )
+                                .toList(),
+                            onChanged: (val) {
+                              controller.selectedDistributorId = val;
+                              controller.update();
+                            },
+                            validator: (_) =>
+                                (controller.selectedDistributorId == null ||
+                                    controller.selectedDistributorId!.isEmpty)
+                                ? 'Please select a distributor'
+                                : null,
+                          ),
+                          const SizedBox(height: 16),
+                        ],
 
-                  _buildField(
-                    controller: controller.nameCtrl,
-                    label: 'Customer Name',
-                    icon: Icons.person_outline,
-                    action: TextInputAction.next,
-                    validator: (v) => v!.isEmpty ? 'Please enter a name' : null,
-                  ),
-                  const SizedBox(height: 16),
-                  _buildField(
-                    controller: controller.phoneCtrl,
-                    label: 'Phone Number',
-                    icon: Icons.phone_outlined,
-                    keyboardType: TextInputType.phone,
-                    action: TextInputAction.next,
-                    maxLength: 10,
-                    inputFormatters: [
-                      FilteringTextInputFormatter.digitsOnly,
-                      LengthLimitingTextInputFormatter(10),
-                    ],
-                    validator: (v) {
-                      if (v == null || v.trim().isEmpty) {
-                        return 'Please enter a phone number';
-                      }
-                      if (v.trim().length != 10) {
-                        return 'Phone number must be exactly 10 digits';
-                      }
-                      return null;
-                    },
-                  ),
-                  const SizedBox(height: 16),
-                  _buildField(
-                    controller: controller.locationCtrl,
-                    label: 'Email Address',
-                    icon: Icons.email_outlined,
-                    action: TextInputAction.next,
-                    validator: (v) {
-                      if (v == null || v.trim().isEmpty) {
-                        return 'Please enter an email address';
-                      } else if (!Utility.emailValidation(v.trim())) {
-                        return 'Please enter a valid email';
-                      }
-                      return null;
-                    },
-                  ),
-                  const SizedBox(height: 16),
-                  _buildField(
-                    controller: controller.villageCtrl,
-                    label: 'Village',
-                    icon: Icons.home_outlined,
-                    action: TextInputAction.done,
-                    validator: (v) =>
-                        v!.isEmpty ? 'Please enter a village' : null,
-                  ),
-                  const SizedBox(height: 24),
-                  ElevatedButton(
-                    onPressed: () {
-                      if (controller.addFormKey.currentState!.validate()) {
-                        controller.addCustomer();
-                      }
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: ColorsValue.primary,
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
+                        _buildField(
+                          controller: controller.nameCtrl,
+                          label: 'Customer Name',
+                          icon: Icons.person_outline,
+                          action: TextInputAction.next,
+                          validator: (v) =>
+                              v!.isEmpty ? 'Please enter a name' : null,
+                        ),
+                        const SizedBox(height: 16),
+                        _buildField(
+                          controller: controller.phoneCtrl,
+                          label: 'Phone Number',
+                          icon: Icons.phone_outlined,
+                          keyboardType: TextInputType.phone,
+                          action: TextInputAction.next,
+                          maxLength: 10,
+                          inputFormatters: [
+                            FilteringTextInputFormatter.digitsOnly,
+                            LengthLimitingTextInputFormatter(10),
+                          ],
+                          validator: (v) {
+                            if (v == null || v.trim().isEmpty) {
+                              return 'Please enter a phone number';
+                            }
+                            if (v.trim().length != 10) {
+                              return 'Phone number must be exactly 10 digits';
+                            }
+                            return null;
+                          },
+                        ),
+                        const SizedBox(height: 16),
+                        _buildField(
+                          controller: controller.locationCtrl,
+                          label:
+                              RoleUtils.isDealer(
+                                Get.find<HomeController>().roleName,
+                              )
+                              ? 'Email Address (Optional)'
+                              : 'Email Address',
+                          icon: Icons.email_outlined,
+                          action: TextInputAction.next,
+                          validator: (v) {
+                            final bool isDealer = RoleUtils.isDealer(
+                              Get.find<HomeController>().roleName,
+                            );
+                            if (isDealer) {
+                              if (v == null || v.trim().isEmpty) {
+                                return null;
+                              }
+                              if (!Utility.emailValidation(v.trim())) {
+                                return 'Please enter a valid email';
+                              }
+                              return null;
+                            }
+
+                            if (v == null || v.trim().isEmpty) {
+                              return 'Please enter an email address';
+                            } else if (!Utility.emailValidation(v.trim())) {
+                              return 'Please enter a valid email';
+                            }
+                            return null;
+                          },
+                        ),
+                        const SizedBox(height: 16),
+                        _buildField(
+                          controller: controller.villageCtrl,
+                          label: 'Village',
+                          icon: Icons.home_outlined,
+                          action: TextInputAction.done,
+                          validator: (v) =>
+                              v!.isEmpty ? 'Please enter a village' : null,
+                        ),
+                        const SizedBox(height: 24),
+                        ElevatedButton(
+                          onPressed: () {
+                            if (controller.addFormKey.currentState!
+                                .validate()) {
+                              controller.addCustomer();
+                            }
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: ColorsValue.primary,
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          child: const Text(
+                            'Save Customer',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
-                    child: const Text(
-                      'Save Customer',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
-                    ),
                   ),
-                ],
+                ),
               ),
             ),
           ),
         ),
       ),
-    ),
-  ),
-),
-  isScrollControlled: true,
-  backgroundColor: Colors.transparent,
-);
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+    );
   }
 
   void _showFeedbackDialog(
@@ -520,70 +547,70 @@ class CustomersScreen extends StatelessWidget {
                 maxHeight: MediaQuery.of(context).size.height * 0.85,
               ),
               child: SafeArea(
-              top: false,
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.all(24),
-                child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Center(
-                  child: Container(
-                    width: 40,
-                    height: 5,
-                    decoration: BoxDecoration(
-                      color: Colors.grey.shade300,
-                      borderRadius: BorderRadius.circular(10),
-                    ),
+                top: false,
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.all(24),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Center(
+                        child: Container(
+                          width: 40,
+                          height: 5,
+                          decoration: BoxDecoration(
+                            color: Colors.grey.shade300,
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+                      Text(
+                        'Add Feedback for ${customer.name}',
+                        style: Styles.txtBlackColorW70020,
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 24),
+                      _buildField(
+                        controller: controller.feedbackCtrl,
+                        label: 'Feedback',
+                        icon: Icons.feedback_outlined,
+                        maxLines: 3,
+                        alignLabelWithHint: true,
+                        prefixIconPadding: const EdgeInsets.only(bottom: 32.0),
+                      ),
+                      const SizedBox(height: 24),
+                      ElevatedButton(
+                        onPressed: () {
+                          controller.submitFeedback(customer.id);
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: ColorsValue.primary,
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        child: const Text(
+                          'Submit Feedback',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-                const SizedBox(height: 24),
-                Text(
-                  'Add Feedback for ${customer.name}',
-                  style: Styles.txtBlackColorW70020,
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 24),
-                _buildField(
-                  controller: controller.feedbackCtrl,
-                  label: 'Feedback',
-                  icon: Icons.feedback_outlined,
-                  maxLines: 3,
-                  alignLabelWithHint: true,
-                  prefixIconPadding: const EdgeInsets.only(bottom: 32.0),
-                ),
-                const SizedBox(height: 24),
-                ElevatedButton(
-                  onPressed: () {
-                    controller.submitFeedback(customer.id);
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: ColorsValue.primary,
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  child: const Text(
-                    'Submit Feedback',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    ),
-                  ),
-                ),
-              ],
+              ),
             ),
           ),
         ),
       ),
-    ),
-  ),
-),
-  isScrollControlled: true,
-  backgroundColor: Colors.transparent,
-);
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+    );
   }
 
   Widget _buildField({

@@ -149,7 +149,8 @@ class HomeScreen extends StatelessWidget {
                           color: Colors.purple,
                           onTap: controller.goToUsers,
                         ),
-                      if (RoleUtils.isAdmin(controller.roleName))
+                      if (RoleUtils.isAdmin(controller.roleName) ||
+                          RoleUtils.isUser(controller.roleName))
                         _buildMenuCard(
                           title: 'Distributors',
                           icon: Icons.local_shipping_outlined,
@@ -162,7 +163,8 @@ class HomeScreen extends StatelessWidget {
                         color: Colors.blue,
                         onTap: controller.goToCustomers,
                       ),
-                      if (RoleUtils.isAdmin(controller.roleName))
+                      if (RoleUtils.isAdmin(controller.roleName) ||
+                          RoleUtils.isUser(controller.roleName))
                         _buildMenuCard(
                           title: 'Products',
                           icon: Icons.inventory_2_outlined,
@@ -182,7 +184,7 @@ class HomeScreen extends StatelessWidget {
                         onTap: controller.goToCustomerOrders,
                       ),
 
-                      if (controller.roleName != "dealer") ...[
+                      if (!RoleUtils.isDealer(controller.roleName)) ...[
                         _buildMenuCard(
                           title: 'Attendance',
                           icon: Icons.fingerprint,
@@ -190,12 +192,13 @@ class HomeScreen extends StatelessWidget {
                           onTap: controller.goToAttendance,
                         ),
                       ],
-                      _buildMenuCard(
-                        title: 'Tasks',
-                        icon: Icons.assignment_outlined,
-                        color: Colors.teal,
-                        onTap: controller.goToTasks,
-                      ),
+                      if (!RoleUtils.isDealer(controller.roleName))
+                        _buildMenuCard(
+                          title: 'Tasks',
+                          icon: Icons.assignment_outlined,
+                          color: Colors.teal,
+                          onTap: controller.goToTasks,
+                        ),
                       if (controller.roleName == "Admin") ...[
                         _buildMenuCard(
                           title: 'Salary',

@@ -2,6 +2,7 @@ import 'package:agro_app/app/app.dart';
 import 'package:agro_app/domain/domain.dart';
 import 'package:agro_app/domain/services/enum.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
@@ -459,7 +460,7 @@ class CustomerOrdersScreen extends StatelessWidget {
                         _buildDetailRow('Remark 2', order.remark2 ?? '-'),
                         const SizedBox(height: 12),
                         _buildDetailRow('Remark 3', order.remark3 ?? '-'),
-                      ]
+                      ],
                     ],
                     const SizedBox(height: 100), // space for bottom buttons
                   ],
@@ -719,7 +720,11 @@ class CustomerOrdersScreen extends StatelessWidget {
                       child: DropdownButtonHideUnderline(
                         child: DropdownButton<String>(
                           isExpanded: true,
-                          hint: const Text('Choose a customer'),
+                          hint: Text(
+                            ctrl.customersList.isEmpty
+                                ? 'Select or create customer'
+                                : 'Choose a customer',
+                          ),
                           value:
                               ctrl.selectedCustomerId.isNotEmpty &&
                                   ctrl.customersList.any(
@@ -727,16 +732,42 @@ class CustomerOrdersScreen extends StatelessWidget {
                                   )
                               ? ctrl.selectedCustomerId
                               : null,
-                          items: ctrl.customersList
-                              .map(
-                                (c) => DropdownMenuItem(
-                                  value: c.id,
-                                  child: Text('${c.name} (${c.mobile ?? ''})'),
+                          items: [
+                            ...ctrl.customersList.map(
+                              (c) => DropdownMenuItem(
+                                value: c.id,
+                                child: Text('${c.name} (${c.mobile ?? ''})'),
+                              ),
+                            ),
+                            if (RoleUtils.isDealer(homeController.roleName))
+                              const DropdownMenuItem<String>(
+                                value: 'create_new_customer',
+                                child: Row(
+                                  children: [
+                                    Icon(
+                                      Icons.person_add_alt_1_outlined,
+                                      color: ColorsValue.primary,
+                                      size: 20,
+                                    ),
+                                    SizedBox(width: 8),
+                                    Text(
+                                      'Create New Customer',
+                                      style: TextStyle(
+                                        color: ColorsValue.primary,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ],
                                 ),
-                              )
-                              .toList(),
+                              ),
+                          ],
                           onChanged: (val) {
-                            if (val != null) {
+                            if (val == 'create_new_customer') {
+                              _showQuickCreateCustomerBottomSheet(
+                                context,
+                                ctrl,
+                              );
+                            } else if (val != null) {
                               ctrl.selectedCustomerId = val;
                               ctrl.update();
                             }
@@ -886,12 +917,19 @@ class CustomerOrdersScreen extends StatelessWidget {
                     const SizedBox(height: 20),
 
                     if (isAdmin) ...[
-                      for (int i = 0; i < ctrl.remarkControllers.length; i++) ...[
+                      for (
+                        int i = 0;
+                        i < ctrl.remarkControllers.length;
+                        i++
+                      ) ...[
                         Row(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Expanded(
-                              child: _buildTextField('Remark ${i + 1}', ctrl.remarkControllers[i]),
+                              child: _buildTextField(
+                                'Remark ${i + 1}',
+                                ctrl.remarkControllers[i],
+                              ),
                             ),
                             if (ctrl.remarkControllers.length > 1) ...[
                               const SizedBox(width: 8),
@@ -901,7 +939,10 @@ class CustomerOrdersScreen extends StatelessWidget {
                                   onPressed: () {
                                     ctrl.removeRemarkFieldAt(i);
                                   },
-                                  icon: const Icon(Icons.delete_outline, color: Colors.red),
+                                  icon: const Icon(
+                                    Icons.delete_outline,
+                                    color: Colors.red,
+                                  ),
                                 ),
                               ),
                             ],
@@ -1002,6 +1043,239 @@ class CustomerOrdersScreen extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+
+  void _showQuickCreateCustomerBottomSheet(
+    BuildContext context,
+    CustomerOrdersController ctrl,
+  ) {
+    final nameCtrl = TextEditingController();
+    final phoneCtrl = TextEditingController();
+    final emailCtrl = TextEditingController();
+    final villageCtrl = TextEditingController();
+    final formKey = GlobalKey<FormState>();
+
+    Get.bottomSheet(
+      Padding(
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.of(context).viewInsets.bottom,
+        ),
+        child: Material(
+          color: Colors.white,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+          clipBehavior: Clip.antiAlias,
+          child: Container(
+            constraints: BoxConstraints(
+              maxHeight: MediaQuery.of(context).size.height * 0.85,
+            ),
+            child: SafeArea(
+              top: false,
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(24),
+                child: Form(
+                  key: formKey,
+                  autovalidateMode: AutovalidateMode.onUserInteraction,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Center(
+                        child: Container(
+                          width: 40,
+                          height: 5,
+                          decoration: BoxDecoration(
+                            color: Colors.grey.shade300,
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+                      Text(
+                        'Create New Customer',
+                        style: Styles.txtBlackColorW70020,
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 24),
+
+                      // Customer Name
+                      TextFormField(
+                        controller: nameCtrl,
+                        decoration: InputDecoration(
+                          labelText: 'Customer Name *',
+                          labelStyle: Styles.txtGreyColorW40014,
+                          prefixIcon: const Icon(
+                            Icons.person_outline,
+                            color: ColorsValue.primary,
+                          ),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        validator: (v) => (v == null || v.trim().isEmpty)
+                            ? 'Please enter a name'
+                            : null,
+                      ),
+                      const SizedBox(height: 16),
+
+                      // Phone Number
+                      TextFormField(
+                        controller: phoneCtrl,
+                        keyboardType: TextInputType.phone,
+                        maxLength: 10,
+                        inputFormatters: [
+                          FilteringTextInputFormatter.digitsOnly,
+                          LengthLimitingTextInputFormatter(10),
+                        ],
+                        decoration: InputDecoration(
+                          labelText: 'Phone Number *',
+                          labelStyle: Styles.txtGreyColorW40014,
+                          prefixIcon: const Icon(
+                            Icons.phone_outlined,
+                            color: ColorsValue.primary,
+                          ),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          counterText: '',
+                        ),
+                        validator: (v) {
+                          if (v == null || v.trim().isEmpty) {
+                            return 'Please enter a phone number';
+                          }
+                          if (v.trim().length != 10) {
+                            return 'Phone number must be exactly 10 digits';
+                          }
+                          return null;
+                        },
+                      ),
+                      const SizedBox(height: 16),
+
+                      // Email Address
+                      TextFormField(
+                        controller: emailCtrl,
+                        decoration: InputDecoration(
+                          labelText: 'Email Address (Optional)',
+                          labelStyle: Styles.txtGreyColorW40014,
+                          prefixIcon: const Icon(
+                            Icons.email_outlined,
+                            color: ColorsValue.primary,
+                          ),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        validator: (v) {
+                          if (v != null && v.trim().isNotEmpty) {
+                            if (!Utility.emailValidation(v.trim())) {
+                              return 'Please enter a valid email';
+                            }
+                          }
+                          return null;
+                        },
+                      ),
+                      const SizedBox(height: 16),
+
+                      // Village
+                      TextFormField(
+                        controller: villageCtrl,
+                        decoration: InputDecoration(
+                          labelText: 'Village *',
+                          labelStyle: Styles.txtGreyColorW40014,
+                          prefixIcon: const Icon(
+                            Icons.home_outlined,
+                            color: ColorsValue.primary,
+                          ),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        validator: (v) => (v == null || v.trim().isEmpty)
+                            ? 'Please enter a village'
+                            : null,
+                      ),
+                      const SizedBox(height: 24),
+
+                      // Save Button
+                      ElevatedButton(
+                        onPressed: () async {
+                          if (formKey.currentState!.validate()) {
+                            Utility.showLoader();
+                            try {
+                              var response = await Get.find<Repository>()
+                                  .createCustomerApi(
+                                    name: nameCtrl.text.trim(),
+                                    email: emailCtrl.text.trim(),
+                                    countrycode: '+91',
+                                    mobile: phoneCtrl.text.trim(),
+                                    feedback: '',
+                                    village: villageCtrl.text.trim(),
+                                    isLoading: false,
+                                  );
+                              Utility.closeLoader();
+
+                              if (response != null &&
+                                  response.isSuccess == true) {
+                                Get.back(); // close sheet
+                                Utility.snacBar(
+                                  'Customer created successfully',
+                                  Colors.green,
+                                );
+
+                                // Refresh customers list
+                                await ctrl.fetchCustomers();
+
+                                // Try to find the newly created customer by mobile and select it!
+                                final newCust = ctrl.customersList
+                                    .firstWhereOrNull(
+                                      (c) =>
+                                          c.mobile == phoneCtrl.text.trim() ||
+                                          c.mobile ==
+                                              '+91 ${phoneCtrl.text.trim()}',
+                                    );
+                                if (newCust != null) {
+                                  ctrl.selectedCustomerId = newCust.id ?? '';
+                                  ctrl.update();
+                                }
+                              } else {
+                                Utility.errorMessage(
+                                  'Failed to save customer. Please try again.',
+                                );
+                              }
+                            } catch (e) {
+                              Utility.closeLoader();
+                              Utility.errorMessage(
+                                'An error occurred. Please try again.',
+                              );
+                            }
+                          }
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: ColorsValue.primary,
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        child: const Text(
+                          'Save Customer',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
     );
   }
 

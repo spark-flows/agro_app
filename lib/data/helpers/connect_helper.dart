@@ -729,7 +729,7 @@ class ConnectHelper {
     String? assignToIdToUse = assigntoid;
     final bool isAdmin = RoleUtils.isAdmin(role);
     // When logged in as User role (non-admin), send assigntoid in the API payload
-    if (isAdmin) {
+    if (!isAdmin) {
       assignToIdToUse = currentUserId;
     }
 

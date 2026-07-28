@@ -51,7 +51,7 @@ class DistributorsController extends GetxController {
   List<GetAllRolesDatum> roles = [];
 
   // Admin view & assigned users selection
-  final RxBool isAdminView = true.obs;
+  final RxBool isAdminView = false.obs;
   final RxList<Doc> selectableUsers = <Doc>[].obs;
   final RxBool isUsersLoading = false.obs;
   final RxList<String> selectedPermissionUserIds = <String>[].obs;
@@ -166,21 +166,23 @@ class DistributorsController extends GetxController {
         final profile = await Get.find<Repository>().getProfileApi(
           isLoading: false,
         );
-        role = profile?.data?.userData?.rolename ?? '';
+        role = profile?.data.userData.rolename ?? '';
       }
 
       if (role.isNotEmpty) {
         isAdminView.value =
             RoleUtils.isAdmin(role) || role.toLowerCase().contains('admin');
       } else {
-        isAdminView.value = true;
+        isAdminView.value = false;
       }
     } catch (e) {
       debugPrint('[DistributorsController] checkAdminRole error: $e');
-      isAdminView.value = true;
+      isAdminView.value = false;
     }
 
-    fetchSelectableUsers();
+    if (isAdminView.value) {
+      fetchSelectableUsers();
+    }
     update();
   }
 

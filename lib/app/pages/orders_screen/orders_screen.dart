@@ -1,6 +1,7 @@
 import 'package:agro_app/app/app.dart';
 import 'package:agro_app/domain/services/enum.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 
 class OrdersScreen extends StatefulWidget {
@@ -848,7 +849,90 @@ class _NewOrderScreenState extends State<NewOrderScreen> {
   }
 }
 
-/// --- Shared Helper Widgets & Dialogs ---
+void _showQuantityEditDialog(OrdersController controller, ProductItem item) {
+  final context = Get.context;
+  if (context == null) return;
+  final textController = TextEditingController(text: item.quantity.toString());
+
+  Get.dialog(
+    Dialog(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: Padding(
+        padding: const EdgeInsets.all(20.0),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(
+              'Enter Quantity',
+              style: Styles.txtBlackColorW70016,
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              item.name,
+              style: Styles.txtGreyColorW40012,
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: textController,
+              keyboardType: TextInputType.number,
+              autofocus: true,
+              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+              decoration: InputDecoration(
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 10,
+                ),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: BorderSide(color: Colors.grey.shade300),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: const BorderSide(color: ColorsValue.primary),
+                ),
+                suffixText: item.unit.replaceAll("per ", ""),
+              ),
+            ),
+            const SizedBox(height: 20),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                TextButton(
+                  onPressed: () => Get.back(),
+                  child: Text(
+                    'Cancel',
+                    style: TextStyle(color: Colors.grey.shade600),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: ColorsValue.primary,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                  onPressed: () {
+                    final enteredVal = int.tryParse(textController.text) ?? 0;
+                    controller.updateQuantity(item.id, enteredVal);
+                    Get.back();
+                  },
+                  child: const Text(
+                    'Update',
+                    style: TextStyle(color: Colors.white),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    ),
+  );
+}
 
 Widget _buildProductCard(OrdersController controller, ProductItem item) {
   return Card(
@@ -930,9 +1014,26 @@ Widget _buildProductCard(OrdersController controller, ProductItem item) {
                             onPressed: () =>
                                 controller.decrementQuantity(item.id),
                           ),
-                          Text(
-                            '${item.quantity}',
-                            style: Styles.txtBlackColorW70016,
+                          InkWell(
+                            onTap: () => _showQuantityEditDialog(
+                              controller,
+                              item,
+                            ),
+                            borderRadius: BorderRadius.circular(4),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 4,
+                              ),
+                              decoration: BoxDecoration(
+                                border: Border.all(color: Colors.grey.shade300),
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              child: Text(
+                                '${item.quantity}',
+                                style: Styles.txtBlackColorW70016,
+                              ),
+                            ),
                           ),
                           IconButton(
                             icon: Icon(
