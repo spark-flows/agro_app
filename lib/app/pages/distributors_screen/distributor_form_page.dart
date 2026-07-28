@@ -589,13 +589,13 @@ class DistributorFormPage extends StatelessWidget {
 
                   final selectedIds = controller.selectedPermissionUserIds;
 
-                  return ListView.builder(
+                    return ListView.builder(
                     shrinkWrap: true,
                     itemCount: filteredUsers.length,
                     itemBuilder: (context, index) {
                       final user = filteredUsers[index];
                       final userId = user.id;
-                      final isSelected = selectedIds.contains(userId);
+                      final isSelected = controller.selectedPermissionUserIds.contains(userId);
                       return CheckboxListTile(
                         contentPadding: EdgeInsets.zero,
                         value: isSelected,

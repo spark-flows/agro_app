@@ -856,7 +856,8 @@ class _DistributorsScreenState extends State<DistributorsScreen> {
     BuildContext context,
     DistributorsController controller,
   ) {
-    if (controller.selectableUsers.isEmpty && !controller.isUsersLoading.value) {
+    if (controller.selectableUsers.isEmpty &&
+        !controller.isUsersLoading.value) {
       controller.fetchSelectableUsers();
     }
 
@@ -963,9 +964,7 @@ class _DistributorsScreenState extends State<DistributorsScreen> {
                   }).toList();
 
                   if (filteredUsers.isEmpty) {
-                    return const Center(
-                      child: Text('No matching users found'),
-                    );
+                    return const Center(child: Text('No matching users found'));
                   }
 
                   final selectedIds = controller.selectedPermissionUserIds;
@@ -976,7 +975,8 @@ class _DistributorsScreenState extends State<DistributorsScreen> {
                     itemBuilder: (context, index) {
                       final user = filteredUsers[index];
                       final userId = user.id;
-                      final isSelected = selectedIds.contains(userId);
+                      final isSelected = controller.selectedPermissionUserIds
+                          .contains(userId);
                       return CheckboxListTile(
                         contentPadding: EdgeInsets.zero,
                         value: isSelected,
@@ -996,7 +996,9 @@ class _DistributorsScreenState extends State<DistributorsScreen> {
                             : null,
                         onChanged: (bool? checked) {
                           if (checked == true) {
-                            if (!controller.selectedPermissionUserIds.contains(userId)) {
+                            if (!controller.selectedPermissionUserIds.contains(
+                              userId,
+                            )) {
                               controller.selectedPermissionUserIds.add(userId);
                             }
                           } else {
