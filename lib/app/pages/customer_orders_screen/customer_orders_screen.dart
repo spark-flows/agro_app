@@ -739,7 +739,8 @@ class CustomerOrdersScreen extends StatelessWidget {
                                 child: Text('${c.name} (${c.mobile ?? ''})'),
                               ),
                             ),
-                            if (RoleUtils.isDealer(homeController.roleName))
+                            if (RoleUtils.isDealer(homeController.roleName) ||
+                                RoleUtils.isUser(homeController.roleName))
                               const DropdownMenuItem<String>(
                                 value: 'create_new_customer',
                                 child: Row(

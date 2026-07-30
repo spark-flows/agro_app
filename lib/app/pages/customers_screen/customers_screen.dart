@@ -449,8 +449,11 @@ class CustomersScreen extends StatelessWidget {
                           controller: controller.locationCtrl,
                           label:
                               RoleUtils.isDealer(
-                                Get.find<HomeController>().roleName,
-                              )
+                                    Get.find<HomeController>().roleName,
+                                  ) ||
+                                  RoleUtils.isUser(
+                                    Get.find<HomeController>().roleName,
+                                  )
                               ? 'Email Address (Optional)'
                               : 'Email Address',
                           icon: Icons.email_outlined,
@@ -459,7 +462,10 @@ class CustomersScreen extends StatelessWidget {
                             final bool isDealer = RoleUtils.isDealer(
                               Get.find<HomeController>().roleName,
                             );
-                            if (isDealer) {
+                            final bool isUser = RoleUtils.isUser(
+                              Get.find<HomeController>().roleName,
+                            );
+                            if (isDealer || isUser) {
                               if (v == null || v.trim().isEmpty) {
                                 return null;
                               }
