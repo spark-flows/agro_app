@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io';
+import 'package:agro_app/app/theme/colors_value.dart';
 import 'package:agro_app/app/utils/utility.dart';
 import 'package:agro_app/domain/repositories/local_storage_keys.dart';
 import 'package:flutter/material.dart';
@@ -42,9 +43,13 @@ class TasksController extends GetxController {
   final dateCtrl = TextEditingController();
   final dueCtrl = TextEditingController();
   final dueTimeCtrl = TextEditingController();
+  final remarkCtrl = TextEditingController();
   List<String> selectedAssignedToIds = []; // Store User ID strings
   String selectedStatus = 'pending'; // Default: pending
   String selectedPriority = 'medium'; // Default: medium
+  String selectedTaskType = 'regular'; // Options: regular, advance
+  List<task_list_model.TaskRemark> existingRemarks = [];
+  String currentUserId = '';
   List<File> selectedFiles = []; // Picked local files
   List<Map<String, String>> existingAttachments =
       []; // Uploaded attachments when editing
@@ -56,8 +61,21 @@ class TasksController extends GetxController {
   @override
   void onInit() {
     super.onInit();
+    _loadCurrentUserId();
     fetchTasks(isRefresh: true);
     fetchUsers();
+  }
+
+  Future<void> _loadCurrentUserId() async {
+    currentUserId = await Get.find<Repository>().getSecureValue(
+      LocalKeys.distributorId,
+    );
+    if (currentUserId.isEmpty) {
+      currentUserId = await Get.find<Repository>().getSecureValue(
+        LocalKeys.userIds,
+      );
+    }
+    update();
   }
 
   @override
@@ -68,6 +86,7 @@ class TasksController extends GetxController {
     dateCtrl.dispose();
     dueCtrl.dispose();
     dueTimeCtrl.dispose();
+    remarkCtrl.dispose();
     super.onClose();
   }
 
@@ -198,6 +217,9 @@ class TasksController extends GetxController {
       dueCtrl.clear();
       dueTimeCtrl.clear();
       selectedPriority = 'medium';
+      selectedTaskType = 'regular';
+      remarkCtrl.clear();
+      existingRemarks = [];
       selectedFiles = [];
       existingAttachments = [];
     } else {
@@ -205,6 +227,7 @@ class TasksController extends GetxController {
       currentAssignees = task.assignedto ?? [];
       taskNameCtrl.text = task.taskname ?? '';
       descriptionCtrl.text = task.description ?? '';
+      selectedTaskType = task.tasktype ?? 'regular';
 
       // Convert API yyyy-MM-dd to display dd-MM-yyyy
       if (task.date != null && task.date!.isNotEmpty) {
@@ -251,6 +274,18 @@ class TasksController extends GetxController {
         }
       }
       selectedStatus = task.status ?? 'pending';
+      existingRemarks = List<task_list_model.TaskRemark>.from(
+        task.remarks ?? [],
+      );
+      remarkCtrl.clear();
+      if (currentUserId.isNotEmpty) {
+        final myRemark = existingRemarks.firstWhereOrNull(
+          (r) => r.updatedById.isNotEmpty && r.updatedById == currentUserId,
+        );
+        if (myRemark != null) {
+          remarkCtrl.text = myRemark.remark ?? '';
+        }
+      }
       selectedFiles = [];
       existingAttachments =
           task.attachment?.map((att) => {"path": att.path ?? ""}).toList() ??
@@ -304,11 +339,43 @@ class TasksController extends GetxController {
       ];
 
       final List<String> assignees = List.from(selectedAssignedToIds);
-      final String loggedInUserId = await Get.find<Repository>().getSecureValue(
+      String loggedInUserId = await Get.find<Repository>().getSecureValue(
         LocalKeys.distributorId,
       );
+      if (loggedInUserId.isEmpty) {
+        loggedInUserId = await Get.find<Repository>().getSecureValue(
+          LocalKeys.userIds,
+        );
+      }
       if (loggedInUserId.isNotEmpty && !assignees.contains(loggedInUserId)) {
         assignees.add(loggedInUserId);
+      }
+
+      final String todayDate = DateFormat('yyyy-MM-dd').format(DateTime.now());
+      final newRemarkText = remarkCtrl.text.trim();
+
+      List<Map<String, dynamic>> remarksPayload = [];
+      for (var r in existingRemarks) {
+        remarksPayload.add(r.toJson());
+      }
+
+      if (newRemarkText.isNotEmpty && loggedInUserId.isNotEmpty) {
+        final userRemarkIdx = remarksPayload.indexWhere(
+          (r) =>
+              r["updatedBy"] != null &&
+              r["updatedBy"].toString() == loggedInUserId,
+        );
+        final newRemarkMap = {
+          "status": selectedTaskType,
+          "remark": newRemarkText,
+          "updatedBy": loggedInUserId,
+          "date": todayDate,
+        };
+        if (userRemarkIdx != -1) {
+          remarksPayload[userRemarkIdx] = newRemarkMap;
+        } else {
+          remarksPayload.add(newRemarkMap);
+        }
       }
 
       final response = await Get.find<Repository>().createTaskApi(
@@ -322,6 +389,8 @@ class TasksController extends GetxController {
         time: dueTimeCtrl.text.trim(),
         priority: selectedPriority,
         attachment: finalAttachments,
+        tasktype: selectedTaskType,
+        remarks: remarksPayload,
         isLoading: true,
       );
 
@@ -411,11 +480,182 @@ class TasksController extends GetxController {
   }
 
   // ── Change Task Status (via changestatus API) ──────────────────────────────
-  Future<void> changeTaskStatus(String id, String status) async {
+  Future<void> showChangeStatusDialog({
+    required String taskId,
+    required String newStatus,
+  }) async {
+    final remarkStatusCtrl = TextEditingController();
+    Get.dialog<void>(
+      Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        backgroundColor: Colors.white,
+        child: Padding(
+          padding: const EdgeInsets.all(20.0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: ColorsValue.primary.withValues(alpha: 0.1),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.published_with_changes,
+                      color: ColorsValue.primary,
+                      size: 24,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          "Update Status",
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: ColorsValue.txtBlackColor,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          "New Status: ${newStatus.toUpperCase()}",
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: ColorsValue.txtGreyColor,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 20),
+              TextField(
+                controller: remarkStatusCtrl,
+                maxLines: 3,
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                  color: ColorsValue.txtBlackColor,
+                ),
+                decoration: InputDecoration(
+                  labelText: "Remark *",
+                  hintText: "Enter remark for status change",
+                  labelStyle: TextStyle(
+                    color: ColorsValue.txtGreyColor,
+                    fontSize: 13,
+                  ),
+                  prefixIcon: const Icon(
+                    Icons.comment_outlined,
+                    color: ColorsValue.primary,
+                  ),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: Colors.grey.shade300),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: Colors.grey.shade300),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(
+                      color: ColorsValue.primary,
+                      width: 1.5,
+                    ),
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 14,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 24),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () => Get.back(),
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        side: BorderSide(color: Colors.grey.shade300),
+                        foregroundColor: ColorsValue.txtGreyColor,
+                      ),
+                      child: const Text(
+                        "Cancel",
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () async {
+                        final remarkText = remarkStatusCtrl.text.trim();
+                        if (remarkText.isEmpty) {
+                          Utility.errorMessage("Please enter a remark");
+                          return;
+                        }
+                        Get.back(); // close dialog
+                        await changeTaskStatus(
+                          id: taskId,
+                          status: newStatus,
+                          remark: remarkText,
+                        );
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: ColorsValue.primary,
+                        foregroundColor: Colors.white,
+                        elevation: 0,
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                      child: const Text(
+                        "Submit",
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> changeTaskStatus({
+    required String id,
+    required String status,
+    required String remark,
+  }) async {
     try {
+      if (currentUserId.isEmpty) {
+        await _loadCurrentUserId();
+      }
       final success = await Get.find<Repository>().changeTaskStatusApi(
         taskid: id,
         status: status,
+        remark: remark,
+        updatedBy: currentUserId,
         isLoading: true,
       );
       if (success) {
@@ -423,7 +663,7 @@ class TasksController extends GetxController {
         if (index != -1) {
           tasks[index].status = status;
         }
-        update();
+        await fetchTasks(isRefresh: true);
         Utility.snacBar('Task status updated successfully', Colors.green);
       }
     } catch (e) {

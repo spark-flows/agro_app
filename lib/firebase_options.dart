@@ -41,48 +41,46 @@ class DefaultFirebaseOptions {
   }
 
   static const FirebaseOptions web = FirebaseOptions(
-    apiKey: 'AIzaSyDBDZwYsnCVJOiIODLZ-f9JQrTv7ST_vkE',
-    appId: '1:976261385108:web:4cc067de88f451c7a19d81',
-    messagingSenderId: '976261385108',
-    projectId: 'sparkchat-f1797',
-    authDomain: 'sparkchat-f1797.firebaseapp.com',
-    storageBucket: 'sparkchat-f1797.firebasestorage.app',
-    measurementId: 'G-EJFFKBXSE9',
+    apiKey: 'AIzaSyDt6jFNtSXmawai4diEYcXqieQHZ27omQE',
+    appId: '1:639935316224:web:13d99a2afcfab71f7473e5',
+    messagingSenderId: '639935316224',
+    projectId: 'agro-app-65d1f',
+    authDomain: 'agro-app-65d1f.firebaseapp.com',
+    storageBucket: 'agro-app-65d1f.firebasestorage.app',
+    measurementId: 'G-B7ZE4FBM0B',
   );
 
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'AIzaSyD5UwKK-TrBDz7dEAYbALIeht0GpZAFFZ8',
-    appId: '1:976261385108:android:628e7a96e12f9ca6a19d81',
-    messagingSenderId: '976261385108',
-    projectId: 'sparkchat-f1797',
-    storageBucket: 'sparkchat-f1797.firebasestorage.app',
+    apiKey: 'AIzaSyDu4r8td99811rU-1704Cq1DHFPhs1umhc',
+    appId: '1:639935316224:android:9d376e042c0025397473e5',
+    messagingSenderId: '639935316224',
+    projectId: 'agro-app-65d1f',
+    storageBucket: 'agro-app-65d1f.firebasestorage.app',
   );
-
   static const FirebaseOptions ios = FirebaseOptions(
-    apiKey: 'AIzaSyCDqfB_P-lawVJfjZIvaFl3iXPB0nmaVWA',
-    appId: '1:976261385108:ios:42306e0aca32715aa19d81',
-    messagingSenderId: '976261385108',
-    projectId: 'sparkchat-f1797',
-    storageBucket: 'sparkchat-f1797.firebasestorage.app',
-    iosBundleId: 'com.example.npjWhatsapp',
+    apiKey: 'AIzaSyDCgNrd1SEzqCeF0vca15Rn5fqIFwJFJWc',
+    appId: '1:639935316224:ios:0bd589f664e3369f7473e5',
+    messagingSenderId: '639935316224',
+    projectId: 'agro-app-65d1f',
+    storageBucket: 'agro-app-65d1f.firebasestorage.app',
+    iosBundleId: 'com.example.agroApp',
   );
-
   static const FirebaseOptions macos = FirebaseOptions(
-    apiKey: 'AIzaSyCDqfB_P-lawVJfjZIvaFl3iXPB0nmaVWA',
-    appId: '1:976261385108:ios:42306e0aca32715aa19d81',
-    messagingSenderId: '976261385108',
-    projectId: 'sparkchat-f1797',
-    storageBucket: 'sparkchat-f1797.firebasestorage.app',
-    iosBundleId: 'com.example.npjWhatsapp',
+    apiKey: 'AIzaSyDCgNrd1SEzqCeF0vca15Rn5fqIFwJFJWc',
+    appId: '1:639935316224:ios:0bd589f664e3369f7473e5',
+    messagingSenderId: '639935316224',
+    projectId: 'agro-app-65d1f',
+    storageBucket: 'agro-app-65d1f.firebasestorage.app',
+    iosBundleId: 'com.example.agroApp',
   );
 
   static const FirebaseOptions windows = FirebaseOptions(
-    apiKey: 'AIzaSyDBDZwYsnCVJOiIODLZ-f9JQrTv7ST_vkE',
-    appId: '1:976261385108:web:65d7cb678efe2ec7a19d81',
-    messagingSenderId: '976261385108',
-    projectId: 'sparkchat-f1797',
-    authDomain: 'sparkchat-f1797.firebaseapp.com',
-    storageBucket: 'sparkchat-f1797.firebasestorage.app',
-    measurementId: 'G-XMFFJY3ZWH',
+    apiKey: 'AIzaSyDt6jFNtSXmawai4diEYcXqieQHZ27omQE',
+    appId: '1:639935316224:web:ea5460f155cea0d77473e5',
+    messagingSenderId: '639935316224',
+    projectId: 'agro-app-65d1f',
+    authDomain: 'agro-app-65d1f.firebaseapp.com',
+    storageBucket: 'agro-app-65d1f.firebasestorage.app',
+    measurementId: 'G-08C978P16P',
   );
 }

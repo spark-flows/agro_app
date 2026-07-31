@@ -68,6 +68,7 @@ class AttendanceController extends GetxController with WidgetsBindingObserver {
   final RxString odometerPhotoPath = "".obs;
   final RxBool isOdometerUploading = false.obs;
   final odometerReadingCtrl = TextEditingController();
+  final vehicleNoCtrl = TextEditingController();
   final RxString timeinPhoto = "".obs;
   final RxString timeoutPhoto = "".obs;
   final timeinOdometerCtrl = TextEditingController();
@@ -104,6 +105,7 @@ class AttendanceController extends GetxController with WidgetsBindingObserver {
     latitudeCtrl.dispose();
     longitudeCtrl.dispose();
     odometerReadingCtrl.dispose();
+    vehicleNoCtrl.dispose();
     super.onClose();
   }
 
@@ -628,8 +630,7 @@ class AttendanceController extends GetxController with WidgetsBindingObserver {
   ) async {
     try {
       final profile = await _getProfileWithCache();
-      final requiresLiveTracking =
-          profile?.data.userData.liveTracking ?? false;
+      final requiresLiveTracking = profile?.data.userData.liveTracking ?? false;
       if (!requiresLiveTracking) {
         return {"latitude": "", "longitude": ""};
       }
@@ -846,6 +847,7 @@ class AttendanceController extends GetxController with WidgetsBindingObserver {
   }) {
     selfiePath.value = "";
     odometerReadingCtrl.clear();
+    vehicleNoCtrl.clear();
     isOdometerUploading.value = false;
 
     Get.dialog<void>(
@@ -1002,6 +1004,50 @@ class AttendanceController extends GetxController with WidgetsBindingObserver {
                 }),
                 const SizedBox(height: 24),
 
+                // ── Vehicle Number Input (Punch-In Only) ──────────────
+                if (!isClockOut) ...[
+                  TextField(
+                    controller: vehicleNoCtrl,
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: ColorsValue.txtBlackColor,
+                    ),
+                    decoration: InputDecoration(
+                      labelText: "Vehicle Number",
+                      labelStyle: TextStyle(
+                        color: ColorsValue.txtGreyColor,
+                        fontSize: 14,
+                      ),
+                      prefixIcon: const Icon(
+                        Icons.directions_car_outlined,
+                        color: ColorsValue.primary,
+                      ),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(14),
+                        borderSide: BorderSide(color: Colors.grey.shade300),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(14),
+                        borderSide: BorderSide(color: Colors.grey.shade300),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(14),
+                        borderSide: const BorderSide(
+                          color: ColorsValue.primary,
+                          width: 1.5,
+                        ),
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 16,
+                      ),
+                    ),
+                    textCapitalization: TextCapitalization.characters,
+                  ),
+                  const SizedBox(height: 16),
+                ],
+
                 // ── Odometer Reading Input ─────────────────────────────
                 TextField(
                   controller: odometerReadingCtrl,
@@ -1090,6 +1136,13 @@ class AttendanceController extends GetxController with WidgetsBindingObserver {
                                     );
                                     return;
                                   }
+                                  if (!isClockOut &&
+                                      vehicleNoCtrl.text.trim().isEmpty) {
+                                    Utility.errorMessage(
+                                      "Please enter Vehicle Number",
+                                    );
+                                    return;
+                                  }
                                   if (odometerReadingCtrl.text.trim().isEmpty) {
                                     Utility.errorMessage(
                                       "Please enter Odometer Reading",
@@ -1133,7 +1186,7 @@ class AttendanceController extends GetxController with WidgetsBindingObserver {
                                     }
                                   }
 
-                                  // Call the API with the selfieUrl as photo and odoValue as odometer
+                                  // Call the API with selfieUrl, odoValue, and vehicalno
                                   final response = await Get.find<Repository>()
                                       .createAttendanceApi(
                                         attendanceid: currentRecord?.id,
@@ -1157,6 +1210,11 @@ class AttendanceController extends GetxController with WidgetsBindingObserver {
                                         breaks: breaksPayload,
                                         photo: selfieUrl,
                                         odometer: odoValue,
+                                        vehicalno: !isClockOut
+                                            ? vehicleNoCtrl.text
+                                                  .trim()
+                                                  .toUpperCase()
+                                            : null,
                                         isLoading: false,
                                       );
 
@@ -1461,7 +1519,9 @@ class AttendanceController extends GetxController with WidgetsBindingObserver {
   ProfileDataModel? _cachedProfile;
   DateTime? _lastProfileFetchTime;
 
-  Future<ProfileDataModel?> _getProfileWithCache({bool forceRefresh = false}) async {
+  Future<ProfileDataModel?> _getProfileWithCache({
+    bool forceRefresh = false,
+  }) async {
     if (!forceRefresh &&
         _cachedProfile != null &&
         _lastProfileFetchTime != null &&

@@ -335,6 +335,7 @@ class DataRepository extends DomainRepository {
     List<String>? permissionuserid,
     List<String>? assigntoid,
     String? mapcolor,
+    String? fcmToken,
     bool isLoading = false,
   }) async => connectHelper.createUserApi(
     userid: userid,
@@ -360,14 +361,12 @@ class DataRepository extends DomainRepository {
     permissionuserid: permissionuserid,
     assigntoid: assigntoid,
     mapcolor: mapcolor,
+    fcmToken: fcmToken,
     isLoading: isLoading,
   );
 
-  Future<ResponseModel> getAllBranchesApi({
-    bool isLoading = false,
-  }) async => connectHelper.getAllBranchesApi(
-    isLoading: isLoading,
-  );
+  Future<ResponseModel> getAllBranchesApi({bool isLoading = false}) async =>
+      connectHelper.getAllBranchesApi(isLoading: isLoading);
 
   Future<ResponseModel> getTaskListApi({
     int page = 1,
@@ -406,6 +405,8 @@ class DataRepository extends DomainRepository {
     required String time,
     required String priority,
     required List<Map<String, String>> attachment,
+    String? tasktype,
+    List<Map<String, dynamic>>? remarks,
     bool isLoading = false,
   }) async => connectHelper.createTaskApi(
     taskid: taskid,
@@ -418,6 +419,8 @@ class DataRepository extends DomainRepository {
     time: time,
     priority: priority,
     attachment: attachment,
+    tasktype: tasktype,
+    remarks: remarks,
     isLoading: isLoading,
   );
 
@@ -440,10 +443,14 @@ class DataRepository extends DomainRepository {
   Future<ResponseModel> changeTaskStatusApi({
     required String taskid,
     required String status,
+    String? remark,
+    String? updatedBy,
     bool isLoading = false,
   }) async => connectHelper.changeTaskStatusApi(
     taskid: taskid,
     status: status,
+    remark: remark,
+    updatedBy: updatedBy,
     isLoading: isLoading,
   );
 
@@ -485,6 +492,7 @@ class DataRepository extends DomainRepository {
     int? timeinodometer,
     String? timeoutphoto,
     int? timeoutodometer,
+    String? vehicalno,
     bool isLoading = false,
   }) async => connectHelper.createAttendanceApi(
     attendanceid: attendanceid,
@@ -504,6 +512,7 @@ class DataRepository extends DomainRepository {
     timeinodometer: timeinodometer,
     timeoutphoto: timeoutphoto,
     timeoutodometer: timeoutodometer,
+    vehicalno: vehicalno,
     isLoading: isLoading,
   );
 
@@ -664,4 +673,74 @@ class DataRepository extends DomainRepository {
     required Map<String, dynamic> body,
     bool isLoading = false,
   }) async => connectHelper.pauseTrackingApi(body: body, isLoading: isLoading);
+
+  Future<ResponseModel> createLeaveApi({
+    String? leaveid,
+    String? leavedate,
+    required String userid,
+    required String fromdate,
+    required String todate,
+    required num totaldays,
+    required num totalhours,
+    required String leavetype,
+    required String reason,
+    required String status,
+    bool isLoading = false,
+  }) async => connectHelper.createLeaveApi(
+    leaveid: leaveid,
+    leavedate: leavedate,
+    userid: userid,
+    fromdate: fromdate,
+    todate: todate,
+    totaldays: totaldays,
+    totalhours: totalhours,
+    leavetype: leavetype,
+    reason: reason,
+    status: status,
+    isLoading: isLoading,
+  );
+
+  Future<ResponseModel> getLeaveListApi({
+    int page = 1,
+    int limit = 10,
+    String search = "",
+    String fromDate = "",
+    String toDate = "",
+    String status = "",
+    String userid = "",
+    String leavetype = "",
+    bool isLoading = false,
+  }) async => connectHelper.getLeaveListApi(
+    page: page,
+    limit: limit,
+    search: search,
+    fromDate: fromDate,
+    toDate: toDate,
+    status: status,
+    userid: userid,
+    leavetype: leavetype,
+    isLoading: isLoading,
+  );
+
+  Future<ResponseModel> deleteLeaveApi({
+    required String leaveid,
+    bool isLoading = false,
+  }) async =>
+      connectHelper.deleteLeaveApi(leaveid: leaveid, isLoading: isLoading);
+
+  Future<ResponseModel> getOneLeaveApi({
+    required String leaveid,
+    bool isLoading = false,
+  }) async =>
+      connectHelper.getOneLeaveApi(leaveid: leaveid, isLoading: isLoading);
+
+  Future<ResponseModel> changeLeaveStatusApi({
+    required String leaveid,
+    required String status,
+    bool isLoading = false,
+  }) async => connectHelper.changeLeaveStatusApi(
+    leaveid: leaveid,
+    status: status,
+    isLoading: isLoading,
+  );
 }

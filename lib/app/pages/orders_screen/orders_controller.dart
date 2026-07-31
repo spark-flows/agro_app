@@ -19,6 +19,7 @@ class ProductItem {
   final Color gradEnd;
   final int? qty;
   int quantity;
+  String? selectedUnit;
 
   ProductItem({
     required this.id,
@@ -33,6 +34,7 @@ class ProductItem {
     required this.gradEnd,
     this.qty,
     this.quantity = 0,
+    this.selectedUnit,
   });
 }
 
@@ -261,6 +263,25 @@ class OrdersController extends GetxController {
     return statuses;
   }
 
+  List<GetAllUnitDatum> units = [];
+  bool isLoadingUnits = false;
+
+  Future<void> fetchUnits() async {
+    try {
+      isLoadingUnits = true;
+      update();
+      final response = await Get.find<Repository>().getUnitListApi();
+      if (response != null && response.data != null) {
+        units = response.data!;
+      }
+    } catch (e) {
+      debugPrint('[OrdersController] fetchUnits error: $e');
+    } finally {
+      isLoadingUnits = false;
+      update();
+    }
+  }
+
   @override
   void onInit() {
     super.onInit();
@@ -268,6 +289,7 @@ class OrdersController extends GetxController {
     fetchProducts();
     fetchCustomers();
     fetchAllOrders();
+    fetchUnits();
   }
 
   Future<void> _loadRole() async {
@@ -409,6 +431,7 @@ class OrdersController extends GetxController {
   }
 
   ProductItem _buildProductItem(GetAllProductDoc doc) {
+    final defaultUnitName = doc.unit?.name ?? doc.unit?.id;
     return ProductItem(
       id: doc.id ?? '',
       name: doc.name ?? '',
@@ -421,6 +444,7 @@ class OrdersController extends GetxController {
       gradStart: const Color(0xFF16A34A),
       gradEnd: const Color(0xFF4ADE80),
       qty: doc.qty,
+      selectedUnit: defaultUnitName,
     );
   }
 
@@ -545,6 +569,9 @@ class OrdersController extends GetxController {
           allProducts[idx].quantity = (item.quantity is num)
               ? item.quantity.toInt()
               : int.tryParse(item.quantity.toString()) ?? 0;
+          if (item.unit != null && item.unit.toString().isNotEmpty) {
+            allProducts[idx].selectedUnit = item.unit.toString();
+          }
         }
       }
     }
@@ -570,10 +597,15 @@ class OrdersController extends GetxController {
 
     final itemsPayload = cartItems
         .map(
-          (p) => {
-            "productid": p.id,
-            "quantity": p.quantity,
-            "price": p.rawPrice,
+          (p) {
+            String u = p.selectedUnit ?? p.unit.replaceAll("per ", "").trim();
+            if (u == "-") u = "";
+            return {
+              "productid": p.id,
+              "quantity": p.quantity,
+              "price": p.rawPrice,
+              "unit": u,
+            };
           },
         )
         .toList();

@@ -7,6 +7,7 @@ import 'package:agro_app/data/data.dart';
 import 'package:agro_app/domain/domain.dart';
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:dio/dio.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:get/get.dart' hide FormData, MultipartFile;
 import 'package:http/http.dart' as http;
@@ -793,9 +794,17 @@ class ConnectHelper {
     List<String>? permissionuserid,
     List<String>? assigntoid,
     String? mapcolor,
+    String? fcmToken,
     bool isLoading = false,
   }) async {
     final String branchId = await _resolveBranchId();
+    String tokenToUse = fcmToken ?? "";
+    if (tokenToUse.isEmpty) {
+      try {
+        final token = await FirebaseMessaging.instance.getToken();
+        if (token != null) tokenToUse = token;
+      } catch (_) {}
+    }
     var data = {
       "userid": userid ?? "",
       "name": name,
@@ -823,6 +832,7 @@ class ConnectHelper {
       if (permissionuserid != null) "permissionuserid": permissionuserid,
       if (assigntoid != null) "assigntoid": assigntoid,
       if (mapcolor != null && mapcolor.isNotEmpty) "mapcolor": mapcolor,
+      if (tokenToUse.isNotEmpty) "fcm_token": tokenToUse,
     };
     var response = await apiWrapper.makeRequest(
       EndPoints.createUsersApi,
@@ -1104,6 +1114,8 @@ class ConnectHelper {
     required String time,
     required String priority,
     required List<Map<String, String>> attachment,
+    String? tasktype,
+    List<Map<String, dynamic>>? remarks,
     bool isLoading = false,
   }) async {
     final String branchId = await _resolveBranchId();
@@ -1119,6 +1131,8 @@ class ConnectHelper {
       "time": time,
       "priority": priority,
       "attachment": attachment,
+      if (tasktype != null && tasktype.isNotEmpty) "tasktype": tasktype,
+      if (remarks != null) "remarks": remarks,
     };
     var response = await apiWrapper.makeRequest(
       EndPoints.createTaskApi,
@@ -1217,9 +1231,23 @@ class ConnectHelper {
   Future<ResponseModel> changeTaskStatusApi({
     required String taskid,
     required String status,
+    String? remark,
+    String? updatedBy,
     bool isLoading = false,
   }) async {
-    var data = {"taskid": taskid, "status": status};
+    String userId = updatedBy ?? "";
+    if (userId.isEmpty) {
+      userId = await Utility.getSecureValue(LocalKeys.distributorId);
+      if (userId.isEmpty) {
+        userId = await Utility.getSecureValue(LocalKeys.userIds);
+      }
+    }
+    var data = {
+      "taskid": taskid,
+      "status": status,
+      "remark": remark ?? "",
+      "updatedBy": userId,
+    };
     var response = await apiWrapper.makeRequest(
       EndPoints.changeTaskStatusApi,
       Request.post,
@@ -1284,6 +1312,7 @@ class ConnectHelper {
     int? timeinodometer,
     String? timeoutphoto,
     int? timeoutodometer,
+    String? vehicalno,
     bool isLoading = false,
   }) async {
     final String branchId = await _resolveBranchId();
@@ -1305,12 +1334,13 @@ class ConnectHelper {
       "breakend": breakend,
       "remark": remark,
       "status": status,
-      if (photo != null) "photo": photo,
       "odometer": odometer ?? 0,
+      if (photo != null) "photo": photo,
       if (timeinphoto != null) "timeinphoto": timeinphoto,
       if (timeinodometer != null) "timeinodometer": timeinodometer,
       if (timeoutphoto != null) "timeoutphoto": timeoutphoto,
       if (timeoutodometer != null) "timeoutodometer": timeoutodometer,
+      if (vehicalno != null) "vehicalno": vehicalno.toUpperCase(),
       if (punching != null) "punching": punching,
       if (breaks != null) "breaks": breaks,
     };
@@ -1659,6 +1689,122 @@ class ConnectHelper {
       isLoading,
       await Utility.commonHeader(),
     );
+  }
+
+  Future<ResponseModel> createLeaveApi({
+    String? leaveid,
+    String? leavedate,
+    required String userid,
+    required String fromdate,
+    required String todate,
+    required num totaldays,
+    required num totalhours,
+    required String leavetype,
+    required String reason,
+    required String status,
+    bool isLoading = false,
+  }) async {
+    final String branchId = await _resolveBranchId();
+    var data = {
+      if (leaveid != null && leaveid.isNotEmpty) "leaveid": leaveid,
+      if (leavedate != null && leavedate.isNotEmpty) "leavedate": leavedate,
+      "userid": userid,
+      "fromdate": fromdate,
+      "todate": todate,
+      "totaldays": totaldays,
+      "totalhours": totalhours,
+      "leavetype": leavetype,
+      "reason": reason,
+      "status": status,
+      "branchid": branchId,
+    };
+    var response = await apiWrapper.makeRequest(
+      EndPoints.createLeaveApi,
+      Request.post,
+      data,
+      isLoading,
+      await Utility.commonHeader(),
+    );
+    return response;
+  }
+
+  Future<ResponseModel> getLeaveListApi({
+    int page = 1,
+    int limit = 10,
+    String search = "",
+    String fromDate = "",
+    String toDate = "",
+    String status = "",
+    String userid = "",
+    String leavetype = "",
+    bool isLoading = false,
+  }) async {
+    var data = <String, dynamic>{
+      "page": page,
+      "limit": limit,
+      "search": search,
+      if (leavetype.isNotEmpty) "leavetype": [leavetype],
+      if (status.isNotEmpty) "status": [status],
+      if (userid.isNotEmpty) "userid": [userid],
+      if (fromDate.isNotEmpty && toDate.isNotEmpty)
+        "leavedate": [fromDate, toDate]
+      else if (fromDate.isNotEmpty)
+        "leavedate": [fromDate],
+    };
+    var response = await apiWrapper.makeRequest(
+      EndPoints.leaveListApi,
+      Request.post,
+      data,
+      isLoading,
+      await Utility.commonHeader(),
+    );
+    return response;
+  }
+
+  Future<ResponseModel> deleteLeaveApi({
+    required String leaveid,
+    bool isLoading = false,
+  }) async {
+    var data = {"leaveid": leaveid};
+    var response = await apiWrapper.makeRequest(
+      EndPoints.deleteLeaveApi,
+      Request.post,
+      data,
+      isLoading,
+      await Utility.commonHeader(),
+    );
+    return response;
+  }
+
+  Future<ResponseModel> getOneLeaveApi({
+    required String leaveid,
+    bool isLoading = false,
+  }) async {
+    var data = {"leaveid": leaveid};
+    var response = await apiWrapper.makeRequest(
+      EndPoints.getOneLeaveApi,
+      Request.post,
+      data,
+      isLoading,
+      await Utility.commonHeader(),
+    );
+    return response;
+  }
+
+  Future<ResponseModel> changeLeaveStatusApi({
+    required String leaveid,
+    required String status,
+    bool isLoading = false,
+  }) async {
+    var data = {"leaveid": leaveid, "status": status};
+    var response = await apiWrapper.makeRequest(
+      EndPoints.changeLeaveStatusApi,
+      Request.post,
+      data,
+      isLoading,
+      await Utility.commonHeader(),
+    );
+    return response;
   }
 }
 

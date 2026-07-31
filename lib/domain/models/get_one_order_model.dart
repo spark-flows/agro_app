@@ -121,15 +121,23 @@ class GetOneOrderItem {
   dynamic productid;
   dynamic quantity;
   dynamic price;
+  String? unit;
   String? id;
 
-  GetOneOrderItem({this.productid, this.quantity, this.price, this.id});
+  GetOneOrderItem({
+    this.productid,
+    this.quantity,
+    this.price,
+    this.unit,
+    this.id,
+  });
 
   factory GetOneOrderItem.fromJson(Map<String, dynamic> json) =>
       GetOneOrderItem(
         productid: json["productid"],
         quantity: json["quantity"],
         price: json["price"],
+        unit: json["unit"]?.toString(),
         id: json["_id"],
       );
 
@@ -137,6 +145,7 @@ class GetOneOrderItem {
     "productid": productid,
     "quantity": quantity,
     "price": price,
+    "unit": unit,
     "_id": id,
   };
 }

@@ -276,10 +276,11 @@ class _TasksScreenState extends State<TasksScreen> {
                                             PopupMenuButton<String>(
                                               padding: EdgeInsets.zero,
                                               onSelected: (newStatus) {
-                                                controller.changeTaskStatus(
-                                                  task.id ?? '',
-                                                  newStatus,
-                                                );
+                                                controller
+                                                    .showChangeStatusDialog(
+                                                      taskId: task.id ?? '',
+                                                      newStatus: newStatus,
+                                                    );
                                               },
                                               itemBuilder: (context) => const [
                                                 PopupMenuItem(
@@ -367,8 +368,7 @@ class _TasksScreenState extends State<TasksScreen> {
                                                     task.attachment![index];
                                                 final path = attach.path ?? '';
                                                 if (path.isEmpty) {
-                                                  return const SizedBox
-                                                      .shrink();
+                                                  return const SizedBox.shrink();
                                                 }
 
                                                 final isImg = _isImage(path);
@@ -392,81 +392,74 @@ class _TasksScreenState extends State<TasksScreen> {
                                                   child: ClipRRect(
                                                     borderRadius:
                                                         BorderRadius.circular(
-                                                      8,
-                                                    ),
+                                                          8,
+                                                        ),
                                                     child: Container(
                                                       width: 60,
                                                       height: 60,
                                                       color:
                                                           Colors.grey.shade100,
-                                                      child: isImg &&
+                                                      child:
+                                                          isImg &&
                                                               resolvedUrl !=
                                                                   null
                                                           ? CachedNetworkImage(
                                                               imageUrl:
                                                                   resolvedUrl,
-                                                              fit: BoxFit
-                                                                  .cover,
-                                                              placeholder: (
-                                                                context,
-                                                                url,
-                                                              ) =>
-                                                                  const Center(
-                                                                child:
-                                                                    SizedBox(
+                                                              fit: BoxFit.cover,
+                                                              placeholder: (context, url) => const Center(
+                                                                child: SizedBox(
                                                                   width: 16,
                                                                   height: 16,
-                                                                  child:
-                                                                      CircularProgressIndicator(
+                                                                  child: CircularProgressIndicator(
                                                                     strokeWidth:
                                                                         2,
-                                                                    valueColor:
-                                                                        AlwaysStoppedAnimation(
+                                                                    valueColor: AlwaysStoppedAnimation(
                                                                       ColorsValue
                                                                           .primary,
                                                                     ),
                                                                   ),
                                                                 ),
                                                               ),
-                                                              errorWidget: (
-                                                                context,
-                                                                url,
-                                                                error,
-                                                              ) =>
-                                                                  const Icon(
-                                                                Icons
-                                                                    .broken_image_outlined,
-                                                                size: 20,
-                                                                color: Colors
-                                                                    .grey,
-                                                              ),
+                                                              errorWidget:
+                                                                  (
+                                                                    context,
+                                                                    url,
+                                                                    error,
+                                                                  ) => const Icon(
+                                                                    Icons
+                                                                        .broken_image_outlined,
+                                                                    size: 20,
+                                                                    color: Colors
+                                                                        .grey,
+                                                                  ),
                                                             )
                                                           : isVid
-                                                              ? Stack(
-                                                                  alignment:
-                                                                      Alignment
-                                                                          .center,
-                                                                  children: [
-                                                                    Container(
-                                                                      color: Colors
-                                                                          .black12,
-                                                                    ),
-                                                                    const Icon(
-                                                                      Icons
-                                                                          .play_circle_outline,
-                                                                      size: 24,
-                                                                      color: Colors
-                                                                          .black87,
-                                                                    ),
-                                                                  ],
-                                                                )
-                                                              : const Icon(
+                                                          ? Stack(
+                                                              alignment:
+                                                                  Alignment
+                                                                      .center,
+                                                              children: [
+                                                                Container(
+                                                                  color: Colors
+                                                                      .black12,
+                                                                ),
+                                                                const Icon(
                                                                   Icons
-                                                                      .insert_drive_file_outlined,
+                                                                      .play_circle_outline,
                                                                   size: 24,
                                                                   color: Colors
-                                                                      .grey,
+                                                                      .black87,
                                                                 ),
+                                                              ],
+                                                            )
+                                                          : const Icon(
+                                                              Icons
+                                                                  .insert_drive_file_outlined,
+                                                              size: 24,
+                                                              color:
+                                                                  Colors.grey,
+                                                            ),
                                                     ),
                                                   ),
                                                 );

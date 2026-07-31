@@ -51,6 +51,9 @@ class AuthController extends GetxController {
     isLoginLoading = true;
     update();
     Utility.showLoader();
+    if (fcmToken.isEmpty) {
+      await getFCMToken();
+    }
     var response = await authPresenter.loginApi(
       userName: userNameController.text,
       password: passController.text,

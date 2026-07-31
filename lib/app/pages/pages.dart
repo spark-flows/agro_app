@@ -12,3 +12,4 @@ export 'customer_orders_screen/customer_orders_binding.dart';
 export 'tasks_screen/tasks_page.dart';
 export 'attendance_screen/attendance_page.dart';
 export 'salary_screen/salary_page.dart';
+export 'leave_screen/leave_page.dart';

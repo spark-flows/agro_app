@@ -55,4 +55,7 @@ abstract class RouteManagement {
   static void goToAttendanceForm() => Get.toNamed<void>(Routes.attendanceForm);
   static void goToSalaryScreen() => Get.toNamed<void>(Routes.salaryScreen);
   static void goToAddSalaryScreen() => Get.toNamed<void>(Routes.addSalaryScreen);
+  static void goToLeaveScreen() => Get.toNamed<void>(Routes.leaveScreen);
+  static void goToLeaveForm() => Get.toNamed<void>(Routes.leaveForm);
 }
+

@@ -207,8 +207,17 @@ class HomeScreen extends StatelessWidget {
                           onTap: controller.goToSalary,
                         ),
                       ],
+                      if (!RoleUtils.isDealer(controller.roleName)) ...[
+                        _buildMenuCard(
+                          title: 'Leaves',
+                          icon: Icons.beach_access,
+                          color: Colors.green,
+                          onTap: controller.goToLeaves,
+                        ),
+                      ],
                     ],
                   ),
+
                   const SizedBox(height: 32),
                 ],
               ),

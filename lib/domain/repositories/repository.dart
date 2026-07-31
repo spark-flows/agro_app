@@ -896,6 +896,7 @@ class Repository {
     List<String>? permissionuserid,
     List<String>? assigntoid,
     String? mapcolor,
+    String? fcmToken,
     bool isLoading = false,
   }) async {
     try {
@@ -923,6 +924,7 @@ class Repository {
         permissionuserid: permissionuserid,
         assigntoid: assigntoid,
         mapcolor: mapcolor,
+        fcmToken: fcmToken,
         isLoading: isLoading,
       );
       if (!response.hasError) {
@@ -1036,6 +1038,8 @@ class Repository {
     required String time,
     required String priority,
     required List<Map<String, String>> attachment,
+    String? tasktype,
+    List<Map<String, dynamic>>? remarks,
     bool isLoading = false,
   }) async {
     try {
@@ -1050,6 +1054,8 @@ class Repository {
         time: time,
         priority: priority,
         attachment: attachment,
+        tasktype: tasktype,
+        remarks: remarks,
         isLoading: isLoading,
       );
       if (response.hasError) {
@@ -1135,12 +1141,16 @@ class Repository {
   Future<bool> changeTaskStatusApi({
     required String taskid,
     required String status,
+    String? remark,
+    String? updatedBy,
     bool isLoading = false,
   }) async {
     try {
       var response = await _dataRepository.changeTaskStatusApi(
         taskid: taskid,
         status: status,
+        remark: remark,
+        updatedBy: updatedBy,
         isLoading: isLoading,
       );
       if (response.hasError) {
@@ -1229,6 +1239,7 @@ class Repository {
     int? timeinodometer,
     String? timeoutphoto,
     int? timeoutodometer,
+    String? vehicalno,
     bool isLoading = false,
   }) async {
     try {
@@ -1250,6 +1261,7 @@ class Repository {
         timeinodometer: timeinodometer,
         timeoutphoto: timeoutphoto,
         timeoutodometer: timeoutodometer,
+        vehicalno: vehicalno,
         isLoading: isLoading,
       );
       if (response.hasError) {
@@ -1644,6 +1656,171 @@ class Repository {
       return !response.hasError;
     } catch (e) {
       print('pauseTrackingApi error: $e');
+      return false;
+    }
+  }
+
+  Future<CreateLeaveModel?> createLeaveApi({
+    String? leaveid,
+    String? leavedate,
+    required String userid,
+    required String fromdate,
+    required String todate,
+    required num totaldays,
+    required num totalhours,
+    required String leavetype,
+    required String reason,
+    required String status,
+    bool isLoading = false,
+  }) async {
+    try {
+      var response = await _dataRepository.createLeaveApi(
+        leaveid: leaveid,
+        leavedate: leavedate,
+        userid: userid,
+        fromdate: fromdate,
+        todate: todate,
+        totaldays: totaldays,
+        totalhours: totalhours,
+        leavetype: leavetype,
+        reason: reason,
+        status: status,
+        isLoading: isLoading,
+      );
+      if (response.hasError) {
+        final msg = _parseErrorMessage(response.data, 'Failed to save leave');
+        Utility.showMessage(msg, MessageType.error, null, '');
+        return null;
+      }
+      if (response.data.isNotEmpty) {
+        return createLeaveModelFromJson(response.data);
+      }
+      return null;
+    } catch (e, st) {
+      print('createLeaveApi error: $e\n$st');
+      Utility.closeDialog();
+      Utility.showMessage('Failed to save leave', MessageType.error, null, '');
+      return null;
+    }
+  }
+
+  Future<GetAllLeavesModel?> getLeaveListApi({
+    int page = 1,
+    int limit = 10,
+    String search = "",
+    String fromDate = "",
+    String toDate = "",
+    String status = "",
+    String userid = "",
+    String leavetype = "",
+    bool isLoading = false,
+  }) async {
+    try {
+      var response = await _dataRepository.getLeaveListApi(
+        page: page,
+        limit: limit,
+        search: search,
+        fromDate: fromDate,
+        toDate: toDate,
+        status: status,
+        userid: userid,
+        leavetype: leavetype,
+        isLoading: isLoading,
+      );
+      if (response.hasError) {
+        final msg = _parseErrorMessage(response.data, 'Failed to load leaves');
+        Utility.showMessage(msg, MessageType.error, null, '');
+        return null;
+      }
+      if (response.data.isNotEmpty) {
+        return getAllLeavesModelFromJson(response.data);
+      }
+      return null;
+    } catch (e, st) {
+      print('getLeaveListApi error: $e\n$st');
+      Utility.closeDialog();
+      Utility.showMessage('Failed to load leaves', MessageType.error, null, '');
+      return null;
+    }
+  }
+
+  Future<bool> deleteLeaveApi({
+    required String leaveid,
+    bool isLoading = false,
+  }) async {
+    try {
+      var response = await _dataRepository.deleteLeaveApi(
+        leaveid: leaveid,
+        isLoading: isLoading,
+      );
+      if (response.hasError) {
+        final msg = _parseErrorMessage(response.data, 'Failed to delete leave');
+        Utility.showMessage(msg, MessageType.error, null, '');
+        return false;
+      }
+      return true;
+    } catch (e) {
+      print('deleteLeaveApi error: $e');
+      return false;
+    }
+  }
+
+  Future<CreateLeaveModel?> getOneLeaveApi({
+    required String leaveid,
+    bool isLoading = false,
+  }) async {
+    try {
+      var response = await _dataRepository.getOneLeaveApi(
+        leaveid: leaveid,
+        isLoading: isLoading,
+      );
+      if (response.hasError) {
+        final msg = _parseErrorMessage(
+          response.data,
+          'Failed to load leave details',
+        );
+        Utility.showMessage(msg, MessageType.error, null, '');
+        return null;
+      }
+      if (response.data.isNotEmpty) {
+        return createLeaveModelFromJson(response.data);
+      }
+      return null;
+    } catch (e, st) {
+      print('getOneLeaveApi error: $e\n$st');
+      Utility.closeDialog();
+      Utility.showMessage(
+        'Failed to load leave details',
+        MessageType.error,
+        null,
+        '',
+      );
+      return null;
+    }
+  }
+
+  Future<bool> changeLeaveStatusApi({
+    required String leaveid,
+    required String status,
+    bool isLoading = false,
+  }) async {
+    try {
+      var response = await _dataRepository.changeLeaveStatusApi(
+        leaveid: leaveid,
+        status: status,
+        isLoading: isLoading,
+      );
+      if (response.hasError) {
+        final msg = _parseErrorMessage(
+          response.data,
+          'Failed to update leave status',
+        );
+        Utility.showMessage(msg, MessageType.error, null, '');
+        return false;
+      }
+      return true;
+    } catch (e) {
+      print('changeLeaveStatusApi error: $e');
       return false;
     }
   }

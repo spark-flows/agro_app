@@ -853,97 +853,165 @@ void _showQuantityEditDialog(OrdersController controller, ProductItem item) {
   final context = Get.context;
   if (context == null) return;
   final textController = TextEditingController(text: item.quantity.toString());
+  String? selectedUnitInDialog = item.selectedUnit;
+  if (selectedUnitInDialog == null || selectedUnitInDialog.isEmpty) {
+    if (controller.units.isNotEmpty) {
+      selectedUnitInDialog =
+          controller.units.first.name ?? controller.units.first.id;
+    }
+  }
 
   Get.dialog(
-    Dialog(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      child: Padding(
-        padding: const EdgeInsets.all(20.0),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Text(
-              'Enter Quantity',
-              style: Styles.txtBlackColorW70016,
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 8),
-            Text(
-              item.name,
-              style: Styles.txtGreyColorW40012,
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: textController,
-              keyboardType: TextInputType.number,
-              autofocus: true,
-              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-              decoration: InputDecoration(
-                contentPadding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 10,
-                ),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                  borderSide: BorderSide(color: Colors.grey.shade300),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                  borderSide: const BorderSide(color: ColorsValue.primary),
-                ),
-                suffixText: item.unit.replaceAll("per ", ""),
-              ),
-            ),
-            const SizedBox(height: 20),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.end,
+    StatefulBuilder(
+      builder: (context, setDialogState) {
+        return Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(20.0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                TextButton(
-                  onPressed: () => Get.back(),
-                  child: Text(
-                    'Cancel',
-                    style: TextStyle(color: Colors.grey.shade600),
-                  ),
+                Text(
+                  'Enter Quantity & Unit',
+                  style: Styles.txtBlackColorW70016,
+                  textAlign: TextAlign.center,
                 ),
-                const SizedBox(width: 8),
-                ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: ColorsValue.primary,
-                    shape: RoundedRectangleBorder(
+                const SizedBox(height: 8),
+                Text(
+                  item.name,
+                  style: Styles.txtGreyColorW40012,
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 16),
+                TextField(
+                  controller: textController,
+                  keyboardType: TextInputType.number,
+                  autofocus: true,
+                  inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                  decoration: InputDecoration(
+                    labelText: 'Quantity',
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 10,
+                    ),
+                    border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide(color: Colors.grey.shade300),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: const BorderSide(color: ColorsValue.primary),
                     ),
                   ),
-                  onPressed: () {
-                    final enteredVal = int.tryParse(textController.text) ?? 0;
-                    controller.updateQuantity(item.id, enteredVal);
-                    Get.back();
-                  },
-                  child: const Text(
-                    'Update',
-                    style: TextStyle(color: Colors.white),
+                ),
+                const SizedBox(height: 14),
+                DropdownButtonFormField<String>(
+                  value:
+                      (controller.units.any(
+                        (u) =>
+                            u.name == selectedUnitInDialog ||
+                            u.id == selectedUnitInDialog,
+                      ))
+                          ? selectedUnitInDialog
+                          : (controller.units.isNotEmpty
+                              ? (controller.units.first.name ??
+                                  controller.units.first.id)
+                              : null),
+                  decoration: InputDecoration(
+                    labelText: 'Unit',
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 10,
+                    ),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide(color: Colors.grey.shade300),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: const BorderSide(color: ColorsValue.primary),
+                    ),
                   ),
+                  items:
+                      controller.units.map((u) {
+                        final val = u.name ?? u.id ?? '';
+                        return DropdownMenuItem<String>(
+                          value: val,
+                          child: Text(val),
+                        );
+                      }).toList(),
+                  onChanged: (val) {
+                    if (val != null) {
+                      setDialogState(() {
+                        selectedUnitInDialog = val;
+                      });
+                    }
+                  },
+                ),
+                const SizedBox(height: 20),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    TextButton(
+                      onPressed: () => Get.back(),
+                      child: Text(
+                        'Cancel',
+                        style: TextStyle(color: Colors.grey.shade600),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: ColorsValue.primary,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                      onPressed: () {
+                        final enteredVal =
+                            int.tryParse(textController.text) ?? 0;
+                        item.selectedUnit = selectedUnitInDialog;
+                        controller.updateQuantity(item.id, enteredVal);
+                        Get.back();
+                      },
+                      child: const Text(
+                        'Update',
+                        style: TextStyle(color: Colors.white),
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     ),
   );
 }
 
 Widget _buildProductCard(OrdersController controller, ProductItem item) {
+  final unitOptions = controller.units;
+  String? currentUnit = item.selectedUnit;
+  if (currentUnit == null || currentUnit.isEmpty) {
+    if (unitOptions.isNotEmpty) {
+      currentUnit = unitOptions.first.name ?? unitOptions.first.id;
+      item.selectedUnit = currentUnit;
+    }
+  }
+
   return Card(
     elevation: 1,
     margin: const EdgeInsets.only(bottom: 12),
     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-    child: Stack(
-      children: [
-        Padding(
-          padding: const EdgeInsets.all(12.0),
-          child: Row(
+    child: Padding(
+      padding: const EdgeInsets.all(12.0),
+      child: Column(
+        children: [
+          Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               /// Icon Placeholder
@@ -977,16 +1045,19 @@ Widget _buildProductCard(OrdersController controller, ProductItem item) {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      '${item.price} / ${item.unit.replaceAll("per ", "")}',
+                      '${item.price} / ${item.selectedUnit ?? item.unit.replaceAll("per ", "")}',
                       style: Styles.txtBlackColorW70014.copyWith(
                         color: ColorsValue.primary,
                       ),
                     ),
-                    const SizedBox(height: 4),
-                    Text(
-                      'Available Qty: ${item.qty ?? 0}',
-                      style: Styles.txtGreyColorW40012,
-                    ),
+
+                    if (!controller.isDealerRole) ...[
+                      const SizedBox(height: 4),
+                      Text(
+                        'Available Qty: ${item.qty ?? 0}',
+                        style: Styles.txtGreyColorW40012,
+                      ),
+                    ],
                   ],
                 ),
               ),
@@ -1001,7 +1072,9 @@ Widget _buildProductCard(OrdersController controller, ProductItem item) {
                           color: ColorsValue.primary,
                           size: 30,
                         ),
-                        onPressed: () => controller.incrementQuantity(item.id),
+                        onPressed: () {
+                          controller.incrementQuantity(item.id);
+                        },
                       )
                     : Row(
                         mainAxisSize: MainAxisSize.min,
@@ -1015,10 +1088,8 @@ Widget _buildProductCard(OrdersController controller, ProductItem item) {
                                 controller.decrementQuantity(item.id),
                           ),
                           InkWell(
-                            onTap: () => _showQuantityEditDialog(
-                              controller,
-                              item,
-                            ),
+                            onTap: () =>
+                                _showQuantityEditDialog(controller, item),
                             borderRadius: BorderRadius.circular(4),
                             child: Container(
                               padding: const EdgeInsets.symmetric(
@@ -1048,8 +1119,82 @@ Widget _buildProductCard(OrdersController controller, ProductItem item) {
               ),
             ],
           ),
-        ),
-      ],
+          if (item.quantity > 0) ...[
+            const SizedBox(height: 8),
+            const Divider(height: 1),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                const Icon(
+                  Icons.straighten,
+                  size: 18,
+                  color: ColorsValue.primary,
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  'Unit: ',
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: ColorsValue.txtBlackColor,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Container(
+                    height: 38,
+                    padding: const EdgeInsets.symmetric(horizontal: 10),
+                    decoration: BoxDecoration(
+                      border: Border.all(color: Colors.grey.shade300),
+                      borderRadius: BorderRadius.circular(8),
+                      color: Colors.grey.shade50,
+                    ),
+                    child: DropdownButtonHideUnderline(
+                      child: DropdownButton<String>(
+                        isExpanded: true,
+                        value:
+                            (unitOptions.any(
+                              (u) =>
+                                  u.name == item.selectedUnit ||
+                                  u.id == item.selectedUnit,
+                            ))
+                                ? item.selectedUnit
+                                : (unitOptions.isNotEmpty
+                                    ? (unitOptions.first.name ??
+                                        unitOptions.first.id)
+                                    : null),
+                        hint: const Text(
+                          'Select Unit',
+                          style: TextStyle(fontSize: 13),
+                        ),
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w500,
+                          color: ColorsValue.txtBlackColor,
+                        ),
+                        items:
+                            unitOptions.map((u) {
+                              final val = u.name ?? u.id ?? '';
+                              return DropdownMenuItem<String>(
+                                value: val,
+                                child: Text(val),
+                              );
+                            }).toList(),
+                        onChanged: (newUnit) {
+                          if (newUnit != null) {
+                            item.selectedUnit = newUnit;
+                            controller.update();
+                          }
+                        },
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ],
+      ),
     ),
   );
 }
@@ -1390,7 +1535,7 @@ void _showOrderDetailsDialog(
                       (p) => p.id == item.productid,
                     );
                     pName = localMatch?.name ?? item.productid.toString();
-                    pUnit = localMatch?.unit?.replaceAll("per ", "");
+                    pUnit = localMatch != null ? localMatch.unit.replaceAll("per ", "") : null;
                   }
 
                   return Card(

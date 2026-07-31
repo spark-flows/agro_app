@@ -152,5 +152,20 @@ class AppPages {
       binding: SalaryBindings(),
       transition: Transition.rightToLeft,
     ),
+    GetPage<LeaveScreen>(
+      name: _Paths.leaveScreen,
+      transitionDuration: transitionDuration,
+      page: LeaveScreen.new,
+      binding: LeaveBinding(),
+      transition: Transition.rightToLeft,
+    ),
+    GetPage<LeaveFormPage>(
+      name: _Paths.leaveForm,
+      transitionDuration: transitionDuration,
+      page: LeaveFormPage.new,
+      binding: LeaveBinding(),
+      transition: Transition.rightToLeft,
+    ),
   ];
 }
+

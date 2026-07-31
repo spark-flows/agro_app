@@ -369,6 +369,171 @@ class _TaskFormPageState extends State<TaskFormPage> {
                     }
                   },
                 ),
+                const SizedBox(height: 20),
+
+                // ── Task Type Dropdown ───────────────────────────────────────
+                DropdownButtonFormField<String>(
+                  value: controller.selectedTaskType,
+                  decoration: InputDecoration(
+                    labelText: 'Task Type *',
+                    labelStyle: Styles.txtGreyColorW40014,
+                    floatingLabelStyle: const TextStyle(
+                      color: ColorsValue.primary,
+                    ),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(color: Colors.grey.shade300),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(color: Colors.grey.shade300),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(
+                        color: ColorsValue.primary,
+                        width: 1.5,
+                      ),
+                    ),
+                    prefixIcon: const Icon(
+                      Icons.category_outlined,
+                      color: ColorsValue.primary,
+                    ),
+                  ),
+                  items: const [
+                    DropdownMenuItem(value: 'regular', child: Text('Regular')),
+                    DropdownMenuItem(value: 'advance', child: Text('Advance')),
+                  ],
+                  onChanged: (val) {
+                    if (val != null) {
+                      setState(() {
+                        controller.selectedTaskType = val;
+                      });
+                      controller.update();
+                    }
+                  },
+                ),
+                const SizedBox(height: 24),
+
+                // ── Remarks Section ──────────────────────────────────────────
+                _sectionHeader('Remarks'),
+                const SizedBox(height: 16),
+
+                if (controller.existingRemarks.isNotEmpty) ...[
+                  ...controller.existingRemarks.map((rem) {
+                    final isMyRemark =
+                        controller.currentUserId.isNotEmpty &&
+                        rem.updatedById.isNotEmpty &&
+                        rem.updatedById == controller.currentUserId;
+                    final authorDisplay = isMyRemark
+                        ? 'You'
+                        : (rem.updatedByName.isNotEmpty
+                              ? rem.updatedByName
+                              : (rem.updatedById.isNotEmpty
+                                    ? rem.updatedById
+                                    : 'User'));
+
+                    return Container(
+                      margin: const EdgeInsets.only(bottom: 12),
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: isMyRemark
+                            ? ColorsValue.primary.withValues(alpha: 0.05)
+                            : Colors.grey.shade100,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: isMyRemark
+                              ? ColorsValue.primary
+                              : Colors.grey.shade300,
+                        ),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Row(
+                                children: [
+                                  Icon(
+                                    isMyRemark
+                                        ? Icons.edit_note
+                                        : Icons.lock_outline,
+                                    size: 16,
+                                    color: isMyRemark
+                                        ? ColorsValue.primary
+                                        : Colors.grey.shade600,
+                                  ),
+                                  const SizedBox(width: 6),
+                                  Text(
+                                    authorDisplay,
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.bold,
+                                      color: isMyRemark
+                                          ? ColorsValue.primary
+                                          : Colors.grey.shade800,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 2,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: rem.status == 'advance'
+                                      ? Colors.orange.shade100
+                                      : Colors.blue.shade100,
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
+                                child: Text(
+                                  (rem.status ?? 'regular').toUpperCase(),
+                                  style: TextStyle(
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.bold,
+                                    color: rem.status == 'advance'
+                                        ? Colors.orange.shade800
+                                        : Colors.blue.shade800,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 6),
+                          Text(
+                            rem.remark ?? '',
+                            style: const TextStyle(
+                              fontSize: 13,
+                              color: Colors.black87,
+                            ),
+                          ),
+                          if (rem.date != null && rem.date!.isNotEmpty) ...[
+                            const SizedBox(height: 4),
+                            Text(
+                              rem.date!,
+                              style: TextStyle(
+                                fontSize: 10,
+                                color: Colors.grey.shade600,
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                    );
+                  }),
+                  const SizedBox(height: 8),
+                ],
+
+                _buildField(
+                  fieldController: controller.remarkCtrl,
+                  label: 'Add / Edit Remark',
+                  icon: Icons.comment_outlined,
+                  keyboardType: TextInputType.multiline,
+                  action: TextInputAction.newline,
+                  maxLines: 2,
+                ),
                 const SizedBox(height: 24),
                 _sectionHeader('Attachments'),
                 const SizedBox(height: 12),

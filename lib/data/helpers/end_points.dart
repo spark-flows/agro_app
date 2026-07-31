@@ -51,4 +51,11 @@ class EndPoints {
   static String stopTrackingApi = 'api/tracking/stop';
   static String updateLocationApi = 'api/tracking/location';
   static String pauseTrackingApi = 'api/tracking/pause';
+
+  static String leaveListApi = 'api/leave';
+  static String createLeaveApi = 'api/leave/create';
+  static String deleteLeaveApi = 'api/leave/delete';
+  static String getOneLeaveApi = 'api/leave/getone';
+  static String changeLeaveStatusApi = 'api/leave/changestatus';
 }
+

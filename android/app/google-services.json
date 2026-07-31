@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "639935316224",
+    "project_id": "agro-app-65d1f",
+    "storage_bucket": "agro-app-65d1f.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:639935316224:android:9d376e042c0025397473e5",
+        "android_client_info": {
+          "package_name": "com.spark.agro_app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDu4r8td99811rU-1704Cq1DHFPhs1umhc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
