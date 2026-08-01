@@ -1662,7 +1662,6 @@ class Repository {
 
   Future<CreateLeaveModel?> createLeaveApi({
     String? leaveid,
-    String? leavedate,
     required String userid,
     required String fromdate,
     required String todate,
@@ -1676,7 +1675,6 @@ class Repository {
     try {
       var response = await _dataRepository.createLeaveApi(
         leaveid: leaveid,
-        leavedate: leavedate,
         userid: userid,
         fromdate: fromdate,
         todate: todate,
@@ -1983,6 +1981,227 @@ class Repository {
     } catch (e) {
       print('changeCollectionStatusApi error: $e');
       return false;
+    }
+  }
+
+  Future<CreateExpenseModel?> createExpenseApi({
+    String? expenseid,
+    required String date,
+    required String userid,
+    required String particularid,
+    required String amount,
+    required String image,
+    required String remark,
+    bool isLoading = false,
+  }) async {
+    try {
+      var response = await _dataRepository.createExpenseApi(
+        expenseid: expenseid,
+        date: date,
+        userid: userid,
+        particularid: particularid,
+        amount: amount,
+        image: image,
+        remark: remark,
+        isLoading: isLoading,
+      );
+      if (response.hasError) {
+        final msg = _parseErrorMessage(response.data, 'Failed to save expense');
+        Utility.showMessage(msg, MessageType.error, null, '');
+        return null;
+      }
+      if (response.data.isNotEmpty) {
+        return createExpenseModelFromJson(response.data);
+      }
+      return null;
+    } catch (e, st) {
+      print('createExpenseApi error: $e\n$st');
+      Utility.closeDialog();
+      Utility.showMessage('Failed to save expense', MessageType.error, null, '');
+      return null;
+    }
+  }
+
+  Future<GetAllExpensesModel?> getExpenseListApi({
+    int page = 1,
+    int limit = 10,
+    String search = "",
+    String fromDate = "",
+    String toDate = "",
+    String userid = "",
+    String sortfield = "_id",
+    int sortoption = 1,
+    bool isLoading = false,
+  }) async {
+    try {
+      var response = await _dataRepository.getExpenseListApi(
+        page: page,
+        limit: limit,
+        search: search,
+        fromDate: fromDate,
+        toDate: toDate,
+        userid: userid,
+        sortfield: sortfield,
+        sortoption: sortoption,
+        isLoading: isLoading,
+      );
+      if (response.hasError) {
+        final msg = _parseErrorMessage(response.data, 'Failed to load expenses');
+        Utility.showMessage(msg, MessageType.error, null, '');
+        return null;
+      }
+      if (response.data.isNotEmpty) {
+        return getAllExpensesModelFromJson(response.data);
+      }
+      return null;
+    } catch (e, st) {
+      print('getExpenseListApi error: $e\n$st');
+      Utility.closeDialog();
+      Utility.showMessage('Failed to load expenses', MessageType.error, null, '');
+      return null;
+    }
+  }
+
+  Future<bool> deleteExpenseApi({
+    required String expenseid,
+    bool isLoading = false,
+  }) async {
+    try {
+      var response = await _dataRepository.deleteExpenseApi(
+        expenseid: expenseid,
+        isLoading: isLoading,
+      );
+      if (response.hasError) {
+        final msg = _parseErrorMessage(response.data, 'Failed to delete expense');
+        Utility.showMessage(msg, MessageType.error, null, '');
+        return false;
+      }
+      return true;
+    } catch (e) {
+      print('deleteExpenseApi error: $e');
+      return false;
+    }
+  }
+
+  Future<CreateExpenseModel?> getOneExpenseApi({
+    required String expenseid,
+    bool isLoading = false,
+  }) async {
+    try {
+      var response = await _dataRepository.getOneExpenseApi(
+        expenseid: expenseid,
+        isLoading: isLoading,
+      );
+      if (response.hasError) {
+        final msg = _parseErrorMessage(
+          response.data,
+          'Failed to load expense details',
+        );
+        Utility.showMessage(msg, MessageType.error, null, '');
+        return null;
+      }
+      if (response.data.isNotEmpty) {
+        return createExpenseModelFromJson(response.data);
+      }
+      return null;
+    } catch (e, st) {
+      print('getOneExpenseApi error: $e\n$st');
+      Utility.closeDialog();
+      Utility.showMessage(
+        'Failed to load expense details',
+        MessageType.error,
+        null,
+        '',
+      );
+      return null;
+    }
+  }
+
+  Future<bool> changeExpenseStatusApi({
+    required String expenseid,
+    required String status,
+    bool isLoading = false,
+  }) async {
+    try {
+      var response = await _dataRepository.changeExpenseStatusApi(
+        expenseid: expenseid,
+        status: status,
+        isLoading: isLoading,
+      );
+      if (response.hasError) {
+        final msg = _parseErrorMessage(
+          response.data,
+          'Failed to update expense status',
+        );
+        Utility.showMessage(msg, MessageType.error, null, '');
+        return false;
+      }
+      return true;
+    } catch (e) {
+      print('changeExpenseStatusApi error: $e');
+      return false;
+    }
+  }
+
+  Future<UploadImageResponse?> uploadExpenseImageApi(
+    File image, {
+    bool isLoading = true,
+  }) async {
+    try {
+      var response = await _dataRepository.uploadExpenseImageApi(
+        filePath: image.path,
+        isLoading: isLoading,
+      );
+      if (response.hasError) {
+        final msg = _parseErrorMessage(response.data, 'Failed to upload image');
+        Utility.showMessage(msg, MessageType.error, null, '');
+        return null;
+      }
+      if (response.data.isNotEmpty) {
+        return UploadImageResponse.fromJson(json.decode(response.data));
+      }
+      return null;
+    } catch (e) {
+      print('uploadExpenseImageApi error: $e');
+      Utility.closeDialog();
+      Utility.showMessage(
+        'Failed to upload image',
+        MessageType.error,
+        null,
+        '',
+      );
+      return null;
+    }
+  }
+
+  Future<GetAllParticularsModel?> getParticularListApi({
+    String search = "",
+    bool isLoading = false,
+  }) async {
+    try {
+      var response = await _dataRepository.getParticularListApi(
+        search: search,
+        isLoading: isLoading,
+      );
+      if (response.hasError) {
+        final msg = _parseErrorMessage(response.data, 'Failed to load particulars');
+        Utility.showMessage(msg, MessageType.error, null, '');
+        return null;
+      }
+      if (response.data.isNotEmpty) {
+        return getAllParticularsModelFromJson(response.data);
+      }
+      return null;
+    } catch (e, st) {
+      print('getParticularListApi error: $e\n$st');
+      Utility.closeDialog();
+      Utility.showMessage(
+        'Failed to load particulars',
+        MessageType.error,
+        null,
+        '',
+      );
+      return null;
     }
   }
 }

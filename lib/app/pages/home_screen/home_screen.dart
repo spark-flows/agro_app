@@ -33,21 +33,41 @@ class HomeScreen extends StatelessWidget {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Column(
-                        mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Welcome, ${controller.roleName.isNotEmpty ? Utility.capitalizeFirst(controller.roleName) : ' - - '}',
-                            style: Styles.txtBlackColorW70020,
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            'What would you like to manage today?',
-                            style: Styles.txtGreyColorW40014,
-                          ),
-                        ],
+                      Expanded(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Welcome, ${controller.roleName.isNotEmpty ? Utility.capitalizeFirst(controller.roleName) : ' - - '}',
+                              style: Styles.txtBlackColorW70020,
+                              overflow: TextOverflow.ellipsis,
+                              maxLines: 1,
+                            ),
+                            if (controller.selectedBranch != null) ...[
+                              const SizedBox(height: 4),
+                              Text(
+                                controller.selectedBranch?.name ?? '',
+                                overflow: TextOverflow.ellipsis,
+                                maxLines: 1,
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                  color: ColorsValue.primary,
+                                ),
+                              ),
+                            ],
+                            const SizedBox(height: 4),
+                            Text(
+                              'What would you like to manage today?',
+                              style: Styles.txtGreyColorW40014,
+                              overflow: TextOverflow.ellipsis,
+                              maxLines: 1,
+                            ),
+                          ],
+                        ),
                       ),
+                      const SizedBox(width: 8),
                       IconButton(
                         icon: Icon(
                           Icons.perm_identity_sharp,
@@ -61,7 +81,8 @@ class HomeScreen extends StatelessWidget {
                   const SizedBox(height: 20),
 
                   // Branch dropdown selection (Admin only)
-                  if (RoleUtils.isAdmin(controller.roleName)) ...[
+                  if (RoleUtils.isAdmin(controller.roleName) ||
+                      RoleUtils.isUser(controller.roleName)) ...[
                     if (controller.isBranchesLoading)
                       const Center(
                         child: CircularProgressIndicator(
@@ -222,6 +243,15 @@ class HomeScreen extends StatelessWidget {
                           icon: Icons.collections_bookmark_outlined,
                           color: Colors.deepPurple,
                           onTap: controller.goToCollection,
+                        ),
+                      ],
+                      if (RoleUtils.isAdmin(controller.roleName) ||
+                          RoleUtils.isUser(controller.roleName)) ...[
+                        _buildMenuCard(
+                          title: 'Expense',
+                          icon: Icons.money_off_outlined,
+                          color: Colors.redAccent,
+                          onTap: controller.goToExpense,
                         ),
                       ],
                     ],

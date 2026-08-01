@@ -1,15 +1,16 @@
+import 'dart:io';
 import 'package:intl/intl.dart';
 import 'package:agro_app/app/app.dart';
 import 'package:agro_app/domain/domain.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-class CollectionScreen extends StatelessWidget {
-  const CollectionScreen({super.key});
+class ExpenseScreen extends StatelessWidget {
+  const ExpenseScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return GetBuilder<CollectionController>(
+    return GetBuilder<ExpenseController>(
       builder: (controller) {
         final isAllowed =
             RoleUtils.isAdmin(controller.roleName) ||
@@ -24,20 +25,20 @@ class CollectionScreen extends StatelessWidget {
               icon: const Icon(Icons.arrow_back, color: Colors.black87),
               onPressed: () => Get.back(),
             ),
-            title: Text('Collections', style: Styles.txtBlackColorW70020),
+            title: Text('Expenses', style: Styles.txtBlackColorW70020),
           ),
           floatingActionButton: isAllowed
               ? FloatingActionButton.extended(
                   backgroundColor: ColorsValue.primary,
                   onPressed: () {
                     controller.prepareForm();
-                    RouteManagement.goToCollectionForm();
+                    RouteManagement.goToExpenseForm();
                   },
                   icon: const Icon(Icons.add, color: Colors.white),
-                  label: Text('Add Collection', style: Styles.whiteColorW60016),
+                  label: Text('Add Expense', style: Styles.whiteColorW60016),
                 )
               : null,
-          body: controller.isLoading && controller.collections.isEmpty
+          body: controller.isLoading && controller.expenses.isEmpty
               ? const Center(
                   child: CircularProgressIndicator(color: ColorsValue.primary),
                 )
@@ -49,7 +50,7 @@ class CollectionScreen extends StatelessWidget {
                   ),
                 )
               : RefreshIndicator(
-                  onRefresh: () => controller.fetchCollections(isRefresh: true),
+                  onRefresh: () => controller.fetchExpenses(isRefresh: true),
                   child: Column(
                     children: [
                       // ── Search & Filter Bar ──
@@ -61,7 +62,7 @@ class CollectionScreen extends StatelessWidget {
                               child: TextField(
                                 onChanged: controller.onSearchChanged,
                                 decoration: InputDecoration(
-                                  hintText: 'Search by party name or mode...',
+                                  hintText: 'Search by particular or amount...',
                                   prefixIcon: const Icon(
                                     Icons.search,
                                     color: Colors.grey,
@@ -114,7 +115,7 @@ class CollectionScreen extends StatelessWidget {
                         ),
                       ),
 
-                      // ── Collection List ──
+                      // ── Expense List ──
                       Expanded(
                         child: controller.isLoading
                             ? const Center(
@@ -122,10 +123,10 @@ class CollectionScreen extends StatelessWidget {
                                   color: ColorsValue.primary,
                                 ),
                               )
-                            : controller.filteredCollections.isEmpty
+                            : controller.filteredExpenses.isEmpty
                             ? Center(
                                 child: Text(
-                                  'No collections found.',
+                                  'No expenses found.',
                                   style: Styles.txtGreyColorW40014,
                                 ),
                               )
@@ -136,11 +137,11 @@ class CollectionScreen extends StatelessWidget {
                                   bottom: 80,
                                 ),
                                 itemCount:
-                                    controller.filteredCollections.length +
+                                    controller.filteredExpenses.length +
                                     (controller.isFetchingMore ? 1 : 0),
                                 itemBuilder: (context, index) {
                                   if (index ==
-                                      controller.filteredCollections.length) {
+                                      controller.filteredExpenses.length) {
                                     return const Padding(
                                       padding: EdgeInsets.all(16.0),
                                       child: Center(
@@ -151,8 +152,8 @@ class CollectionScreen extends StatelessWidget {
                                     );
                                   }
                                   final item =
-                                      controller.filteredCollections[index];
-                                  return _buildCollectionCard(
+                                      controller.filteredExpenses[index];
+                                  return _buildExpenseCard(
                                     context,
                                     controller,
                                     item,
@@ -168,24 +169,16 @@ class CollectionScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildCollectionCard(
+  Widget _buildExpenseCard(
     BuildContext context,
-    CollectionController controller,
-    CollectionDoc item,
+    ExpenseController controller,
+    ExpenseDoc item,
   ) {
-    final status = item.paymentstatus?.toLowerCase().trim() ?? 'pending';
-    Color statusBgColor = Colors.orange.shade100;
-    Color statusTextColor = Colors.orange.shade900;
-
-    if (status == 'received') {
-      statusBgColor = Colors.green.shade100;
-      statusTextColor = Colors.green.shade900;
-    } else if (status == 'return') {
-      statusBgColor = Colors.red.shade100;
-      statusTextColor = Colors.red.shade900;
-    }
-
-    final mode = item.paymentmode?.toUpperCase() ?? 'N/A';
+    final particularName = item.particularid?.name ?? 'Unknown Expense';
+    final amount = item.amount ?? '0';
+    final date = item.date ?? 'N/A';
+    final remark = item.remark ?? '';
+    final imageUrl = item.image;
 
     return Card(
       elevation: 2,
@@ -201,59 +194,23 @@ class CollectionScreen extends StatelessWidget {
               children: [
                 Expanded(
                   child: Text(
-                    item.partyname ?? 'Unknown Party',
+                    particularName,
                     style: Styles.txtBlackColorW70016,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 4,
-                  ),
-                  decoration: BoxDecoration(
-                    color: statusBgColor,
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Text(
-                    status.toUpperCase(),
-                    style: TextStyle(
-                      color: statusTextColor,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 11,
-                    ),
+                Text(
+                  '₹$amount',
+                  style: const TextStyle(
+                    color: Colors.redAccent,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
                   ),
                 ),
               ],
             ),
             const SizedBox(height: 8),
-
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  'Amount: ₹${item.amount ?? '0'}',
-                  style: TextStyle(
-                    color: ColorsValue.primary,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 15,
-                  ),
-                ),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 2,
-                  ),
-                  decoration: BoxDecoration(
-                    color: Colors.grey.shade200,
-                    borderRadius: BorderRadius.circular(6),
-                  ),
-                  child: Text('Mode: $mode', style: Styles.txtBlackColorW70012),
-                ),
-              ],
-            ),
-            const SizedBox(height: 6),
 
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -266,7 +223,7 @@ class CollectionScreen extends StatelessWidget {
                       color: Colors.grey,
                     ),
                     const SizedBox(width: 4),
-                    Text(item.date ?? 'N/A', style: Styles.txtGreyColorW40012),
+                    Text(date, style: Styles.txtGreyColorW40012),
                   ],
                 ),
                 if (item.userid?.name != null &&
@@ -288,10 +245,36 @@ class CollectionScreen extends StatelessWidget {
                 ],
               ],
             ),
-            if (item.remark != null && item.remark!.trim().isNotEmpty) ...[
-              const SizedBox(height: 6),
-              Text('Remark: ${item.remark}', style: Styles.txtGreyColorW40012),
+
+            if (remark.trim().isNotEmpty) ...[
+              const SizedBox(height: 8),
+              Text('Remark: $remark', style: Styles.txtGreyColorW40012),
             ],
+
+            if (imageUrl != null && imageUrl.trim().isNotEmpty) ...[
+              const SizedBox(height: 10),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(8),
+                child: imageUrl.startsWith('http')
+                    ? Image.network(
+                        imageUrl,
+                        height: 120,
+                        width: double.infinity,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) =>
+                            const SizedBox(),
+                      )
+                    : Image.file(
+                        File(imageUrl),
+                        height: 120,
+                        width: double.infinity,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) =>
+                            const SizedBox(),
+                      ),
+              ),
+            ],
+
             const Divider(height: 16),
 
             // ── Action Buttons ──
@@ -301,14 +284,14 @@ class CollectionScreen extends StatelessWidget {
                 // Change Status Button
                 PopupMenuButton<String>(
                   onSelected: (String newStatus) {
-                    final collectionId = item.id ?? item.collectionid ?? '';
-                    if (collectionId.isNotEmpty) {
-                      controller.changeStatus(collectionId, newStatus);
+                    final expenseId = item.id ?? item.expenseid ?? '';
+                    if (expenseId.isNotEmpty) {
+                      controller.changeStatus(expenseId, newStatus);
                     }
                   },
                   itemBuilder: (context) => [
                     const PopupMenuItem(
-                      value: 'received',
+                      value: 'accept',
                       child: Row(
                         children: [
                           Icon(
@@ -317,7 +300,21 @@ class CollectionScreen extends StatelessWidget {
                             size: 18,
                           ),
                           SizedBox(width: 8),
-                          Text('Received'),
+                          Text('Accept'),
+                        ],
+                      ),
+                    ),
+                    const PopupMenuItem(
+                      value: 'reject',
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.cancel_outlined,
+                            color: Colors.red,
+                            size: 18,
+                          ),
+                          SizedBox(width: 8),
+                          Text('Reject'),
                         ],
                       ),
                     ),
@@ -332,20 +329,6 @@ class CollectionScreen extends StatelessWidget {
                           ),
                           SizedBox(width: 8),
                           Text('Pending'),
-                        ],
-                      ),
-                    ),
-                    const PopupMenuItem(
-                      value: 'return',
-                      child: Row(
-                        children: [
-                          Icon(
-                            Icons.cancel_outlined,
-                            color: Colors.red,
-                            size: 18,
-                          ),
-                          SizedBox(width: 8),
-                          Text('Return'),
                         ],
                       ),
                     ),
@@ -380,7 +363,7 @@ class CollectionScreen extends StatelessWidget {
                 TextButton.icon(
                   onPressed: () {
                     controller.prepareForm(item);
-                    RouteManagement.goToCollectionForm();
+                    RouteManagement.goToExpenseForm();
                   },
                   icon: const Icon(
                     Icons.edit_outlined,
@@ -423,16 +406,16 @@ class CollectionScreen extends StatelessWidget {
 
   void _showDeleteConfirmDialog(
     BuildContext context,
-    CollectionController controller,
-    CollectionDoc item,
+    ExpenseController controller,
+    ExpenseDoc item,
   ) {
     showDialog(
       context: context,
       builder: (ctx) {
         return AlertDialog(
-          title: const Text('Delete Collection'),
+          title: const Text('Delete Expense'),
           content: const Text(
-            'Are you sure you want to delete this collection entry?',
+            'Are you sure you want to delete this expense entry?',
           ),
           actions: [
             TextButton(
@@ -442,9 +425,9 @@ class CollectionScreen extends StatelessWidget {
             TextButton(
               onPressed: () {
                 Navigator.pop(ctx);
-                final collectionId = item.id ?? item.collectionid ?? '';
-                if (collectionId.isNotEmpty) {
-                  controller.deleteCollection(collectionId);
+                final expenseId = item.id ?? item.expenseid ?? '';
+                if (expenseId.isNotEmpty) {
+                  controller.deleteExpense(expenseId);
                 }
               },
               child: const Text('Delete', style: TextStyle(color: Colors.red)),
@@ -457,7 +440,7 @@ class CollectionScreen extends StatelessWidget {
 
   void _showFilterBottomSheet(
     BuildContext context,
-    CollectionController controller,
+    ExpenseController controller,
   ) {
     DateTime? tempFromDate = controller.filterFromDate;
     DateTime? tempToDate = controller.filterToDate;
@@ -496,7 +479,7 @@ class CollectionScreen extends StatelessWidget {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         const Text(
-                          'Filter Collections',
+                          'Filter Expenses',
                           style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
@@ -586,16 +569,16 @@ class CollectionScreen extends StatelessWidget {
                       ),
                       items: const [
                         DropdownMenuItem(
-                          value: 'received',
-                          child: Text('Received'),
+                          value: 'accept',
+                          child: Text('Accepted'),
+                        ),
+                        DropdownMenuItem(
+                          value: 'reject',
+                          child: Text('Rejected'),
                         ),
                         DropdownMenuItem(
                           value: 'pending',
                           child: Text('Pending'),
-                        ),
-                        DropdownMenuItem(
-                          value: 'return',
-                          child: Text('Return'),
                         ),
                       ],
                       onChanged: (val) {

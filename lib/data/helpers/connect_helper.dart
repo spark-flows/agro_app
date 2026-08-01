@@ -1693,7 +1693,6 @@ class ConnectHelper {
 
   Future<ResponseModel> createLeaveApi({
     String? leaveid,
-    String? leavedate,
     required String userid,
     required String fromdate,
     required String todate,
@@ -1707,7 +1706,6 @@ class ConnectHelper {
     final String branchId = await _resolveBranchId();
     var data = {
       if (leaveid != null && leaveid.isNotEmpty) "leaveid": leaveid,
-      if (leavedate != null && leavedate.isNotEmpty) "leavedate": leavedate,
       "userid": userid,
       "fromdate": fromdate,
       "todate": todate,
@@ -1828,7 +1826,7 @@ class ConnectHelper {
       "paymentmode": paymentmode,
       "paymentstatus": paymentstatus,
       "remark": remark ?? "",
-      "branchId": branchId,
+      "branchid": branchId,
     };
     var response = await apiWrapper.makeRequest(
       EndPoints.createCollectionApi,
@@ -1861,7 +1859,7 @@ class ConnectHelper {
       "userid": userid,
       "sortfield": sortfield,
       "sortoption": sortoption,
-      "branchId": branchId,
+      "branchid": branchId,
     };
     var response = await apiWrapper.makeRequest(
       EndPoints.collectionListApi,
@@ -1916,6 +1914,193 @@ class ConnectHelper {
       EndPoints.changeCollectionStatusApi,
       Request.post,
       data,
+      isLoading,
+      await Utility.commonHeader(),
+    );
+    return response;
+  }
+
+  Future<ResponseModel> createExpenseApi({
+    String? expenseid,
+    required String date,
+    required String userid,
+    required String particularid,
+    required String amount,
+    required String image,
+    required String remark,
+    bool isLoading = false,
+  }) async {
+    final String branchId = await _resolveBranchId();
+    var data = {
+      "expenseid": expenseid ?? "",
+      "date": date,
+      "userid": userid,
+      "branchid": branchId,
+      "particularid": particularid,
+      "amount": amount,
+      "image": image,
+      "remark": remark,
+    };
+    var response = await apiWrapper.makeRequest(
+      EndPoints.createExpenseApi,
+      Request.post,
+      data,
+      isLoading,
+      await Utility.commonHeader(),
+    );
+    return response;
+  }
+
+  Future<ResponseModel> getExpenseListApi({
+    int page = 1,
+    int limit = 10,
+    String search = "",
+    String fromDate = "",
+    String toDate = "",
+    String userid = "",
+    String sortfield = "_id",
+    int sortoption = 1,
+    bool isLoading = false,
+  }) async {
+    final String branchId = await _resolveBranchId();
+    var data = <String, dynamic>{
+      "page": page,
+      "limit": limit,
+      "search": search,
+      "fromDate": fromDate,
+      "toDate": toDate,
+      "userid": userid,
+      "branchid": branchId,
+      "sortfield": sortfield,
+      "sortoption": sortoption,
+    };
+    var response = await apiWrapper.makeRequest(
+      EndPoints.expenseListApi,
+      Request.post,
+      data,
+      isLoading,
+      await Utility.commonHeader(),
+    );
+    return response;
+  }
+
+  Future<ResponseModel> getOneExpenseApi({
+    required String expenseid,
+    bool isLoading = false,
+  }) async {
+    var data = {"expenseid": expenseid};
+    var response = await apiWrapper.makeRequest(
+      EndPoints.getOneExpenseApi,
+      Request.post,
+      data,
+      isLoading,
+      await Utility.commonHeader(),
+    );
+    return response;
+  }
+
+  Future<ResponseModel> deleteExpenseApi({
+    required String expenseid,
+    bool isLoading = false,
+  }) async {
+    var data = {"expenseid": expenseid};
+    var response = await apiWrapper.makeRequest(
+      EndPoints.deleteExpenseApi,
+      Request.post,
+      data,
+      isLoading,
+      await Utility.commonHeader(),
+    );
+    return response;
+  }
+
+  Future<ResponseModel> changeExpenseStatusApi({
+    required String expenseid,
+    required String status,
+    bool isLoading = false,
+  }) async {
+    var data = {
+      "expenseid": expenseid,
+      "status": status,
+    };
+    var response = await apiWrapper.makeRequest(
+      EndPoints.changeExpenseStatusApi,
+      Request.post,
+      data,
+      isLoading,
+      await Utility.commonHeader(),
+    );
+    return response;
+  }
+
+  Future<ResponseModel> uploadExpenseImageApi(
+    String filePath, {
+    bool isLoading = false,
+  }) async {
+    try {
+      if (isLoading) {
+        if (Get.isSnackbarOpen) {
+          await Get.closeCurrentSnackbar();
+        }
+        Utility.showLoader();
+      }
+
+      final headers = await Utility.commonHeader();
+      headers.remove('Content-Type');
+
+      final FormData formData;
+      if (kIsWeb) {
+        final bytes = await XFile(filePath).readAsBytes();
+        formData = FormData.fromMap({
+          'image': MultipartFile.fromBytes(
+            bytes,
+            filename: filePath.split(RegExp(r'[/\\]')).last,
+          ),
+        });
+      } else {
+        formData = FormData.fromMap({
+          'image': await MultipartFile.fromFile(
+            filePath,
+            filename: filePath.split(RegExp(r'[/\\]')).last,
+          ),
+        });
+      }
+
+      final response = await dio.post(
+        '${ApiWrapper.api}${EndPoints.uploadExpenseApi}',
+        data: formData,
+        options: Options(headers: headers),
+      );
+
+      if (isLoading) Utility.closeDialog();
+
+      if (response.statusCode == 200) {
+        return ResponseModel(
+          data: json.encode(response.data),
+          hasError: false,
+          statusCode: response.statusCode ?? 200,
+        );
+      } else {
+        return ResponseModel(
+          data: response.statusMessage ?? 'Failed to upload image',
+          hasError: true,
+          statusCode: response.statusCode ?? 500,
+        );
+      }
+    } catch (e) {
+      if (isLoading) Utility.closeDialog();
+      return ResponseModel(data: e.toString(), hasError: true, statusCode: 500);
+    }
+  }
+
+  Future<ResponseModel> getParticularListApi({
+    String search = "",
+    bool isLoading = false,
+  }) async {
+    var response = await apiWrapper.makeRequest(
+      '${EndPoints.particularListApi}?search=$search',
+      Request.get,
+      null,
       isLoading,
       await Utility.commonHeader(),
     );

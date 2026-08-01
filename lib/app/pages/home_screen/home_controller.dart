@@ -91,6 +91,7 @@ class HomeController extends GetxController {
   void goToSalary() => RouteManagement.goToSalaryScreen();
   void goToLeaves() => RouteManagement.goToLeaveScreen();
   void goToCollection() => RouteManagement.goToCollectionScreen();
+  void goToExpense() => RouteManagement.goToExpenseScreen();
 
 
   Future<void> fetchBranches() async {

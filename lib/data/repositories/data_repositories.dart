@@ -676,7 +676,6 @@ class DataRepository extends DomainRepository {
 
   Future<ResponseModel> createLeaveApi({
     String? leaveid,
-    String? leavedate,
     required String userid,
     required String fromdate,
     required String todate,
@@ -688,7 +687,6 @@ class DataRepository extends DomainRepository {
     bool isLoading = false,
   }) async => connectHelper.createLeaveApi(
     leaveid: leaveid,
-    leavedate: leavedate,
     userid: userid,
     fromdate: fromdate,
     todate: todate,
@@ -811,6 +809,90 @@ class DataRepository extends DomainRepository {
   }) async => connectHelper.changeCollectionStatusApi(
     collectionid: collectionid,
     paymentstatus: paymentstatus,
+    isLoading: isLoading,
+  );
+
+  Future<ResponseModel> createExpenseApi({
+    String? expenseid,
+    required String date,
+    required String userid,
+    required String particularid,
+    required String amount,
+    required String image,
+    required String remark,
+    bool isLoading = false,
+  }) async => connectHelper.createExpenseApi(
+    expenseid: expenseid,
+    date: date,
+    userid: userid,
+    particularid: particularid,
+    amount: amount,
+    image: image,
+    remark: remark,
+    isLoading: isLoading,
+  );
+
+  Future<ResponseModel> getExpenseListApi({
+    int page = 1,
+    int limit = 10,
+    String search = "",
+    String fromDate = "",
+    String toDate = "",
+    String userid = "",
+    String sortfield = "_id",
+    int sortoption = 1,
+    bool isLoading = false,
+  }) async => connectHelper.getExpenseListApi(
+    page: page,
+    limit: limit,
+    search: search,
+    fromDate: fromDate,
+    toDate: toDate,
+    userid: userid,
+    sortfield: sortfield,
+    sortoption: sortoption,
+    isLoading: isLoading,
+  );
+
+  Future<ResponseModel> getOneExpenseApi({
+    required String expenseid,
+    bool isLoading = false,
+  }) async => connectHelper.getOneExpenseApi(
+    expenseid: expenseid,
+    isLoading: isLoading,
+  );
+
+  Future<ResponseModel> deleteExpenseApi({
+    required String expenseid,
+    bool isLoading = false,
+  }) async => connectHelper.deleteExpenseApi(
+    expenseid: expenseid,
+    isLoading: isLoading,
+  );
+
+  Future<ResponseModel> changeExpenseStatusApi({
+    required String expenseid,
+    required String status,
+    bool isLoading = false,
+  }) async => connectHelper.changeExpenseStatusApi(
+    expenseid: expenseid,
+    status: status,
+    isLoading: isLoading,
+  );
+
+  Future<ResponseModel> uploadExpenseImageApi({
+    required String filePath,
+    bool isLoading = false,
+  }) async => connectHelper.uploadExpenseImageApi(
+    filePath,
+    isLoading: isLoading,
+  );
+
+  Future<ResponseModel> getParticularListApi({
+    String search = "",
+    bool isLoading = false,
+  }) async => connectHelper.getParticularListApi(
+    search: search,
     isLoading: isLoading,
   );
 }

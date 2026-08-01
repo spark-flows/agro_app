@@ -93,90 +93,86 @@ class _LeaveFormPageState extends State<LeaveFormPage> {
                 const SizedBox(height: 16),
 
                 // User Selection for Admin
-                if (!isUserRole && controller.userList.isNotEmpty) Builder(
-                  builder: (context) {
-                    final bool userExists = controller.userList.any(
-                      (u) => u.id == controller.selectedUserId,
-                    );
-                    final String? activeUserId = userExists
-                        ? controller.selectedUserId
-                        : (controller.userList.isNotEmpty
-                            ? controller.userList.first.id
-                            : null);
+                if (!isUserRole && controller.userList.isNotEmpty)
+                  Builder(
+                    builder: (context) {
+                      final bool userExists = controller.userList.any(
+                        (u) => u.id == controller.selectedUserId,
+                      );
+                      final String? activeUserId = userExists
+                          ? controller.selectedUserId
+                          : (controller.userList.isNotEmpty
+                                ? controller.userList.first.id
+                                : null);
 
-                    return Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          'Select User *',
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.black87,
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'Select User *',
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.black87,
+                            ),
                           ),
-                        ),
-                        const SizedBox(height: 8),
-                        DropdownButtonFormField<String>(
-                          value: activeUserId,
-                          decoration: InputDecoration(
-                            prefixIcon: const Icon(
-                              Icons.person_outline,
-                              color: ColorsValue.primary,
-                            ),
-                            filled: true,
-                            fillColor: Colors.white,
-                            contentPadding: const EdgeInsets.symmetric(
-                              horizontal: 16,
-                              vertical: 14,
-                            ),
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                              borderSide: BorderSide(color: Colors.grey.shade300),
-                            ),
-                            enabledBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                              borderSide: BorderSide(color: Colors.grey.shade300),
-                            ),
-                            focusedBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                              borderSide: const BorderSide(
+                          const SizedBox(height: 8),
+                          DropdownButtonFormField<String>(
+                            value: activeUserId,
+                            decoration: InputDecoration(
+                              prefixIcon: const Icon(
+                                Icons.person_outline,
                                 color: ColorsValue.primary,
                               ),
-                            ),
-                          ),
-                          items: controller.userList.map((user) {
-                            final name =
-                                '${user.name} ${user.surname ?? ''}'.trim();
-                            return DropdownMenuItem<String>(
-                              value: user.id,
-                              child: Text(
-                                name.isNotEmpty ? name : user.mobile,
-                                style: Styles.txtBlackColorW60014,
+                              filled: true,
+                              fillColor: Colors.white,
+                              contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 14,
                               ),
-                            );
-                          }).toList(),
-                          onChanged: (val) {
-                            controller.selectedUserId = val;
-                            controller.update();
-                          },
-                          validator: (val) => val == null || val.isEmpty
-                              ? 'Please select a user'
-                              : null,
-                        ),
-                        const SizedBox(height: 16),
-                      ],
-                    );
-                  },
-                ),
-
-                // Leave Submission Date (Read only)
-                _buildField(
-                  fieldController: controller.leaveDateCtrl,
-                  label: 'Application Date',
-                  icon: Icons.calendar_today,
-                  readOnly: true,
-                ),
-                const SizedBox(height: 16),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: BorderSide(
+                                  color: Colors.grey.shade300,
+                                ),
+                              ),
+                              enabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: BorderSide(
+                                  color: Colors.grey.shade300,
+                                ),
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: const BorderSide(
+                                  color: ColorsValue.primary,
+                                ),
+                              ),
+                            ),
+                            items: controller.userList.map((user) {
+                              final name = '${user.name} ${user.surname ?? ''}'
+                                  .trim();
+                              return DropdownMenuItem<String>(
+                                value: user.id,
+                                child: Text(
+                                  name.isNotEmpty ? name : user.mobile,
+                                  style: Styles.txtBlackColorW60014,
+                                ),
+                              );
+                            }).toList(),
+                            onChanged: (val) {
+                              controller.selectedUserId = val;
+                              controller.update();
+                            },
+                            validator: (val) => val == null || val.isEmpty
+                                ? 'Please select a user'
+                                : null,
+                          ),
+                          const SizedBox(height: 16),
+                        ],
+                      );
+                    },
+                  ),
 
                 // From Date & To Date row
                 Row(
@@ -224,7 +220,9 @@ class _LeaveFormPageState extends State<LeaveFormPage> {
                         onTap: () {
                           final now = DateTime.now();
                           final today = DateTime(now.year, now.month, now.day);
-                          DateTime minDate = isUserRole ? today : DateTime(2020);
+                          DateTime minDate = isUserRole
+                              ? today
+                              : DateTime(2020);
                           if (controller.fromDateCtrl.text.isNotEmpty) {
                             try {
                               final parsedFrom = DateFormat(
@@ -339,6 +337,11 @@ class _LeaveFormPageState extends State<LeaveFormPage> {
                   ignoring: isUserRole,
                   child: DropdownButtonFormField<String>(
                     value: isUserRole ? 'pending' : controller.selectedStatus,
+                    style: const TextStyle(
+                      color: Colors.black87,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                    ),
                     decoration: InputDecoration(
                       labelText: 'Status *',
                       labelStyle: Styles.txtGreyColorW40014,
@@ -372,19 +375,41 @@ class _LeaveFormPageState extends State<LeaveFormPage> {
                     items: const [
                       DropdownMenuItem(
                         value: 'pending',
-                        child: Text('PENDING'),
+                        child: Text(
+                          'PENDING',
+                          style: TextStyle(
+                            color: Colors.black87,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
                       ),
-                      DropdownMenuItem(value: 'accept', child: Text('ACCEPT')),
-                      DropdownMenuItem(value: 'reject', child: Text('REJECT')),
+                      DropdownMenuItem(
+                        value: 'accept',
+                        child: Text(
+                          'ACCEPT',
+                          style: TextStyle(
+                            color: Colors.black87,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                      DropdownMenuItem(
+                        value: 'reject',
+                        child: Text(
+                          'REJECT',
+                          style: TextStyle(
+                            color: Colors.black87,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
                     ],
-                    onChanged: isUserRole
-                        ? null
-                        : (newValue) {
-                            if (newValue != null) {
-                              controller.selectedStatus = newValue;
-                              controller.update();
-                            }
-                          },
+                    onChanged: (newValue) {
+                      if (!isUserRole && newValue != null) {
+                        controller.selectedStatus = newValue;
+                        controller.update();
+                      }
+                    },
                   ),
                 ),
                 const SizedBox(height: 20),

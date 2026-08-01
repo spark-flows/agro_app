@@ -63,5 +63,13 @@ class EndPoints {
   static String getOneCollectionApi = 'api/collection/getone';
   static String deleteCollectionApi = 'api/collection/delete';
   static String changeCollectionStatusApi = 'api/collection/changestatus';
+
+  static String expenseListApi = 'api/expense';
+  static String createExpenseApi = 'api/expense/create';
+  static String getOneExpenseApi = 'api/expense/getone';
+  static String deleteExpenseApi = 'api/expense/delete';
+  static String changeExpenseStatusApi = 'api/expense/changestatus';
+  static String uploadExpenseApi = 'api/expense/upload';
+  static String particularListApi = 'api/particular';
 }
 

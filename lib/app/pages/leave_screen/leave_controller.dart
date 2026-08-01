@@ -34,7 +34,6 @@ class LeaveController extends GetxController {
 
   // ── Form Controllers & State ───────────────────────────────────────────────
   final formKey = GlobalKey<FormState>();
-  final leaveDateCtrl = TextEditingController();
   final fromDateCtrl = TextEditingController();
   final toDateCtrl = TextEditingController();
   final totalDaysCtrl = TextEditingController();
@@ -57,7 +56,6 @@ class LeaveController extends GetxController {
   @override
   void onClose() {
     _searchTimer?.cancel();
-    leaveDateCtrl.dispose();
     fromDateCtrl.dispose();
     toDateCtrl.dispose();
     totalDaysCtrl.dispose();
@@ -219,7 +217,6 @@ class LeaveController extends GetxController {
     }
     if (doc == null) {
       editingLeaveId = '';
-      leaveDateCtrl.text = DateFormat('dd-MM-yyyy').format(DateTime.now());
       fromDateCtrl.clear();
       toDateCtrl.clear();
       totalDaysCtrl.clear();
@@ -233,7 +230,6 @@ class LeaveController extends GetxController {
     } else {
       if (doc is LeaveDoc) {
         editingLeaveId = doc.id ?? '';
-        leaveDateCtrl.text = _formatDateString(doc.leavedate);
         fromDateCtrl.text = _formatDateString(doc.fromdate);
         toDateCtrl.text = _formatDateString(doc.todate);
         totalDaysCtrl.text = doc.totaldays?.toString() ?? '';
@@ -245,7 +241,6 @@ class LeaveController extends GetxController {
       } else if (doc is CreateLeaveModel) {
         final data = doc.data;
         editingLeaveId = data?.id ?? '';
-        leaveDateCtrl.text = _formatDateString(data?.leavedate);
         fromDateCtrl.text = _formatDateString(data?.fromdate);
         toDateCtrl.text = _formatDateString(data?.todate);
         totalDaysCtrl.text = data?.totaldays?.toString() ?? '';
@@ -313,11 +308,9 @@ class LeaveController extends GetxController {
 
     DateTime fromParsed;
     DateTime toParsed;
-    DateTime leaveDateParsed;
     try {
       fromParsed = DateFormat('dd-MM-yyyy').parse(fromDateCtrl.text);
       toParsed = DateFormat('dd-MM-yyyy').parse(toDateCtrl.text);
-      leaveDateParsed = DateFormat('dd-MM-yyyy').parse(leaveDateCtrl.text);
     } catch (e) {
       Utility.showMessage(
         'Invalid date format. Use DD-MM-YYYY',

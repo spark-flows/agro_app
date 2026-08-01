@@ -60,5 +60,8 @@ abstract class RouteManagement {
   static void goToCollectionScreen() =>
       Get.toNamed<void>(Routes.collectionScreen);
   static void goToCollectionForm() => Get.toNamed<void>(Routes.collectionForm);
+  static void goToExpenseScreen() =>
+      Get.toNamed<void>(Routes.expenseScreen);
+  static void goToExpenseForm() => Get.toNamed<void>(Routes.expenseForm);
 }
 

@@ -180,6 +180,20 @@ class AppPages {
       binding: CollectionBinding(),
       transition: Transition.rightToLeft,
     ),
+    GetPage<ExpenseScreen>(
+      name: _Paths.expenseScreen,
+      transitionDuration: transitionDuration,
+      page: ExpenseScreen.new,
+      binding: ExpenseBinding(),
+      transition: Transition.rightToLeft,
+    ),
+    GetPage<ExpenseFormPage>(
+      name: _Paths.expenseForm,
+      transitionDuration: transitionDuration,
+      page: ExpenseFormPage.new,
+      binding: ExpenseBinding(),
+      transition: Transition.rightToLeft,
+    ),
   ];
 }
 

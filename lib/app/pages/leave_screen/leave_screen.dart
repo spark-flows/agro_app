@@ -87,125 +87,75 @@ class _LeaveScreenState extends State<LeaveScreen> {
             elevation: 0,
             iconTheme: const IconThemeData(color: Colors.black87),
             title: Text('Leaves', style: Styles.txtBlackColorW70020),
-            actions: [
-              IconButton(
-                icon: Icon(
-                  Icons.filter_alt_outlined,
-                  color:
-                      (controller.filterFromDate != null ||
-                          controller.filterStatus != null)
-                      ? ColorsValue.primary
-                      : Colors.black87,
-                ),
-                onPressed: () => _showFilterBottomSheet(context, controller),
-              ),
-            ],
           ),
           body: Column(
             children: [
-              // Search bar container
+              // ── Search & Filter Bar ──
               Container(
                 color: Colors.white,
                 padding: const EdgeInsets.symmetric(
                   horizontal: 16,
                   vertical: 8,
                 ),
-                child: TextField(
-                  controller: _searchController,
-                  onChanged: controller.onSearchChanged,
-                  decoration: InputDecoration(
-                    hintText: 'Search by reason...',
-                    hintStyle: Styles.txtGreyColorW40014,
-                    prefixIcon: const Icon(Icons.search, color: Colors.grey),
-                    suffixIcon: _searchController.text.isNotEmpty
-                        ? IconButton(
-                            icon: const Icon(Icons.clear, color: Colors.grey),
-                            onPressed: () {
-                              _searchController.clear();
-                              controller.onSearchChanged('');
-                            },
-                          )
-                        : null,
-                    filled: true,
-                    fillColor: Colors.grey.shade50,
-                    contentPadding: const EdgeInsets.symmetric(vertical: 0),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(color: Colors.grey.shade200),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(color: Colors.grey.shade200),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: ColorsValue.primary),
-                    ),
-                  ),
-                ),
-              ),
-
-              // Active filters chips
-              if (controller.filterFromDate != null ||
-                  controller.filterStatus != null)
-                Container(
-                  color: Colors.white,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 4,
-                  ),
-                  alignment: Alignment.centerLeft,
-                  child: Wrap(
-                    spacing: 8,
-                    children: [
-                      if (controller.filterFromDate != null)
-                        Chip(
-                          backgroundColor: ColorsValue.primaryLight,
-                          label: Text(
-                            'Date: ${DateFormat('dd/MM').format(controller.filterFromDate!)}',
-                            style: const TextStyle(
-                              color: ColorsValue.primaryDark,
-                              fontSize: 12,
-                            ),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        controller: _searchController,
+                        onChanged: controller.onSearchChanged,
+                        decoration: InputDecoration(
+                          hintText: 'Search by reason...',
+                          hintStyle: Styles.txtGreyColorW40014,
+                          prefixIcon: const Icon(Icons.search, color: Colors.grey),
+                          suffixIcon: _searchController.text.isNotEmpty
+                              ? IconButton(
+                                  icon: const Icon(Icons.clear, color: Colors.grey),
+                                  onPressed: () {
+                                    _searchController.clear();
+                                    controller.onSearchChanged('');
+                                  },
+                                )
+                              : null,
+                          filled: true,
+                          fillColor: Colors.grey.shade50,
+                          contentPadding: const EdgeInsets.symmetric(vertical: 0),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide(color: Colors.grey.shade200),
                           ),
-                          onDeleted: () {
-                            controller.setFilters(
-                              fromDate: null,
-                              toDate: null,
-                              status: controller.filterStatus,
-                            );
-                          },
-                        ),
-                      if (controller.filterStatus != null)
-                        Chip(
-                          backgroundColor: _getStatusBgColor(
-                            controller.filterStatus,
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide(color: Colors.grey.shade200),
                           ),
-                          label: Text(
-                            'Status: ${controller.filterStatus!.toUpperCase()}',
-                            style: TextStyle(
-                              color: _getStatusColor(controller.filterStatus),
-                              fontSize: 12,
-                            ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: const BorderSide(color: ColorsValue.primary),
                           ),
-                          onDeleted: () {
-                            controller.setFilters(
-                              fromDate: controller.filterFromDate,
-                              toDate: controller.filterToDate,
-                              status: null,
-                            );
-                          },
-                        ),
-                      TextButton(
-                        onPressed: controller.clearFilters,
-                        child: const Text(
-                          'Clear All',
-                          style: TextStyle(color: Colors.red, fontSize: 12),
                         ),
                       ),
-                    ],
-                  ),
+                    ),
+                    const SizedBox(width: 12),
+                    InkWell(
+                      onTap: () => _showFilterBottomSheet(context, controller),
+                      child: Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(color: Colors.grey.shade300),
+                        ),
+                        child: Icon(
+                          Icons.filter_list,
+                          color: (controller.filterFromDate != null ||
+                                  controller.filterStatus != null)
+                              ? ColorsValue.primary
+                              : Colors.grey,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
+              ),
 
               // List of leaves
               Expanded(
@@ -625,15 +575,29 @@ class _LeaveScreenState extends State<LeaveScreen> {
 
     showModalBottomSheet<void>(
       context: context,
+      isScrollControlled: true,
+      showDragHandle: true,
+      backgroundColor: Colors.white,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       builder: (context) {
         return StatefulBuilder(
           builder: (context, setModalState) {
+            String dateText = 'Choose Date';
+            if (tempFromDate != null && tempToDate != null) {
+              dateText =
+                  '${DateFormat('dd/MM/yyyy').format(tempFromDate!)} - ${DateFormat('dd/MM/yyyy').format(tempToDate!)}';
+            }
+
             return SafeArea(
               child: Padding(
-                padding: const EdgeInsets.all(20),
+                padding: EdgeInsets.only(
+                  left: 20,
+                  right: 20,
+                  top: 10,
+                  bottom: MediaQuery.of(context).viewInsets.bottom + 20,
+                ),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -648,101 +612,87 @@ class _LeaveScreenState extends State<LeaveScreen> {
                             fontWeight: FontWeight.bold,
                           ),
                         ),
-                        TextButton(
-                          onPressed: () {
-                            setModalState(() {
-                              tempFromDate = null;
-                              tempToDate = null;
-                              tempStatus = null;
-                            });
-                          },
-                          child: const Text(
-                            'Reset',
-                            style: TextStyle(color: Colors.red),
-                          ),
-                        ),
                       ],
                     ),
                     const SizedBox(height: 16),
 
-                    // Date Selectors
-                    Row(
-                      children: [
-                        Expanded(
-                          child: InkWell(
-                            onTap: () async {
-                              final picked = await showDatePicker(
-                                context: context,
-                                initialDate: tempFromDate ?? DateTime.now(),
-                                firstDate: DateTime(2020),
-                                lastDate: DateTime(2100),
-                              );
-                              if (picked != null) {
-                                setModalState(() => tempFromDate = picked);
-                              }
-                            },
-                            child: InputDecorator(
-                              decoration: InputDecoration(
-                                labelText: 'From Date',
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-                              ),
+                    Text('Select Date', style: Styles.txtBlackColorW60014),
+                    const SizedBox(height: 6),
+                    InkWell(
+                      onTap: () async {
+                        final picked = await showDateRangePicker(
+                          context: context,
+                          firstDate: DateTime(2020),
+                          lastDate: DateTime(2035),
+                          initialDateRange:
+                              tempFromDate != null && tempToDate != null
+                                  ? DateTimeRange(
+                                      start: tempFromDate!,
+                                      end: tempToDate!,
+                                    )
+                                  : null,
+                        );
+                        if (picked != null) {
+                          setModalState(() {
+                            tempFromDate = picked.start;
+                            tempToDate = picked.end;
+                          });
+                        }
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 12,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(color: Colors.grey.shade300),
+                        ),
+                        child: Row(
+                          children: [
+                            const Icon(
+                              Icons.calendar_today,
+                              color: ColorsValue.primary,
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
                               child: Text(
-                                tempFromDate == null
-                                    ? 'Select'
-                                    : DateFormat(
-                                        'dd/MM/yyyy',
-                                      ).format(tempFromDate!),
-                                style: const TextStyle(fontSize: 14),
+                                dateText,
+                                style: dateText == 'Choose Date'
+                                    ? Styles.txtGreyColorW40014
+                                    : Styles.txtBlackColorW60014,
                               ),
                             ),
-                          ),
-                        ),
-                        const SizedBox(width: 16),
-                        Expanded(
-                          child: InkWell(
-                            onTap: () async {
-                              final picked = await showDatePicker(
-                                context: context,
-                                initialDate: tempToDate ?? DateTime.now(),
-                                firstDate: DateTime(2020),
-                                lastDate: DateTime(2100),
-                              );
-                              if (picked != null) {
-                                setModalState(() => tempToDate = picked);
-                              }
-                            },
-                            child: InputDecorator(
-                              decoration: InputDecoration(
-                                labelText: 'To Date',
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-                              ),
-                              child: Text(
-                                tempToDate == null
-                                    ? 'Select'
-                                    : DateFormat(
-                                        'dd/MM/yyyy',
-                                      ).format(tempToDate!),
-                                style: const TextStyle(fontSize: 14),
-                              ),
+                            const Icon(
+                              Icons.arrow_drop_down,
+                              color: Colors.grey,
                             ),
-                          ),
+                          ],
                         ),
-                      ],
+                      ),
                     ),
-                    const SizedBox(height: 20),
+                    const SizedBox(height: 16),
 
-                    // Status Dropdown
+                    Text('Status', style: Styles.txtBlackColorW60014),
+                    const SizedBox(height: 6),
                     DropdownButtonFormField<String>(
                       value: tempStatus,
                       decoration: InputDecoration(
-                        labelText: 'Status',
+                        filled: true,
+                        fillColor: Colors.white,
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(10),
+                          borderSide: BorderSide(color: Colors.grey.shade300),
                         ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10),
+                          borderSide: BorderSide(color: Colors.grey.shade300),
+                        ),
+                      ),
+                      hint: Text(
+                        'Select Status',
+                        style: Styles.txtGreyColorW40014,
                       ),
                       items: const [
                         DropdownMenuItem(
@@ -759,38 +709,65 @@ class _LeaveScreenState extends State<LeaveScreen> {
                         ),
                       ],
                       onChanged: (val) {
-                        setModalState(() => tempStatus = val);
+                        setModalState(() {
+                          tempStatus = val;
+                        });
                       },
                     ),
                     const SizedBox(height: 24),
 
-                    // Apply Button
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: ColorsValue.primary,
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: OutlinedButton(
+                            style: OutlinedButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(vertical: 14),
+                              side: BorderSide(color: Colors.grey.shade300),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                            ),
+                            onPressed: () {
+                              setModalState(() {
+                                tempFromDate = null;
+                                tempToDate = null;
+                                tempStatus = null;
+                              });
+                            },
+                            child: const Text(
+                              'Clear All',
+                              style: TextStyle(
+                                color: Colors.grey,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
                           ),
                         ),
-                        onPressed: () {
-                          controller.setFilters(
-                            fromDate: tempFromDate,
-                            toDate: tempToDate,
-                            status: tempStatus,
-                          );
-                          Navigator.pop(context);
-                        },
-                        child: const Text(
-                          'Apply Filters',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: ColorsValue.primary,
+                              padding: const EdgeInsets.symmetric(vertical: 14),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                            ),
+                            onPressed: () {
+                              controller.setFilters(
+                                fromDate: tempFromDate,
+                                toDate: tempToDate,
+                                status: tempStatus,
+                              );
+                              Navigator.pop(context);
+                            },
+                            child: Text(
+                              'Apply Filters',
+                              style: Styles.whiteColorW60016,
+                            ),
                           ),
                         ),
-                      ),
+                      ],
                     ),
                   ],
                 ),

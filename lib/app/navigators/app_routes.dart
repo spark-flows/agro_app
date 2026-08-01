@@ -30,6 +30,8 @@ abstract class Routes {
   static const leaveForm = _Paths.leaveForm;
   static const collectionScreen = _Paths.collectionScreen;
   static const collectionForm = _Paths.collectionForm;
+  static const expenseScreen = _Paths.expenseScreen;
+  static const expenseForm = _Paths.expenseForm;
 }
 
 abstract class _Paths {
@@ -62,5 +64,7 @@ abstract class _Paths {
   static const leaveForm = '/leaveForm';
   static const collectionScreen = '/collectionScreen';
   static const collectionForm = '/collectionForm';
+  static const expenseScreen = '/expenseScreen';
+  static const expenseForm = '/expenseForm';
 }
 

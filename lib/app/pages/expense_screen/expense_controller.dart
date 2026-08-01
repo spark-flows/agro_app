@@ -1,15 +1,16 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 import 'package:agro_app/app/utils/utility.dart';
 import 'package:agro_app/domain/domain.dart';
-import 'package:agro_app/domain/services/enum.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
+import 'package:image_picker/image_picker.dart';
 
-class CollectionController extends GetxController {
+class ExpenseController extends GetxController {
   // ── List & Pagination State ──────────────────────────────────────────────
-  List<CollectionDoc> collections = [];
+  List<ExpenseDoc> expenses = [];
   bool isLoading = true;
   bool isFetchingMore = false;
 
@@ -23,7 +24,6 @@ class CollectionController extends GetxController {
   // ── Filters State ────────────────────────────────────────────────────────
   DateTime? filterFromDate;
   DateTime? filterToDate;
-  String? filterStatus; // null/empty = all, or 'received', 'pending', 'return'
 
   // ── Role & User Context ──────────────────────────────────────────────────
   String roleName = '';
@@ -32,39 +32,45 @@ class CollectionController extends GetxController {
   // ── Form Controllers & State ─────────────────────────────────────────────
   final formKey = GlobalKey<FormState>();
   final dateCtrl = TextEditingController();
-  final partyNameCtrl = TextEditingController();
   final amountCtrl = TextEditingController();
   final remarkCtrl = TextEditingController();
 
-  // Dropdown values:
-  // Payment mode options: 'cash', 'check', 'rtgs/neft'
-  String selectedPaymentMode = 'cash';
-  // Payment status options: 'received', 'pending', 'return'
-  String selectedPaymentStatus = 'pending';
+  String selectedParticularId = '';
+  File? selectedImage;
+  String? existingImageUrl;
 
-  String editingCollectionId = '';
+  String editingExpenseId = '';
   Timer? _searchTimer;
 
-  static const List<String> paymentModeOptions = ['cash', 'check', 'rtgs/neft'];
-  static const List<String> paymentStatusOptions = [
-    'received',
-    'pending',
-    'return',
-  ];
+  List<ParticularDoc> particulars = [];
 
   @override
   void onInit() {
     super.onInit();
     _loadUserContext().then((_) {
-      fetchCollections(isRefresh: true);
+      fetchParticulars();
+      fetchExpenses(isRefresh: true);
     });
+  }
+
+  Future<void> fetchParticulars() async {
+    try {
+      final res = await Get.find<Repository>().getParticularListApi(
+        isLoading: false,
+      );
+      if (res != null && res.data != null) {
+        particulars = res.data!;
+        update();
+      }
+    } catch (e) {
+      debugPrint('fetchParticulars error: $e');
+    }
   }
 
   @override
   void onClose() {
     _searchTimer?.cancel();
     dateCtrl.dispose();
-    partyNameCtrl.dispose();
     amountCtrl.dispose();
     remarkCtrl.dispose();
     super.onClose();
@@ -72,10 +78,8 @@ class CollectionController extends GetxController {
 
   // ── Load Role & User ID from Storage / Profile API ─────────────────────────
   Future<void> _loadUserContext() async {
-    // 1. Try reading from secure storage
     roleName = await Get.find<Repository>().getSecureValue(LocalKeys.roleName);
 
-    // 2. Try reading from cached profile JSON
     if (roleName.isEmpty) {
       final profileJson = await Get.find<Repository>().getSecureValue(
         LocalKeys.profileData,
@@ -94,7 +98,6 @@ class CollectionController extends GetxController {
       }
     }
 
-    // 3. Fallback: fetch profile API directly
     if (roleName.isEmpty) {
       try {
         final profileRes = await Get.find<Repository>().getProfileApi(
@@ -120,11 +123,11 @@ class CollectionController extends GetxController {
     update();
   }
 
-  // ── Fetch Collections ─────────────────────────────────────────────────────
-  Future<void> fetchCollections({bool isRefresh = true}) async {
+  // ── Fetch Expenses ────────────────────────────────────────────────────────
+  Future<void> fetchExpenses({bool isRefresh = true}) async {
     if (isRefresh) {
       currentPage = 1;
-      collections.clear();
+      expenses.clear();
       isLoading = true;
     } else {
       if (currentPage >= totalPages) return;
@@ -134,7 +137,7 @@ class CollectionController extends GetxController {
     update();
 
     try {
-      final response = await Get.find<Repository>().getCollectionListApi(
+      final response = await Get.find<Repository>().getExpenseListApi(
         page: currentPage,
         limit: limit,
         search: searchQuery,
@@ -151,14 +154,14 @@ class CollectionController extends GetxController {
       if (response != null && response.data != null) {
         final docs = response.data!.docs ?? [];
         if (isRefresh) {
-          collections = docs;
+          expenses = docs;
         } else {
-          collections.addAll(docs);
+          expenses.addAll(docs);
         }
         totalPages = response.data!.totalPages ?? 1;
       }
     } catch (e) {
-      debugPrint('fetchCollections error: $e');
+      debugPrint('fetchExpenses error: $e');
     } finally {
       isLoading = false;
       isFetchingMore = false;
@@ -171,93 +174,128 @@ class CollectionController extends GetxController {
     _searchTimer?.cancel();
     _searchTimer = Timer(const Duration(milliseconds: 500), () {
       _searchQuery = query.trim();
-      fetchCollections(isRefresh: true);
+      fetchExpenses(isRefresh: true);
     });
   }
 
   void setDateRange(DateTime? from, DateTime? to) {
     filterFromDate = from;
     filterToDate = to;
-    fetchCollections(isRefresh: true);
+    fetchExpenses(isRefresh: true);
   }
 
-  void setStatusFilter(String? status) {
-    filterStatus = status;
-    update();
-  }
+  String? filterStatus;
 
   void applyFilters(DateTime? from, DateTime? to, String? status) {
     filterFromDate = from;
     filterToDate = to;
     filterStatus = status;
-    fetchCollections(isRefresh: true);
+    fetchExpenses(isRefresh: true);
   }
 
-  List<CollectionDoc> get filteredCollections {
+  List<ExpenseDoc> get filteredExpenses {
     if (filterStatus == null || filterStatus!.isEmpty) {
-      return collections;
+      return expenses;
     }
-    return collections
+    return expenses
         .where(
-          (c) =>
-              c.paymentstatus?.toLowerCase().trim() ==
+          (e) =>
+              e.status?.toLowerCase().trim() ==
               filterStatus!.toLowerCase().trim(),
         )
         .toList();
   }
 
+  // ── Image Picker Helpers ──────────────────────────────────────────────────
+  Future<void> pickImage(ImageSource source) async {
+    final ImagePicker picker = ImagePicker();
+    final XFile? image = await picker.pickImage(source: source);
+    if (image != null) {
+      selectedImage = File(image.path);
+      update();
+    }
+  }
+
+  void removeImage() {
+    selectedImage = null;
+    existingImageUrl = null;
+    update();
+  }
+
   // ── Prepare Form Page ─────────────────────────────────────────────────────
-  void prepareForm([CollectionDoc? collection]) {
-    if (collection != null) {
-      editingCollectionId = collection.id ?? collection.collectionid ?? '';
-      if (collection.date != null && collection.date!.isNotEmpty) {
-        final parsedDate = DateTime.tryParse(collection.date!);
+  void prepareForm([ExpenseDoc? expense]) {
+    if (expense != null) {
+      editingExpenseId = expense.id ?? expense.expenseid ?? '';
+      if (expense.date != null && expense.date!.isNotEmpty) {
+        final parsedDate = DateTime.tryParse(expense.date!);
         if (parsedDate != null) {
           dateCtrl.text = DateFormat('yyyy-MM-dd').format(parsedDate.toLocal());
         } else {
-          dateCtrl.text = collection.date!;
+          dateCtrl.text = expense.date!;
         }
       } else {
         dateCtrl.text = '';
       }
-      partyNameCtrl.text = collection.partyname ?? '';
-      amountCtrl.text = collection.amount ?? '';
-      remarkCtrl.text = collection.remark ?? '';
-
-      final mode = collection.paymentmode?.toLowerCase().trim() ?? '';
-      if (paymentModeOptions.contains(mode)) {
-        selectedPaymentMode = mode;
-      } else {
-        selectedPaymentMode = paymentModeOptions.first;
-      }
-
-      final status = collection.paymentstatus?.toLowerCase().trim() ?? '';
-      if (paymentStatusOptions.contains(status)) {
-        selectedPaymentStatus = status;
-      } else {
-        selectedPaymentStatus = paymentStatusOptions.first;
-      }
+      amountCtrl.text = expense.amount ?? '';
+      remarkCtrl.text = expense.remark ?? '';
+      selectedParticularId = expense.particularid?.id ?? '';
+      existingImageUrl = expense.image ?? '';
+      selectedImage = null;
     } else {
-      editingCollectionId = '';
+      editingExpenseId = '';
       dateCtrl.text = DateFormat('yyyy-MM-dd').format(DateTime.now());
-      partyNameCtrl.clear();
       amountCtrl.clear();
       remarkCtrl.clear();
-      selectedPaymentMode = 'cash';
-      selectedPaymentStatus = 'pending';
+      selectedParticularId = particulars.isNotEmpty
+          ? particulars.first.id ?? ''
+          : '';
+      selectedImage = null;
+      existingImageUrl = null;
     }
     update();
   }
 
-  // ── Submit Collection Form (Add / Edit) ───────────────────────────────────
-  Future<void> submitCollection() async {
+  // ── Submit Expense Form (Add / Edit) ──────────────────────────────────────
+  Future<void> submitExpense() async {
     if (formKey.currentState != null && !formKey.currentState!.validate()) {
       return;
     }
 
-    // Determine userid based on requirement:
-    // If logged in as User role: send the logged-in User's User ID
-    // If logged in as Admin role: no need to send user ID ("")
+    if (selectedParticularId.isEmpty) {
+      Utility.showMessage(
+        'Please select a particular',
+        MessageType.error,
+        null,
+        '',
+      );
+      return;
+    }
+
+    Utility.showLoader();
+
+    // 1. Upload image if a new one is selected
+    String finalImageUrl = existingImageUrl ?? '';
+    if (selectedImage != null) {
+      final uploadRes = await Get.find<Repository>().uploadExpenseImageApi(
+        selectedImage!,
+        isLoading: false,
+      );
+      if (uploadRes != null &&
+          uploadRes.data != null &&
+          uploadRes.data!.url != null) {
+        finalImageUrl = uploadRes.data!.url!;
+      } else {
+        Utility.closeDialog();
+        Utility.showMessage(
+          'Failed to upload image. Please try again.',
+          MessageType.error,
+          null,
+          '',
+        );
+        return;
+      }
+    }
+
     String effectiveUserId = '';
     if (RoleUtils.isUser(roleName)) {
       effectiveUserId = userId;
@@ -265,16 +303,13 @@ class CollectionController extends GetxController {
       effectiveUserId = '';
     }
 
-    Utility.showLoader();
-
-    final result = await Get.find<Repository>().createCollectionApi(
-      collectionid: editingCollectionId.isNotEmpty ? editingCollectionId : '',
+    final result = await Get.find<Repository>().createExpenseApi(
+      expenseid: editingExpenseId.isNotEmpty ? editingExpenseId : '',
       date: dateCtrl.text.trim(),
       userid: effectiveUserId,
-      partyname: partyNameCtrl.text.trim(),
+      particularid: selectedParticularId,
       amount: amountCtrl.text.trim(),
-      paymentmode: selectedPaymentMode,
-      paymentstatus: selectedPaymentStatus,
+      image: finalImageUrl,
       remark: remarkCtrl.text.trim(),
       isLoading: false,
     );
@@ -283,24 +318,44 @@ class CollectionController extends GetxController {
 
     if (result != null) {
       Utility.showMessage(
-        editingCollectionId.isNotEmpty
-            ? 'Collection updated successfully'
-            : 'Collection created successfully',
+        editingExpenseId.isNotEmpty
+            ? 'Expense updated successfully'
+            : 'Expense created successfully',
         MessageType.information,
         null,
         '',
       );
       Get.back();
-      fetchCollections(isRefresh: true);
+      fetchExpenses(isRefresh: true);
     }
   }
 
-  // ── Change Payment Status ──────────────────────────────────────────────────
-  Future<void> changeStatus(String collectionId, String newStatus) async {
+  // ── Delete Expense ────────────────────────────────────────────────────────
+  Future<void> deleteExpense(String expenseId) async {
     Utility.showLoader();
-    final success = await Get.find<Repository>().changeCollectionStatusApi(
-      collectionid: collectionId,
-      paymentstatus: newStatus,
+    final success = await Get.find<Repository>().deleteExpenseApi(
+      expenseid: expenseId,
+      isLoading: false,
+    );
+    Utility.closeLoader();
+
+    if (success) {
+      Utility.showMessage(
+        'Expense deleted successfully',
+        MessageType.information,
+        null,
+        '',
+      );
+      fetchExpenses(isRefresh: true);
+    }
+  }
+
+  // ── Change Status ─────────────────────────────────────────────────────────
+  Future<void> changeStatus(String expenseId, String newStatus) async {
+    Utility.showLoader();
+    final success = await Get.find<Repository>().changeExpenseStatusApi(
+      expenseid: expenseId,
+      status: newStatus,
       isLoading: false,
     );
     Utility.closeLoader();
@@ -312,38 +367,7 @@ class CollectionController extends GetxController {
         null,
         '',
       );
-      fetchCollections(isRefresh: true);
+      fetchExpenses(isRefresh: true);
     }
-  }
-
-  // ── Delete Collection ──────────────────────────────────────────────────────
-  Future<void> deleteCollection(String collectionId) async {
-    Utility.showLoader();
-    final success = await Get.find<Repository>().deleteCollectionApi(
-      collectionid: collectionId,
-      isLoading: false,
-    );
-    Utility.closeLoader();
-
-    if (success) {
-      Utility.showMessage(
-        'Collection deleted successfully',
-        MessageType.information,
-        null,
-        '',
-      );
-      fetchCollections(isRefresh: true);
-    }
-  }
-
-  // ── Fetch One Collection ───────────────────────────────────────────────────
-  Future<CollectionDoc?> getOneCollection(String collectionId) async {
-    Utility.showLoader();
-    final res = await Get.find<Repository>().getOneCollectionApi(
-      collectionid: collectionId,
-      isLoading: false,
-    );
-    Utility.closeLoader();
-    return res?.data;
   }
 }
