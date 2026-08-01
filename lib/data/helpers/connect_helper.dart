@@ -1806,6 +1806,121 @@ class ConnectHelper {
     );
     return response;
   }
+
+  Future<ResponseModel> createCollectionApi({
+    String? collectionid,
+    required String date,
+    required String userid,
+    required String partyname,
+    required String amount,
+    required String paymentmode,
+    required String paymentstatus,
+    String? remark,
+    bool isLoading = false,
+  }) async {
+    final String branchId = await _resolveBranchId();
+    var data = {
+      "collectionid": collectionid ?? "",
+      "date": date,
+      "userid": userid,
+      "partyname": partyname,
+      "amount": amount,
+      "paymentmode": paymentmode,
+      "paymentstatus": paymentstatus,
+      "remark": remark ?? "",
+      "branchId": branchId,
+    };
+    var response = await apiWrapper.makeRequest(
+      EndPoints.createCollectionApi,
+      Request.post,
+      data,
+      isLoading,
+      await Utility.commonHeader(),
+    );
+    return response;
+  }
+
+  Future<ResponseModel> getCollectionListApi({
+    int page = 1,
+    int limit = 10,
+    String search = "",
+    String fromDate = "",
+    String toDate = "",
+    String userid = "",
+    String sortfield = "_id",
+    int sortoption = 1,
+    bool isLoading = false,
+  }) async {
+    final String branchId = await _resolveBranchId();
+    var data = <String, dynamic>{
+      "page": page,
+      "limit": limit,
+      "search": search,
+      "fromDate": fromDate,
+      "toDate": toDate,
+      "userid": userid,
+      "sortfield": sortfield,
+      "sortoption": sortoption,
+      "branchId": branchId,
+    };
+    var response = await apiWrapper.makeRequest(
+      EndPoints.collectionListApi,
+      Request.post,
+      data,
+      isLoading,
+      await Utility.commonHeader(),
+    );
+    return response;
+  }
+
+  Future<ResponseModel> getOneCollectionApi({
+    required String collectionid,
+    bool isLoading = false,
+  }) async {
+    var data = {"collectionid": collectionid};
+    var response = await apiWrapper.makeRequest(
+      EndPoints.getOneCollectionApi,
+      Request.post,
+      data,
+      isLoading,
+      await Utility.commonHeader(),
+    );
+    return response;
+  }
+
+  Future<ResponseModel> deleteCollectionApi({
+    required String collectionid,
+    bool isLoading = false,
+  }) async {
+    var data = {"collectionid": collectionid};
+    var response = await apiWrapper.makeRequest(
+      EndPoints.deleteCollectionApi,
+      Request.post,
+      data,
+      isLoading,
+      await Utility.commonHeader(),
+    );
+    return response;
+  }
+
+  Future<ResponseModel> changeCollectionStatusApi({
+    required String collectionid,
+    required String paymentstatus,
+    bool isLoading = false,
+  }) async {
+    var data = {
+      "collectionid": collectionid,
+      "paymentstatus": paymentstatus,
+    };
+    var response = await apiWrapper.makeRequest(
+      EndPoints.changeCollectionStatusApi,
+      Request.post,
+      data,
+      isLoading,
+      await Utility.commonHeader(),
+    );
+    return response;
+  }
 }
 
 class FileUrl {

@@ -1824,4 +1824,165 @@ class Repository {
       return false;
     }
   }
+
+  Future<CreateCollectionModel?> createCollectionApi({
+    String? collectionid,
+    required String date,
+    required String userid,
+    required String partyname,
+    required String amount,
+    required String paymentmode,
+    required String paymentstatus,
+    String? remark,
+    bool isLoading = false,
+  }) async {
+    try {
+      var response = await _dataRepository.createCollectionApi(
+        collectionid: collectionid,
+        date: date,
+        userid: userid,
+        partyname: partyname,
+        amount: amount,
+        paymentmode: paymentmode,
+        paymentstatus: paymentstatus,
+        remark: remark,
+        isLoading: isLoading,
+      );
+      if (response.hasError) {
+        final msg = _parseErrorMessage(response.data, 'Failed to save collection');
+        Utility.showMessage(msg, MessageType.error, null, '');
+        return null;
+      }
+      if (response.data.isNotEmpty) {
+        return createCollectionModelFromJson(response.data);
+      }
+      return null;
+    } catch (e, st) {
+      print('createCollectionApi error: $e\n$st');
+      Utility.closeDialog();
+      Utility.showMessage('Failed to save collection', MessageType.error, null, '');
+      return null;
+    }
+  }
+
+  Future<GetAllCollectionsModel?> getCollectionListApi({
+    int page = 1,
+    int limit = 10,
+    String search = "",
+    String fromDate = "",
+    String toDate = "",
+    String userid = "",
+    String sortfield = "_id",
+    int sortoption = 1,
+    bool isLoading = false,
+  }) async {
+    try {
+      var response = await _dataRepository.getCollectionListApi(
+        page: page,
+        limit: limit,
+        search: search,
+        fromDate: fromDate,
+        toDate: toDate,
+        userid: userid,
+        sortfield: sortfield,
+        sortoption: sortoption,
+        isLoading: isLoading,
+      );
+      if (response.hasError) {
+        final msg = _parseErrorMessage(response.data, 'Failed to load collections');
+        Utility.showMessage(msg, MessageType.error, null, '');
+        return null;
+      }
+      if (response.data.isNotEmpty) {
+        return getAllCollectionsModelFromJson(response.data);
+      }
+      return null;
+    } catch (e, st) {
+      print('getCollectionListApi error: $e\n$st');
+      Utility.closeDialog();
+      Utility.showMessage('Failed to load collections', MessageType.error, null, '');
+      return null;
+    }
+  }
+
+  Future<bool> deleteCollectionApi({
+    required String collectionid,
+    bool isLoading = false,
+  }) async {
+    try {
+      var response = await _dataRepository.deleteCollectionApi(
+        collectionid: collectionid,
+        isLoading: isLoading,
+      );
+      if (response.hasError) {
+        final msg = _parseErrorMessage(response.data, 'Failed to delete collection');
+        Utility.showMessage(msg, MessageType.error, null, '');
+        return false;
+      }
+      return true;
+    } catch (e) {
+      print('deleteCollectionApi error: $e');
+      return false;
+    }
+  }
+
+  Future<CreateCollectionModel?> getOneCollectionApi({
+    required String collectionid,
+    bool isLoading = false,
+  }) async {
+    try {
+      var response = await _dataRepository.getOneCollectionApi(
+        collectionid: collectionid,
+        isLoading: isLoading,
+      );
+      if (response.hasError) {
+        final msg = _parseErrorMessage(
+          response.data,
+          'Failed to load collection details',
+        );
+        Utility.showMessage(msg, MessageType.error, null, '');
+        return null;
+      }
+      if (response.data.isNotEmpty) {
+        return createCollectionModelFromJson(response.data);
+      }
+      return null;
+    } catch (e, st) {
+      print('getOneCollectionApi error: $e\n$st');
+      Utility.closeDialog();
+      Utility.showMessage(
+        'Failed to load collection details',
+        MessageType.error,
+        null,
+        '',
+      );
+      return null;
+    }
+  }
+
+  Future<bool> changeCollectionStatusApi({
+    required String collectionid,
+    required String paymentstatus,
+    bool isLoading = false,
+  }) async {
+    try {
+      var response = await _dataRepository.changeCollectionStatusApi(
+        collectionid: collectionid,
+        paymentstatus: paymentstatus,
+        isLoading: isLoading,
+      );
+      if (response.hasError) {
+        final msg = _parseErrorMessage(
+          response.data,
+          'Failed to update collection status',
+        );
+        Utility.showMessage(msg, MessageType.error, null, '');
+        return false;
+      }
+      return true;
+    } catch (e) {
+      print('changeCollectionStatusApi error: $e');
+      return false;
+    }
+  }
 }

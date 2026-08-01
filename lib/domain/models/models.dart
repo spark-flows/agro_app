@@ -23,5 +23,6 @@ export 'get_salary_model.dart';
 export 'salary_model.dart';
 export 'user_model.dart';
 export 'leave_model.dart';
+export 'collection_model.dart';
 export 'get_all_unit_model.dart';
 export 'get_all_users_model.dart' hide Data, Roleid;

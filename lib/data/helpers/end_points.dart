@@ -57,5 +57,11 @@ class EndPoints {
   static String deleteLeaveApi = 'api/leave/delete';
   static String getOneLeaveApi = 'api/leave/getone';
   static String changeLeaveStatusApi = 'api/leave/changestatus';
+
+  static String collectionListApi = 'api/collection';
+  static String createCollectionApi = 'api/collection/create';
+  static String getOneCollectionApi = 'api/collection/getone';
+  static String deleteCollectionApi = 'api/collection/delete';
+  static String changeCollectionStatusApi = 'api/collection/changestatus';
 }
 

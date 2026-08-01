@@ -743,4 +743,74 @@ class DataRepository extends DomainRepository {
     status: status,
     isLoading: isLoading,
   );
+
+  Future<ResponseModel> createCollectionApi({
+    String? collectionid,
+    required String date,
+    required String userid,
+    required String partyname,
+    required String amount,
+    required String paymentmode,
+    required String paymentstatus,
+    String? remark,
+    bool isLoading = false,
+  }) async => connectHelper.createCollectionApi(
+    collectionid: collectionid,
+    date: date,
+    userid: userid,
+    partyname: partyname,
+    amount: amount,
+    paymentmode: paymentmode,
+    paymentstatus: paymentstatus,
+    remark: remark,
+    isLoading: isLoading,
+  );
+
+  Future<ResponseModel> getCollectionListApi({
+    int page = 1,
+    int limit = 10,
+    String search = "",
+    String fromDate = "",
+    String toDate = "",
+    String userid = "",
+    String sortfield = "_id",
+    int sortoption = 1,
+    bool isLoading = false,
+  }) async => connectHelper.getCollectionListApi(
+    page: page,
+    limit: limit,
+    search: search,
+    fromDate: fromDate,
+    toDate: toDate,
+    userid: userid,
+    sortfield: sortfield,
+    sortoption: sortoption,
+    isLoading: isLoading,
+  );
+
+  Future<ResponseModel> getOneCollectionApi({
+    required String collectionid,
+    bool isLoading = false,
+  }) async => connectHelper.getOneCollectionApi(
+    collectionid: collectionid,
+    isLoading: isLoading,
+  );
+
+  Future<ResponseModel> deleteCollectionApi({
+    required String collectionid,
+    bool isLoading = false,
+  }) async => connectHelper.deleteCollectionApi(
+    collectionid: collectionid,
+    isLoading: isLoading,
+  );
+
+  Future<ResponseModel> changeCollectionStatusApi({
+    required String collectionid,
+    required String paymentstatus,
+    bool isLoading = false,
+  }) async => connectHelper.changeCollectionStatusApi(
+    collectionid: collectionid,
+    paymentstatus: paymentstatus,
+    isLoading: isLoading,
+  );
 }

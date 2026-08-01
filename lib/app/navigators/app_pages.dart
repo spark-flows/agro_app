@@ -166,6 +166,20 @@ class AppPages {
       binding: LeaveBinding(),
       transition: Transition.rightToLeft,
     ),
+    GetPage<CollectionScreen>(
+      name: _Paths.collectionScreen,
+      transitionDuration: transitionDuration,
+      page: CollectionScreen.new,
+      binding: CollectionBinding(),
+      transition: Transition.rightToLeft,
+    ),
+    GetPage<CollectionFormPage>(
+      name: _Paths.collectionForm,
+      transitionDuration: transitionDuration,
+      page: CollectionFormPage.new,
+      binding: CollectionBinding(),
+      transition: Transition.rightToLeft,
+    ),
   ];
 }
 

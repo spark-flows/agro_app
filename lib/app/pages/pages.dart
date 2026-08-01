@@ -13,3 +13,4 @@ export 'tasks_screen/tasks_page.dart';
 export 'attendance_screen/attendance_page.dart';
 export 'salary_screen/salary_page.dart';
 export 'leave_screen/leave_page.dart';
+export 'collection_screen/collection_page.dart';
