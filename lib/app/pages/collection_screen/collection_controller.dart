@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:convert';
 import 'package:agro_app/app/utils/utility.dart';
 import 'package:agro_app/domain/domain.dart';
-import 'package:agro_app/domain/services/enum.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
@@ -28,6 +27,8 @@ class CollectionController extends GetxController {
   // ── Role & User Context ──────────────────────────────────────────────────
   String roleName = '';
   String userId = '';
+  List<Doc> userList = [];
+  String? selectedUserId;
 
   // ── Form Controllers & State ─────────────────────────────────────────────
   final formKey = GlobalKey<FormState>();
@@ -117,7 +118,28 @@ class CollectionController extends GetxController {
         LocalKeys.distributorId,
       );
     }
+    if (RoleUtils.isAdmin(roleName)) {
+      fetchUserList();
+    }
     update();
+  }
+
+  // ── Fetch Users for Admin Selection ───────────────────────────────────────
+  Future<void> fetchUserList() async {
+    try {
+      final response = await Get.find<Repository>().getUsersListApi(
+        page: 1,
+        limit: 1000,
+        isLoading: false,
+      );
+      final docs = response?.data.docs;
+      if (docs != null && docs.isNotEmpty) {
+        userList = docs.where((u) => RoleUtils.isUser(u.roleid.rolename)).toList();
+        update();
+      }
+    } catch (e) {
+      debugPrint('fetchUserList error: $e');
+    }
   }
 
   // ── Fetch Collections ─────────────────────────────────────────────────────
@@ -237,6 +259,7 @@ class CollectionController extends GetxController {
       } else {
         selectedPaymentStatus = paymentStatusOptions.first;
       }
+      selectedUserId = collection.userid?.id;
     } else {
       editingCollectionId = '';
       dateCtrl.text = DateFormat('yyyy-MM-dd').format(DateTime.now());
@@ -245,6 +268,7 @@ class CollectionController extends GetxController {
       remarkCtrl.clear();
       selectedPaymentMode = 'cash';
       selectedPaymentStatus = 'pending';
+      selectedUserId = null;
     }
     update();
   }
@@ -257,12 +281,16 @@ class CollectionController extends GetxController {
 
     // Determine userid based on requirement:
     // If logged in as User role: send the logged-in User's User ID
-    // If logged in as Admin role: no need to send user ID ("")
+    // If logged in as Admin role: send selected user's ID
     String effectiveUserId = '';
     if (RoleUtils.isUser(roleName)) {
       effectiveUserId = userId;
     } else if (RoleUtils.isAdmin(roleName)) {
-      effectiveUserId = '';
+      if (selectedUserId == null || selectedUserId!.isEmpty) {
+        Utility.showMessage('Please select a user', MessageType.error, null, '');
+        return;
+      }
+      effectiveUserId = selectedUserId!;
     }
 
     Utility.showLoader();

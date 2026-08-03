@@ -13,14 +13,6 @@ import 'package:upgrader/upgrader.dart';
 import 'package:flutter/foundation.dart';
 import 'firebase_options.dart';
 
-// Admin
-// admin@agro.com
-// PY@002025
-
-// Raj
-// aayush@gmail.com
-// 12345678
-
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);

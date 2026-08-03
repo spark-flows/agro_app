@@ -178,12 +178,7 @@ class HomeScreen extends StatelessWidget {
                           color: Colors.teal,
                           onTap: controller.goToDistributors,
                         ),
-                      _buildMenuCard(
-                        title: 'Customers',
-                        icon: Icons.people_alt,
-                        color: Colors.blue,
-                        onTap: controller.goToCustomers,
-                      ),
+
                       if (RoleUtils.isAdmin(controller.roleName) ||
                           RoleUtils.isUser(controller.roleName))
                         _buildMenuCard(
@@ -254,6 +249,12 @@ class HomeScreen extends StatelessWidget {
                           onTap: controller.goToExpense,
                         ),
                       ],
+                      _buildMenuCard(
+                        title: 'Customers',
+                        icon: Icons.people_alt,
+                        color: Colors.blue,
+                        onTap: controller.goToCustomers,
+                      ),
                     ],
                   ),
 

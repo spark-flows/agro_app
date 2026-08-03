@@ -20,6 +20,9 @@ class ProductItem {
   final int? qty;
   int quantity;
   String? selectedUnit;
+  Alternateunitid? alternateunitid;
+  num? purchaseprice;
+  num? saleprice;
 
   ProductItem({
     required this.id,
@@ -32,6 +35,9 @@ class ProductItem {
     required this.emoji,
     required this.gradStart,
     required this.gradEnd,
+    this.alternateunitid,
+    this.purchaseprice,
+    this.saleprice,
     this.qty,
     this.quantity = 0,
     this.selectedUnit,
@@ -445,6 +451,9 @@ class OrdersController extends GetxController {
       gradEnd: const Color(0xFF4ADE80),
       qty: doc.qty,
       selectedUnit: defaultUnitName,
+      alternateunitid: doc.alternateunitid,
+      saleprice: doc.saleprice??0,
+      purchaseprice: doc.purchaseprice ?? 0,
     );
   }
 
@@ -595,20 +604,16 @@ class OrdersController extends GetxController {
       return;
     }
 
-    final itemsPayload = cartItems
-        .map(
-          (p) {
-            String u = p.selectedUnit ?? p.unit.replaceAll("per ", "").trim();
-            if (u == "-") u = "";
-            return {
-              "productid": p.id,
-              "quantity": p.quantity,
-              "price": p.rawPrice,
-              "unit": u,
-            };
-          },
-        )
-        .toList();
+    final itemsPayload = cartItems.map((p) {
+      String u = p.selectedUnit ?? p.unit.replaceAll("per ", "").trim();
+      if (u == "-") u = "";
+      return {
+        "productid": p.id,
+        "quantity": p.quantity,
+        "price": p.rawPrice,
+        "unit": u,
+      };
+    }).toList();
 
     isPlacingOrder = true;
     update();

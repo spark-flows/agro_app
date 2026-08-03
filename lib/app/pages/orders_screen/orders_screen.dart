@@ -507,7 +507,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
 
                   // ── Status Dropdown ─────────────────────────────────────
                   DropdownButtonFormField<String>(
-                    value: tempStatus,
+                    initialValue: tempStatus,
                     decoration: InputDecoration(
                       labelText: 'Status',
                       border: OutlineInputBorder(
@@ -536,7 +536,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
                   // ── Distributor Dropdown (Admin only) ───────────────────
                   if (controller.isAdmin) ...[
                     DropdownButtonFormField<String>(
-                      value: tempDistributorId,
+                      initialValue: tempDistributorId,
                       decoration: InputDecoration(
                         labelText: 'Distributor',
                         border: OutlineInputBorder(
@@ -802,7 +802,10 @@ class _NewOrderScreenState extends State<NewOrderScreen> {
                             ),
                           );
                         }
-                        return _buildProductCard(controller, products[index]);
+                        return ProductCard(
+                          controller: controller,
+                          item: products[index],
+                        );
                       },
                     );
                   },
@@ -849,354 +852,232 @@ class _NewOrderScreenState extends State<NewOrderScreen> {
   }
 }
 
-void _showQuantityEditDialog(OrdersController controller, ProductItem item) {
-  final context = Get.context;
-  if (context == null) return;
-  final textController = TextEditingController(text: item.quantity.toString());
-  String? selectedUnitInDialog = item.selectedUnit;
-  if (selectedUnitInDialog == null || selectedUnitInDialog.isEmpty) {
-    if (controller.units.isNotEmpty) {
-      selectedUnitInDialog =
-          controller.units.first.name ?? controller.units.first.id;
+class ProductCard extends StatefulWidget {
+  final OrdersController controller;
+  final ProductItem item;
+
+  const ProductCard({super.key, required this.controller, required this.item});
+
+  @override
+  State<ProductCard> createState() => _ProductCardState();
+}
+
+class _ProductCardState extends State<ProductCard> {
+  late TextEditingController _qtyController;
+  late TextEditingController _unitController;
+
+  @override
+  void initState() {
+    super.initState();
+    _qtyController = TextEditingController(text: '${widget.item.quantity}');
+
+    // Default unit fallback logic
+    final String defaultUnit = widget.item.unit.replaceAll("per ", "").trim();
+    final currentUnit =
+        (widget.item.selectedUnit != null &&
+            widget.item.selectedUnit!.isNotEmpty)
+        ? widget.item.selectedUnit
+        : (defaultUnit != "-" ? defaultUnit : "");
+    widget.item.selectedUnit = currentUnit;
+    _unitController = TextEditingController();
+  }
+
+  @override
+  void didUpdateWidget(covariant ProductCard oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // Sync external updates (e.g. cart cleared)
+    final targetQtyText = '${widget.item.quantity}';
+    if (_qtyController.text != targetQtyText &&
+        !FocusScope.of(context).hasFocus) {
+      _qtyController.text = targetQtyText;
+    }
+
+    final targetUnitText = widget.item.selectedUnit ?? '';
+    if (_unitController.text != targetUnitText &&
+        !FocusScope.of(context).hasFocus) {
+      _unitController.text = targetUnitText;
     }
   }
 
-  Get.dialog(
-    StatefulBuilder(
-      builder: (context, setDialogState) {
-        return Dialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-          child: Padding(
-            padding: const EdgeInsets.all(20.0),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
+  @override
+  void dispose() {
+    _qtyController.dispose();
+    _unitController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final bool isDealer = RoleUtils.isDealer(
+      Get.find<HomeController>().roleName,
+    );
+    final bool isUser = RoleUtils.isUser(Get.find<HomeController>().roleName);
+    final bool isAdmin = RoleUtils.isAdmin(Get.find<HomeController>().roleName);
+    final bool isInCart = widget.item.quantity > 0;
+
+    return Card(
+      elevation: isInCart ? 3 : 1,
+      margin: const EdgeInsets.only(bottom: 12),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(
+          color: isInCart ? ColorsValue.primary : Colors.transparent,
+          width: isInCart ? 1.5 : 0,
+        ),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(12.0),
+        child: Column(
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  'Enter Quantity & Unit',
-                  style: Styles.txtBlackColorW70016,
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  item.name,
-                  style: Styles.txtGreyColorW40012,
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 16),
-                TextField(
-                  controller: textController,
-                  keyboardType: TextInputType.number,
-                  autofocus: true,
-                  inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                  decoration: InputDecoration(
-                    labelText: 'Quantity',
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 10,
-                    ),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide: BorderSide(color: Colors.grey.shade300),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide: const BorderSide(color: ColorsValue.primary),
+                /// Icon Placeholder
+                Container(
+                  width: 60,
+                  height: 60,
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade100,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Center(
+                    child: Text(
+                      widget.item.emoji,
+                      style: const TextStyle(fontSize: 30),
                     ),
                   ),
                 ),
-                const SizedBox(height: 14),
-                DropdownButtonFormField<String>(
-                  value:
-                      (controller.units.any(
-                        (u) =>
-                            u.name == selectedUnitInDialog ||
-                            u.id == selectedUnitInDialog,
-                      ))
-                          ? selectedUnitInDialog
-                          : (controller.units.isNotEmpty
-                              ? (controller.units.first.name ??
-                                  controller.units.first.id)
-                              : null),
-                  decoration: InputDecoration(
-                    labelText: 'Unit',
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 10,
-                    ),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide: BorderSide(color: Colors.grey.shade300),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide: const BorderSide(color: ColorsValue.primary),
-                    ),
-                  ),
-                  items:
-                      controller.units.map((u) {
-                        final val = u.name ?? u.id ?? '';
-                        return DropdownMenuItem<String>(
-                          value: val,
-                          child: Text(val),
-                        );
-                      }).toList(),
-                  onChanged: (val) {
-                    if (val != null) {
-                      setDialogState(() {
-                        selectedUnitInDialog = val;
-                      });
-                    }
-                  },
-                ),
-                const SizedBox(height: 20),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    TextButton(
-                      onPressed: () => Get.back(),
-                      child: Text(
-                        'Cancel',
-                        style: TextStyle(color: Colors.grey.shade600),
+                const SizedBox(width: 12),
+
+                /// Details
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(widget.item.name, style: Styles.txtBlackColorW60014),
+                      const SizedBox(height: 4),
+                      Text(
+                        widget.item.category,
+                        style: Styles.txtGreyColorW40012,
                       ),
-                    ),
-                    const SizedBox(width: 8),
-                    ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: ColorsValue.primary,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
+                      const SizedBox(height: 4),
+                      if (isAdmin || isDealer || isUser) ...[
+                        Text(
+                          widget.item.alternateunitid?.name ?? "",
+                          style: Styles.txtGreyColorW40012,
                         ),
+                        const SizedBox(height: 4),
+                      ],
+                      Text(
+                        widget.item.description,
+                        style: Styles.txtGreyColorW40012,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
                       ),
-                      onPressed: () {
-                        final enteredVal =
-                            int.tryParse(textController.text) ?? 0;
-                        item.selectedUnit = selectedUnitInDialog;
-                        controller.updateQuantity(item.id, enteredVal);
-                        Get.back();
-                      },
-                      child: const Text(
-                        'Update',
-                        style: TextStyle(color: Colors.white),
-                      ),
-                    ),
-                  ],
+                      const SizedBox(height: 4),
+                      if (isAdmin || isUser) ...[
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              'Purchase :-  ₹${widget.item.purchaseprice ?? 0}',
+                              style: Styles.txtBlackColorW70014.copyWith(
+                                color: ColorsValue.primary,
+                              ),
+                            ),
+                            Text(
+                              'Sale :- ₹${widget.item.saleprice ?? 0}',
+                              style: Styles.txtBlackColorW70014.copyWith(
+                                color: ColorsValue.primary,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                      if (!widget.controller.isDealerRole) ...[
+                        const SizedBox(height: 4),
+                        Text(
+                          'Available Qty: ${widget.item.qty ?? 0}',
+                          style: Styles.txtGreyColorW40012,
+                        ),
+                      ],
+                    ],
+                  ),
                 ),
               ],
             ),
-          ),
-        );
-      },
-    ),
-  );
-}
-
-Widget _buildProductCard(OrdersController controller, ProductItem item) {
-  final unitOptions = controller.units;
-  String? currentUnit = item.selectedUnit;
-  if (currentUnit == null || currentUnit.isEmpty) {
-    if (unitOptions.isNotEmpty) {
-      currentUnit = unitOptions.first.name ?? unitOptions.first.id;
-      item.selectedUnit = currentUnit;
-    }
-  }
-
-  return Card(
-    elevation: 1,
-    margin: const EdgeInsets.only(bottom: 12),
-    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-    child: Padding(
-      padding: const EdgeInsets.all(12.0),
-      child: Column(
-        children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              /// Icon Placeholder
-              Container(
-                width: 60,
-                height: 60,
-                decoration: BoxDecoration(
-                  color: Colors.grey.shade100,
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Center(
-                  child: Text(item.emoji, style: const TextStyle(fontSize: 30)),
-                ),
-              ),
-              const SizedBox(width: 12),
-
-              /// Details
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(item.name, style: Styles.txtBlackColorW60014),
-                    const SizedBox(height: 4),
-                    Text(item.category, style: Styles.txtGreyColorW40012),
-                    const SizedBox(height: 4),
-                    Text(
-                      item.description,
-                      style: Styles.txtGreyColorW40012,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      '${item.price} / ${item.selectedUnit ?? item.unit.replaceAll("per ", "")}',
-                      style: Styles.txtBlackColorW70014.copyWith(
-                        color: ColorsValue.primary,
-                      ),
-                    ),
-
-                    if (!controller.isDealerRole) ...[
-                      const SizedBox(height: 4),
-                      Text(
-                        'Available Qty: ${item.qty ?? 0}',
-                        style: Styles.txtGreyColorW40012,
-                      ),
-                    ],
-                  ],
-                ),
-              ),
-
-              /// Action
-              Align(
-                alignment: Alignment.centerRight,
-                child: item.quantity == 0
-                    ? IconButton(
-                        icon: Icon(
-                          Icons.add_circle_outline,
-                          color: ColorsValue.primary,
-                          size: 30,
-                        ),
-                        onPressed: () {
-                          controller.incrementQuantity(item.id);
-                        },
-                      )
-                    : Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          IconButton(
-                            icon: const Icon(
-                              Icons.remove_circle_outline,
-                              color: Colors.red,
-                            ),
-                            onPressed: () =>
-                                controller.decrementQuantity(item.id),
-                          ),
-                          InkWell(
-                            onTap: () =>
-                                _showQuantityEditDialog(controller, item),
-                            borderRadius: BorderRadius.circular(4),
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 8,
-                                vertical: 4,
-                              ),
-                              decoration: BoxDecoration(
-                                border: Border.all(color: Colors.grey.shade300),
-                                borderRadius: BorderRadius.circular(6),
-                              ),
-                              child: Text(
-                                '${item.quantity}',
-                                style: Styles.txtBlackColorW70016,
-                              ),
-                            ),
-                          ),
-                          IconButton(
-                            icon: Icon(
-                              Icons.add_circle_outline,
-                              color: ColorsValue.primary,
-                            ),
-                            onPressed: () =>
-                                controller.incrementQuantity(item.id),
-                          ),
-                        ],
-                      ),
-              ),
-            ],
-          ),
-          if (item.quantity > 0) ...[
-            const SizedBox(height: 8),
+            const SizedBox(height: 12),
             const Divider(height: 1),
-            const SizedBox(height: 8),
+            const SizedBox(height: 12),
             Row(
               children: [
-                const Icon(
-                  Icons.straighten,
-                  size: 18,
-                  color: ColorsValue.primary,
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  'Unit: ',
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    color: ColorsValue.txtBlackColor,
-                  ),
-                ),
-                const SizedBox(width: 8),
                 Expanded(
-                  child: Container(
-                    height: 38,
-                    padding: const EdgeInsets.symmetric(horizontal: 10),
-                    decoration: BoxDecoration(
-                      border: Border.all(color: Colors.grey.shade300),
-                      borderRadius: BorderRadius.circular(8),
-                      color: Colors.grey.shade50,
-                    ),
-                    child: DropdownButtonHideUnderline(
-                      child: DropdownButton<String>(
-                        isExpanded: true,
-                        value:
-                            (unitOptions.any(
-                              (u) =>
-                                  u.name == item.selectedUnit ||
-                                  u.id == item.selectedUnit,
-                            ))
-                                ? item.selectedUnit
-                                : (unitOptions.isNotEmpty
-                                    ? (unitOptions.first.name ??
-                                        unitOptions.first.id)
-                                    : null),
-                        hint: const Text(
-                          'Select Unit',
-                          style: TextStyle(fontSize: 13),
-                        ),
-                        style: TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w500,
-                          color: ColorsValue.txtBlackColor,
-                        ),
-                        items:
-                            unitOptions.map((u) {
-                              final val = u.name ?? u.id ?? '';
-                              return DropdownMenuItem<String>(
-                                value: val,
-                                child: Text(val),
-                              );
-                            }).toList(),
-                        onChanged: (newUnit) {
-                          if (newUnit != null) {
-                            item.selectedUnit = newUnit;
-                            controller.update();
-                          }
-                        },
+                  child: TextFormField(
+                    controller: _qtyController,
+                    keyboardType: TextInputType.number,
+                    decoration: InputDecoration(
+                      labelText: 'Quantity',
+                      hintText: 'Enter Qty',
+                      filled: true,
+                      fillColor: Colors.white,
+                      isDense: true,
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 10,
+                      ),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        borderSide: BorderSide(color: Colors.grey.shade300),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        borderSide: BorderSide(color: Colors.grey.shade300),
                       ),
                     ),
+                    onChanged: (val) {
+                      final parsed = int.tryParse(val.trim()) ?? 0;
+                      widget.item.quantity = parsed;
+                      widget.controller.update();
+                    },
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: TextFormField(
+                    controller: _unitController,
+                    keyboardType: TextInputType.text,
+                    decoration: InputDecoration(
+                      labelText: 'Unit',
+                      hintText: 'Enter Unit',
+                      filled: true,
+                      fillColor: Colors.white,
+                      isDense: true,
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 10,
+                      ),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        borderSide: BorderSide(color: Colors.grey.shade300),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        borderSide: BorderSide(color: Colors.grey.shade300),
+                      ),
+                    ),
+                    onChanged: (val) {
+                      widget.item.selectedUnit = val.trim();
+                      widget.controller.update();
+                    },
                   ),
                 ),
               ],
             ),
           ],
-        ],
+        ),
       ),
-    ),
-  );
+    );
+  }
 }
 
 void _showCartBottomSheet(
@@ -1535,7 +1416,9 @@ void _showOrderDetailsDialog(
                       (p) => p.id == item.productid,
                     );
                     pName = localMatch?.name ?? item.productid.toString();
-                    pUnit = localMatch != null ? localMatch.unit.replaceAll("per ", "") : null;
+                    pUnit = localMatch != null
+                        ? localMatch.unit.replaceAll("per ", "")
+                        : null;
                   }
 
                   return Card(

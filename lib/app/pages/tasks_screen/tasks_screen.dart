@@ -67,6 +67,48 @@ class _TasksScreenState extends State<TasksScreen> {
     }
   }
 
+  Widget _buildStatusChip({
+    required String title,
+    required int count,
+    required Color color,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.only(right: 8.0),
+      child: Container(
+        height: Dimens.seventy,
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.08),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: color.withValues(alpha: 0.3), width: 1),
+        ),
+        child: Column(
+          spacing: Dimens.three,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              title,
+              style: TextStyle(
+                color: color,
+                fontWeight: FontWeight.w600,
+                fontSize: 12,
+              ),
+            ),
+            const SizedBox(width: 6),
+            Text(
+              count.toString(),
+              style: TextStyle(
+                color: color,
+                fontWeight: FontWeight.bold,
+                fontSize: 16,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   bool _isImage(String path) {
     final cleanPath = path.toLowerCase().split('?').first;
     return cleanPath.endsWith('.jpg') ||
@@ -183,376 +225,435 @@ class _TasksScreenState extends State<TasksScreen> {
                 ),
                 const SizedBox(height: 16),
 
-                // ── Tasks List ──────────────────────────────────────────────
+                // ── Tasks List (incorporating scrollable Status Count Chips) ──
                 Expanded(
-                  child: controller.isLoading
-                      ? const Center(
-                          child: CircularProgressIndicator(
-                            color: ColorsValue.primary,
-                          ),
-                        )
-                      : controller.tasks.isEmpty
-                      ? Center(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
+                  child: RefreshIndicator(
+                    onRefresh: () => controller.fetchTasks(isRefresh: true),
+                    child: ListView.builder(
+                      controller: _scrollController,
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      itemCount:
+                          2 +
+                          (controller.isLoading
+                              ? 1
+                              : (controller.tasks.isEmpty
+                                    ? 1
+                                    : (controller.tasks.length +
+                                          (controller.isFetchingMore
+                                              ? 1
+                                              : 0)))),
+                      itemBuilder: (context, index) {
+                        if (index == 0) {
+                          return Row(
                             children: [
-                              Icon(
-                                Icons.assignment_outlined,
-                                size: 64,
-                                color: Colors.grey.shade300,
+                              Expanded(
+                                child: _buildStatusChip(
+                                  title: 'Pending',
+                                  count: controller.pendingCount,
+                                  color: Colors.amber.shade800,
+                                ),
                               ),
-                              const SizedBox(height: 16),
-                              Text(
-                                'No tasks found',
-                                style: Styles.txtGreyColorW40014,
+                              Expanded(
+                                child: _buildStatusChip(
+                                  title: 'Processing',
+                                  count: controller.processingCount,
+                                  color: Colors.blue,
+                                ),
+                              ),
+                              Expanded(
+                                child: _buildStatusChip(
+                                  title: 'Completed',
+                                  count: controller.completedCount,
+                                  color: Colors.green,
+                                ),
                               ),
                             ],
-                          ),
-                        )
-                      : RefreshIndicator(
-                          onRefresh: () =>
-                              controller.fetchTasks(isRefresh: true),
-                          child: ListView.builder(
-                            controller: _scrollController,
-                            itemCount:
-                                controller.tasks.length +
-                                (controller.isFetchingMore ? 1 : 0),
-                            itemBuilder: (context, index) {
-                              if (index == controller.tasks.length) {
-                                return const Padding(
-                                  padding: EdgeInsets.symmetric(vertical: 16),
-                                  child: Center(
-                                    child: CircularProgressIndicator(
-                                      color: ColorsValue.primary,
-                                    ),
+                          );
+                        }
+                        if (index == 1) {
+                          return Padding(
+                            padding: const EdgeInsets.only(top: 10, bottom: 16),
+                            child: Row(
+                              children: [
+                                Expanded(
+                                  child: _buildStatusChip(
+                                    title: 'Cancelled',
+                                    count: controller.cancelledCount,
+                                    color: Colors.red,
                                   ),
-                                );
-                              }
-
-                              final task = controller.tasks[index];
-                              final statusColor = _getStatusColor(task.status);
-                              final assigneeName =
-                                  (task.assignedto != null &&
-                                      task.assignedto!.isNotEmpty)
-                                  ? task.assignedto!
-                                        .map((e) => e.name ?? '')
-                                        .where((n) => n.isNotEmpty)
-                                        .join(', ')
-                                  : '';
-
-                              return Card(
-                                elevation: 1,
-                                margin: const EdgeInsets.only(bottom: 12),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12),
                                 ),
-                                child: InkWell(
-                                  onTap: () {
-                                    controller.fetchTaskDetailsAndOpenForm(
-                                      task.id ?? '',
-                                    );
-                                  },
-                                  borderRadius: BorderRadius.circular(12),
-                                  child: Padding(
-                                    padding: const EdgeInsets.all(16),
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Row(
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.spaceBetween,
-                                          children: [
-                                            Expanded(
-                                              child: Text(
-                                                task.taskname ?? 'Unnamed',
-                                                style:
-                                                    Styles.txtBlackColorW60014,
-                                                maxLines: 1,
-                                                overflow: TextOverflow.ellipsis,
-                                              ),
-                                            ),
-                                            const SizedBox(width: 8),
-                                            PopupMenuButton<String>(
-                                              padding: EdgeInsets.zero,
-                                              onSelected: (newStatus) {
-                                                controller
-                                                    .showChangeStatusDialog(
-                                                      taskId: task.id ?? '',
-                                                      newStatus: newStatus,
-                                                    );
-                                              },
-                                              itemBuilder: (context) => const [
-                                                PopupMenuItem(
-                                                  value: 'pending',
-                                                  child: Text('Pending'),
-                                                ),
-                                                PopupMenuItem(
-                                                  value: 'processing',
-                                                  child: Text('Processing'),
-                                                ),
-                                                PopupMenuItem(
-                                                  value: 'completed',
-                                                  child: Text('Completed'),
-                                                ),
-                                                PopupMenuItem(
-                                                  value: 'cancelled',
-                                                  child: Text('Cancelled'),
-                                                ),
-                                              ],
-                                              child: Container(
-                                                padding:
-                                                    const EdgeInsets.symmetric(
-                                                      horizontal: 10,
-                                                      vertical: 4,
-                                                    ),
-                                                decoration: BoxDecoration(
-                                                  color: statusColor.withValues(
-                                                    alpha: 0.1,
-                                                  ),
-                                                  borderRadius:
-                                                      BorderRadius.circular(20),
-                                                ),
-                                                child: Row(
-                                                  mainAxisSize:
-                                                      MainAxisSize.min,
-                                                  children: [
-                                                    Text(
-                                                      Utility.capitalizeFirst(
-                                                        task.status ??
-                                                            'pending',
-                                                      ),
-                                                      style: TextStyle(
-                                                        color: statusColor,
-                                                        fontSize: 11,
-                                                        fontWeight:
-                                                            FontWeight.bold,
-                                                      ),
-                                                    ),
-                                                    const SizedBox(width: 2),
-                                                    Icon(
-                                                      Icons.arrow_drop_down,
-                                                      size: 14,
-                                                      color: statusColor,
-                                                    ),
-                                                  ],
-                                                ),
-                                              ),
-                                            ),
-                                          ],
+                                Expanded(
+                                  child: _buildStatusChip(
+                                    title: 'Before Due',
+                                    count: controller.beforeDueCount,
+                                    color: Colors.purple,
+                                  ),
+                                ),
+                                Expanded(
+                                  child: _buildStatusChip(
+                                    title: 'After Due',
+                                    count: controller.afterDueCount,
+                                    color: Colors.blueGrey,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          );
+                        }
+
+                        if (controller.isLoading) {
+                          return const Padding(
+                            padding: EdgeInsets.only(top: 80),
+                            child: Center(
+                              child: CircularProgressIndicator(
+                                color: ColorsValue.primary,
+                              ),
+                            ),
+                          );
+                        }
+
+                        if (controller.tasks.isEmpty) {
+                          return Padding(
+                            padding: const EdgeInsets.only(top: 80),
+                            child: Center(
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    Icons.assignment_outlined,
+                                    size: 64,
+                                    color: Colors.grey.shade300,
+                                  ),
+                                  const SizedBox(height: 16),
+                                  Text(
+                                    'No tasks found',
+                                    style: Styles.txtGreyColorW40014,
+                                  ),
+                                ],
+                              ),
+                            ),
+                          );
+                        }
+                        final taskIndex = index - 2;
+                        if (taskIndex == controller.tasks.length) {
+                          return const Padding(
+                            padding: EdgeInsets.symmetric(vertical: 16),
+                            child: Center(
+                              child: CircularProgressIndicator(
+                                color: ColorsValue.primary,
+                              ),
+                            ),
+                          );
+                        }
+
+                        final task = controller.tasks[taskIndex];
+                        final statusColor = _getStatusColor(task.status);
+                        final assigneeName =
+                            (task.assignedto != null &&
+                                task.assignedto!.isNotEmpty)
+                            ? task.assignedto!
+                                  .map((e) => e.name ?? '')
+                                  .where((n) => n.isNotEmpty)
+                                  .join(', ')
+                            : '';
+
+                        return Card(
+                          elevation: 1,
+                          margin: const EdgeInsets.only(bottom: 12),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: InkWell(
+                            onTap: () {
+                              controller.fetchTaskDetailsAndOpenForm(
+                                task.id ?? '',
+                              );
+                            },
+                            borderRadius: BorderRadius.circular(12),
+                            child: Padding(
+                              padding: const EdgeInsets.all(16),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Expanded(
+                                        child: Text(
+                                          task.taskname ?? 'Unnamed',
+                                          style: Styles.txtBlackColorW60014,
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
                                         ),
-                                        const SizedBox(height: 8),
-                                        if (task.description != null &&
-                                            task.description!.isNotEmpty) ...[
-                                          Text(
-                                            task.description!,
-                                            style: Styles.txtGreyColorW40012,
-                                            maxLines: 2,
-                                            overflow: TextOverflow.ellipsis,
+                                      ),
+                                      const SizedBox(width: 8),
+                                      PopupMenuButton<String>(
+                                        padding: EdgeInsets.zero,
+                                        onSelected: (newStatus) {
+                                          controller.showChangeStatusDialog(
+                                            taskId: task.id ?? '',
+                                            newStatus: newStatus,
+                                          );
+                                        },
+                                        itemBuilder: (context) => const [
+                                          PopupMenuItem(
+                                            value: 'pending',
+                                            child: Text('Pending'),
                                           ),
-                                          const SizedBox(height: 12),
+                                          PopupMenuItem(
+                                            value: 'processing',
+                                            child: Text('Processing'),
+                                          ),
+                                          PopupMenuItem(
+                                            value: 'completed',
+                                            child: Text('Completed'),
+                                          ),
+                                          PopupMenuItem(
+                                            value: 'cancelled',
+                                            child: Text('Cancelled'),
+                                          ),
                                         ],
-                                        if (task.attachment != null &&
-                                            task.attachment!.isNotEmpty) ...[
-                                          const SizedBox(height: 8),
-                                          SizedBox(
-                                            height: 60,
-                                            child: ListView.separated(
-                                              scrollDirection: Axis.horizontal,
-                                              itemCount:
-                                                  task.attachment!.length,
-                                              separatorBuilder: (_, __) =>
-                                                  const SizedBox(width: 8),
-                                              itemBuilder: (context, index) {
-                                                final attach =
-                                                    task.attachment![index];
-                                                final path = attach.path ?? '';
-                                                if (path.isEmpty) {
-                                                  return const SizedBox.shrink();
-                                                }
+                                        child: Container(
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 10,
+                                            vertical: 4,
+                                          ),
+                                          decoration: BoxDecoration(
+                                            color: statusColor.withValues(
+                                              alpha: 0.1,
+                                            ),
+                                            borderRadius: BorderRadius.circular(
+                                              20,
+                                            ),
+                                          ),
+                                          child: Row(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              Text(
+                                                Utility.capitalizeFirst(
+                                                  task.status ?? 'pending',
+                                                ),
+                                                style: TextStyle(
+                                                  color: statusColor,
+                                                  fontSize: 11,
+                                                  fontWeight: FontWeight.bold,
+                                                ),
+                                              ),
+                                              const SizedBox(width: 2),
+                                              Icon(
+                                                Icons.arrow_drop_down,
+                                                size: 14,
+                                                color: statusColor,
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 8),
+                                  if (task.description != null &&
+                                      task.description!.isNotEmpty) ...[
+                                    Text(
+                                      task.description!,
+                                      style: Styles.txtGreyColorW40012,
+                                      maxLines: 2,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                    const SizedBox(height: 12),
+                                  ],
+                                  if (task.attachment != null &&
+                                      task.attachment!.isNotEmpty) ...[
+                                    const SizedBox(height: 8),
+                                    SizedBox(
+                                      height: 60,
+                                      child: ListView.separated(
+                                        scrollDirection: Axis.horizontal,
+                                        itemCount: task.attachment!.length,
+                                        separatorBuilder: (_, __) =>
+                                            const SizedBox(width: 8),
+                                        itemBuilder: (context, index) {
+                                          final attach =
+                                              task.attachment![index];
+                                          final path = attach.path ?? '';
+                                          if (path.isEmpty) {
+                                            return const SizedBox.shrink();
+                                          }
 
-                                                final isImg = _isImage(path);
-                                                final isVid = _isVideo(path);
-                                                final resolvedUrl =
-                                                    _resolveMediaUrl(path);
+                                          final isImg = _isImage(path);
+                                          final isVid = _isVideo(path);
+                                          final resolvedUrl = _resolveMediaUrl(
+                                            path,
+                                          );
 
-                                                return GestureDetector(
-                                                  onTap: () {
-                                                    Get.to(
-                                                      () =>
-                                                          const ShowFullScareenImage(),
-                                                      arguments: [
-                                                        path,
-                                                        isVid
-                                                            ? 'video'
-                                                            : 'image',
-                                                      ],
-                                                    );
-                                                  },
-                                                  child: ClipRRect(
-                                                    borderRadius:
-                                                        BorderRadius.circular(
-                                                          8,
-                                                        ),
-                                                    child: Container(
-                                                      width: 60,
-                                                      height: 60,
-                                                      color:
-                                                          Colors.grey.shade100,
-                                                      child:
-                                                          isImg &&
-                                                              resolvedUrl !=
-                                                                  null
-                                                          ? CachedNetworkImage(
-                                                              imageUrl:
-                                                                  resolvedUrl,
-                                                              fit: BoxFit.cover,
-                                                              placeholder: (context, url) => const Center(
-                                                                child: SizedBox(
-                                                                  width: 16,
-                                                                  height: 16,
-                                                                  child: CircularProgressIndicator(
-                                                                    strokeWidth:
-                                                                        2,
-                                                                    valueColor: AlwaysStoppedAnimation(
-                                                                      ColorsValue
-                                                                          .primary,
-                                                                    ),
-                                                                  ),
+                                          return GestureDetector(
+                                            onTap: () {
+                                              Get.to(
+                                                () =>
+                                                    const ShowFullScareenImage(),
+                                                arguments: [
+                                                  path,
+                                                  isVid ? 'video' : 'image',
+                                                ],
+                                              );
+                                            },
+                                            child: ClipRRect(
+                                              borderRadius:
+                                                  BorderRadius.circular(8),
+                                              child: Container(
+                                                width: 60,
+                                                height: 60,
+                                                color: Colors.grey.shade100,
+                                                child:
+                                                    isImg && resolvedUrl != null
+                                                    ? CachedNetworkImage(
+                                                        imageUrl: resolvedUrl,
+                                                        fit: BoxFit.cover,
+                                                        placeholder:
+                                                            (
+                                                              context,
+                                                              url,
+                                                            ) => const Center(
+                                                              child: SizedBox(
+                                                                width: 16,
+                                                                height: 16,
+                                                                child: CircularProgressIndicator(
+                                                                  strokeWidth:
+                                                                      2,
+                                                                  valueColor:
+                                                                      AlwaysStoppedAnimation(
+                                                                        ColorsValue
+                                                                            .primary,
+                                                                      ),
                                                                 ),
                                                               ),
-                                                              errorWidget:
-                                                                  (
-                                                                    context,
-                                                                    url,
-                                                                    error,
-                                                                  ) => const Icon(
-                                                                    Icons
-                                                                        .broken_image_outlined,
-                                                                    size: 20,
-                                                                    color: Colors
-                                                                        .grey,
-                                                                  ),
-                                                            )
-                                                          : isVid
-                                                          ? Stack(
-                                                              alignment:
-                                                                  Alignment
-                                                                      .center,
-                                                              children: [
-                                                                Container(
-                                                                  color: Colors
-                                                                      .black12,
-                                                                ),
-                                                                const Icon(
-                                                                  Icons
-                                                                      .play_circle_outline,
-                                                                  size: 24,
-                                                                  color: Colors
-                                                                      .black87,
-                                                                ),
-                                                              ],
-                                                            )
-                                                          : const Icon(
+                                                            ),
+                                                        errorWidget:
+                                                            (
+                                                              context,
+                                                              url,
+                                                              error,
+                                                            ) => const Icon(
                                                               Icons
-                                                                  .insert_drive_file_outlined,
-                                                              size: 24,
+                                                                  .broken_image_outlined,
+                                                              size: 20,
                                                               color:
                                                                   Colors.grey,
                                                             ),
-                                                    ),
-                                                  ),
-                                                );
-                                              },
+                                                      )
+                                                    : isVid
+                                                    ? Stack(
+                                                        alignment:
+                                                            Alignment.center,
+                                                        children: [
+                                                          Container(
+                                                            color:
+                                                                Colors.black12,
+                                                          ),
+                                                          const Icon(
+                                                            Icons
+                                                                .play_circle_outline,
+                                                            size: 24,
+                                                            color:
+                                                                Colors.black87,
+                                                          ),
+                                                        ],
+                                                      )
+                                                    : const Icon(
+                                                        Icons
+                                                            .insert_drive_file_outlined,
+                                                        size: 24,
+                                                        color: Colors.grey,
+                                                      ),
+                                              ),
                                             ),
+                                          );
+                                        },
+                                      ),
+                                    ),
+                                    const SizedBox(height: 12),
+                                  ],
+                                  Divider(
+                                    height: 1,
+                                    color: Colors.grey.shade100,
+                                  ),
+                                  const SizedBox(height: 12),
+                                  Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Row(
+                                        children: [
+                                          const Icon(
+                                            Icons.calendar_today_outlined,
+                                            size: 14,
+                                            color: ColorsValue.primary,
                                           ),
-                                          const SizedBox(height: 12),
+                                          const SizedBox(width: 6),
+                                          Text(
+                                            _formatDisplayDate(task.date),
+                                            style: Styles.txtGreyColorW40012,
+                                          ),
                                         ],
-                                        Divider(
-                                          height: 1,
-                                          color: Colors.grey.shade100,
-                                        ),
-                                        const SizedBox(height: 12),
-                                        Row(
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.spaceBetween,
-                                          children: [
-                                            Row(
-                                              children: [
-                                                const Icon(
-                                                  Icons.calendar_today_outlined,
-                                                  size: 14,
-                                                  color: ColorsValue.primary,
-                                                ),
-                                                const SizedBox(width: 6),
-                                                Text(
-                                                  _formatDisplayDate(task.date),
-                                                  style:
-                                                      Styles.txtGreyColorW40012,
-                                                ),
-                                              ],
+                                      ),
+                                      Row(
+                                        children: [
+                                          if (assigneeName.isNotEmpty) ...[
+                                            const Icon(
+                                              Icons.person_outline,
+                                              size: 14,
+                                              color: ColorsValue.primary,
                                             ),
-                                            Row(
-                                              children: [
-                                                if (assigneeName
-                                                    .isNotEmpty) ...[
-                                                  const Icon(
-                                                    Icons.person_outline,
-                                                    size: 14,
-                                                    color: ColorsValue.primary,
-                                                  ),
-                                                  const SizedBox(width: 4),
-                                                  Text(
-                                                    assigneeName,
-                                                    style: const TextStyle(
-                                                      fontSize: 12,
-                                                      fontWeight:
-                                                          FontWeight.w500,
-                                                      color: Colors.black87,
-                                                    ),
-                                                  ),
-                                                ] else ...[
-                                                  Text(
-                                                    'Unassigned',
-                                                    style: Styles
-                                                        .txtGreyColorW40012,
-                                                  ),
-                                                ],
-                                                const SizedBox(width: 8),
-                                                IconButton(
-                                                  constraints:
-                                                      const BoxConstraints(),
-                                                  padding: EdgeInsets.zero,
-                                                  icon: const Icon(
-                                                    Icons.delete_outline,
-                                                    color: Colors.red,
-                                                    size: 20,
-                                                  ),
-                                                  onPressed: () {
-                                                    Utility.showDeleteDialog(
-                                                      title: 'Delete Task',
-                                                      message:
-                                                          'Are you sure you want to delete "${task.taskname}"?',
-                                                      onConfirm: () {
-                                                        controller.deleteTask(
-                                                          task.id ?? '',
-                                                        );
-                                                      },
-                                                    );
-                                                  },
-                                                ),
-                                              ],
+                                            const SizedBox(width: 4),
+                                            Text(
+                                              assigneeName,
+                                              style: const TextStyle(
+                                                fontSize: 12,
+                                                fontWeight: FontWeight.w500,
+                                                color: Colors.black87,
+                                              ),
+                                            ),
+                                          ] else ...[
+                                            Text(
+                                              'Unassigned',
+                                              style: Styles.txtGreyColorW40012,
                                             ),
                                           ],
-                                        ),
-                                      ],
-                                    ),
+                                          const SizedBox(width: 8),
+                                          IconButton(
+                                            constraints: const BoxConstraints(),
+                                            padding: EdgeInsets.zero,
+                                            icon: const Icon(
+                                              Icons.delete_outline,
+                                              color: Colors.red,
+                                              size: 20,
+                                            ),
+                                            onPressed: () {
+                                              Utility.showDeleteDialog(
+                                                title: 'Delete Task',
+                                                message:
+                                                    'Are you sure you want to delete "${task.taskname}"?',
+                                                onConfirm: () {
+                                                  controller.deleteTask(
+                                                    task.id ?? '',
+                                                  );
+                                                },
+                                              );
+                                            },
+                                          ),
+                                        ],
+                                      ),
+                                    ],
                                   ),
-                                ),
-                              );
-                            },
+                                ],
+                              ),
+                            ),
                           ),
-                        ),
+                        );
+                      },
+                    ),
+                  ),
                 ),
               ],
             ),
@@ -796,7 +897,7 @@ class _TasksScreenState extends State<TasksScreen> {
                       items: controller.usersList.map((user) {
                         return DropdownMenuItem(
                           value: user.id,
-                          child: Text(user.name),
+                          child: Text(user.name??""),
                         );
                       }).toList(),
                       onChanged: (val) {

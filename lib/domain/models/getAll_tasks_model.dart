@@ -45,6 +45,12 @@ class Data {
   bool? hasNextPage;
   dynamic prevPage;
   dynamic nextPage;
+  int? totalPending;
+  int? totalProcessing;
+  int? totalCompleted;
+  int? totalCancelled;
+  int? beforeDue;
+  int? afterDue;
 
   Data({
     this.docs,
@@ -57,6 +63,12 @@ class Data {
     this.hasNextPage,
     this.prevPage,
     this.nextPage,
+    this.totalPending,
+    this.totalProcessing,
+    this.totalCompleted,
+    this.totalCancelled,
+    this.beforeDue,
+    this.afterDue,
   });
 
   factory Data.fromJson(Map<String, dynamic> json) => Data(
@@ -72,6 +84,12 @@ class Data {
     hasNextPage: json["hasNextPage"],
     prevPage: json["prevPage"],
     nextPage: json["nextPage"],
+    totalPending: json["totalPending"],
+    totalProcessing: json["totalProcessing"],
+    totalCompleted: json["totalCompleted"],
+    totalCancelled: json["totalCancelled"],
+    beforeDue: json["beforeDue"],
+    afterDue: json["afterDue"],
   );
 
   Map<String, dynamic> toJson() => {
@@ -87,6 +105,12 @@ class Data {
     "hasNextPage": hasNextPage,
     "prevPage": prevPage,
     "nextPage": nextPage,
+    "totalPending": totalPending,
+    "totalProcessing": totalProcessing,
+    "totalCompleted": totalCompleted,
+    "totalCancelled": totalCancelled,
+    "beforeDue": beforeDue,
+    "afterDue": afterDue,
   };
 }
 

@@ -28,6 +28,8 @@ class ExpenseController extends GetxController {
   // ── Role & User Context ──────────────────────────────────────────────────
   String roleName = '';
   String userId = '';
+  List<Doc> userList = [];
+  String? selectedUserId;
 
   // ── Form Controllers & State ─────────────────────────────────────────────
   final formKey = GlobalKey<FormState>();
@@ -120,7 +122,28 @@ class ExpenseController extends GetxController {
         LocalKeys.distributorId,
       );
     }
+    if (RoleUtils.isAdmin(roleName)) {
+      fetchUserList();
+    }
     update();
+  }
+
+  // ── Fetch Users for Admin Selection ───────────────────────────────────────
+  Future<void> fetchUserList() async {
+    try {
+      final response = await Get.find<Repository>().getUsersListApi(
+        page: 1,
+        limit: 1000,
+        isLoading: false,
+      );
+      final docs = response?.data.docs;
+      if (docs != null && docs.isNotEmpty) {
+        userList = docs.where((u) => RoleUtils.isUser(u.roleid.rolename)).toList();
+        update();
+      }
+    } catch (e) {
+      debugPrint('fetchUserList error: $e');
+    }
   }
 
   // ── Fetch Expenses ────────────────────────────────────────────────────────
@@ -241,6 +264,7 @@ class ExpenseController extends GetxController {
       selectedParticularId = expense.particularid?.id ?? '';
       existingImageUrl = expense.image ?? '';
       selectedImage = null;
+      selectedUserId = expense.userid?.id;
     } else {
       editingExpenseId = '';
       dateCtrl.text = DateFormat('yyyy-MM-dd').format(DateTime.now());
@@ -251,6 +275,7 @@ class ExpenseController extends GetxController {
           : '';
       selectedImage = null;
       existingImageUrl = null;
+      selectedUserId = null;
     }
     update();
   }
@@ -300,7 +325,11 @@ class ExpenseController extends GetxController {
     if (RoleUtils.isUser(roleName)) {
       effectiveUserId = userId;
     } else if (RoleUtils.isAdmin(roleName)) {
-      effectiveUserId = '';
+      if (selectedUserId == null || selectedUserId!.isEmpty) {
+        Utility.showMessage('Please select a user', MessageType.error, null, '');
+        return;
+      }
+      effectiveUserId = selectedUserId!;
     }
 
     final result = await Get.find<Repository>().createExpenseApi(

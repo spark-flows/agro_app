@@ -896,12 +896,13 @@ class _TaskFormPageState extends State<TaskFormPage> {
       StatefulBuilder(
         builder: (context, setSheetState) {
           final filteredUsers = controller.usersList
-              .where((user) => user.roleid.rolename?.toLowerCase() != 'admin')
+              .where((user) => user.roleid?.rolename?.toLowerCase() != 'admin')
               .where((user) {
                 if (sheetSearchQuery.isEmpty) return true;
-                return user.name.toLowerCase().contains(
-                  sheetSearchQuery.toLowerCase(),
-                );
+                return user.name?.toLowerCase()?.contains(
+                      sheetSearchQuery.toLowerCase(),
+                    ) ??
+                    false;
               })
               .toList();
 
@@ -992,40 +993,43 @@ class _TaskFormPageState extends State<TaskFormPage> {
                           itemBuilder: (context, idx) {
                             final user = filteredUsers[idx];
                             final isChecked = tempSelectedIds.contains(user.id);
-                            return CheckboxListTile(
-                              visualDensity: VisualDensity(
-                                horizontal: Dimens.zero,
-                                vertical: Dimens.zero,
-                              ),
-                              materialTapTargetSize:
-                                  MaterialTapTargetSize.shrinkWrap,
-                              dense: true,
-                              activeColor: ColorsValue.primary,
-                              title: Text(
-                                user.name,
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.w500,
-                                  fontSize: 14,
+                            return Material(
+                              color: Colors.transparent,
+                              child: CheckboxListTile(
+                                visualDensity: VisualDensity(
+                                  horizontal: Dimens.zero,
+                                  vertical: Dimens.zero,
                                 ),
-                              ),
-                              subtitle: Text(
-                                user.roleid.rolename ?? '',
-                                style: TextStyle(
-                                  color: Colors.grey.shade500,
-                                  fontSize: 12,
+                                materialTapTargetSize:
+                                    MaterialTapTargetSize.shrinkWrap,
+                                dense: true,
+                                activeColor: ColorsValue.primary,
+                                title: Text(
+                                  user.name ?? "",
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.w500,
+                                    fontSize: 14,
+                                  ),
                                 ),
+                                subtitle: Text(
+                                  user.roleid?.rolename ?? '',
+                                  style: TextStyle(
+                                    color: Colors.grey.shade500,
+                                    fontSize: 12,
+                                  ),
+                                ),
+                                value: isChecked,
+                                onChanged: (bool? checked) {
+                                  setSheetState(() {
+                                    if (checked == true) {
+                                      tempSelectedIds.add(user.id ?? "");
+                                    } else {
+                                      tempSelectedIds.remove(user.id);
+                                    }
+                                  });
+                                },
+                                contentPadding: EdgeInsets.zero,
                               ),
-                              value: isChecked,
-                              onChanged: (bool? checked) {
-                                setSheetState(() {
-                                  if (checked == true) {
-                                    tempSelectedIds.add(user.id);
-                                  } else {
-                                    tempSelectedIds.remove(user.id);
-                                  }
-                                });
-                              },
-                              contentPadding: EdgeInsets.zero,
                             );
                           },
                         ),

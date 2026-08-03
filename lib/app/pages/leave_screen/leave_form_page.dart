@@ -162,6 +162,7 @@ class _LeaveFormPageState extends State<LeaveFormPage> {
                             }).toList(),
                             onChanged: (val) {
                               controller.selectedUserId = val;
+                              controller.calculateDuration();
                               controller.update();
                             },
                             validator: (val) => val == null || val.isEmpty

@@ -727,17 +727,18 @@ class ConnectHelper {
     final String role = await _resolveUserRole();
     final String currentUserId = await _resolveUserId();
 
-    String? assignToIdToUse = assigntoid;
+    String? assignToIdToUse;
     final bool isAdmin = RoleUtils.isAdmin(role);
+    final bool isUser = RoleUtils.isUser(role);
     // When logged in as User role (non-admin), send assigntoid in the API payload
-    if (!isAdmin) {
+    if (!isAdmin && !isUser) {
       assignToIdToUse = currentUserId;
     }
 
     var data = {
       "page": page,
       "type": type,
-      "limit": limit,
+      "limit": 2000,
       "search": search.isNotEmpty ? {"name": search} : {},
       "sortfield": sortfield,
       "sortoption": sortoption,
@@ -884,12 +885,7 @@ class ConnectHelper {
       if (profileJson.isNotEmpty) {
         try {
           final decoded = json.decode(profileJson);
-          role =
-              decoded['roleid']?['rolename']?.toString() ??
-              decoded['rolename']?.toString() ??
-              decoded['userData']?['roleid']?['rolename']?.toString() ??
-              decoded['userData']?['rolename']?.toString() ??
-              '';
+          role = decoded['rolename']?.toString() ?? '';
         } catch (_) {}
       }
     }
@@ -1304,6 +1300,7 @@ class ConnectHelper {
     required String breakend,
     required String remark,
     required String status,
+    String? userid,
     List<Map<String, String>>? punching,
     List<Map<String, String>>? breaks,
     String? photo,
@@ -1324,7 +1321,7 @@ class ConnectHelper {
 
     Map<String, dynamic> data = {
       "attendanceid": attendanceid ?? "",
-      "userid": distributorId,
+      "userid": userid ?? distributorId,
       "date": date,
       "branchid": branchId,
       "timein": timein,
@@ -1540,8 +1537,11 @@ class ConnectHelper {
   }
 
   Future<ResponseModel> getUserList({bool isLoading = false}) async {
+    var brachId = await Get.find<Repository>().getSecureValue(
+      LocalKeys.selectedBranchId,
+    );
     var response = await apiWrapper.makeRequest(
-      "${EndPoints.usersApi}?role=${Get.find<Repository>().getStringValue(LocalKeys.roleHiveName)}&branchid=${Get.find<Repository>().getSecureValue(LocalKeys.selectedBranchId)}",
+      "${EndPoints.usersApi}?role=${Get.find<Repository>().getStringValue(LocalKeys.roleHiveName)}&branchid=${brachId}",
       Request.get,
       null,
       isLoading,
@@ -1906,10 +1906,7 @@ class ConnectHelper {
     required String paymentstatus,
     bool isLoading = false,
   }) async {
-    var data = {
-      "collectionid": collectionid,
-      "paymentstatus": paymentstatus,
-    };
+    var data = {"collectionid": collectionid, "paymentstatus": paymentstatus};
     var response = await apiWrapper.makeRequest(
       EndPoints.changeCollectionStatusApi,
       Request.post,
@@ -2019,10 +2016,7 @@ class ConnectHelper {
     required String status,
     bool isLoading = false,
   }) async {
-    var data = {
-      "expenseid": expenseid,
-      "status": status,
-    };
+    var data = {"expenseid": expenseid, "status": status};
     var response = await apiWrapper.makeRequest(
       EndPoints.changeExpenseStatusApi,
       Request.post,

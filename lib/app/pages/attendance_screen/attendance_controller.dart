@@ -9,9 +9,7 @@ import 'package:agro_app/domain/models/get_all_attandance_model.dart'
     as get_all_model;
 import 'package:agro_app/domain/models/get_one_attandance_model.dart'
     as get_one_model;
-import 'package:agro_app/domain/models/get_profille_model.dart';
-import 'package:agro_app/domain/repositories/local_storage_keys.dart';
-import 'package:agro_app/domain/repositories/repository.dart';
+import 'package:agro_app/domain/domain.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -60,6 +58,8 @@ class AttendanceController extends GetxController with WidgetsBindingObserver {
   String existingLatitude = '';
   String existingLongitude = '';
   bool isAdmin = false;
+  List<Doc> userList = [];
+  String? selectedUserId;
   String editingAttendanceId = '';
   Timer? _searchTimer;
   bool isLocationLoading = false;
@@ -88,7 +88,27 @@ class AttendanceController extends GetxController with WidgetsBindingObserver {
   Future<void> checkAdminRole() async {
     final role = Get.find<Repository>().getStringValue(LocalKeys.roleHiveName);
     isAdmin = role.toLowerCase() == 'admin';
+    if (isAdmin) {
+      fetchUserList();
+    }
     update();
+  }
+
+  Future<void> fetchUserList() async {
+    try {
+      final response = await Get.find<Repository>().getUsersListApi(
+        page: 1,
+        limit: 1000,
+        isLoading: false,
+      );
+      final docs = response?.data.docs;
+      if (docs != null && docs.isNotEmpty) {
+        userList = docs.where((u) => RoleUtils.isUser(u.roleid.rolename)).toList();
+        update();
+      }
+    } catch (e) {
+      debugPrint('fetchUserList error: $e');
+    }
   }
 
   @override
@@ -281,6 +301,7 @@ class AttendanceController extends GetxController with WidgetsBindingObserver {
   void setupForm(get_one_model.GetAttendanceData? attendance) {
     if (attendance == null) {
       editingAttendanceId = '';
+      selectedUserId = null;
       dateCtrl.text = DateFormat('dd-MM-yyyy').format(DateTime.now());
       timeInCtrl.text = DateFormat('hh:mm a').format(DateTime.now());
       timeOutCtrl.clear();
@@ -300,6 +321,7 @@ class AttendanceController extends GetxController with WidgetsBindingObserver {
       timeoutPhoto.value = '';
     } else {
       editingAttendanceId = attendance.id ?? '';
+      selectedUserId = attendance.userid?.id;
       remarkCtrl.text = attendance.remark ?? '';
       selectedStatus = attendance.status ?? 'present';
       odometerReadingCtrl.text = attendance.odometer != null
@@ -437,6 +459,11 @@ class AttendanceController extends GetxController with WidgetsBindingObserver {
 
   // ── Save Attendance (Create/Update) ────────────────────────────────────────
   Future<void> saveAttendance() async {
+    if (isAdmin && (selectedUserId == null || selectedUserId!.isEmpty)) {
+      Utility.showMessage('Please select user', MessageType.error, null, '');
+      return;
+    }
+
     if (!formKey.currentState!.validate()) return;
 
     try {
@@ -495,6 +522,7 @@ class AttendanceController extends GetxController with WidgetsBindingObserver {
         attendanceid: editingAttendanceId.isNotEmpty
             ? editingAttendanceId
             : null,
+        userid: selectedUserId,
         date: apiDate,
         timein: timeInCtrl.text.trim(),
         timeout: timeOutCtrl.text.trim(),

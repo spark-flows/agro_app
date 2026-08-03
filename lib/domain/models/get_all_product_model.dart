@@ -45,8 +45,8 @@ class GetAllProductData {
   int? pagingCounter;
   bool? hasPrevPage;
   bool? hasNextPage;
-  dynamic prevPage;
-  dynamic nextPage;
+  num? prevPage;
+  num? nextPage;
 
   GetAllProductData({
     this.docs,
@@ -107,6 +107,9 @@ class GetAllProductDoc {
   bool? isDeleted;
   String? createdAt;
   dynamic branchid;
+  Alternateunitid? alternateunitid;
+  num? purchaseprice;
+  num? saleprice;
 
   GetAllProductDoc({
     this.id,
@@ -119,6 +122,9 @@ class GetAllProductDoc {
     this.description,
     this.isDeleted,
     this.createdAt,
+    this.alternateunitid,
+    this.purchaseprice,
+    this.saleprice,
     this.branchid,
   });
 
@@ -143,6 +149,11 @@ class GetAllProductDoc {
         isDeleted: json["isDeleted"],
         createdAt: json["createdAt"]?.toString(),
         branchid: json["branchid"],
+        alternateunitid: json["alternateunitid"] == null
+            ? null
+            : Alternateunitid.fromJson(json["alternateunitid"]),
+        purchaseprice: json["purchaseprice"],
+        saleprice: json["saleprice"],
       );
 
   Map<String, dynamic> toJson() => {
@@ -157,7 +168,22 @@ class GetAllProductDoc {
     "isDeleted": isDeleted,
     "createdAt": createdAt,
     "branchid": branchid,
+    "alternateunitid": alternateunitid?.toJson(),
+    "purchaseprice": purchaseprice,
+    "saleprice": saleprice,
   };
+}
+
+class Alternateunitid {
+  String? id;
+  String? name;
+
+  Alternateunitid({this.id, this.name});
+
+  factory Alternateunitid.fromJson(Map<String, dynamic> json) =>
+      Alternateunitid(id: json["_id"], name: json["name"]);
+
+  Map<String, dynamic> toJson() => {"_id": id, "name": name};
 }
 
 class GetAllProductCategoryid {

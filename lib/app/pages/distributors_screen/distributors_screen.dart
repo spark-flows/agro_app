@@ -288,12 +288,20 @@ class _DistributorsScreenState extends State<DistributorsScreen> {
                         fontWeight: FontWeight.bold,
                         color: ColorsValue.primary,
                       ),
+                      textAlign: TextAlign.center,
                     ),
                   ),
                   const SizedBox(height: 10),
-                  Text(
-                    '${user.name}${user.surname != null && user.surname!.isNotEmpty ? " ${user.surname}" : ""}',
-                    style: Styles.txtBlackColorW70020,
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 0,
+                    ),
+                    child: Text(
+                      '${user.name}${user.surname != null && user.surname!.isNotEmpty ? " ${user.surname}" : ""}',
+                      style: Styles.txtBlackColorW70020,
+                      textAlign: TextAlign.center,
+                    ),
                   ),
                   const SizedBox(height: 4),
                   Text(user.email, style: Styles.txtGreyColorW40014),

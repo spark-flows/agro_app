@@ -550,7 +550,7 @@ class ExpenseScreen extends StatelessWidget {
                     Text('Status', style: Styles.txtBlackColorW60014),
                     const SizedBox(height: 6),
                     DropdownButtonFormField<String>(
-                      value: tempStatus,
+                      initialValue: tempStatus,
                       decoration: InputDecoration(
                         filled: true,
                         fillColor: Colors.white,

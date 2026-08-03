@@ -77,6 +77,10 @@ class ProfileDataUserData {
   ProfileBranch? branchid;
   bool? odometer;
   bool? liveTracking;
+  String? starttime;
+  String? endtime;
+  String? breakstart;
+  String? breakend;
 
   ProfileDataUserData({
     required this.id,
@@ -105,6 +109,10 @@ class ProfileDataUserData {
     this.branchid,
     this.odometer,
     this.liveTracking,
+    this.starttime,
+    this.endtime,
+    this.breakstart,
+    this.breakend,
   });
 
   factory ProfileDataUserData.fromJson(Map<String, dynamic> json) =>
@@ -147,6 +155,10 @@ class ProfileDataUserData {
             : null,
         odometer: json["odometer"] as bool? ?? false,
         liveTracking: json["liveTracking"] as bool? ?? false,
+        starttime: (json["starttime"] ?? json["startTime"] ?? json["start_time"])?.toString(),
+        endtime: (json["endtime"] ?? json["endTime"] ?? json["end_time"])?.toString(),
+        breakstart: (json["breakstart"] ?? json["breakStart"] ?? json["break_start"])?.toString(),
+        breakend: (json["breakend"] ?? json["breakEnd"] ?? json["break_end"])?.toString(),
       );
 
   Map<String, dynamic> toJson() => {
@@ -176,6 +188,10 @@ class ProfileDataUserData {
     "branchid": branchid?.toJson(),
     "odometer": odometer,
     "liveTracking": liveTracking,
+    "starttime": starttime,
+    "endtime": endtime,
+    "breakstart": breakstart,
+    "breakend": breakend,
   };
 }
 

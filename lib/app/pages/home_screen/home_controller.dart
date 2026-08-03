@@ -93,7 +93,6 @@ class HomeController extends GetxController {
   void goToCollection() => RouteManagement.goToCollectionScreen();
   void goToExpense() => RouteManagement.goToExpenseScreen();
 
-
   Future<void> fetchBranches() async {
     isBranchesLoading = true;
     update();

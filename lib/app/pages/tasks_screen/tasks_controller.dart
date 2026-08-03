@@ -90,6 +90,15 @@ class TasksController extends GetxController {
     super.onClose();
   }
 
+  // ── Status counts for display ──────────────────────────────────────────────
+  int totalCount = 0;
+  int pendingCount = 0;
+  int processingCount = 0;
+  int completedCount = 0;
+  int cancelledCount = 0;
+  int beforeDueCount = 0;
+  int afterDueCount = 0;
+
   // ── Fetch Tasks from API with Pagination ──────────────────────────────────
   Future<void> fetchTasks({bool isRefresh = true}) async {
     if (isRefresh) {
@@ -131,7 +140,14 @@ class TasksController extends GetxController {
         } else {
           tasks.addAll(docs);
         }
-        totalPages = response.data!.totalPages ?? 1;
+        totalPages = response.data?.totalPages ?? 1;
+        totalCount = response.data?.totalDocs ?? 0;
+        pendingCount = response.data?.totalPending ?? 0;
+        processingCount = response.data?.totalProcessing ?? 0;
+        completedCount = response.data?.totalCompleted ?? 0;
+        cancelledCount = response.data?.totalCancelled ?? 0;
+        beforeDueCount = response.data?.beforeDue ?? 0;
+        afterDueCount = response.data?.afterDue ?? 0;
       }
     } catch (e) {
       debugPrint('[TasksController] fetchTasks error: $e');
@@ -145,6 +161,7 @@ class TasksController extends GetxController {
   // ── Fetch System Users via API ─────────────────────────────────────────────
   Future<void> fetchUsers() async {
     isLoadingUsers = true;
+
     update();
     print('[TasksController] fetchUsers: Starting fetch...');
     try {

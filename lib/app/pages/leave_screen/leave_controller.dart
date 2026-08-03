@@ -31,6 +31,7 @@ class LeaveController extends GetxController {
   // ── Role State ────────────────────────────────────────────────────────────
   String roleName = '';
   String userId = '';
+  ProfileDataUserData? profileData;
 
   // ── Form Controllers & State ───────────────────────────────────────────────
   final formKey = GlobalKey<FormState>();
@@ -66,44 +67,47 @@ class LeaveController extends GetxController {
 
   // ── Load Role & User ID from Local Storage ─────────────────────────────────
   Future<void> _loadUserContext() async {
-    // 1. Try reading from secure storage
-    roleName = await Get.find<Repository>().getSecureValue(LocalKeys.roleName);
-
-    // 2. Try reading from cached profile JSON
-    if (roleName.isEmpty) {
-      final profileJson = await Get.find<Repository>().getSecureValue(
-        LocalKeys.profileData,
-      );
-      if (profileJson.isNotEmpty) {
-        try {
-          final decoded = json.decode(profileJson);
-          final userData =
-              decoded['Data']?['userData'] ?? decoded['userData'] ?? decoded;
-          roleName =
-              userData['roleid']?['rolename']?.toString() ??
-              userData['rolename']?.toString() ??
-              userData['role']?.toString() ??
-              '';
-        } catch (_) {}
-      }
-    }
-
-    // 3. Fallback: fetch profile API directly
-    if (roleName.isEmpty) {
+    // Try reading cached profile JSON
+    final profileJson = await Get.find<Repository>().getSecureValue(
+      LocalKeys.profileData,
+    );
+    if (profileJson.isNotEmpty) {
       try {
-        final profileRes = await Get.find<Repository>().getProfileApi(
-          isLoading: false,
-        );
-        if (profileRes != null &&
-            profileRes.data.userData.rolename.isNotEmpty) {
-          roleName = profileRes.data.userData.rolename;
-          Get.find<Repository>().saveSecureValue(
-            LocalKeys.roleName,
-            profileRes.data.userData.roleid.rolename ?? roleName,
-          );
-        }
+        final decoded = json.decode(profileJson);
+        final userDataJson =
+            decoded['Data']?['userData'] ?? decoded['userData'] ?? decoded;
+        profileData = ProfileDataUserData.fromJson(userDataJson);
       } catch (_) {}
     }
+
+    // 1. Try reading role from secure storage
+    roleName = await Get.find<Repository>().getSecureValue(LocalKeys.roleName);
+
+    // 2. Try reading role from cached profile JSON
+    if (roleName.isEmpty && profileData != null) {
+      roleName = profileData!.rolename;
+    }
+
+    // 3. Fetch profile API directly to get latest timings/role
+    try {
+      final profileRes = await Get.find<Repository>().getProfileApi(
+        isLoading: false,
+      );
+      if (profileRes != null && profileRes.data != null) {
+        profileData = profileRes.data.userData;
+        roleName = profileRes.data.userData.rolename.isNotEmpty
+            ? profileRes.data.userData.rolename
+            : roleName;
+        Get.find<Repository>().saveSecureValue(
+          LocalKeys.roleName,
+          profileRes.data.userData.roleid.rolename ?? roleName,
+        );
+        Get.find<Repository>().saveSecureValue(
+          LocalKeys.profileData,
+          json.encode(profileRes.data.userData.toJson()),
+        );
+      }
+    } catch (_) {}
 
     userId = await Get.find<Repository>().getSecureValue(LocalKeys.userIds);
     if (userId.isEmpty) {
@@ -210,6 +214,31 @@ class LeaveController extends GetxController {
     fetchLeaves(isRefresh: true);
   }
 
+  String formatHoursToDisplay(dynamic hoursVal) {
+    if (hoursVal == null) return '';
+    final double? hours = double.tryParse(hoursVal.toString());
+    if (hours == null) return '';
+    final hoursInt = hours.toInt();
+    final minutes = ((hours - hoursInt) * 60).round();
+    if (minutes == 0) {
+      return hoursInt.toString();
+    }
+    return '$hoursInt.${minutes.toString().padLeft(2, '0')}';
+  }
+
+  double parseHoursFromDisplay(String text) {
+    final clean = text.trim();
+    if (clean.isEmpty) return 0.0;
+    final parts = clean.split('.');
+    if (parts.length == 2) {
+      final hoursPart = int.tryParse(parts[0]) ?? 0;
+      final minsStr = parts[1].padRight(2, '0').substring(0, 2);
+      final minutesPart = int.tryParse(minsStr) ?? 0;
+      return hoursPart + (minutesPart / 60.0);
+    }
+    return double.tryParse(clean) ?? 0.0;
+  }
+
   // ── Setup Form for Creation or Editing ─────────────────────────────────────
   void setupForm(dynamic doc) {
     if (RoleUtils.isAdmin(roleName) && userList.isEmpty) {
@@ -233,7 +262,7 @@ class LeaveController extends GetxController {
         fromDateCtrl.text = _formatDateString(doc.fromdate);
         toDateCtrl.text = _formatDateString(doc.todate);
         totalDaysCtrl.text = doc.totaldays?.toString() ?? '';
-        totalHoursCtrl.text = doc.totalhours?.toString() ?? '';
+        totalHoursCtrl.text = formatHoursToDisplay(doc.totalhours);
         reasonCtrl.text = doc.reason ?? '';
         selectedLeaveType = doc.leavetype ?? 'full';
         selectedStatus = doc.status ?? 'pending';
@@ -244,7 +273,7 @@ class LeaveController extends GetxController {
         fromDateCtrl.text = _formatDateString(data?.fromdate);
         toDateCtrl.text = _formatDateString(data?.todate);
         totalDaysCtrl.text = data?.totaldays?.toString() ?? '';
-        totalHoursCtrl.text = data?.totalhours?.toString() ?? '';
+        totalHoursCtrl.text = formatHoursToDisplay(data?.totalhours);
         reasonCtrl.text = data?.reason ?? '';
         selectedLeaveType = data?.leavetype ?? 'full';
         selectedStatus = data?.status ?? 'pending';
@@ -270,6 +299,87 @@ class LeaveController extends GetxController {
   }
 
   // ── Calculation of Duration ────────────────────────────────────────────────
+  double calculateWorkHoursPerDay({
+    String? starttime,
+    String? endtime,
+    String? breakstart,
+    String? breakend,
+  }) {
+    if (starttime == null ||
+        starttime.isEmpty ||
+        endtime == null ||
+        endtime.isEmpty) {
+      return 8.0;
+    }
+
+    DateTime? parseTimeString(String timeStr) {
+      final formats = [
+        DateFormat('hh:mm a'),
+        DateFormat('HH:mm:ss'),
+        DateFormat('HH:mm'),
+        DateFormat('h:mm a'),
+      ];
+      for (var format in formats) {
+        try {
+          return format.parse(timeStr.trim());
+        } catch (_) {}
+      }
+      final parts = timeStr.trim().split(':');
+      if (parts.length >= 2) {
+        final hour = int.tryParse(parts[0]);
+        var minute = 0;
+        var isPm = false;
+        if (parts[1].toLowerCase().contains('pm')) {
+          isPm = true;
+        }
+        final minPart = parts[1].replaceAll(RegExp(r'[^0-9]'), '');
+        minute = int.tryParse(minPart) ?? 0;
+        if (hour != null) {
+          var h = hour;
+          if (isPm && h < 12) h += 12;
+          if (!isPm && h == 12) h = 0;
+          return DateTime(2000, 1, 1, h, minute);
+        }
+      }
+      return null;
+    }
+
+    final start = parseTimeString(starttime);
+    final end = parseTimeString(endtime);
+
+    if (start == null || end == null) {
+      return 8.0;
+    }
+
+    var diffMinutes = end.difference(start).inMinutes;
+    if (diffMinutes < 0) {
+      diffMinutes += 24 * 60;
+    }
+
+    var breakMinutes = 0;
+    if (breakstart != null &&
+        breakstart.isNotEmpty &&
+        breakend != null &&
+        breakend.isNotEmpty) {
+      final bStart = parseTimeString(breakstart);
+      final bEnd = parseTimeString(breakend);
+      if (bStart != null && bEnd != null) {
+        var bDiff = bEnd.difference(bStart).inMinutes;
+        if (bDiff < 0) {
+          bDiff += 24 * 60;
+        }
+        breakMinutes = bDiff;
+      }
+    }
+
+    final netMinutes = diffMinutes - breakMinutes;
+    if (netMinutes <= 0) {
+      return 8.0;
+    }
+
+    return netMinutes / 60.0;
+  }
+
   void calculateDuration() {
     if (fromDateCtrl.text.isEmpty || toDateCtrl.text.isEmpty) return;
     try {
@@ -281,13 +391,59 @@ class LeaveController extends GetxController {
         return;
       }
       final daysDiff = to.difference(from).inDays + 1;
+
+      // Determine timings based on selected user (if admin) or self
+      String? start;
+      String? end;
+      String? bStart;
+      String? bEnd;
+
+      if (RoleUtils.isAdmin(roleName) && selectedUserId != null) {
+        final selectedUserList = userList
+            .where((u) => u.id == selectedUserId)
+            .toList();
+        final selectedUser = selectedUserList.isNotEmpty
+            ? selectedUserList.first
+            : null;
+        if (selectedUser != null) {
+          start = selectedUser.starttime;
+          end = selectedUser.endtime;
+          bStart = selectedUser.breakstart;
+          bEnd = selectedUser.breakend;
+        }
+      }
+
+      // Fallback to logged-in user profile data if not found/admin not matching
+      if (start == null || end == null) {
+        start = profileData?.starttime;
+        end = profileData?.endtime;
+        bStart = profileData?.breakstart;
+        bEnd = profileData?.breakend;
+      }
+
+      final hoursPerDay = calculateWorkHoursPerDay(
+        starttime: start,
+        endtime: end,
+        breakstart: bStart,
+        breakend: bEnd,
+      );
+
+      String formatHours(double hours) {
+        final hoursInt = hours.toInt();
+        final minutes = ((hours - hoursInt) * 60).round();
+        if (minutes == 0) {
+          return hoursInt.toString();
+        }
+        return '$hoursInt.${minutes.toString().padLeft(2, '0')}';
+      }
+
       if (selectedLeaveType == 'half') {
         final double days = daysDiff * 0.5;
         totalDaysCtrl.text = days.toStringAsFixed(1);
-        totalHoursCtrl.text = (daysDiff * 4).toString();
+        totalHoursCtrl.text = formatHours(daysDiff * 0.5 * hoursPerDay);
       } else {
         totalDaysCtrl.text = daysDiff.toString();
-        totalHoursCtrl.text = (daysDiff * 8).toString();
+        totalHoursCtrl.text = formatHours(daysDiff * hoursPerDay);
       }
     } catch (_) {}
   }
@@ -332,7 +488,7 @@ class LeaveController extends GetxController {
     }
 
     final double parsedDays = double.tryParse(totalDaysCtrl.text) ?? 0;
-    final double parsedHours = double.tryParse(totalHoursCtrl.text) ?? 0;
+    final double parsedHours = parseHoursFromDisplay(totalHoursCtrl.text);
 
     // For the User role, status is forced to pending and cannot be modified.
     final finalStatus = RoleUtils.isUser(roleName) ? 'pending' : selectedStatus;

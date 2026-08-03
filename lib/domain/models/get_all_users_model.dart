@@ -116,6 +116,10 @@ class Doc {
   bool isClockedOut;
   String? clockInTime;
   String? clockOutTime;
+  String? starttime;
+  String? endtime;
+  String? breakstart;
+  String? breakend;
 
   Doc({
     required this.id,
@@ -141,6 +145,10 @@ class Doc {
     this.permissionbranchid,
     this.permissionuserid,
     this.mapcolor,
+    this.starttime,
+    this.endtime,
+    this.breakstart,
+    this.breakend,
   });
 
   List<String>? permissionbranchid;
@@ -197,6 +205,10 @@ class Doc {
                 .where((x) => x.isNotEmpty)
                 .toList()
             : [],
+    starttime: (json["starttime"] ?? json["startTime"] ?? json["start_time"])?.toString(),
+    endtime: (json["endtime"] ?? json["endTime"] ?? json["end_time"])?.toString(),
+    breakstart: (json["breakstart"] ?? json["breakStart"] ?? json["break_start"])?.toString(),
+    breakend: (json["breakend"] ?? json["breakEnd"] ?? json["break_end"])?.toString(),
   );
 
   Map<String, dynamic> toJson() => {
@@ -222,6 +234,10 @@ class Doc {
     "clockOutTime": clockOutTime,
     "permissionbranchid": permissionbranchid,
     "mapcolor": mapcolor,
+    "starttime": starttime,
+    "endtime": endtime,
+    "breakstart": breakstart,
+    "breakend": breakend,
   };
 }
 

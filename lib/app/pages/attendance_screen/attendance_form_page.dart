@@ -149,6 +149,54 @@ class _AttendanceFormPageState extends State<AttendanceFormPage> {
                 _sectionHeader('Time Logs'),
                 const SizedBox(height: 16),
 
+                if (controller.isAdmin) ...[
+                  Text('Select User', style: Styles.txtBlackColorW60014),
+                  const SizedBox(height: 6),
+                  Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: Colors.grey.shade300),
+                    ),
+                    child: DropdownButtonHideUnderline(
+                      child: DropdownButton<String>(
+                        isExpanded: true,
+                        value: controller.selectedUserId,
+                        hint: Padding(
+                          padding: const EdgeInsets.only(left: 12.0),
+                          child: Text(
+                            'Select User',
+                            style: Styles.txtGreyColorW40014,
+                          ),
+                        ),
+                        icon: const Padding(
+                          padding: EdgeInsets.only(right: 12.0),
+                          child: Icon(Icons.arrow_drop_down),
+                        ),
+                        items: controller.userList.map((user) {
+                          return DropdownMenuItem<String>(
+                            value: user.id,
+                            child: Padding(
+                              padding: const EdgeInsets.only(left: 12.0),
+                              child: Text(
+                                '${user.name} (${user.roleid.rolename})',
+                                style: Styles.txtBlackColorW60014,
+                              ),
+                            ),
+                          );
+                        }).toList(),
+                        onChanged: (val) {
+                          if (val != null) {
+                            controller.selectedUserId = val;
+                            controller.update();
+                          }
+                        },
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                ],
+
                 // ── Date Picker ──────────────────────────────────────────────
                 InkWell(
                   onTap: () => _selectDate(context, controller),
@@ -216,8 +264,6 @@ class _AttendanceFormPageState extends State<AttendanceFormPage> {
                             fieldController: controller.breakStartCtrl,
                             label: 'Pause Time *',
                             icon: Icons.pause_circle_outline,
-                            validator: (v) =>
-                                v!.trim().isEmpty ? 'Required' : null,
                           ),
                         ),
                       ),
@@ -232,8 +278,6 @@ class _AttendanceFormPageState extends State<AttendanceFormPage> {
                             fieldController: controller.breakEndCtrl,
                             label: 'Resume Time *',
                             icon: Icons.play_circle_outline,
-                            validator: (v) =>
-                                v!.trim().isEmpty ? 'Required' : null,
                           ),
                         ),
                       ),

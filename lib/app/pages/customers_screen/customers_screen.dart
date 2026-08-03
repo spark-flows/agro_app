@@ -465,7 +465,10 @@ class CustomersScreen extends StatelessWidget {
                             final bool isUser = RoleUtils.isUser(
                               Get.find<HomeController>().roleName,
                             );
-                            if (isDealer || isUser) {
+                            final bool isAdmin = RoleUtils.isAdmin(
+                              Get.find<HomeController>().roleName,
+                            );
+                            if (isDealer || isUser || isAdmin) {
                               if (v == null || v.trim().isEmpty) {
                                 return null;
                               }

@@ -1,5 +1,5 @@
 import 'package:agro_app/app/app.dart';
-import 'package:agro_app/app/pages/collection_screen/collection_controller.dart';
+import 'package:agro_app/domain/domain.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
@@ -34,6 +34,54 @@ class CollectionFormPage extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  if (RoleUtils.isAdmin(controller.roleName)) ...[
+                    Text('Select User', style: Styles.txtBlackColorW60014),
+                    const SizedBox(height: 6),
+                    Container(
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: Colors.grey.shade300),
+                      ),
+                      child: DropdownButtonHideUnderline(
+                        child: DropdownButton<String>(
+                          isExpanded: true,
+                          value: controller.selectedUserId,
+                          hint: Padding(
+                            padding: const EdgeInsets.only(left: 12.0),
+                            child: Text(
+                              'Select User',
+                              style: Styles.txtGreyColorW40014,
+                            ),
+                          ),
+                          icon: const Padding(
+                            padding: EdgeInsets.only(right: 12.0),
+                            child: Icon(Icons.arrow_drop_down),
+                          ),
+                          items: controller.userList.map((user) {
+                            return DropdownMenuItem<String>(
+                              value: user.id,
+                              child: Padding(
+                                padding: const EdgeInsets.only(left: 12.0),
+                                child: Text(
+                                  '${user.name} (${user.roleid.rolename})',
+                                  style: Styles.txtBlackColorW60014,
+                                ),
+                              ),
+                            );
+                          }).toList(),
+                          onChanged: (val) {
+                            if (val != null) {
+                              controller.selectedUserId = val;
+                              controller.update();
+                            }
+                          },
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                  ],
+
                   // ── Date Selection Field ──
                   Text('Collection Date', style: Styles.txtBlackColorW60014),
                   const SizedBox(height: 6),
@@ -147,7 +195,7 @@ class CollectionFormPage extends StatelessWidget {
                   Text('Payment Mode', style: Styles.txtBlackColorW60014),
                   const SizedBox(height: 6),
                   DropdownButtonFormField<String>(
-                    value: controller.selectedPaymentMode,
+                    initialValue: controller.selectedPaymentMode,
                     decoration: InputDecoration(
                       filled: true,
                       fillColor: Colors.white,
@@ -183,7 +231,7 @@ class CollectionFormPage extends StatelessWidget {
                   Text('Payment Status', style: Styles.txtBlackColorW60014),
                   const SizedBox(height: 6),
                   DropdownButtonFormField<String>(
-                    value: controller.selectedPaymentStatus,
+                    initialValue: controller.selectedPaymentStatus,
                     decoration: InputDecoration(
                       filled: true,
                       fillColor: Colors.white,
