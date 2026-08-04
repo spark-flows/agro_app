@@ -194,6 +194,27 @@ class AppPages {
       binding: ExpenseBinding(),
       transition: Transition.rightToLeft,
     ),
+    GetPage<LedgersScreen>(
+      name: _Paths.ledgersScreen,
+      transitionDuration: transitionDuration,
+      page: LedgersScreen.new,
+      binding: LedgersBinding(),
+      transition: Transition.rightToLeft,
+    ),
+    GetPage<LedgerStatementScreen>(
+      name: _Paths.ledgerStatementScreen,
+      transitionDuration: transitionDuration,
+      page: LedgerStatementScreen.new,
+      binding: LedgersBinding(),
+      transition: Transition.rightToLeft,
+    ),
+    GetPage<LedgerPdfPreviewPage>(
+      name: _Paths.ledgerPdfPreviewScreen,
+      transitionDuration: transitionDuration,
+      page: LedgerPdfPreviewPage.new,
+      binding: LedgersBinding(),
+      transition: Transition.rightToLeft,
+    ),
   ];
 }
 

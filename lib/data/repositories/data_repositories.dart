@@ -91,6 +91,12 @@ class DataRepository extends DomainRepository {
   Future<ResponseModel> getUnitListApi({bool isLoading = false}) async =>
       connectHelper.getUnitListApi(isLoading: isLoading);
 
+  Future<ResponseModel> createUnitApi({
+    required String name,
+    bool isLoading = false,
+  }) async =>
+      connectHelper.createUnitApi(name: name, isLoading: isLoading);
+
   Future<ResponseModel> createProductApi({
     String? productid,
     required String name,
@@ -913,4 +919,44 @@ class DataRepository extends DomainRepository {
     bool isLoading = false,
   }) async =>
       connectHelper.createParticularApi(name: name, isLoading: isLoading);
+
+  Future<ResponseModel> getLedgerListApi({
+    int page = 1,
+    int limit = 15,
+    String search = "",
+    String branchid = "",
+    List<String> name = const [],
+    List<String> parent = const [],
+    bool isLoading = false,
+  }) async =>
+      connectHelper.getLedgerListApi(
+        page: page,
+        limit: limit,
+        search: search,
+        branchid: branchid,
+        name: name,
+        parent: parent,
+        isLoading: isLoading,
+      );
+
+  Future<ResponseModel> getLedgerEntryListApi({
+    required String ledgerName,
+    String branchid = "",
+    int page = 1,
+    int limit = 15,
+    List<String> particulars = const [],
+    List<String> vouchertypes = const [],
+    List<String> voucherno = const [],
+    bool isLoading = false,
+  }) async =>
+      connectHelper.getLedgerEntryListApi(
+        ledgerName: ledgerName,
+        branchid: branchid,
+        page: page,
+        limit: limit,
+        particulars: particulars,
+        vouchertypes: vouchertypes,
+        voucherno: voucherno,
+        isLoading: isLoading,
+      );
 }

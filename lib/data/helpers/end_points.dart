@@ -28,6 +28,7 @@ class EndPoints {
   static String customerFeedbackApi = 'api/customer/feedback';
   static String branchApi = 'api/branch';
   static String unitApi = 'api/unit';
+  static String createUnitApi = 'api/unit/create';
 
   static String taskListApi = 'api/task';
   static String createTaskApi = 'api/task/create';
@@ -73,4 +74,6 @@ class EndPoints {
   static String uploadExpenseApi = 'api/expense/upload';
   static String particularListApi = 'api/particular';
   static String createParticularApi = 'api/particular/create';
+  static String ledgerListApi = 'api/ledger/list';
+  static String ledgerEntryListApi = 'api/ledgerentry/list';
 }

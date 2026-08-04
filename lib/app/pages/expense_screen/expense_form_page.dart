@@ -154,9 +154,11 @@ class ExpenseFormPage extends StatelessWidget {
                               : 'Choose a particular',
                           style: Styles.txtGreyColorW40014,
                         ),
-                        value: controller.selectedParticularId.isNotEmpty &&
+                        value:
+                            controller.selectedParticularId.isNotEmpty &&
                                 controller.particulars.any(
-                                  (p) => p.id == controller.selectedParticularId,
+                                  (p) =>
+                                      p.id == controller.selectedParticularId,
                                 )
                             ? controller.selectedParticularId
                             : null,
@@ -625,13 +627,16 @@ class ExpenseFormPage extends StatelessWidget {
                                   await ctrl.fetchParticulars();
 
                                   // Automatically select the newly created particular
-                                  if (response.data != null && response.data!.id != null) {
-                                    ctrl.selectedParticularId = response.data!.id!;
+                                  if (response.data != null &&
+                                      response.data!.id != null) {
+                                    ctrl.selectedParticularId =
+                                        response.data!.id!;
                                     ctrl.update();
                                   }
                                 } else {
                                   Utility.errorMessage(
-                                    response?.message ?? 'Failed to save particular. Please try again.',
+                                    response?.message ??
+                                        'Failed to save particular. Please try again.',
                                   );
                                 }
                               } catch (e) {

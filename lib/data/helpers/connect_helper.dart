@@ -177,6 +177,25 @@ class ConnectHelper {
     return response;
   }
 
+  Future<ResponseModel> createUnitApi({
+    required String name,
+    bool isLoading = false,
+  }) async {
+    var data = {
+      'unitid': '',
+      'name': name,
+      'sequence': '1',
+    };
+    var response = await apiWrapper.makeRequest(
+      EndPoints.createUnitApi,
+      Request.post,
+      data,
+      isLoading,
+      await Utility.commonHeader(),
+    );
+    return response;
+  }
+
   Future<ResponseModel> createProductApi({
     String? productid,
     required String name,
@@ -2129,6 +2148,60 @@ class ConnectHelper {
       {
         "particularid": "",
         "name": name,
+      },
+      isLoading,
+      await Utility.commonHeader(),
+    );
+    return response;
+  }
+
+  Future<ResponseModel> getLedgerListApi({
+    int page = 1,
+    int limit = 15,
+    String search = "",
+    String branchid = "",
+    List<String> name = const [],
+    List<String> parent = const [],
+    bool isLoading = false,
+  }) async {
+    var response = await apiWrapper.makeRequest(
+      EndPoints.ledgerListApi,
+      Request.post,
+      {
+        "page": page,
+        "limit": limit,
+        "search": search,
+        "branchid": branchid,
+        "name": name,
+        "parent": parent,
+      },
+      isLoading,
+      await Utility.commonHeader(),
+    );
+    return response;
+  }
+
+  Future<ResponseModel> getLedgerEntryListApi({
+    required String ledgerName,
+    String branchid = "",
+    int page = 1,
+    int limit = 15,
+    List<String> particulars = const [],
+    List<String> vouchertypes = const [],
+    List<String> voucherno = const [],
+    bool isLoading = false,
+  }) async {
+    var response = await apiWrapper.makeRequest(
+      EndPoints.ledgerEntryListApi,
+      Request.post,
+      {
+        "ledgerName": ledgerName,
+        "branchid": branchid,
+        "page": page,
+        "limit": limit,
+        "particulars": particulars,
+        "vouchertypes": vouchertypes,
+        "voucherno": voucherno,
       },
       isLoading,
       await Utility.commonHeader(),

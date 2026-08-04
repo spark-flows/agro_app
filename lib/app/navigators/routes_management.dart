@@ -1,3 +1,4 @@
+import 'dart:typed_data';
 import 'package:get/get.dart';
 import 'package:agro_app/app/widgets/show_full_scareen_image.dart';
 
@@ -54,14 +55,24 @@ abstract class RouteManagement {
       Get.toNamed<void>(Routes.attendanceScreen);
   static void goToAttendanceForm() => Get.toNamed<void>(Routes.attendanceForm);
   static void goToSalaryScreen() => Get.toNamed<void>(Routes.salaryScreen);
-  static void goToAddSalaryScreen() => Get.toNamed<void>(Routes.addSalaryScreen);
+  static void goToAddSalaryScreen() =>
+      Get.toNamed<void>(Routes.addSalaryScreen);
   static void goToLeaveScreen() => Get.toNamed<void>(Routes.leaveScreen);
   static void goToLeaveForm() => Get.toNamed<void>(Routes.leaveForm);
   static void goToCollectionScreen() =>
       Get.toNamed<void>(Routes.collectionScreen);
   static void goToCollectionForm() => Get.toNamed<void>(Routes.collectionForm);
-  static void goToExpenseScreen() =>
-      Get.toNamed<void>(Routes.expenseScreen);
+  static void goToExpenseScreen() => Get.toNamed<void>(Routes.expenseScreen);
   static void goToExpenseForm() => Get.toNamed<void>(Routes.expenseForm);
+  static void goToLedgersScreen() => Get.toNamed<void>(Routes.ledgersScreen);
+  static void goToLedgerStatementScreen(String partyId, String partyName) =>
+      Get.toNamed<void>(
+        Routes.ledgerStatementScreen,
+        arguments: {'partyId': partyId, 'partyName': partyName},
+      );
+  static void goToLedgerPdfPreviewScreen(Uint8List pdfBytes, String fileName) =>
+      Get.toNamed<void>(
+        Routes.ledgerPdfPreviewScreen,
+        arguments: [pdfBytes, fileName],
+      );
 }
-

@@ -122,6 +122,7 @@ class GetOneOrderItem {
   dynamic quantity;
   dynamic price;
   String? unit;
+  dynamic unitid;
   String? id;
 
   GetOneOrderItem({
@@ -129,6 +130,7 @@ class GetOneOrderItem {
     this.quantity,
     this.price,
     this.unit,
+    this.unitid,
     this.id,
   });
 
@@ -138,6 +140,7 @@ class GetOneOrderItem {
         quantity: json["quantity"],
         price: json["price"],
         unit: json["unit"]?.toString(),
+        unitid: json["unitid"],
         id: json["_id"],
       );
 
@@ -146,6 +149,7 @@ class GetOneOrderItem {
     "quantity": quantity,
     "price": price,
     "unit": unit,
+    "unitid": unitid,
     "_id": id,
   };
 }

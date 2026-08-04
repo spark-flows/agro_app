@@ -405,6 +405,28 @@ class Repository {
     }
   }
 
+  Future<bool> createUnitApi({
+    required String name,
+    bool isLoading = false,
+  }) async {
+    try {
+      var response = await _dataRepository.createUnitApi(
+        name: name,
+        isLoading: isLoading,
+      );
+      if (response.hasError) {
+        final msg = _parseErrorMessage(response.data, 'Failed to create unit');
+        Utility.showMessage(msg, MessageType.error, null, '');
+        return false;
+      }
+      return true;
+    } catch (e) {
+      print('createUnitApi error: $e');
+      Utility.showMessage('Failed to create unit', MessageType.error, null, '');
+      return false;
+    }
+  }
+
   /// Returns null on success, or an error message string on failure.
   Future<String?> createProductApi({
     String? productid,
@@ -2306,6 +2328,96 @@ class Repository {
       Utility.closeDialog();
       Utility.showMessage(
         'Failed to create particular',
+        MessageType.error,
+        null,
+        '',
+      );
+      return null;
+    }
+  }
+
+  Future<GetAllLedgersModel?> getLedgerListApi({
+    int page = 1,
+    int limit = 15,
+    String search = "",
+    String branchid = "",
+    List<String> name = const [],
+    List<String> parent = const [],
+    bool isLoading = false,
+  }) async {
+    try {
+      var response = await _dataRepository.getLedgerListApi(
+        page: page,
+        limit: limit,
+        search: search,
+        branchid: branchid,
+        name: name,
+        parent: parent,
+        isLoading: isLoading,
+      );
+      if (response.hasError) {
+        final msg = _parseErrorMessage(
+          response.data,
+          'Failed to load ledgers',
+        );
+        Utility.showMessage(msg, MessageType.error, null, '');
+        return null;
+      }
+      if (response.data.isNotEmpty) {
+        return getAllLedgersModelFromJson(response.data);
+      }
+      return null;
+    } catch (e) {
+      print('getLedgerListApi error: $e');
+      Utility.closeDialog();
+      Utility.showMessage(
+        'Failed to load ledgers',
+        MessageType.error,
+        null,
+        '',
+      );
+      return null;
+    }
+  }
+
+  Future<GetLedgerEntriesModel?> getLedgerEntryListApi({
+    required String ledgerName,
+    String branchid = "",
+    int page = 1,
+    int limit = 15,
+    List<String> particulars = const [],
+    List<String> vouchertypes = const [],
+    List<String> voucherno = const [],
+    bool isLoading = false,
+  }) async {
+    try {
+      var response = await _dataRepository.getLedgerEntryListApi(
+        ledgerName: ledgerName,
+        branchid: branchid,
+        page: page,
+        limit: limit,
+        particulars: particulars,
+        vouchertypes: vouchertypes,
+        voucherno: voucherno,
+        isLoading: isLoading,
+      );
+      if (response.hasError) {
+        final msg = _parseErrorMessage(
+          response.data,
+          'Failed to load ledger entries',
+        );
+        Utility.showMessage(msg, MessageType.error, null, '');
+        return null;
+      }
+      if (response.data.isNotEmpty) {
+        return getLedgerEntriesModelFromJson(response.data);
+      }
+      return null;
+    } catch (e) {
+      print('getLedgerEntryListApi error: $e');
+      Utility.closeDialog();
+      Utility.showMessage(
+        'Failed to load ledger entries',
         MessageType.error,
         null,
         '',

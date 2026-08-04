@@ -1,4 +1,5 @@
 import 'package:agro_app/app/app.dart';
+import 'package:agro_app/domain/domain.dart';
 import 'package:agro_app/domain/services/enum.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -965,7 +966,6 @@ class ProductCard extends StatefulWidget {
 
 class _ProductCardState extends State<ProductCard> {
   late TextEditingController _qtyController;
-  late TextEditingController _unitController;
 
   @override
   void initState() {
@@ -980,7 +980,6 @@ class _ProductCardState extends State<ProductCard> {
         ? widget.item.selectedUnit
         : (defaultUnit != "-" ? defaultUnit : "");
     widget.item.selectedUnit = currentUnit;
-    _unitController = TextEditingController();
   }
 
   @override
@@ -992,19 +991,95 @@ class _ProductCardState extends State<ProductCard> {
         !FocusScope.of(context).hasFocus) {
       _qtyController.text = targetQtyText;
     }
-
-    final targetUnitText = widget.item.selectedUnit ?? '';
-    if (_unitController.text != targetUnitText &&
-        !FocusScope.of(context).hasFocus) {
-      _unitController.text = targetUnitText;
-    }
   }
 
   @override
   void dispose() {
     _qtyController.dispose();
-    _unitController.dispose();
     super.dispose();
+  }
+
+  List<DropdownMenuItem<String>> _buildDropdownItems() {
+    final List<String> uniqueNames = [];
+
+    // Add units fetched from API
+    for (var u in widget.controller.units) {
+      if (u.name != null && u.name!.isNotEmpty) {
+        final name = u.name!.trim();
+        if (!uniqueNames.contains(name)) {
+          uniqueNames.add(name);
+        }
+      }
+    }
+
+    // Ensure the current selected unit is in the items to avoid dropdown assertion crash
+    final current = widget.item.selectedUnit?.trim() ?? "";
+    if (current.isNotEmpty && !uniqueNames.contains(current)) {
+      uniqueNames.add(current);
+    }
+
+    return uniqueNames.map((name) {
+      return DropdownMenuItem<String>(
+        value: name,
+        child: Text(name, style: Styles.txtBlackColorW60014),
+      );
+    }).toList();
+  }
+
+  void _showCreateUnitDialog(BuildContext context) {
+    final TextEditingController nameController = TextEditingController();
+    Get.dialog(
+      AlertDialog(
+        title: const Text('Create New Unit'),
+        content: TextField(
+          controller: nameController,
+          decoration: const InputDecoration(
+            hintText: 'Enter unit name (e.g. LITER, BAG, BOX)',
+            labelText: 'Unit Name',
+          ),
+        ),
+        actions: [
+          TextButton(onPressed: () => Get.back(), child: const Text('Cancel')),
+          ElevatedButton(
+            onPressed: () async {
+              final name = nameController.text.trim();
+              if (name.isEmpty) {
+                Utility.showMessage(
+                  'Please enter a unit name',
+                  MessageType.error,
+                  null,
+                  '',
+                );
+                return;
+              }
+              Get.back(); // close dialog
+
+              Utility.showLoader();
+              final success = await Get.find<Repository>().createUnitApi(
+                name: name,
+                isLoading: false,
+              );
+              Utility.closeDialog();
+
+              if (success) {
+                Utility.showMessage(
+                  'Unit created successfully',
+                  MessageType.success,
+                  null,
+                  '',
+                );
+                await widget.controller.fetchUnits();
+                setState(() {
+                  widget.item.selectedUnit = name;
+                });
+                widget.controller.update();
+              }
+            },
+            child: const Text('Create'),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -1115,26 +1190,35 @@ class _ProductCardState extends State<ProductCard> {
                 Expanded(
                   child: TextFormField(
                     controller: _qtyController,
-                    keyboardType: TextInputType.number,
+                    keyboardType: const TextInputType.numberWithOptions(
+                      decimal: true,
+                    ),
                     decoration: InputDecoration(
-                      labelText: 'Quantity',
                       hintText: 'Enter Qty',
                       filled: true,
                       fillColor: Colors.white,
-                      isDense: true,
                       contentPadding: const EdgeInsets.symmetric(
                         horizontal: 12,
-                        vertical: 10,
+                        vertical: 12,
                       ),
                       border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
+                        borderRadius: BorderRadius.circular(10),
                         borderSide: BorderSide(color: Colors.grey.shade300),
                       ),
                       enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
+                        borderRadius: BorderRadius.circular(10),
                         borderSide: BorderSide(color: Colors.grey.shade300),
                       ),
                     ),
+                    validator: (val) {
+                      if (val == null || val.trim().isEmpty) {
+                        return 'Please enter quantity';
+                      }
+                      if (int.tryParse(val.trim()) == null) {
+                        return 'Please enter a valid numeric quantity';
+                      }
+                      return null;
+                    },
                     onChanged: (val) {
                       final parsed = int.tryParse(val.trim()) ?? 0;
                       widget.item.quantity = parsed;
@@ -1144,32 +1228,61 @@ class _ProductCardState extends State<ProductCard> {
                 ),
                 const SizedBox(width: 12),
                 Expanded(
-                  child: TextFormField(
-                    controller: _unitController,
-                    keyboardType: TextInputType.text,
-                    decoration: InputDecoration(
-                      labelText: 'Unit',
-                      hintText: 'Enter Unit',
-                      filled: true,
-                      fillColor: Colors.white,
-                      isDense: true,
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 10,
-                      ),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                        borderSide: BorderSide(color: Colors.grey.shade300),
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                        borderSide: BorderSide(color: Colors.grey.shade300),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      border: Border.all(color: Colors.grey.shade300),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: DropdownButtonHideUnderline(
+                      child: DropdownButton<String>(
+                        isExpanded: true,
+                        hint: Text(
+                          'Choose a unit',
+                          style: Styles.txtGreyColorW40014,
+                        ),
+                        value:
+                            widget.item.selectedUnit?.isNotEmpty == true &&
+                                _buildDropdownItems().any(
+                                  (item) =>
+                                      item.value == widget.item.selectedUnit,
+                                )
+                            ? widget.item.selectedUnit
+                            : null,
+                        items: [
+                          ..._buildDropdownItems(),
+                          const DropdownMenuItem<String>(
+                            value: 'create_new_unit',
+                            child: Row(
+                              children: [
+                                Icon(
+                                  Icons.add_circle_outline,
+                                  color: ColorsValue.primary,
+                                  size: 20,
+                                ),
+                                SizedBox(width: 8),
+                                Text(
+                                  'Create New Unit',
+                                  style: TextStyle(
+                                    color: ColorsValue.primary,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                        onChanged: (val) {
+                          if (val == 'create_new_unit') {
+                            _showCreateUnitDialog(context);
+                          } else if (val != null) {
+                            widget.item.selectedUnit = val;
+                            widget.controller.update();
+                          }
+                        },
                       ),
                     ),
-                    onChanged: (val) {
-                      widget.item.selectedUnit = val.trim();
-                      widget.controller.update();
-                    },
                   ),
                 ),
               ],
@@ -1501,25 +1614,41 @@ void _showOrderDetailsDialog(
                   final item = details.items![idx];
                   String pName = 'Unknown Product';
                   String? pUnit;
+
+                  // 1. Resolve unit from the item level (unitid or unit)
+                  if (item.unitid is Map) {
+                    pUnit = item.unitid['name']?.toString();
+                  } else if (item.unitid is String) {
+                    pUnit = item.unitid;
+                  } else if (item.unit != null && item.unit!.isNotEmpty) {
+                    pUnit = item.unit;
+                  }
+
+                  // 2. Resolve product name and try productid level unit if not found
                   if (item.productid is Map) {
                     pName =
                         item.productid['name'] ??
                         item.productid['_id'] ??
                         'Unknown Product';
-                    final unitData = item.productid['unit'];
-                    if (unitData is Map) {
-                      pUnit = unitData['name']?.toString();
-                    } else if (unitData is String) {
-                      pUnit = unitData;
+                    if (pUnit == null || pUnit.isEmpty) {
+                      final unitData =
+                          item.productid['unitid'] ?? item.productid['unit'];
+                      if (unitData is Map) {
+                        pUnit = unitData['name']?.toString();
+                      } else if (unitData is String) {
+                        pUnit = unitData;
+                      }
                     }
                   } else if (item.productid != null) {
                     final localMatch = controller.allProducts.firstWhereOrNull(
                       (p) => p.id == item.productid,
                     );
                     pName = localMatch?.name ?? item.productid.toString();
-                    pUnit = localMatch != null
-                        ? localMatch.unit.replaceAll("per ", "")
-                        : null;
+                    if (pUnit == null || pUnit.isEmpty) {
+                      pUnit = localMatch != null
+                          ? localMatch.unit.replaceAll("per ", "")
+                          : null;
+                    }
                   }
 
                   return Card(
@@ -1559,9 +1688,20 @@ void _showOrderDetailsDialog(
                               children: [
                                 Text(pName, style: Styles.txtBlackColorW60014),
                                 const SizedBox(height: 4),
-                                Text(
-                                  'Qty: ${item.quantity}${pUnit != null && pUnit.isNotEmpty ? " $pUnit" : ""}',
-                                  style: Styles.txtGreyColorW40012,
+                                Row(
+                                  children: [
+                                    Text(
+                                      'Qty: ${item.quantity}',
+                                      style: Styles.txtGreyColorW40012,
+                                    ),
+                                    if (pUnit != null && pUnit.isNotEmpty) ...[
+                                      const SizedBox(width: 12),
+                                      Text(
+                                        'Unit: $pUnit',
+                                        style: Styles.txtGreyColorW40012,
+                                      ),
+                                    ],
+                                  ],
                                 ),
                               ],
                             ),

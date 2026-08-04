@@ -32,6 +32,9 @@ abstract class Routes {
   static const collectionForm = _Paths.collectionForm;
   static const expenseScreen = _Paths.expenseScreen;
   static const expenseForm = _Paths.expenseForm;
+  static const ledgersScreen = _Paths.ledgersScreen;
+  static const ledgerStatementScreen = _Paths.ledgerStatementScreen;
+  static const ledgerPdfPreviewScreen = _Paths.ledgerPdfPreviewScreen;
 }
 
 abstract class _Paths {
@@ -66,5 +69,8 @@ abstract class _Paths {
   static const collectionForm = '/collectionForm';
   static const expenseScreen = '/expenseScreen';
   static const expenseForm = '/expenseForm';
+  static const ledgersScreen = '/ledgersScreen';
+  static const ledgerStatementScreen = '/ledgerStatementScreen';
+  static const ledgerPdfPreviewScreen = '/ledgerPdfPreviewScreen';
 }
 
