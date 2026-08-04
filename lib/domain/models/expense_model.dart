@@ -18,6 +18,13 @@ GetAllParticularsModel getAllParticularsModelFromJson(String str) =>
 String getAllParticularsModelToJson(GetAllParticularsModel data) =>
     json.encode(data.toJson());
 
+CreateParticularModel createParticularModelFromJson(String str) =>
+    CreateParticularModel.fromJson(json.decode(str));
+
+String createParticularModelToJson(CreateParticularModel data) =>
+    json.encode(data.toJson());
+
+
 class GetAllExpensesModel {
   String? message;
   ExpenseData? data;
@@ -290,4 +297,28 @@ class GetAllParticularsModel {
         "Status": status,
         "IsSuccess": isSuccess,
       };
+}
+
+class CreateParticularModel {
+  String? message;
+  ParticularDoc? data;
+  int? status;
+  bool? isSuccess;
+
+  CreateParticularModel({this.message, this.data, this.status, this.isSuccess});
+
+  factory CreateParticularModel.fromJson(Map<String, dynamic> json) =>
+      CreateParticularModel(
+        message: json["Message"],
+        data: json["Data"] == null ? null : ParticularDoc.fromJson(json["Data"]),
+        status: json["Status"],
+        isSuccess: json["IsSuccess"],
+      );
+
+  Map<String, dynamic> toJson() => {
+    "Message": message,
+    "Data": data?.toJson(),
+    "Status": status,
+    "IsSuccess": isSuccess,
+  };
 }

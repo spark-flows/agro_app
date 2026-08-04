@@ -117,57 +117,51 @@ class _LeaveFormPageState extends State<LeaveFormPage> {
                             ),
                           ),
                           const SizedBox(height: 8),
-                          DropdownButtonFormField<String>(
-                            value: activeUserId,
-                            decoration: InputDecoration(
-                              prefixIcon: const Icon(
-                                Icons.person_outline,
-                                color: ColorsValue.primary,
-                              ),
-                              filled: true,
-                              fillColor: Colors.white,
-                              contentPadding: const EdgeInsets.symmetric(
-                                horizontal: 16,
-                                vertical: 14,
-                              ),
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12),
-                                borderSide: BorderSide(
-                                  color: Colors.grey.shade300,
-                                ),
-                              ),
-                              enabledBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12),
-                                borderSide: BorderSide(
-                                  color: Colors.grey.shade300,
-                                ),
-                              ),
-                              focusedBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12),
-                                borderSide: const BorderSide(
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 16),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              border: Border.all(color: Colors.grey.shade300),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Row(
+                              children: [
+                                const Icon(
+                                  Icons.person_outline,
                                   color: ColorsValue.primary,
                                 ),
-                              ),
-                            ),
-                            items: controller.userList.map((user) {
-                              final name = '${user.name} ${user.surname ?? ''}'
-                                  .trim();
-                              return DropdownMenuItem<String>(
-                                value: user.id,
-                                child: Text(
-                                  name.isNotEmpty ? name : user.mobile,
-                                  style: Styles.txtBlackColorW60014,
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: DropdownButtonHideUnderline(
+                                    child: DropdownButton<String>(
+                                      isExpanded: true,
+                                      value: activeUserId,
+                                      items: controller.userList.map((user) {
+                                        final name =
+                                            '${user.name} ${user.surname ?? ''}'
+                                                .trim();
+                                        return DropdownMenuItem<String>(
+                                          value: user.id,
+                                          child: Text(
+                                            name.isNotEmpty
+                                                ? name
+                                                : user.mobile,
+                                            style: Styles.txtBlackColorW60014,
+                                          ),
+                                        );
+                                      }).toList(),
+                                      onChanged: (val) {
+                                        if (val != null) {
+                                          controller.selectedUserId = val;
+                                          controller.calculateDuration();
+                                          controller.update();
+                                        }
+                                      },
+                                    ),
+                                  ),
                                 ),
-                              );
-                            }).toList(),
-                            onChanged: (val) {
-                              controller.selectedUserId = val;
-                              controller.calculateDuration();
-                              controller.update();
-                            },
-                            validator: (val) => val == null || val.isEmpty
-                                ? 'Please select a user'
-                                : null,
+                              ],
+                            ),
                           ),
                           const SizedBox(height: 16),
                         ],
@@ -256,46 +250,107 @@ class _LeaveFormPageState extends State<LeaveFormPage> {
                 const SizedBox(height: 16),
 
                 // Leave Type Dropdown
-                DropdownButtonFormField<String>(
-                  value: controller.selectedLeaveType,
-                  decoration: InputDecoration(
-                    labelText: 'Leave Type *',
-                    labelStyle: Styles.txtGreyColorW40014,
-                    floatingLabelStyle: const TextStyle(
-                      color: ColorsValue.primary,
-                    ),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(color: Colors.grey.shade300),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(color: Colors.grey.shade300),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(
+                const Text(
+                  'Leave Type *',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.black87,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    border: Border.all(color: Colors.grey.shade300),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(
+                        Icons.beach_access,
                         color: ColorsValue.primary,
-                        width: 1.5,
                       ),
-                    ),
-                    prefixIcon: const Icon(
-                      Icons.beach_access,
-                      color: ColorsValue.primary,
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: DropdownButtonHideUnderline(
+                          child: DropdownButton<String>(
+                            isExpanded: true,
+                            value: controller.selectedLeaveType,
+                            items: const [
+                              DropdownMenuItem(
+                                value: 'full',
+                                child: Text('Full Day'),
+                              ),
+                              DropdownMenuItem(
+                                value: 'half',
+                                child: Text('Half Day'),
+                              ),
+                            ],
+                            onChanged: (newValue) {
+                              if (newValue != null) {
+                                controller.selectedLeaveType = newValue;
+                                controller.calculateDuration();
+                                controller.update();
+                              }
+                            },
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                if (controller.selectedLeaveType == 'half') ...[
+                  const SizedBox(height: 16),
+                  const Text(
+                    'Session *',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.black87,
                     ),
                   ),
-                  items: const [
-                    DropdownMenuItem(value: 'full', child: Text('Full Day')),
-                    DropdownMenuItem(value: 'half', child: Text('Half Day')),
-                  ],
-                  onChanged: (newValue) {
-                    if (newValue != null) {
-                      controller.selectedLeaveType = newValue;
-                      controller.calculateDuration();
-                      controller.update();
-                    }
-                  },
-                ),
+                  const SizedBox(height: 8),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      border: Border.all(color: Colors.grey.shade300),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.schedule, color: ColorsValue.primary),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: DropdownButtonHideUnderline(
+                            child: DropdownButton<String>(
+                              isExpanded: true,
+                              value: controller.selectedSession,
+                              items: const [
+                                DropdownMenuItem(
+                                  value: 'session1',
+                                  child: Text('Session 1'),
+                                ),
+                                DropdownMenuItem(
+                                  value: 'session2',
+                                  child: Text('Session 2'),
+                                ),
+                              ],
+                              onChanged: (newValue) {
+                                if (newValue != null) {
+                                  controller.selectedSession = newValue;
+                                  controller.update();
+                                }
+                              },
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
                 const SizedBox(height: 20),
 
                 // Total Days & Total Hours Row
@@ -334,83 +389,86 @@ class _LeaveFormPageState extends State<LeaveFormPage> {
                 const SizedBox(height: 16),
 
                 // Status Dropdown: disabled/read-only for User role
+                const Text(
+                  'Status *',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.black87,
+                  ),
+                ),
+                const SizedBox(height: 8),
                 IgnorePointer(
                   ignoring: isUserRole,
-                  child: DropdownButtonFormField<String>(
-                    value: isUserRole ? 'pending' : controller.selectedStatus,
-                    style: const TextStyle(
-                      color: Colors.black87,
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    decoration: BoxDecoration(
+                      color: isUserRole ? Colors.grey.shade100 : Colors.white,
+                      border: Border.all(color: Colors.grey.shade300),
+                      borderRadius: BorderRadius.circular(12),
                     ),
-                    decoration: InputDecoration(
-                      labelText: 'Status *',
-                      labelStyle: Styles.txtGreyColorW40014,
-                      floatingLabelStyle: const TextStyle(
-                        color: ColorsValue.primary,
-                      ),
-                      fillColor: isUserRole ? Colors.grey.shade100 : null,
-                      filled: isUserRole,
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(color: Colors.grey.shade300),
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(color: Colors.grey.shade300),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(
-                          color: isUserRole
-                              ? Colors.grey.shade300
-                              : ColorsValue.primary,
-                          width: 1.5,
+                    child: Row(
+                      children: [
+                        const Icon(
+                          Icons.shield_outlined,
+                          color: ColorsValue.primary,
                         ),
-                      ),
-                      prefixIcon: const Icon(
-                        Icons.shield_outlined,
-                        color: ColorsValue.primary,
-                      ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: DropdownButtonHideUnderline(
+                            child: DropdownButton<String>(
+                              isExpanded: true,
+                              value: isUserRole
+                                  ? 'pending'
+                                  : controller.selectedStatus,
+                              style: const TextStyle(
+                                color: Colors.black87,
+                                fontSize: 14,
+                                fontWeight: FontWeight.w500,
+                              ),
+                              items: const [
+                                DropdownMenuItem(
+                                  value: 'pending',
+                                  child: Text(
+                                    'PENDING',
+                                    style: TextStyle(
+                                      color: Colors.black87,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ),
+                                DropdownMenuItem(
+                                  value: 'accept',
+                                  child: Text(
+                                    'ACCEPT',
+                                    style: TextStyle(
+                                      color: Colors.black87,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ),
+                                DropdownMenuItem(
+                                  value: 'reject',
+                                  child: Text(
+                                    'REJECT',
+                                    style: TextStyle(
+                                      color: Colors.black87,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                              onChanged: (newValue) {
+                                if (!isUserRole && newValue != null) {
+                                  controller.selectedStatus = newValue;
+                                  controller.update();
+                                }
+                              },
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
-                    items: const [
-                      DropdownMenuItem(
-                        value: 'pending',
-                        child: Text(
-                          'PENDING',
-                          style: TextStyle(
-                            color: Colors.black87,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ),
-                      DropdownMenuItem(
-                        value: 'accept',
-                        child: Text(
-                          'ACCEPT',
-                          style: TextStyle(
-                            color: Colors.black87,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ),
-                      DropdownMenuItem(
-                        value: 'reject',
-                        child: Text(
-                          'REJECT',
-                          style: TextStyle(
-                            color: Colors.black87,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ),
-                    ],
-                    onChanged: (newValue) {
-                      if (!isUserRole && newValue != null) {
-                        controller.selectedStatus = newValue;
-                        controller.update();
-                      }
-                    },
                   ),
                 ),
                 const SizedBox(height: 20),

@@ -110,7 +110,7 @@ class GetAllAttendanceDoc {
   String? createdBy;
   List<Punching>? punching;
   List<BreakObj>? breaks;
-
+    int? dayKmtravelled;
   GetAllAttendanceDoc({
     this.id,
     this.branchid,
@@ -126,6 +126,7 @@ class GetAllAttendanceDoc {
     this.createdBy,
     this.punching,
     this.breaks,
+    this.dayKmtravelled,
   });
 
   factory GetAllAttendanceDoc.fromJson(Map<String, dynamic> json) =>
@@ -143,6 +144,7 @@ class GetAllAttendanceDoc {
                 ? GetAllAttendanceUserid(id: json["userid"].toString())
                 : null),
         timein: json["timein"],
+        dayKmtravelled: json["dayKmtravelled"],
         timeout: json["timeout"],
         coordinates: json["coordinates"] is Map<String, dynamic>
             ? GetAllAttendanceCoordinates.fromJson(json["coordinates"])
@@ -167,6 +169,7 @@ class GetAllAttendanceDoc {
 
   Map<String, dynamic> toJson() => {
     "_id": id,
+    "dayKmtravelled": dayKmtravelled,
     "branchid": branchid?.toJson(),
     "date": date,
     "userid": userid?.toJson(),

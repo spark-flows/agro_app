@@ -1717,6 +1717,7 @@ class ConnectHelper {
     required String leavetype,
     required String reason,
     required String status,
+    String? session,
     bool isLoading = false,
   }) async {
     final String branchId = await _resolveBranchId();
@@ -1731,6 +1732,7 @@ class ConnectHelper {
       "reason": reason,
       "status": status,
       "branchid": branchId,
+      if (session != null && session.isNotEmpty) "session": session,
     };
     var response = await apiWrapper.makeRequest(
       EndPoints.createLeaveApi,
@@ -2111,6 +2113,23 @@ class ConnectHelper {
       '${EndPoints.particularListApi}?search=$search',
       Request.get,
       null,
+      isLoading,
+      await Utility.commonHeader(),
+    );
+    return response;
+  }
+
+  Future<ResponseModel> createParticularApi({
+    required String name,
+    bool isLoading = true,
+  }) async {
+    var response = await apiWrapper.makeRequest(
+      EndPoints.createParticularApi,
+      Request.post,
+      {
+        "particularid": "",
+        "name": name,
+      },
       isLoading,
       await Utility.commonHeader(),
     );

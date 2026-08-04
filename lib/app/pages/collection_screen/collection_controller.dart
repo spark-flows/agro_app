@@ -52,7 +52,11 @@ class CollectionController extends GetxController {
   String editingCollectionId = '';
   Timer? _searchTimer;
 
-  static const List<String> paymentModeOptions = ['cash', 'check', 'rtgs/neft'];
+  static const List<String> paymentModeOptions = [
+    'cash',
+    'cheque',
+    'rtgs/neft',
+  ];
   static const List<String> paymentStatusOptions = [
     'received',
     'pending',
@@ -140,7 +144,9 @@ class CollectionController extends GetxController {
       );
       final docs = response?.data.docs;
       if (docs != null && docs.isNotEmpty) {
-        userList = docs.where((u) => RoleUtils.isUser(u.roleid.rolename)).toList();
+        userList = docs
+            .where((u) => RoleUtils.isUser(u.roleid.rolename))
+            .toList();
         update();
       }
     } catch (e) {
@@ -293,7 +299,12 @@ class CollectionController extends GetxController {
       effectiveUserId = userId;
     } else if (RoleUtils.isAdmin(roleName)) {
       if (selectedUserId == null || selectedUserId!.isEmpty) {
-        Utility.showMessage('Please select a user', MessageType.error, null, '');
+        Utility.showMessage(
+          'Please select a user',
+          MessageType.error,
+          null,
+          '',
+        );
         return;
       }
       effectiveUserId = selectedUserId!;
@@ -436,10 +447,7 @@ class CollectionController extends GetxController {
         ),
         pw.Padding(
           padding: const pw.EdgeInsets.all(8),
-          child: pw.Text(
-            value,
-            style: const pw.TextStyle(fontSize: 11),
-          ),
+          child: pw.Text(value, style: const pw.TextStyle(fontSize: 11)),
         ),
       ],
     );
@@ -509,7 +517,11 @@ class CollectionController extends GetxController {
                       ),
                     ],
                   ),
-                  pw.Divider(thickness: 1.5, color: PdfColors.green800, height: 24),
+                  pw.Divider(
+                    thickness: 1.5,
+                    color: PdfColors.green800,
+                    height: 24,
+                  ),
 
                   // Transaction Details Header
                   pw.Text(
@@ -524,7 +536,10 @@ class CollectionController extends GetxController {
 
                   // Details Table
                   pw.Table(
-                    border: pw.TableBorder.all(color: PdfColors.grey300, width: 0.5),
+                    border: pw.TableBorder.all(
+                      color: PdfColors.grey300,
+                      width: 0.5,
+                    ),
                     columnWidths: {
                       0: const pw.FixedColumnWidth(150),
                       1: const pw.FlexColumnWidth(),
@@ -532,8 +547,14 @@ class CollectionController extends GetxController {
                     children: [
                       _buildTableRow('Party Name', item.partyname ?? 'N/A'),
                       _buildTableRow('Amount', 'Rs. ${item.amount ?? '0'}'),
-                      _buildTableRow('Payment Mode', (item.paymentmode ?? 'N/A').toUpperCase()),
-                      _buildTableRow('Payment Status', (item.paymentstatus ?? 'N/A').toUpperCase()),
+                      _buildTableRow(
+                        'Payment Mode',
+                        (item.paymentmode ?? 'N/A').toUpperCase(),
+                      ),
+                      _buildTableRow(
+                        'Payment Status',
+                        (item.paymentstatus ?? 'N/A').toUpperCase(),
+                      ),
                       _buildTableRow('Remark', item.remark ?? 'N/A'),
                     ],
                   ),
@@ -551,7 +572,10 @@ class CollectionController extends GetxController {
                     ),
                     pw.SizedBox(height: 8),
                     pw.Table(
-                      border: pw.TableBorder.all(color: PdfColors.grey300, width: 0.5),
+                      border: pw.TableBorder.all(
+                        color: PdfColors.grey300,
+                        width: 0.5,
+                      ),
                       columnWidths: {
                         0: const pw.FixedColumnWidth(150),
                         1: const pw.FlexColumnWidth(),
@@ -570,12 +594,12 @@ class CollectionController extends GetxController {
                   pw.Align(
                     alignment: pw.Alignment.center,
                     child: pw.Text(
-                       'Thank you for your transaction.',
-                       style: pw.TextStyle(
-                         fontSize: 10,
-                         fontStyle: pw.FontStyle.italic,
-                         color: PdfColors.grey600,
-                       ),
+                      'Thank you for your transaction.',
+                      style: pw.TextStyle(
+                        fontSize: 10,
+                        fontStyle: pw.FontStyle.italic,
+                        color: PdfColors.grey600,
+                      ),
                     ),
                   ),
                 ],
@@ -586,17 +610,25 @@ class CollectionController extends GetxController {
       );
 
       final pdfBytes = await pdf.save();
-      final sanitizedParty = (item.partyname ?? 'unknown').replaceAll(RegExp(r'[^a-zA-Z0-9]'), '_');
-      final fileName = 'collection_${sanitizedParty}_${DateTime.now().millisecondsSinceEpoch}.pdf';
+      final sanitizedParty = (item.partyname ?? 'unknown').replaceAll(
+        RegExp(r'[^a-zA-Z0-9]'),
+        '_',
+      );
+      final fileName =
+          'collection_${sanitizedParty}_${DateTime.now().millisecondsSinceEpoch}.pdf';
 
       Utility.closeLoader();
-      Get.to(() => CollectionPdfPreviewPage(
-            pdfBytes: pdfBytes,
-            fileName: fileName,
-          ));
+      Get.to(
+        () => CollectionPdfPreviewPage(pdfBytes: pdfBytes, fileName: fileName),
+      );
     } catch (e) {
       Utility.closeLoader();
-      Utility.showMessage('Failed to generate PDF: $e', MessageType.error, null, '');
+      Utility.showMessage(
+        'Failed to generate PDF: $e',
+        MessageType.error,
+        null,
+        '',
+      );
     }
   }
 }

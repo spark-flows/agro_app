@@ -698,6 +698,7 @@ class DataRepository extends DomainRepository {
     required String leavetype,
     required String reason,
     required String status,
+    String? session,
     bool isLoading = false,
   }) async => connectHelper.createLeaveApi(
     leaveid: leaveid,
@@ -709,6 +710,7 @@ class DataRepository extends DomainRepository {
     leavetype: leavetype,
     reason: reason,
     status: status,
+    session: session,
     isLoading: isLoading,
   );
 
@@ -905,4 +907,10 @@ class DataRepository extends DomainRepository {
     bool isLoading = false,
   }) async =>
       connectHelper.getParticularListApi(search: search, isLoading: isLoading);
+
+  Future<ResponseModel> createParticularApi({
+    required String name,
+    bool isLoading = false,
+  }) async =>
+      connectHelper.createParticularApi(name: name, isLoading: isLoading);
 }

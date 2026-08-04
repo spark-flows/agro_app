@@ -43,6 +43,7 @@ class LeaveController extends GetxController {
 
   String selectedLeaveType = 'full'; // Default: full
   String selectedStatus = 'pending'; // Default: pending
+  String selectedSession = 'session1'; // Default: session1
   String editingLeaveId = '';
   Timer? _searchTimer;
 
@@ -131,8 +132,8 @@ class LeaveController extends GetxController {
       );
       final docs = response?.data.docs;
       if (docs != null && docs.isNotEmpty) {
-        userList = docs;
-        selectedUserId ??= userList.first.id;
+        userList = docs.where((u) => RoleUtils.isUser(u.roleid.rolename)).toList();
+        selectedUserId ??= userList.isNotEmpty ? userList.first.id : null;
         update();
       }
     } catch (e) {
@@ -253,6 +254,7 @@ class LeaveController extends GetxController {
       reasonCtrl.clear();
       selectedLeaveType = 'full';
       selectedStatus = 'pending'; // User defaults to pending
+      selectedSession = 'session1';
       selectedUserId = RoleUtils.isAdmin(roleName)
           ? (userList.isNotEmpty ? userList.first.id : null)
           : userId;
@@ -266,6 +268,7 @@ class LeaveController extends GetxController {
         reasonCtrl.text = doc.reason ?? '';
         selectedLeaveType = doc.leavetype ?? 'full';
         selectedStatus = doc.status ?? 'pending';
+        selectedSession = doc.session ?? 'session1';
         selectedUserId = doc.userid?.id ?? userId;
       } else if (doc is CreateLeaveModel) {
         final data = doc.data;
@@ -277,6 +280,7 @@ class LeaveController extends GetxController {
         reasonCtrl.text = data?.reason ?? '';
         selectedLeaveType = data?.leavetype ?? 'full';
         selectedStatus = data?.status ?? 'pending';
+        selectedSession = data?.session ?? 'session1';
         selectedUserId = data?.userid?.id ?? userId;
       }
     }
@@ -508,6 +512,7 @@ class LeaveController extends GetxController {
       leavetype: selectedLeaveType,
       reason: reasonCtrl.text.trim(),
       status: finalStatus,
+      session: selectedLeaveType == 'half' ? selectedSession : null,
       isLoading: false,
     );
 

@@ -72,4 +72,5 @@ class EndPoints {
   static String changeExpenseStatusApi = 'api/expense/changestatus';
   static String uploadExpenseApi = 'api/expense/upload';
   static String particularListApi = 'api/particular';
+  static String createParticularApi = 'api/particular/create';
 }

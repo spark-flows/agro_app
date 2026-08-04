@@ -134,51 +134,78 @@ class ExpenseFormPage extends StatelessWidget {
 
                   // ── Particular / Category Dropdown ──
                   Text(
-                    'Particular (Expense Category)',
+                    'Particular (Expense Category) *',
                     style: Styles.txtBlackColorW60014,
                   ),
-                  const SizedBox(height: 6),
-                  DropdownButtonFormField<String>(
-                    initialValue: controller.selectedParticularId.isNotEmpty
-                        ? controller.selectedParticularId
-                        : null,
-                    decoration: InputDecoration(
-                      filled: true,
-                      fillColor: Colors.white,
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10),
-                        borderSide: BorderSide(color: Colors.grey.shade300),
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10),
-                        borderSide: BorderSide(color: Colors.grey.shade300),
-                      ),
+                  const SizedBox(height: 8),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      border: Border.all(color: Colors.grey.shade300),
+                      borderRadius: BorderRadius.circular(12),
                     ),
-                    hint: Text(
-                      'Select Particular',
-                      style: Styles.txtGreyColorW40014,
-                    ),
-                    items: controller.particulars.map((particular) {
-                      return DropdownMenuItem<String>(
-                        value: particular.id,
-                        child: Text(
-                          particular.name ?? '',
-                          style: Styles.txtBlackColorW60014,
+                    child: DropdownButtonHideUnderline(
+                      child: DropdownButton<String>(
+                        isExpanded: true,
+                        hint: Text(
+                          controller.particulars.isEmpty
+                              ? 'Select or create particular'
+                              : 'Choose a particular',
+                          style: Styles.txtGreyColorW40014,
                         ),
-                      );
-                    }).toList(),
-                    onChanged: (val) {
-                      if (val != null) {
-                        controller.selectedParticularId = val;
-                        controller.update();
-                      }
-                    },
-                    validator: (val) {
-                      if (val == null || val.isEmpty) {
-                        return 'Please select an expense particular';
-                      }
-                      return null;
-                    },
+                        value: controller.selectedParticularId.isNotEmpty &&
+                                controller.particulars.any(
+                                  (p) => p.id == controller.selectedParticularId,
+                                )
+                            ? controller.selectedParticularId
+                            : null,
+                        items: [
+                          ...controller.particulars.map(
+                            (p) => DropdownMenuItem(
+                              value: p.id,
+                              child: Text(
+                                p.name ?? '',
+                                style: Styles.txtBlackColorW60014,
+                              ),
+                            ),
+                          ),
+                          if (RoleUtils.isAdmin(controller.roleName) ||
+                              RoleUtils.isUser(controller.roleName))
+                            const DropdownMenuItem<String>(
+                              value: 'create_new_particular',
+                              child: Row(
+                                children: [
+                                  Icon(
+                                    Icons.add_circle_outline,
+                                    color: ColorsValue.primary,
+                                    size: 20,
+                                  ),
+                                  SizedBox(width: 8),
+                                  Text(
+                                    'Create New Particular',
+                                    style: TextStyle(
+                                      color: ColorsValue.primary,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                        ],
+                        onChanged: (val) {
+                          if (val == 'create_new_particular') {
+                            _showQuickCreateParticularBottomSheet(
+                              context,
+                              controller,
+                            );
+                          } else if (val != null) {
+                            controller.selectedParticularId = val;
+                            controller.update();
+                          }
+                        },
+                      ),
+                    ),
                   ),
                   const SizedBox(height: 16),
 
@@ -493,6 +520,144 @@ class ExpenseFormPage extends StatelessWidget {
           ),
         );
       },
+    );
+  }
+
+  void _showQuickCreateParticularBottomSheet(
+    BuildContext context,
+    ExpenseController ctrl,
+  ) {
+    final nameCtrl = TextEditingController();
+    final formKey = GlobalKey<FormState>();
+
+    Get.bottomSheet(
+      Padding(
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.of(context).viewInsets.bottom,
+        ),
+        child: Material(
+          color: Colors.white,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+          clipBehavior: Clip.antiAlias,
+          child: Container(
+            constraints: BoxConstraints(
+              maxHeight: MediaQuery.of(context).size.height * 0.45,
+            ),
+            child: SafeArea(
+              top: false,
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(24),
+                child: Form(
+                  key: formKey,
+                  autovalidateMode: AutovalidateMode.onUserInteraction,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Center(
+                        child: Container(
+                          width: 40,
+                          height: 5,
+                          decoration: BoxDecoration(
+                            color: Colors.grey.shade300,
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+                      Text(
+                        'Create New Particular',
+                        style: Styles.txtBlackColorW70020,
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 24),
+
+                      // Particular Name
+                      TextFormField(
+                        controller: nameCtrl,
+                        decoration: InputDecoration(
+                          labelText: 'Particular Name *',
+                          labelStyle: Styles.txtGreyColorW40014,
+                          prefixIcon: const Icon(
+                            Icons.category_outlined,
+                            color: ColorsValue.primary,
+                          ),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        validator: (v) => (v == null || v.trim().isEmpty)
+                            ? 'Please enter a particular name'
+                            : null,
+                      ),
+                      const SizedBox(height: 24),
+
+                      // Save Button
+                      SizedBox(
+                        height: 50,
+                        child: ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: ColorsValue.primary,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          onPressed: () async {
+                            if (formKey.currentState!.validate()) {
+                              Utility.showLoader();
+                              try {
+                                var response = await Get.find<Repository>()
+                                    .createParticularApi(
+                                      name: nameCtrl.text.trim(),
+                                      isLoading: false,
+                                    );
+                                Utility.closeLoader();
+
+                                if (response != null &&
+                                    response.isSuccess == true) {
+                                  Get.back(); // close sheet
+                                  Utility.snacBar(
+                                    'Particular created successfully',
+                                    Colors.green,
+                                  );
+
+                                  // Refresh particulars list
+                                  await ctrl.fetchParticulars();
+
+                                  // Automatically select the newly created particular
+                                  if (response.data != null && response.data!.id != null) {
+                                    ctrl.selectedParticularId = response.data!.id!;
+                                    ctrl.update();
+                                  }
+                                } else {
+                                  Utility.errorMessage(
+                                    response?.message ?? 'Failed to save particular. Please try again.',
+                                  );
+                                }
+                              } catch (e) {
+                                Utility.closeLoader();
+                                Utility.errorMessage(
+                                  'An error occurred. Please try again.',
+                                );
+                              }
+                            }
+                          },
+                          child: Text(
+                            'Save Particular',
+                            style: Styles.whiteColorW60016,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
     );
   }
 }

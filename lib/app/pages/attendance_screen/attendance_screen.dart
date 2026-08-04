@@ -510,6 +510,25 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                                             ],
                                           ],
                                         ),
+                                      const SizedBox(height: 5),
+                                      Row(
+                                        children: [
+                                          Text(
+                                            "KM Traveled :- ",
+                                            style: const TextStyle(
+                                              color: Colors.black87,
+                                              fontWeight: FontWeight.w500,
+                                            ),
+                                          ),
+                                          Text(
+                                            "${record.dayKmtravelled ?? 0} KM",
+                                            style: const TextStyle(
+                                              color: Colors.black87,
+                                              fontWeight: FontWeight.w500,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
                                       const SizedBox(height: 12),
                                       const Divider(),
                                       const SizedBox(height: 8),
@@ -569,38 +588,40 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                                             MainAxisAlignment.end,
                                         children: [
                                           // Quick change status button
-                                          PopupMenuButton<String>(
-                                            icon: const Icon(
-                                              Icons.change_circle_outlined,
-                                              color: ColorsValue.primary,
-                                            ),
-                                            tooltip: 'Change Status',
-                                            onSelected: (newStatus) {
-                                              controller.changeAttendanceStatus(
-                                                record.id ?? '',
-                                                newStatus,
-                                              );
-                                            },
-                                            itemBuilder: (context) =>
-                                                [
-                                                      'present',
-                                                      'absent',
-                                                      'holiday',
-                                                      'halfday',
-                                                      'leave',
-                                                    ]
-                                                    .map(
-                                                      (st) => PopupMenuItem(
-                                                        value: st,
-                                                        child: Text(
-                                                          st.toUpperCase(),
-                                                        ),
-                                                      ),
-                                                    )
-                                                    .toList(),
-                                          ),
                                           if (controller.roleName !=
                                               "User") ...[
+                                            PopupMenuButton<String>(
+                                              icon: const Icon(
+                                                Icons.change_circle_outlined,
+                                                color: ColorsValue.primary,
+                                              ),
+                                              tooltip: 'Change Status',
+                                              onSelected: (newStatus) {
+                                                controller
+                                                    .changeAttendanceStatus(
+                                                      record.id ?? '',
+                                                      newStatus,
+                                                    );
+                                              },
+                                              itemBuilder: (context) =>
+                                                  [
+                                                        'present',
+                                                        'absent',
+                                                        'holiday',
+                                                        'halfday',
+                                                        'leave',
+                                                      ]
+                                                      .map(
+                                                        (st) => PopupMenuItem(
+                                                          value: st,
+                                                          child: Text(
+                                                            st.toUpperCase(),
+                                                          ),
+                                                        ),
+                                                      )
+                                                      .toList(),
+                                            ),
+
                                             const SizedBox(width: 8),
                                             IconButton(
                                               icon: const Icon(
@@ -612,20 +633,20 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                                                     record.id ?? '',
                                                   ),
                                             ),
-                                          ],
-                                          const SizedBox(width: 8),
-                                          IconButton(
-                                            icon: const Icon(
-                                              Icons.delete_outline,
-                                              color: Colors.red,
+                                            const SizedBox(width: 8),
+                                            IconButton(
+                                              icon: const Icon(
+                                                Icons.delete_outline,
+                                                color: Colors.red,
+                                              ),
+                                              onPressed: () =>
+                                                  _showDeleteConfirmation(
+                                                    context,
+                                                    controller,
+                                                    record.id ?? '',
+                                                  ),
                                             ),
-                                            onPressed: () =>
-                                                _showDeleteConfirmation(
-                                                  context,
-                                                  controller,
-                                                  record.id ?? '',
-                                                ),
-                                          ),
+                                          ],
                                         ],
                                       ),
                                     ],

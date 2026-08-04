@@ -1705,6 +1705,7 @@ class Repository {
     required String leavetype,
     required String reason,
     required String status,
+    String? session,
     bool isLoading = false,
   }) async {
     try {
@@ -1718,6 +1719,7 @@ class Repository {
         leavetype: leavetype,
         reason: reason,
         status: status,
+        session: session,
         isLoading: isLoading,
       );
       if (response.hasError) {
@@ -2270,6 +2272,40 @@ class Repository {
       Utility.closeDialog();
       Utility.showMessage(
         'Failed to load particulars',
+        MessageType.error,
+        null,
+        '',
+      );
+      return null;
+    }
+  }
+
+  Future<CreateParticularModel?> createParticularApi({
+    required String name,
+    bool isLoading = true,
+  }) async {
+    try {
+      var response = await _dataRepository.createParticularApi(
+        name: name,
+        isLoading: isLoading,
+      );
+      if (response.hasError) {
+        final msg = _parseErrorMessage(
+          response.data,
+          'Failed to create particular',
+        );
+        Utility.showMessage(msg, MessageType.error, null, '');
+        return null;
+      }
+      if (response.data.isNotEmpty) {
+        return createParticularModelFromJson(response.data);
+      }
+      return null;
+    } catch (e, st) {
+      print('createParticularApi error: $e\n$st');
+      Utility.closeDialog();
+      Utility.showMessage(
+        'Failed to create particular',
         MessageType.error,
         null,
         '',

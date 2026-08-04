@@ -211,7 +211,7 @@ class CollectionFormPage extends StatelessWidget {
                     items: CollectionController.paymentModeOptions.map((mode) {
                       String label = mode;
                       if (mode == 'cash') label = 'Cash';
-                      if (mode == 'check') label = 'Check';
+                      if (mode == 'cheque') label = 'Cheque';
                       if (mode == 'rtgs/neft') label = 'RTGS / NEFT';
                       return DropdownMenuItem<String>(
                         value: mode,

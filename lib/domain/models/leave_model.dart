@@ -110,6 +110,7 @@ class LeaveDoc {
   String? leavetype;
   String? reason;
   String? status;
+  String? session;
   bool? isDeleted;
   String? createdAt;
   String? updatedAt;
@@ -125,6 +126,7 @@ class LeaveDoc {
     this.leavetype,
     this.reason,
     this.status,
+    this.session,
     this.isDeleted,
     this.createdAt,
     this.updatedAt,
@@ -145,6 +147,7 @@ class LeaveDoc {
         leavetype: json["leavetype"],
         reason: json["reason"],
         status: json["status"],
+        session: json["session"],
         isDeleted: json["isDeleted"],
         createdAt: json["createdAt"],
         updatedAt: json["updatedAt"],
@@ -161,6 +164,7 @@ class LeaveDoc {
         "leavetype": leavetype,
         "reason": reason,
         "status": status,
+        "session": session,
         "isDeleted": isDeleted,
         "createdAt": createdAt,
         "updatedAt": updatedAt,
