@@ -7,6 +7,10 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:pdf/pdf.dart';
+import 'package:pdf/widgets.dart' as pw;
+import 'package:path_provider/path_provider.dart';
+import 'expense_pdf_preview_page.dart';
 
 class ExpenseController extends GetxController {
   // ── List & Pagination State ──────────────────────────────────────────────
@@ -397,6 +401,224 @@ class ExpenseController extends GetxController {
         '',
       );
       fetchExpenses(isRefresh: true);
+    }
+  }
+
+  // ── Format Date for Expense Screen ─────────────────────────────────────────
+  String formatExpenseDate(String? dateStr) {
+    if (dateStr == null || dateStr.isEmpty) return 'N/A';
+    try {
+      final parsed = DateTime.parse(dateStr);
+      return DateFormat('dd/MM/yyyy').format(parsed);
+    } catch (_) {
+      try {
+        final parsed = DateFormat('dd-MM-yyyy').parse(dateStr);
+        return DateFormat('dd/MM/yyyy').format(parsed);
+      } catch (_) {
+        try {
+          final parsed = DateFormat('yyyy-MM-dd').parse(dateStr);
+          return DateFormat('dd/MM/yyyy').format(parsed);
+        } catch (_) {
+          return dateStr;
+        }
+      }
+    }
+  }
+
+  // ── Format Date for PDF ────────────────────────────────────────────────────
+  String _formatPdfDate(String? dateStr) {
+    if (dateStr == null || dateStr.isEmpty) return 'N/A';
+    try {
+      final parsed = DateTime.parse(dateStr);
+      return DateFormat('dd/M/yyyy').format(parsed);
+    } catch (_) {
+      try {
+        final parsed = DateFormat('dd-MM-yyyy').parse(dateStr);
+        return DateFormat('dd/M/yyyy').format(parsed);
+      } catch (_) {
+        try {
+          final parsed = DateFormat('yyyy-MM-dd').parse(dateStr);
+          return DateFormat('dd/M/yyyy').format(parsed);
+        } catch (_) {
+          return dateStr;
+        }
+      }
+    }
+  }
+
+  // ── Table Row Helper ───────────────────────────────────────────────────────
+  pw.TableRow _buildTableRow(String label, String value) {
+    return pw.TableRow(
+      children: [
+        pw.Padding(
+          padding: const pw.EdgeInsets.all(8),
+          child: pw.Text(
+            label,
+            style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 11),
+          ),
+        ),
+        pw.Padding(
+          padding: const pw.EdgeInsets.all(8),
+          child: pw.Text(
+            value,
+            style: const pw.TextStyle(fontSize: 11),
+          ),
+        ),
+      ],
+    );
+  }
+
+  // ── Generate and Download PDF ──────────────────────────────────────────────
+  Future<void> generateAndDownloadPdf(ExpenseDoc item) async {
+    try {
+      Utility.showLoader();
+      final pdf = pw.Document();
+
+      pdf.addPage(
+        pw.Page(
+          pageFormat: PdfPageFormat.a4.copyWith(
+            marginLeft: 20,
+            marginRight: 20,
+            marginTop: 20,
+            marginBottom: 20,
+          ),
+          build: (pw.Context context) {
+            return pw.Container(
+              padding: const pw.EdgeInsets.all(20),
+              decoration: pw.BoxDecoration(
+                border: pw.Border.all(color: PdfColors.grey400, width: 1),
+                borderRadius: const pw.BorderRadius.all(pw.Radius.circular(8)),
+              ),
+              child: pw.Column(
+                crossAxisAlignment: pw.CrossAxisAlignment.start,
+                children: [
+                  // Brand Header
+                  pw.Row(
+                    mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                    children: [
+                      pw.Column(
+                        crossAxisAlignment: pw.CrossAxisAlignment.start,
+                        children: [
+                          pw.Text(
+                            'AGRO APP',
+                            style: pw.TextStyle(
+                              fontSize: 24,
+                              fontWeight: pw.FontWeight.bold,
+                              color: PdfColors.red800,
+                            ),
+                          ),
+                          pw.SizedBox(height: 4),
+                          pw.Text(
+                            'Expense Voucher',
+                            style: pw.TextStyle(
+                              fontSize: 14,
+                              color: PdfColors.grey600,
+                              fontWeight: pw.FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+                      pw.Column(
+                        crossAxisAlignment: pw.CrossAxisAlignment.end,
+                        children: [
+                          pw.Text(
+                            'Date: ${_formatPdfDate(item.date)}',
+                            style: pw.TextStyle(
+                              fontSize: 12,
+                              fontWeight: pw.FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                  pw.Divider(thickness: 1.5, color: PdfColors.red800, height: 24),
+
+                  // Voucher Details
+                  pw.Text(
+                    'Expense Details',
+                    style: pw.TextStyle(
+                      fontSize: 16,
+                      fontWeight: pw.FontWeight.bold,
+                      color: PdfColors.red800,
+                    ),
+                  ),
+                  pw.SizedBox(height: 12),
+
+                  // Table
+                  pw.Table(
+                    border: pw.TableBorder.all(color: PdfColors.grey300, width: 0.5),
+                    columnWidths: {
+                      0: const pw.FixedColumnWidth(150),
+                      1: const pw.FlexColumnWidth(),
+                    },
+                    children: [
+                      _buildTableRow('Particular / Expense', item.particularid?.name ?? 'N/A'),
+                      _buildTableRow('Amount', 'Rs. ${item.amount ?? '0'}'),
+                      _buildTableRow('Status', (item.status ?? 'PENDING').toUpperCase()),
+                      _buildTableRow('Remark', item.remark ?? 'N/A'),
+                    ],
+                  ),
+                  pw.SizedBox(height: 24),
+
+                  // Submitter Section
+                  if (item.userid != null) ...[
+                    pw.Text(
+                      'Submitted By',
+                      style: pw.TextStyle(
+                        fontSize: 14,
+                        fontWeight: pw.FontWeight.bold,
+                        color: PdfColors.grey800,
+                      ),
+                    ),
+                    pw.SizedBox(height: 8),
+                    pw.Table(
+                      border: pw.TableBorder.all(color: PdfColors.grey300, width: 0.5),
+                      columnWidths: {
+                        0: const pw.FixedColumnWidth(150),
+                        1: const pw.FlexColumnWidth(),
+                      },
+                      children: [
+                        _buildTableRow('Name', item.userid?.name ?? 'N/A'),
+                        _buildTableRow('Mobile', item.userid?.mobile ?? 'N/A'),
+                        _buildTableRow('Email', item.userid?.email ?? 'N/A'),
+                      ],
+                    ),
+                  ],
+
+                  pw.Spacer(),
+                  pw.Divider(thickness: 1, color: PdfColors.grey300),
+                  pw.SizedBox(height: 8),
+                  pw.Align(
+                    alignment: pw.Alignment.center,
+                    child: pw.Text(
+                       'Verified Expense Record.',
+                       style: pw.TextStyle(
+                         fontSize: 10,
+                         fontStyle: pw.FontStyle.italic,
+                         color: PdfColors.grey600,
+                       ),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+        ),
+      );
+
+      final pdfBytes = await pdf.save();
+      final sanitizedParticular = (item.particularid?.name ?? 'unknown').replaceAll(RegExp(r'[^a-zA-Z0-9]'), '_');
+      final fileName = 'expense_${sanitizedParticular}_${DateTime.now().millisecondsSinceEpoch}.pdf';
+
+      Utility.closeLoader();
+      Get.to(() => ExpensePdfPreviewPage(
+            pdfBytes: pdfBytes,
+            fileName: fileName,
+          ));
+    } catch (e) {
+      Utility.closeLoader();
+      Utility.showMessage('Failed to generate PDF: $e', MessageType.error, null, '');
     }
   }
 }

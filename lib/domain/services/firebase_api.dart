@@ -10,9 +10,24 @@ class FirebaseApi {
   static String? currentUuid;
   static bool isVideo = false;
 
-  Future<void> initNotification() async {
+  static Future<void> initNotification() async {
+    // Request permission (especially important for iOS and Android 13+)
+    await FirebaseMessaging.instance.requestPermission(
+      alert: true,
+      badge: true,
+      sound: true,
+    );
+
+    // On iOS, configure foreground presentation options to show heads-up notifications natively
+    await FirebaseMessaging.instance
+        .setForegroundNotificationPresentationOptions(
+          alert: true,
+          badge: true,
+          sound: true,
+        );
+
     FirebaseMessaging.onMessage.listen((RemoteMessage message) async {
-      print(message.notification);
+      print("Foreground message received: ${message.notification?.title}");
 
       if (Platform.isAndroid) {
         _showNotification(message);
@@ -83,7 +98,8 @@ class FirebaseApi {
           channelGroupKey: 'high_importance_channel',
           channelKey: 'agro_location_tracking',
           channelName: 'Agro Location Tracking',
-          channelDescription: 'Notification channel for tracking user location during shifts.',
+          channelDescription:
+              'Notification channel for tracking user location during shifts.',
           ledColor: ColorsValue.appColor,
           importance: NotificationImportance.Low,
           channelShowBadge: false,
@@ -101,11 +117,19 @@ class FirebaseApi {
       debug: true,
     );
 
+    // Request permissions for Awesome Notifications
+    AwesomeNotifications().isNotificationAllowed().then((isAllowed) {
+      if (!isAllowed) {
+        AwesomeNotifications().requestPermissionToSendNotifications();
+      }
+    });
+
     AwesomeNotifications().setListeners(
       onActionReceivedMethod: _onNotificationActionReceived,
     );
 
-
+    // Initialize Firebase listeners (foreground/permissions)
+    await initNotification();
 
     // ✅ Must be registered before any background work
     FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);

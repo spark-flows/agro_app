@@ -715,6 +715,39 @@ class Repository {
     }
   }
 
+  Future<bool> changeOrderStatusApi({
+    required String orderid,
+    required String status,
+    bool isLoading = false,
+  }) async {
+    try {
+      var response = await _dataRepository.changeOrderStatusApi(
+        orderid: orderid,
+        status: status,
+        isLoading: isLoading,
+      );
+      if (response.hasError) {
+        final msg = _parseErrorMessage(
+          response.data,
+          'Failed to change order status',
+        );
+        Utility.showMessage(msg, MessageType.error, null, '');
+        return false;
+      }
+      return true;
+    } catch (e, st) {
+      print('changeOrderStatusApi error: $e\n$st');
+      Utility.closeDialog();
+      Utility.showMessage(
+        'Failed to change order status',
+        MessageType.error,
+        null,
+        '',
+      );
+      return false;
+    }
+  }
+
   Future<bool> deleteProductApi({
     required String productid,
     bool isLoading = false,
@@ -1849,7 +1882,10 @@ class Repository {
         isLoading: isLoading,
       );
       if (response.hasError) {
-        final msg = _parseErrorMessage(response.data, 'Failed to save collection');
+        final msg = _parseErrorMessage(
+          response.data,
+          'Failed to save collection',
+        );
         Utility.showMessage(msg, MessageType.error, null, '');
         return null;
       }
@@ -1860,7 +1896,12 @@ class Repository {
     } catch (e, st) {
       print('createCollectionApi error: $e\n$st');
       Utility.closeDialog();
-      Utility.showMessage('Failed to save collection', MessageType.error, null, '');
+      Utility.showMessage(
+        'Failed to save collection',
+        MessageType.error,
+        null,
+        '',
+      );
       return null;
     }
   }
@@ -1889,7 +1930,10 @@ class Repository {
         isLoading: isLoading,
       );
       if (response.hasError) {
-        final msg = _parseErrorMessage(response.data, 'Failed to load collections');
+        final msg = _parseErrorMessage(
+          response.data,
+          'Failed to load collections',
+        );
         Utility.showMessage(msg, MessageType.error, null, '');
         return null;
       }
@@ -1900,7 +1944,12 @@ class Repository {
     } catch (e, st) {
       print('getCollectionListApi error: $e\n$st');
       Utility.closeDialog();
-      Utility.showMessage('Failed to load collections', MessageType.error, null, '');
+      Utility.showMessage(
+        'Failed to load collections',
+        MessageType.error,
+        null,
+        '',
+      );
       return null;
     }
   }
@@ -1915,7 +1964,10 @@ class Repository {
         isLoading: isLoading,
       );
       if (response.hasError) {
-        final msg = _parseErrorMessage(response.data, 'Failed to delete collection');
+        final msg = _parseErrorMessage(
+          response.data,
+          'Failed to delete collection',
+        );
         Utility.showMessage(msg, MessageType.error, null, '');
         return false;
       }
@@ -2019,7 +2071,12 @@ class Repository {
     } catch (e, st) {
       print('createExpenseApi error: $e\n$st');
       Utility.closeDialog();
-      Utility.showMessage('Failed to save expense', MessageType.error, null, '');
+      Utility.showMessage(
+        'Failed to save expense',
+        MessageType.error,
+        null,
+        '',
+      );
       return null;
     }
   }
@@ -2048,7 +2105,10 @@ class Repository {
         isLoading: isLoading,
       );
       if (response.hasError) {
-        final msg = _parseErrorMessage(response.data, 'Failed to load expenses');
+        final msg = _parseErrorMessage(
+          response.data,
+          'Failed to load expenses',
+        );
         Utility.showMessage(msg, MessageType.error, null, '');
         return null;
       }
@@ -2059,7 +2119,12 @@ class Repository {
     } catch (e, st) {
       print('getExpenseListApi error: $e\n$st');
       Utility.closeDialog();
-      Utility.showMessage('Failed to load expenses', MessageType.error, null, '');
+      Utility.showMessage(
+        'Failed to load expenses',
+        MessageType.error,
+        null,
+        '',
+      );
       return null;
     }
   }
@@ -2074,7 +2139,10 @@ class Repository {
         isLoading: isLoading,
       );
       if (response.hasError) {
-        final msg = _parseErrorMessage(response.data, 'Failed to delete expense');
+        final msg = _parseErrorMessage(
+          response.data,
+          'Failed to delete expense',
+        );
         Utility.showMessage(msg, MessageType.error, null, '');
         return false;
       }
@@ -2186,7 +2254,10 @@ class Repository {
         isLoading: isLoading,
       );
       if (response.hasError) {
-        final msg = _parseErrorMessage(response.data, 'Failed to load particulars');
+        final msg = _parseErrorMessage(
+          response.data,
+          'Failed to load particulars',
+        );
         Utility.showMessage(msg, MessageType.error, null, '');
         return null;
       }

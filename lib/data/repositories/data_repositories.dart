@@ -208,6 +208,18 @@ class DataRepository extends DomainRepository {
     );
   }
 
+  Future<ResponseModel> changeOrderStatusApi({
+    required String orderid,
+    required String status,
+    bool isLoading = false,
+  }) async {
+    return await connectHelper.changeOrderStatusApi(
+      orderid: orderid,
+      status: status,
+      isLoading: isLoading,
+    );
+  }
+
   Future<ResponseModel> getCustomerOrderListApi({
     String? customerid,
     bool isLoading = false,
@@ -885,16 +897,12 @@ class DataRepository extends DomainRepository {
   Future<ResponseModel> uploadExpenseImageApi({
     required String filePath,
     bool isLoading = false,
-  }) async => connectHelper.uploadExpenseImageApi(
-    filePath,
-    isLoading: isLoading,
-  );
+  }) async =>
+      connectHelper.uploadExpenseImageApi(filePath, isLoading: isLoading);
 
   Future<ResponseModel> getParticularListApi({
     String search = "",
     bool isLoading = false,
-  }) async => connectHelper.getParticularListApi(
-    search: search,
-    isLoading: isLoading,
-  );
+  }) async =>
+      connectHelper.getParticularListApi(search: search, isLoading: isLoading);
 }

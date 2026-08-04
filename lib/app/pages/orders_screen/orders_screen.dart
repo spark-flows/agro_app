@@ -197,30 +197,131 @@ class _OrdersScreenState extends State<OrdersScreen> {
                                     Row(
                                       mainAxisAlignment:
                                           MainAxisAlignment.spaceBetween,
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
                                       children: [
-                                        Padding(
-                                          padding: const EdgeInsets.only(
-                                            top: 4.0,
-                                          ),
-                                          child: Text(
-                                            'Date: ${order.createdAt?.split('T').first ?? ''}',
-                                            style: Styles.txtGreyColorW40012,
-                                          ),
+                                        Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Padding(
+                                              padding: const EdgeInsets.only(
+                                                top: 4.0,
+                                              ),
+                                              child: Text(
+                                                'Date: ${order.createdAt?.split('T').first ?? ''}',
+                                                style:
+                                                    Styles.txtGreyColorW40012,
+                                              ),
+                                            ),
+                                            const SizedBox(height: 4),
+                                            Text(
+                                              'Delivery Date: ${order.deliverydate?.split('T').first ?? "N/A"}',
+                                              style: Styles.txtGreyColorW40012,
+                                            ),
+                                          ],
                                         ),
-                                        Padding(
-                                          padding: const EdgeInsets.only(
-                                            top: 4.0,
-                                          ),
-                                          child: Text(
-                                            'Status: ${order.status ?? ''}',
-                                            style: Styles.txtGreyColorW40012,
-                                          ),
+                                        Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.end,
+                                          children: [
+                                            Padding(
+                                              padding: const EdgeInsets.only(
+                                                top: 4.0,
+                                              ),
+                                              child: Text(
+                                                'Status: ${order.status ?? ''}',
+                                                style:
+                                                    Styles.txtGreyColorW40012,
+                                              ),
+                                            ),
+                                            // if (RoleUtils.isAdmin(
+                                            //   homeController.roleName,
+                                            // )) ...[
+                                            //   const SizedBox(height: 4),
+                                            //   PopupMenuButton<String>(
+                                            //     padding: EdgeInsets.zero,
+                                            //     icon: const Icon(
+                                            //       Icons
+                                            //           .published_with_changes_outlined,
+                                            //       color: ColorsValue.primary,
+                                            //       size: 20,
+                                            //     ),
+                                            //     onSelected: (String newStatus) {
+                                            //       if (order.id != null) {
+                                            //         controller
+                                            //             .changeOrderStatus(
+                                            //               order.id!,
+                                            //               newStatus,
+                                            //               closeDialog: false,
+                                            //             );
+                                            //       }
+                                            //     },
+                                            //     itemBuilder: (context) => [
+                                            //       const PopupMenuItem(
+                                            //         value: 'accept',
+                                            //         child: Row(
+                                            //           children: [
+                                            //             Icon(
+                                            //               Icons
+                                            //                   .check_circle_outline,
+                                            //               color: Colors.green,
+                                            //               size: 18,
+                                            //             ),
+                                            //             SizedBox(width: 8),
+                                            //             Text('Accept'),
+                                            //           ],
+                                            //         ),
+                                            //       ),
+                                            //       const PopupMenuItem(
+                                            //         value: 'reject',
+                                            //         child: Row(
+                                            //           children: [
+                                            //             Icon(
+                                            //               Icons.cancel_outlined,
+                                            //               color: Colors.red,
+                                            //               size: 18,
+                                            //             ),
+                                            //             SizedBox(width: 8),
+                                            //             Text('Reject'),
+                                            //           ],
+                                            //         ),
+                                            //       ),
+                                            //       const PopupMenuItem(
+                                            //         value: 'delivered',
+                                            //         child: Row(
+                                            //           children: [
+                                            //             Icon(
+                                            //               Icons
+                                            //                   .local_shipping_outlined,
+                                            //               color: Colors.blue,
+                                            //               size: 18,
+                                            //             ),
+                                            //             SizedBox(width: 8),
+                                            //             Text('Delivered'),
+                                            //           ],
+                                            //         ),
+                                            //       ),
+                                            //       const PopupMenuItem(
+                                            //         value: 'pending',
+                                            //         child: Row(
+                                            //           children: [
+                                            //             Icon(
+                                            //               Icons.hourglass_empty,
+                                            //               color: Colors.orange,
+                                            //               size: 18,
+                                            //             ),
+                                            //             SizedBox(width: 8),
+                                            //             Text('Pending'),
+                                            //           ],
+                                            //         ),
+                                            //       ),
+                                            //     ],
+                                            //   ),
+                                            // ],
+                                          ],
                                         ),
                                       ],
-                                    ),
-                                    Text(
-                                      'Delivery Date: ${order.deliverydate?.split('T').first ?? "N/A"}',
-                                      style: Styles.txtGreyColorW40012,
                                     ),
                                   ],
                                 ),
@@ -1539,6 +1640,108 @@ void _showOrderDetailsDialog(
                             padding: const EdgeInsets.symmetric(vertical: 16),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                if (RoleUtils.isAdmin(homeController.roleName))
+                  Row(
+                    children: [
+                      Expanded(
+                        child: PopupMenuButton<String>(
+                          onSelected: (String newStatus) {
+                            if (details.id != null) {
+                              controller.changeOrderStatus(
+                                details.id!,
+                                newStatus,
+                              );
+                            }
+                          },
+                          itemBuilder: (context) => [
+                            const PopupMenuItem(
+                              value: 'accept',
+                              child: Row(
+                                children: [
+                                  Icon(
+                                    Icons.check_circle_outline,
+                                    color: Colors.green,
+                                    size: 18,
+                                  ),
+                                  SizedBox(width: 8),
+                                  Text('Accept'),
+                                ],
+                              ),
+                            ),
+                            const PopupMenuItem(
+                              value: 'reject',
+                              child: Row(
+                                children: [
+                                  Icon(
+                                    Icons.cancel_outlined,
+                                    color: Colors.red,
+                                    size: 18,
+                                  ),
+                                  SizedBox(width: 8),
+                                  Text('Reject'),
+                                ],
+                              ),
+                            ),
+                            const PopupMenuItem(
+                              value: 'delivered',
+                              child: Row(
+                                children: [
+                                  Icon(
+                                    Icons.local_shipping_outlined,
+                                    color: Colors.blue,
+                                    size: 18,
+                                  ),
+                                  SizedBox(width: 8),
+                                  Text('Delivered'),
+                                ],
+                              ),
+                            ),
+                            const PopupMenuItem(
+                              value: 'pending',
+                              child: Row(
+                                children: [
+                                  Icon(
+                                    Icons.hourglass_empty,
+                                    color: Colors.orange,
+                                    size: 18,
+                                  ),
+                                  SizedBox(width: 8),
+                                  Text('Pending'),
+                                ],
+                              ),
+                            ),
+                          ],
+                          child: Container(
+                            alignment: Alignment.center,
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            decoration: BoxDecoration(
+                              color: ColorsValue.primary,
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: const Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  Icons.published_with_changes_outlined,
+                                  color: Colors.white,
+                                  size: 18,
+                                ),
+                                SizedBox(width: 8),
+                                Text(
+                                  'Change Status',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 16,
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
                         ),

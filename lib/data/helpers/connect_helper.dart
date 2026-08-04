@@ -505,6 +505,22 @@ class ConnectHelper {
     return response;
   }
 
+  Future<ResponseModel> changeOrderStatusApi({
+    required String orderid,
+    required String status,
+    bool isLoading = false,
+  }) async {
+    var data = {"orderid": orderid, "status": status};
+    var response = await apiWrapper.makeRequest(
+      EndPoints.changeOrderStatusApi,
+      Request.post,
+      data,
+      isLoading,
+      await Utility.commonHeader(),
+    );
+    return response;
+  }
+
   Future<ResponseModel> getCustomerOrderListApi({
     String? customerid,
     bool isLoading = false,

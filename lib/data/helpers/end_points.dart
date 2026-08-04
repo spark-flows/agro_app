@@ -11,6 +11,7 @@ class EndPoints {
   static String createOrderApi = 'api/order/create';
   static String getOneOrderApi = 'api/order/getone';
   static String deleteOrderApi = 'api/order/delete';
+  static String changeOrderStatusApi = 'api/order/changestatus';
   static String customerOrderListApi = 'api/customerorder';
   static String createCustomerOrderApi = 'api/customerorder/create';
   static String getOneCustomerOrderApi = 'api/customerorder/getone';
@@ -72,4 +73,3 @@ class EndPoints {
   static String uploadExpenseApi = 'api/expense/upload';
   static String particularListApi = 'api/particular';
 }
-

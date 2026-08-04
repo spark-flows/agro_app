@@ -452,7 +452,7 @@ class OrdersController extends GetxController {
       qty: doc.qty,
       selectedUnit: defaultUnitName,
       alternateunitid: doc.alternateunitid,
-      saleprice: doc.saleprice??0,
+      saleprice: doc.saleprice ?? 0,
       purchaseprice: doc.purchaseprice ?? 0,
     );
   }
@@ -673,6 +673,33 @@ class OrdersController extends GetxController {
       Utility.snacBar('Order deleted successfully', Colors.green);
     } else {
       Utility.errorMessage('Failed to delete order');
+    }
+  }
+
+  Future<void> changeOrderStatus(
+    String orderId,
+    String status, {
+    bool closeDialog = true,
+  }) async {
+    Utility.showLoader();
+    final success = await Get.find<Repository>().changeOrderStatusApi(
+      orderid: orderId,
+      status: status,
+      isLoading: false,
+    );
+    Utility.closeLoader();
+
+    if (success) {
+      Utility.snacBar('Order status changed successfully', Colors.green);
+      if (Get.isSnackbarOpen) await Get.closeCurrentSnackbar();
+      if (closeDialog) {
+        Get.back(); // Close details dialog
+      }
+      if (historyCustomerId != null && historyCustomerId!.isNotEmpty) {
+        fetchOrderHistory(historyCustomerId!);
+      } else {
+        fetchAllOrders();
+      }
     }
   }
 }

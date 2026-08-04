@@ -223,7 +223,10 @@ class ExpenseScreen extends StatelessWidget {
                       color: Colors.grey,
                     ),
                     const SizedBox(width: 4),
-                    Text(date, style: Styles.txtGreyColorW40012),
+                    Text(
+                      controller.formatExpenseDate(date),
+                      style: Styles.txtGreyColorW40012,
+                    ),
                   ],
                 ),
                 if (item.userid?.name != null &&
@@ -356,6 +359,24 @@ class ExpenseScreen extends StatelessWidget {
                           ),
                         ),
                       ],
+                    ),
+                  ),
+                ),
+                // PDF Button
+                TextButton.icon(
+                  onPressed: () {
+                    controller.generateAndDownloadPdf(item);
+                  },
+                  icon: const Icon(
+                    Icons.visibility_outlined,
+                    size: 18,
+                    color: ColorsValue.primary,
+                  ),
+                  label: const Text(
+                    'PDF',
+                    style: TextStyle(
+                      color: ColorsValue.primary,
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
                 ),
