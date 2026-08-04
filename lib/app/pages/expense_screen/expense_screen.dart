@@ -38,132 +38,105 @@ class ExpenseScreen extends StatelessWidget {
                   label: Text('Add Expense', style: Styles.whiteColorW60016),
                 )
               : null,
-          body: controller.isLoading && controller.expenses.isEmpty
-              ? const Center(
-                  child: CircularProgressIndicator(color: ColorsValue.primary),
-                )
-              : !isAllowed
-              ? Center(
-                  child: Text(
-                    'Access restricted to Admin & User roles.',
-                    style: Styles.redColor50014,
-                  ),
-                )
-              : RefreshIndicator(
-                  onRefresh: () => controller.fetchExpenses(isRefresh: true),
-                  child: Column(
-                    children: [
-                      // ── Search & Filter Bar ──
-                      Padding(
-                        padding: const EdgeInsets.all(12.0),
-                        child: Row(
-                          children: [
-                            Expanded(
-                              child: TextField(
-                                onChanged: controller.onSearchChanged,
-                                decoration: InputDecoration(
-                                  hintText: 'Search by particular or amount...',
-                                  prefixIcon: const Icon(
-                                    Icons.search,
-                                    color: Colors.grey,
-                                  ),
-                                  filled: true,
-                                  fillColor: Colors.white,
-                                  contentPadding: const EdgeInsets.symmetric(
-                                    vertical: 0,
-                                    horizontal: 16,
-                                  ),
-                                  border: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(10),
-                                    borderSide: BorderSide(
-                                      color: Colors.grey.shade300,
-                                    ),
-                                  ),
-                                  enabledBorder: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(10),
-                                    borderSide: BorderSide(
-                                      color: Colors.grey.shade300,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            InkWell(
-                              onTap: () =>
-                                  _showFilterBottomSheet(context, controller),
-                              child: Container(
-                                padding: const EdgeInsets.all(12),
-                                decoration: BoxDecoration(
-                                  color: Colors.white,
-                                  borderRadius: BorderRadius.circular(10),
-                                  border: Border.all(
-                                    color: Colors.grey.shade300,
-                                  ),
-                                ),
-                                child: Icon(
-                                  Icons.filter_list,
-                                  color:
-                                      (controller.filterFromDate != null ||
-                                          controller.filterStatus != null)
-                                      ? ColorsValue.primary
-                                      : Colors.grey,
-                                ),
-                              ),
-                            ),
-                          ],
+          body: Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(12.0),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        onChanged: controller.onSearchChanged,
+                        decoration: InputDecoration(
+                          hintText: 'Search by particular or amount...',
+                          prefixIcon: const Icon(
+                            Icons.search,
+                            color: Colors.grey,
+                          ),
+                          filled: true,
+                          fillColor: Colors.white,
+                          contentPadding: const EdgeInsets.symmetric(
+                            vertical: 0,
+                            horizontal: 16,
+                          ),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
+                            borderSide: BorderSide(color: Colors.grey.shade300),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
+                            borderSide: BorderSide(color: Colors.grey.shade300),
+                          ),
                         ),
                       ),
-
-                      // ── Expense List ──
-                      Expanded(
-                        child: controller.isLoading
-                            ? const Center(
-                                child: CircularProgressIndicator(
-                                  color: ColorsValue.primary,
-                                ),
-                              )
-                            : controller.filteredExpenses.isEmpty
-                            ? Center(
-                                child: Text(
-                                  'No expenses found.',
-                                  style: Styles.txtGreyColorW40014,
-                                ),
-                              )
-                            : ListView.builder(
-                                padding: const EdgeInsets.only(
-                                  left: 12,
-                                  right: 12,
-                                  bottom: 80,
-                                ),
-                                itemCount:
-                                    controller.filteredExpenses.length +
-                                    (controller.isFetchingMore ? 1 : 0),
-                                itemBuilder: (context, index) {
-                                  if (index ==
-                                      controller.filteredExpenses.length) {
-                                    return const Padding(
-                                      padding: EdgeInsets.all(16.0),
-                                      child: Center(
-                                        child: CircularProgressIndicator(
-                                          color: ColorsValue.primary,
-                                        ),
-                                      ),
-                                    );
-                                  }
-                                  final item =
-                                      controller.filteredExpenses[index];
-                                  return _buildExpenseCard(
-                                    context,
-                                    controller,
-                                    item,
-                                  );
-                                },
-                              ),
+                    ),
+                    const SizedBox(width: 12),
+                    InkWell(
+                      onTap: () => _showFilterBottomSheet(context, controller),
+                      child: Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(color: Colors.grey.shade300),
+                        ),
+                        child: Icon(
+                          Icons.filter_list,
+                          color:
+                              (controller.filterFromDate != null ||
+                                  controller.filterStatus != null)
+                              ? ColorsValue.primary
+                              : Colors.grey,
+                        ),
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
+              ),
+              Expanded(
+                child: RefreshIndicator(
+                  onRefresh: () => controller.fetchExpenses(isRefresh: true),
+                  child: controller.isLoading
+                      ? const Center(
+                          child: CircularProgressIndicator(
+                            color: ColorsValue.primary,
+                          ),
+                        )
+                      : controller.filteredExpenses.isEmpty
+                      ? Center(
+                          child: Text(
+                            'No expenses found.',
+                            style: Styles.txtGreyColorW40014,
+                          ),
+                        )
+                      : ListView.builder(
+                          padding: const EdgeInsets.only(
+                            left: 12,
+                            right: 12,
+                            bottom: 80,
+                          ),
+                          itemCount:
+                              controller.filteredExpenses.length +
+                              (controller.isFetchingMore ? 1 : 0),
+                          itemBuilder: (context, index) {
+                            if (index == controller.filteredExpenses.length) {
+                              return const Padding(
+                                padding: EdgeInsets.all(16.0),
+                                child: Center(
+                                  child: CircularProgressIndicator(
+                                    color: ColorsValue.primary,
+                                  ),
+                                ),
+                              );
+                            }
+                            final item = controller.filteredExpenses[index];
+                            return _buildExpenseCard(context, controller, item);
+                          },
+                        ),
+                ),
+              ),
+            ],
+          ),
         );
       },
     );

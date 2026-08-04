@@ -99,7 +99,11 @@ class LedgersController extends GetxController {
   }
 
   // ── Fetch Detailed Ledger Entries from api/ledgerentry/list ──────────────────
-  Future<void> fetchStatement(String ledgerName, String branchId, {bool isRefresh = true}) async {
+  Future<void> fetchStatement(
+    String ledgerName,
+    String branchId, {
+    bool isRefresh = true,
+  }) async {
     if (isRefresh) {
       statementCurrentPage = 1;
       statementEntries.clear();
@@ -151,8 +155,11 @@ class LedgersController extends GetxController {
 
         // Outstanding Balance is the balance of the most recent transaction entry
         if (statementEntries.isNotEmpty) {
-          final lastEntry = statementEntries.first; // APIs usually return newest or oldest first
-          outstandingBalance = double.tryParse(lastEntry.balance?.toString() ?? '0') ?? (totalDebit - totalCredit);
+          final lastEntry = statementEntries
+              .first; // APIs usually return newest or oldest first
+          outstandingBalance =
+              double.tryParse(lastEntry.balance?.toString() ?? '0') ??
+              (totalDebit - totalCredit);
         } else {
           outstandingBalance = totalDebit - totalCredit;
         }
@@ -207,7 +214,12 @@ class LedgersController extends GetxController {
 
       if (allEntries.isEmpty) {
         Utility.closeDialog();
-        Utility.showMessage('No entries found to generate PDF', MessageType.error, null, '');
+        Utility.showMessage(
+          'No entries found to generate PDF',
+          MessageType.error,
+          null,
+          '',
+        );
         return;
       }
 
@@ -224,7 +236,8 @@ class LedgersController extends GetxController {
       // Extract branch/company name from entries branchid object
       String companyName = ledgerName;
       if (allEntries.isNotEmpty && allEntries.first.branchid is Map) {
-        companyName = allEntries.first.branchid['name']?.toString() ?? ledgerName;
+        companyName =
+            allEntries.first.branchid['name']?.toString() ?? ledgerName;
       }
 
       final todayDate = DateFormat('dd-MM-yyyy').format(DateTime.now());
@@ -269,7 +282,10 @@ class LedgersController extends GetxController {
 
                   // Ledger name + Date row
                   pw.Container(
-                    padding: const pw.EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    padding: const pw.EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 8,
+                    ),
                     child: pw.Row(
                       mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
                       children: [
@@ -293,14 +309,17 @@ class LedgersController extends GetxController {
 
                   // Table
                   pw.Table(
-                    border: pw.TableBorder.all(color: PdfColors.black, width: 0.5),
+                    border: pw.TableBorder.all(
+                      color: PdfColors.black,
+                      width: 0.5,
+                    ),
                     columnWidths: {
-                      0: const pw.FlexColumnWidth(1.5),  // Date
-                      1: const pw.FlexColumnWidth(3.5),  // Particulars
-                      2: const pw.FlexColumnWidth(1.8),  // Voucher Type
-                      3: const pw.FlexColumnWidth(1.5),  // Voucher No
-                      4: const pw.FlexColumnWidth(1.5),  // Debit (DR)
-                      5: const pw.FlexColumnWidth(1.5),  // Credit (CR)
+                      0: const pw.FlexColumnWidth(1.5), // Date
+                      1: const pw.FlexColumnWidth(3.5), // Particulars
+                      2: const pw.FlexColumnWidth(1.8), // Voucher Type
+                      3: const pw.FlexColumnWidth(1.5), // Voucher No
+                      4: const pw.FlexColumnWidth(1.5), // Debit (DR)
+                      5: const pw.FlexColumnWidth(1.5), // Credit (CR)
                     },
                     children: [
                       // Header row
@@ -319,20 +338,29 @@ class LedgersController extends GetxController {
                       ),
                       // Data rows
                       ...allEntries.map((txn) {
-                        final deb = double.tryParse(txn.debit?.toString() ?? '0') ?? 0.0;
-                        final cred = double.tryParse(txn.credit?.toString() ?? '0') ?? 0.0;
-                        final particularsText = txn.particulars?.isNotEmpty == true
+                        final deb =
+                            double.tryParse(txn.debit?.toString() ?? '0') ??
+                            0.0;
+                        final cred =
+                            double.tryParse(txn.credit?.toString() ?? '0') ??
+                            0.0;
+                        final particularsText =
+                            txn.particulars?.isNotEmpty == true
                             ? txn.particulars!
                             : (txn.particular ?? '');
 
                         return pw.TableRow(
                           children: [
-                            _pdfDataCell(formatEntryDate(txn.date, txn.dateString)),
+                            _pdfDataCell(
+                              formatEntryDate(txn.date, txn.dateString),
+                            ),
                             _pdfDataCell(particularsText),
                             _pdfDataCell(txn.vouchertype ?? ''),
                             _pdfDataCell(txn.voucherno ?? ''),
                             _pdfDataCell(deb > 0 ? deb.toStringAsFixed(2) : ''),
-                            _pdfDataCell(cred > 0 ? cred.toStringAsFixed(2) : ''),
+                            _pdfDataCell(
+                              cred > 0 ? cred.toStringAsFixed(2) : '',
+                            ),
                           ],
                         );
                       }),
@@ -362,14 +390,21 @@ class LedgersController extends GetxController {
       final pdfBytes = await pdf.save();
       Utility.closeDialog();
 
-      final safeName = ledgerName.replaceAll(RegExp(r'[^\w\s\-]'), '').replaceAll(' ', '_');
+      final safeName = ledgerName
+          .replaceAll(RegExp(r'[^\w\s\-]'), '')
+          .replaceAll(' ', '_');
       RouteManagement.goToLedgerPdfPreviewScreen(
         pdfBytes,
         'Statement_${safeName}_${DateFormat('yyyyMMdd').format(DateTime.now())}.pdf',
       );
     } catch (e) {
       Utility.closeDialog();
-      Utility.showMessage('Failed to generate PDF: $e', MessageType.error, null, '');
+      Utility.showMessage(
+        'Failed to generate PDF: $e',
+        MessageType.error,
+        null,
+        '',
+      );
     }
   }
 
@@ -391,13 +426,7 @@ class LedgersController extends GetxController {
   pw.Widget _pdfDataCell(String text, {PdfColor? color}) {
     return pw.Padding(
       padding: const pw.EdgeInsets.all(6),
-      child: pw.Text(
-        text,
-        style: pw.TextStyle(
-          fontSize: 7,
-          color: color,
-        ),
-      ),
+      child: pw.Text(text, style: pw.TextStyle(fontSize: 7, color: color)),
     );
   }
 }

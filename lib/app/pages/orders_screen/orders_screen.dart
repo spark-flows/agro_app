@@ -4,6 +4,7 @@ import 'package:agro_app/domain/services/enum.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
+import 'package:intl/intl.dart';
 
 class OrdersScreen extends StatefulWidget {
   const OrdersScreen({super.key});
@@ -210,14 +211,21 @@ class _OrdersScreenState extends State<OrdersScreen> {
                                                 top: 4.0,
                                               ),
                                               child: Text(
-                                                'Date: ${order.createdAt?.split('T').first ?? ''}',
+                                                'Date: ${order.createdAt != null && order.createdAt!.isNotEmpty ? (() {
+                                                        final parsed = DateTime.tryParse(order.createdAt!);
+                                                        return parsed != null ? DateFormat('dd-MM-yyyy').format(parsed.toLocal()) : order.createdAt!;
+                                                      })() : ''}',
                                                 style:
                                                     Styles.txtGreyColorW40012,
                                               ),
                                             ),
                                             const SizedBox(height: 4),
                                             Text(
-                                              'Delivery Date: ${order.deliverydate?.split('T').first ?? "N/A"}',
+                                              'Delivery Date: ${order.deliverydate != null && order.deliverydate!.isNotEmpty ? (() {
+                                                      final datePart = order.deliverydate!.split('T').first;
+                                                      final parsed = DateTime.tryParse(datePart);
+                                                      return parsed != null ? DateFormat('dd-MM-yyyy').format(parsed) : datePart;
+                                                    })() : "N/A"}',
                                               style: Styles.txtGreyColorW40012,
                                             ),
                                           ],
@@ -1533,12 +1541,19 @@ void _showOrderDetailsDialog(
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'Date: ${details.createdAt?.split('T').first ?? ''}',
+                  'Date: ${details.createdAt != null && details.createdAt!.isNotEmpty ? (() {
+                          final parsed = DateTime.tryParse(details.createdAt!);
+                          return parsed != null ? DateFormat('dd-MM-yyyy, hh:mm a').format(parsed.toLocal()) : details.createdAt!;
+                        })() : ''}',
                   style: Styles.txtGreyColorW40012,
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'Delivery Date: ${details.deliverydate?.split('T').first ?? "N/A"}',
+                  'Delivery Date: ${details.deliverydate != null && details.deliverydate!.isNotEmpty ? (() {
+                          final datePart = details.deliverydate!.split('T').first;
+                          final parsed = DateTime.tryParse(datePart);
+                          return parsed != null ? DateFormat('dd-MM-yyyy').format(parsed) : datePart;
+                        })() : "N/A"}',
                   style: Styles.txtGreyColorW40012,
                 ),
                 const SizedBox(height: 16),

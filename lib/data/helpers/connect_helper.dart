@@ -181,11 +181,7 @@ class ConnectHelper {
     required String name,
     bool isLoading = false,
   }) async {
-    var data = {
-      'unitid': '',
-      'name': name,
-      'sequence': '1',
-    };
+    var data = {'unitid': '', 'name': name, 'sequence': '1'};
     var response = await apiWrapper.makeRequest(
       EndPoints.createUnitApi,
       Request.post,
@@ -776,7 +772,7 @@ class ConnectHelper {
       "limit": 2000,
       "search": search.isNotEmpty ? {"name": search} : {},
       "sortfield": sortfield,
-      "sortoption": sortoption,
+      "sortoption": 1,
       "roleid": roleid,
       "branchid": branchId,
       if (assignToIdToUse != null && assignToIdToUse.isNotEmpty)
@@ -1890,7 +1886,8 @@ class ConnectHelper {
     var data = <String, dynamic>{
       "page": page,
       "limit": limit,
-      "search": search,
+      "search": "",
+      "partyname": search,
       "fromDate": fromDate,
       "toDate": toDate,
       "userid": userid,
@@ -2000,7 +1997,7 @@ class ConnectHelper {
     var data = <String, dynamic>{
       "page": page,
       "limit": limit,
-      "search": search,
+      "search": {"particularid": search},
       "fromDate": fromDate,
       "toDate": toDate,
       "userid": userid,
@@ -2145,10 +2142,7 @@ class ConnectHelper {
     var response = await apiWrapper.makeRequest(
       EndPoints.createParticularApi,
       Request.post,
-      {
-        "particularid": "",
-        "name": name,
-      },
+      {"particularid": "", "name": name},
       isLoading,
       await Utility.commonHeader(),
     );
@@ -2170,7 +2164,7 @@ class ConnectHelper {
       {
         "page": page,
         "limit": limit,
-        "search": search,
+        "search": {"name": search},
         "branchid": branchid,
         "name": name,
         "parent": parent,
