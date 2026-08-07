@@ -1412,6 +1412,19 @@ void _showCartBottomSheet(
                   },
                 ),
                 const SizedBox(height: 16),
+                TextField(
+                  controller: controller.remarkController,
+                  maxLines: 2,
+                  decoration: InputDecoration(
+                    labelText: 'Remark (Optional)',
+                    hintText: 'Enter remark',
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    prefixIcon: const Icon(Icons.comment_outlined),
+                  ),
+                ),
+                const SizedBox(height: 16),
                 ElevatedButton(
                   onPressed: controller.isPlacingOrder
                       ? null
@@ -1556,6 +1569,14 @@ void _showOrderDetailsDialog(
                         })() : "N/A"}',
                   style: Styles.txtGreyColorW40012,
                 ),
+                if (details.remark != null &&
+                    details.remark!.trim().isNotEmpty) ...[
+                  const SizedBox(height: 4),
+                  Text(
+                    'Remark: ${details.remark}',
+                    style: Styles.txtGreyColorW40012,
+                  ),
+                ],
                 const SizedBox(height: 16),
 
                 // Distributor Info

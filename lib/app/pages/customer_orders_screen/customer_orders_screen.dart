@@ -329,6 +329,7 @@ class CustomerOrdersScreen extends StatelessWidget {
   ) {
     final homeController = Get.find<HomeController>();
     final isAdmin = RoleUtils.isAdmin(homeController.roleName);
+    final isUser = RoleUtils.isUser(homeController.roleName);
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -443,7 +444,7 @@ class CustomerOrdersScreen extends StatelessWidget {
                           ),
                         ),
                       ),
-                    if (isAdmin) ...[
+                    if (isAdmin || isUser) ...[
                       if (order.remark != null && order.remark!.isNotEmpty)
                         for (int i = 0; i < order.remark!.length; i++) ...[
                           _buildRemarkCard(
@@ -644,6 +645,7 @@ class CustomerOrdersScreen extends StatelessWidget {
   }) {
     final homeController = Get.find<HomeController>();
     final isAdmin = RoleUtils.isAdmin(homeController.roleName);
+    final isUser = RoleUtils.isUser(homeController.roleName);
     if (!isEdit) {
       controller.resetForm();
     }
@@ -917,7 +919,7 @@ class CustomerOrdersScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: 20),
 
-                    if (isAdmin) ...[
+                    if (isAdmin || isUser) ...[
                       for (
                         int i = 0;
                         i < ctrl.remarkControllers.length;

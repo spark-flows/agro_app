@@ -462,6 +462,7 @@ class ConnectHelper {
     required num totalamount,
     String? deliverydate,
     String? distributorid,
+    String? remark,
     bool isLoading = false,
   }) async {
     var loggedInDistributorId = await Utility.getSecureValue(
@@ -479,6 +480,7 @@ class ConnectHelper {
       "deliverydate": deliverydate ?? "",
       "totalamount": totalamount.toString(),
       "branchid": branchId,
+      "remark": remark ?? "",
     };
     var response = await apiWrapper.makeRequest(
       EndPoints.createOrderApi,
@@ -2183,6 +2185,8 @@ class ConnectHelper {
     List<String> particulars = const [],
     List<String> vouchertypes = const [],
     List<String> voucherno = const [],
+    String fromDate = "",
+    String toDate = "",
     bool isLoading = false,
   }) async {
     var response = await apiWrapper.makeRequest(
@@ -2196,6 +2200,8 @@ class ConnectHelper {
         "particulars": particulars,
         "vouchertypes": vouchertypes,
         "voucherno": voucherno,
+        "fromDate": fromDate,
+        "toDate": toDate,
       },
       isLoading,
       await Utility.commonHeader(),

@@ -178,11 +178,27 @@ class CollectionScreen extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Expanded(
-                  child: Text(
-                    item.partyname ?? 'Unknown Party',
-                    style: Styles.txtBlackColorW70016,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        item.partyname?.name ?? 'Unknown Party',
+                        style: Styles.txtBlackColorW70016,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      if (item.receiptno != null && item.receiptno!.isNotEmpty) ...[
+                        const SizedBox(height: 4),
+                        Text(
+                          'Receipt No: ${item.receiptno}',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w500,
+                            color: Colors.grey.shade600,
+                          ),
+                        ),
+                      ],
+                    ],
                   ),
                 ),
                 Container(
@@ -282,7 +298,7 @@ class CollectionScreen extends StatelessWidget {
                 // Change Status Button
                 PopupMenuButton<String>(
                   onSelected: (String newStatus) {
-                    final collectionId = item.id ?? item.collectionid ?? '';
+                    final collectionId = item.id ?? '';
                     if (collectionId.isNotEmpty) {
                       controller.changeStatus(collectionId, newStatus);
                     }
@@ -441,7 +457,7 @@ class CollectionScreen extends StatelessWidget {
             TextButton(
               onPressed: () {
                 Navigator.pop(ctx);
-                final collectionId = item.id ?? item.collectionid ?? '';
+                final collectionId = item.id ?? '';
                 if (collectionId.isNotEmpty) {
                   controller.deleteCollection(collectionId);
                 }

@@ -461,7 +461,15 @@ class _TasksScreenState extends State<TasksScreen> {
                                       maxLines: 2,
                                       overflow: TextOverflow.ellipsis,
                                     ),
-                                    const SizedBox(height: 12),
+                                  ],
+                                  if (task.priority != null &&
+                                      task.priority!.isNotEmpty) ...[
+                                    const SizedBox(height: 8),
+                                    Text(
+                                      'Priority : ${Utility.capitalizeFirst(task.priority!)}',
+                                      style: Styles.txtGreyColorW40012,
+                                    ),
+                                    const SizedBox(height: 8),
                                   ],
                                   if (task.attachment != null &&
                                       task.attachment!.isNotEmpty) ...[
@@ -620,28 +628,30 @@ class _TasksScreenState extends State<TasksScreen> {
                                               style: Styles.txtGreyColorW40012,
                                             ),
                                           ],
-                                          const SizedBox(width: 8),
-                                          IconButton(
-                                            constraints: const BoxConstraints(),
-                                            padding: EdgeInsets.zero,
-                                            icon: const Icon(
-                                              Icons.delete_outline,
-                                              color: Colors.red,
-                                              size: 20,
+                                          if (controller.isAdmin) ...[
+                                            const SizedBox(width: 8),
+                                            IconButton(
+                                              constraints: const BoxConstraints(),
+                                              padding: EdgeInsets.zero,
+                                              icon: const Icon(
+                                                Icons.delete_outline,
+                                                color: Colors.red,
+                                                size: 20,
+                                              ),
+                                              onPressed: () {
+                                                Utility.showDeleteDialog(
+                                                  title: 'Delete Task',
+                                                  message:
+                                                      'Are you sure you want to delete "${task.taskname}"?',
+                                                  onConfirm: () {
+                                                    controller.deleteTask(
+                                                      task.id ?? '',
+                                                    );
+                                                  },
+                                                );
+                                              },
                                             ),
-                                            onPressed: () {
-                                              Utility.showDeleteDialog(
-                                                title: 'Delete Task',
-                                                message:
-                                                    'Are you sure you want to delete "${task.taskname}"?',
-                                                onConfirm: () {
-                                                  controller.deleteTask(
-                                                    task.id ?? '',
-                                                  );
-                                                },
-                                              );
-                                            },
-                                          ),
+                                          ],
                                         ],
                                       ),
                                     ],

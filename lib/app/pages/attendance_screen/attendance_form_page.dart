@@ -134,9 +134,11 @@ class _AttendanceFormPageState extends State<AttendanceFormPage> {
             elevation: 0,
             iconTheme: const IconThemeData(color: Colors.black87),
             title: Text(
-              controller.editingAttendanceId.isNotEmpty
-                  ? 'Edit Attendance'
-                  : 'Add Attendance',
+              controller.roleName == "User"
+                  ? 'Attendance Details'
+                  : (controller.editingAttendanceId.isNotEmpty
+                      ? 'Edit Attendance'
+                      : 'Add Attendance'),
               style: Styles.txtBlackColorW70020,
             ),
           ),
@@ -146,8 +148,13 @@ class _AttendanceFormPageState extends State<AttendanceFormPage> {
             child: ListView(
               padding: const EdgeInsets.all(20),
               children: [
-                _sectionHeader('Time Logs'),
-                const SizedBox(height: 16),
+                AbsorbPointer(
+                  absorbing: controller.roleName == "User",
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _sectionHeader('Time Logs'),
+                      const SizedBox(height: 16),
 
                 if (controller.isAdmin) ...[
                   Text('Select User', style: Styles.txtBlackColorW60014),
@@ -434,54 +441,80 @@ class _AttendanceFormPageState extends State<AttendanceFormPage> {
                     keyboardType: TextInputType.number,
                   ),
                   const SizedBox(height: 20),
-                ],
+              ],
+            ],
+          ),
+        ),
 
                 const SizedBox(height: 32),
 
                 // ── Form Action Buttons ──────────────────────────────────────
-                Row(
-                  children: [
-                    Expanded(
-                      child: OutlinedButton(
-                        onPressed: () => Get.back(),
-                        style: OutlinedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          side: BorderSide(color: Colors.grey.shade300),
+                if (controller.roleName == "User") ...[
+                  SizedBox(
+                    width: double.infinity,
+                    height: 48,
+                    child: ElevatedButton(
+                      onPressed: () => Get.back(),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: ColorsValue.primary,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
                         ),
-                        child: Text(
-                          'Cancel',
-                          style: TextStyle(
-                            color: Colors.grey.shade700,
-                            fontWeight: FontWeight.bold,
-                          ),
+                      ),
+                      child: const Text(
+                        'Close',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
                         ),
                       ),
                     ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: ElevatedButton(
-                        onPressed: controller.saveAttendance,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: ColorsValue.primary,
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
+                  ),
+                ] else ...[
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton(
+                          onPressed: () => Get.back(),
+                          style: OutlinedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            side: BorderSide(color: Colors.grey.shade300),
                           ),
-                        ),
-                        child: const Text(
-                          'Save',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
+                          child: Text(
+                            'Cancel',
+                            style: TextStyle(
+                              color: Colors.grey.shade700,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                         ),
                       ),
-                    ),
-                  ],
-                ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: ElevatedButton(
+                          onPressed: controller.saveAttendance,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: ColorsValue.primary,
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          child: const Text(
+                            'Save',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
                 const SizedBox(height: 24),
               ],
             ),

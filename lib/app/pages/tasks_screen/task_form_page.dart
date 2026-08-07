@@ -82,6 +82,7 @@ class _TaskFormPageState extends State<TaskFormPage> {
                   label: 'Task Name *',
                   icon: Icons.assignment_outlined,
                   action: TextInputAction.next,
+                  enabled: controller.editingTaskId.isEmpty,
                   validator: (v) =>
                       v!.trim().isEmpty ? 'Please enter task name' : null,
                 ),
@@ -95,17 +96,21 @@ class _TaskFormPageState extends State<TaskFormPage> {
                   keyboardType: TextInputType.multiline,
                   action: TextInputAction.newline,
                   maxLines: 3,
+                  enabled: controller.editingTaskId.isEmpty,
                 ),
                 const SizedBox(height: 20),
 
                 // ── Date Picker ──────────────────────────────────────────────
                 InkWell(
-                  onTap: () => _selectDate(context, controller),
+                  onTap: controller.editingTaskId.isNotEmpty
+                      ? null
+                      : () => _selectDate(context, controller),
                   child: IgnorePointer(
                     child: _buildField(
                       fieldController: controller.dateCtrl,
                       label: 'Date *',
                       icon: Icons.calendar_today_outlined,
+                      enabled: controller.editingTaskId.isEmpty,
                       validator: (v) =>
                           v!.trim().isEmpty ? 'Please select a date' : null,
                     ),
@@ -120,12 +125,15 @@ class _TaskFormPageState extends State<TaskFormPage> {
                   children: [
                     Expanded(
                       child: InkWell(
-                        onTap: () => _selectDueDate(context, controller),
+                        onTap: controller.editingTaskId.isNotEmpty
+                            ? null
+                            : () => _selectDueDate(context, controller),
                         child: IgnorePointer(
                           child: _buildField(
                             fieldController: controller.dueCtrl,
                             label: 'Due Date',
                             icon: Icons.date_range_outlined,
+                            enabled: controller.editingTaskId.isEmpty,
                           ),
                         ),
                       ),
@@ -134,6 +142,7 @@ class _TaskFormPageState extends State<TaskFormPage> {
                     Expanded(
                       child: TextFormField(
                         controller: controller.dueTimeCtrl,
+                        enabled: controller.editingTaskId.isEmpty,
                         cursorColor: ColorsValue.primary,
                         style: Styles.txtBlackColorW50014,
                         decoration: InputDecoration(
@@ -162,14 +171,16 @@ class _TaskFormPageState extends State<TaskFormPage> {
                             Icons.access_time_outlined,
                             color: ColorsValue.primary.withValues(alpha: 0.8),
                           ),
-                          suffixIcon: IconButton(
-                            icon: const Icon(
-                              Icons.timer_outlined,
-                              color: ColorsValue.primary,
-                            ),
-                            onPressed: () =>
-                                _selectDueTime(context, controller),
-                          ),
+                          suffixIcon: controller.editingTaskId.isNotEmpty
+                              ? null
+                              : IconButton(
+                                  icon: const Icon(
+                                    Icons.timer_outlined,
+                                    color: ColorsValue.primary,
+                                  ),
+                                  onPressed: () =>
+                                      _selectDueTime(context, controller),
+                                ),
                         ),
                       ),
                     ),
@@ -181,7 +192,7 @@ class _TaskFormPageState extends State<TaskFormPage> {
                   value: controller.selectedPriority,
                   decoration: InputDecoration(
                     labelText: 'Priority *',
-                    labelStyle: Styles.txtGreyColorW40014,
+                    labelStyle: Styles.txtBlackColorW50014,
                     floatingLabelStyle: const TextStyle(
                       color: ColorsValue.primary,
                     ),
@@ -209,16 +220,18 @@ class _TaskFormPageState extends State<TaskFormPage> {
                       .map(
                         (val) => DropdownMenuItem<String>(
                           value: val,
-                          child: Text(val.toUpperCase()),
+                          child: Text(val.toUpperCase(),style: Styles.txtBlackColorW50014,),
                         ),
                       )
                       .toList(),
-                  onChanged: (newValue) {
-                    if (newValue != null) {
-                      controller.selectedPriority = newValue;
-                      controller.update();
-                    }
-                  },
+                  onChanged: controller.editingTaskId.isNotEmpty
+                      ? null
+                      : (newValue) {
+                          if (newValue != null) {
+                            controller.selectedPriority = newValue;
+                            controller.update();
+                          }
+                        },
                 ),
                 const SizedBox(height: 24),
 
@@ -236,8 +249,9 @@ class _TaskFormPageState extends State<TaskFormPage> {
                   ),
                 ] else ...[
                   InkWell(
-                    onTap: () =>
-                        _showAssigneesSelectionSheet(context, controller),
+                    onTap: controller.editingTaskId.isNotEmpty
+                        ? null
+                        : () => _showAssigneesSelectionSheet(context, controller),
                     borderRadius: BorderRadius.circular(12),
                     child: Container(
                       padding: const EdgeInsets.symmetric(
@@ -302,12 +316,16 @@ class _TaskFormPageState extends State<TaskFormPage> {
                           horizontal: 4,
                           vertical: 2,
                         ),
-                        onDeleted: () {
-                          controller.currentAssignees.remove(user);
-                          controller.selectedAssignedToIds.remove(user.id);
-                          controller.update();
-                        },
-                        deleteIcon: Icon(Icons.close),
+                        onDeleted: controller.editingTaskId.isNotEmpty
+                            ? null
+                            : () {
+                                controller.currentAssignees.remove(user);
+                                controller.selectedAssignedToIds.remove(user.id);
+                                controller.update();
+                              },
+                        deleteIcon: controller.editingTaskId.isNotEmpty
+                            ? null
+                            : const Icon(Icons.close),
                       );
                     }).toList(),
                   ),
@@ -376,7 +394,7 @@ class _TaskFormPageState extends State<TaskFormPage> {
                   value: controller.selectedTaskType,
                   decoration: InputDecoration(
                     labelText: 'Task Type *',
-                    labelStyle: Styles.txtGreyColorW40014,
+                    labelStyle: Styles.txtBlackColorW50014,
                     floatingLabelStyle: const TextStyle(
                       color: ColorsValue.primary,
                     ),
@@ -400,18 +418,20 @@ class _TaskFormPageState extends State<TaskFormPage> {
                       color: ColorsValue.primary,
                     ),
                   ),
-                  items: const [
-                    DropdownMenuItem(value: 'regular', child: Text('Regular')),
-                    DropdownMenuItem(value: 'advance', child: Text('Advance')),
+                  items:  [
+                    DropdownMenuItem(value: 'regular', child: Text('Regular',style: Styles.txtBlackColorW50014)),
+                    DropdownMenuItem(value: 'advance', child: Text('Advance', style: Styles.txtBlackColorW50014)),
                   ],
-                  onChanged: (val) {
-                    if (val != null) {
-                      setState(() {
-                        controller.selectedTaskType = val;
-                      });
-                      controller.update();
-                    }
-                  },
+                  onChanged: controller.editingTaskId.isNotEmpty
+                      ? null
+                      : (val) {
+                          if (val != null) {
+                            setState(() {
+                              controller.selectedTaskType = val;
+                            });
+                            controller.update();
+                          }
+                        },
                 ),
                 const SizedBox(height: 24),
 
@@ -851,6 +871,7 @@ class _TaskFormPageState extends State<TaskFormPage> {
     TextInputAction action = TextInputAction.done,
     int maxLines = 1,
     String? Function(String?)? validator,
+    bool enabled = true,
   }) {
     return TextFormField(
       autovalidateMode: AutovalidateMode.onUserInteraction,
@@ -860,6 +881,7 @@ class _TaskFormPageState extends State<TaskFormPage> {
       maxLines: maxLines,
       cursorColor: ColorsValue.primary,
       style: Styles.txtBlackColorW50014,
+      enabled: enabled,
       decoration: InputDecoration(
         labelText: label,
         labelStyle: Styles.txtGreyColorW40014,

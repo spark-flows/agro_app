@@ -133,26 +133,82 @@ class CollectionFormPage extends StatelessWidget {
                   // ── Party Name Field ──
                   Text('Party Name', style: Styles.txtBlackColorW60014),
                   const SizedBox(height: 6),
-                  TextFormField(
-                    controller: controller.partyNameCtrl,
-                    decoration: InputDecoration(
-                      hintText: 'Enter Party Name',
-                      filled: true,
-                      fillColor: Colors.white,
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10),
-                        borderSide: BorderSide(color: Colors.grey.shade300),
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10),
-                        borderSide: BorderSide(color: Colors.grey.shade300),
-                      ),
-                    ),
-                    validator: (val) {
-                      if (val == null || val.trim().isEmpty) {
-                        return 'Please enter party name';
+                  FormField<String>(
+                    validator: (value) {
+                      if (controller.selectedDistributorId == null ||
+                          controller.selectedDistributorId!.isEmpty) {
+                        return 'Please select dealer';
                       }
                       return null;
+                    },
+                    builder: (FormFieldState<String> state) {
+                      final Map<String, Doc> uniqueDistributors = {};
+                      for (var dist in controller.distributors) {
+                        if (dist.id.isNotEmpty) {
+                          uniqueDistributors[dist.id] = dist;
+                        }
+                      }
+                      final String? selectedValue =
+                          uniqueDistributors.containsKey(
+                            controller.selectedDistributorId,
+                          )
+                          ? controller.selectedDistributorId
+                          : null;
+
+                      final selectedDistText = selectedValue != null
+                          ? ((uniqueDistributors[selectedValue]!.name.isNotEmpty)
+                                ? uniqueDistributors[selectedValue]!.name
+                                : 'Unknown Dealer')
+                          : 'Select Dealer';
+
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          InkWell(
+                            onTap: () {
+                              Get.dialog(
+                                _DealerSearchDialog(
+                                  controller: controller,
+                                  distributors: uniqueDistributors.values.toList(),
+                                ),
+                              ).then((_) {
+                                state.didChange(controller.selectedDistributorId);
+                              });
+                            },
+                            borderRadius: BorderRadius.circular(10),
+                            child: InputDecorator(
+                              decoration: InputDecoration(
+                                errorText: state.errorText,
+                                filled: true,
+                                fillColor: Colors.white,
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                  borderSide: BorderSide(color: Colors.grey.shade300),
+                                ),
+                                enabledBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                  borderSide: BorderSide(color: Colors.grey.shade300),
+                                ),
+                                prefixIcon: const Icon(
+                                  Icons.storefront_outlined,
+                                  color: ColorsValue.primary,
+                                ),
+                                suffixIcon: const Icon(Icons.arrow_drop_down),
+                              ),
+                              child: Text(
+                                selectedDistText,
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  color: selectedValue != null
+                                      ? ColorsValue.txtBlackColor
+                                      : Colors.grey.shade600,
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ),
+                        ],
+                      );
                     },
                   ),
                   const SizedBox(height: 16),
@@ -311,6 +367,139 @@ class CollectionFormPage extends StatelessWidget {
           ),
         );
       },
+    );
+  }
+}
+
+class _DealerSearchDialog extends StatefulWidget {
+  final CollectionController controller;
+  final List<Doc> distributors;
+
+  const _DealerSearchDialog({
+    required this.controller,
+    required this.distributors,
+  });
+
+  @override
+  State<_DealerSearchDialog> createState() => _DealerSearchDialogState();
+}
+
+class _DealerSearchDialogState extends State<_DealerSearchDialog> {
+  final TextEditingController _searchController = TextEditingController();
+  String _searchQuery = '';
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final filtered = widget.distributors.where((dist) {
+      final name = dist.name.toLowerCase();
+      return name.contains(_searchQuery.toLowerCase().trim());
+    }).toList();
+
+    return Dialog(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        constraints: BoxConstraints(
+          maxHeight: MediaQuery.of(context).size.height * 0.6,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text('Select Dealer', style: Styles.txtBlackColorW70018),
+                IconButton(
+                  icon: const Icon(Icons.close),
+                  onPressed: () => Get.back(),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            TextField(
+              controller: _searchController,
+              decoration: InputDecoration(
+                hintText: 'Search dealer...',
+                prefixIcon: const Icon(Icons.search),
+                suffixIcon: _searchQuery.isNotEmpty
+                    ? IconButton(
+                        icon: const Icon(Icons.clear),
+                        onPressed: () {
+                          setState(() {
+                            _searchController.clear();
+                            _searchQuery = '';
+                          });
+                        },
+                      )
+                    : null,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
+                ),
+              ),
+              onChanged: (val) {
+                setState(() {
+                  _searchQuery = val;
+                });
+              },
+            ),
+            const SizedBox(height: 16),
+            Expanded(
+              child: filtered.isEmpty
+                  ? const Center(child: Text('No dealers found'))
+                  : ListView.separated(
+                      shrinkWrap: true,
+                      itemCount: filtered.length,
+                      separatorBuilder: (context, index) =>
+                          const Divider(height: 1),
+                      itemBuilder: (context, index) {
+                        final dist = filtered[index];
+                        final name = dist.name.isNotEmpty
+                            ? dist.name
+                            : 'Unknown Dealer';
+                        final isSelected =
+                            widget.controller.selectedDistributorId == dist.id;
+                        return ListTile(
+                          title: Text(
+                            name,
+                            style: TextStyle(
+                              fontWeight: isSelected
+                                  ? FontWeight.bold
+                                  : FontWeight.normal,
+                              color: isSelected
+                                  ? ColorsValue.primary
+                                  : ColorsValue.txtBlackColor,
+                            ),
+                          ),
+                          trailing: isSelected
+                              ? const Icon(
+                                  Icons.check,
+                                  color: ColorsValue.primary,
+                                )
+                              : null,
+                          onTap: () {
+                            widget.controller.selectedDistributorId = dist.id;
+                            widget.controller.partyNameCtrl.text = name;
+                            widget.controller.update();
+                            Get.back();
+                          },
+                        );
+                      },
+                    ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

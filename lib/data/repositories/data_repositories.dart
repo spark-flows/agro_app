@@ -188,6 +188,7 @@ class DataRepository extends DomainRepository {
     required num totalamount,
     String? deliverydate,
     String? distributorid,
+    String? remark,
     bool isLoading = false,
   }) async => connectHelper.createOrderApi(
     orderid: orderid,
@@ -195,6 +196,7 @@ class DataRepository extends DomainRepository {
     totalamount: totalamount,
     deliverydate: deliverydate,
     distributorid: distributorid,
+    remark: remark,
     isLoading: isLoading,
   );
 
@@ -947,6 +949,8 @@ class DataRepository extends DomainRepository {
     List<String> particulars = const [],
     List<String> vouchertypes = const [],
     List<String> voucherno = const [],
+    String fromDate = "",
+    String toDate = "",
     bool isLoading = false,
   }) async =>
       connectHelper.getLedgerEntryListApi(
@@ -957,6 +961,8 @@ class DataRepository extends DomainRepository {
         particulars: particulars,
         vouchertypes: vouchertypes,
         voucherno: voucherno,
+        fromDate: fromDate,
+        toDate: toDate,
         isLoading: isLoading,
       );
 }

@@ -1,16 +1,13 @@
 import 'dart:convert';
 
+import 'package:agro_app/domain/domain.dart';
+
 GetAllCollectionsModel getAllCollectionsModelFromJson(String str) =>
     GetAllCollectionsModel.fromJson(json.decode(str));
 
 String getAllCollectionsModelToJson(GetAllCollectionsModel data) =>
     json.encode(data.toJson());
 
-CreateCollectionModel createCollectionModelFromJson(String str) =>
-    CreateCollectionModel.fromJson(json.decode(str));
-
-String createCollectionModelToJson(CreateCollectionModel data) =>
-    json.encode(data.toJson());
 
 class GetAllCollectionsModel {
   String? message;
@@ -103,136 +100,91 @@ class CollectionData {
 
 class CollectionDoc {
   String? id;
-  String? collectionid;
+  Branchid? branchid;
   String? date;
-  CollectionUser? userid;
-  String? partyname;
-  String? amount;
-  String? paymentmode;
-  String? paymentstatus;
+  Partyname? userid;
+  Partyname? partyname;
+  int? amount;
   String? remark;
-  String? branchid;
-  bool? isDeleted;
+  String? paymentmode;
+  String? receiptno;
+  String? paymentstatus;
+  bool? status;
   String? createdAt;
   String? updatedAt;
 
   CollectionDoc({
     this.id,
-    this.collectionid,
+    this.branchid,
     this.date,
     this.userid,
     this.partyname,
     this.amount,
-    this.paymentmode,
-    this.paymentstatus,
     this.remark,
-    this.branchid,
-    this.isDeleted,
+    this.paymentmode,
+    this.receiptno,
+    this.paymentstatus,
+    this.status,
     this.createdAt,
     this.updatedAt,
   });
 
   factory CollectionDoc.fromJson(Map<String, dynamic> json) => CollectionDoc(
-        id: json["_id"],
-        collectionid: json["collectionid"],
-        date: json["date"],
-        userid: json["userid"] == null
-            ? null
-            : json["userid"] is Map<String, dynamic>
-                ? CollectionUser.fromJson(json["userid"])
-                : CollectionUser(id: json["userid"].toString()),
-        partyname: json["partyname"],
-        amount: json["amount"]?.toString(),
-        paymentmode: json["paymentmode"],
-        paymentstatus: json["paymentstatus"],
-        remark: json["remark"],
-        branchid: json["branchid"]?.toString() ?? json["branchId"]?.toString(),
-        isDeleted: json["isDeleted"],
-        createdAt: json["createdAt"],
-        updatedAt: json["updatedAt"],
-      );
+    id: json["_id"],
+    branchid: json["branchid"] == null
+        ? null
+        : Branchid.fromJson(json["branchid"]),
+    date: json["date"],
+    userid: json["userid"] == null ? null : Partyname.fromJson(json["userid"]),
+    partyname: json["partyname"] == null
+        ? null
+        : Partyname.fromJson(json["partyname"]),
+    amount: json["amount"],
+    remark: json["remark"],
+    paymentmode: json["paymentmode"],
+    receiptno: json["receiptno"],
+    paymentstatus: json["paymentstatus"],
+    status: json["status"],
+    createdAt: json["createdAt"],
+    updatedAt: json["updatedAt"],
+  );
 
   Map<String, dynamic> toJson() => {
-        "_id": id,
-        "collectionid": collectionid,
-        "date": date,
-        "userid": userid?.toJson(),
-        "partyname": partyname,
-        "amount": amount,
-        "paymentmode": paymentmode,
-        "paymentstatus": paymentstatus,
-        "remark": remark,
-        "branchid": branchid,
-        "isDeleted": isDeleted,
-        "createdAt": createdAt,
-        "updatedAt": updatedAt,
-      };
+    "_id": id,
+    "branchid": branchid?.toJson(),
+    "date": date,
+    "userid": userid?.toJson(),
+    "partyname": partyname?.toJson(),
+    "amount": amount,
+    "remark": remark,
+    "paymentmode": paymentmode,
+    "receiptno": receiptno,
+    "paymentstatus": paymentstatus,
+    "status": status,
+    "createdAt": createdAt,
+    "updatedAt": updatedAt,
+  };
 }
 
-class CollectionUser {
+class Partyname {
   String? id;
   String? name;
-  String? mobile;
   String? email;
-  String? role;
+  String? mobile;
 
-  CollectionUser({
-    this.id,
-    this.name,
-    this.mobile,
-    this.email,
-    this.role,
-  });
+  Partyname({this.id, this.name, this.email, this.mobile});
 
-  factory CollectionUser.fromJson(dynamic json) {
-    if (json is Map<String, dynamic>) {
-      return CollectionUser(
-        id: json["_id"],
-        name: json["name"],
-        mobile: json["mobile"],
-        email: json["email"],
-        role: json["role"]?.toString() ?? json["rolename"]?.toString(),
-      );
-    } else if (json is String) {
-      return CollectionUser(id: json);
-    }
-    return CollectionUser();
-  }
+  factory Partyname.fromJson(Map<String, dynamic> json) => Partyname(
+    id: json["_id"],
+    name: json["name"],
+    email: json["email"],
+    mobile: json["mobile"],
+  );
 
   Map<String, dynamic> toJson() => {
-        "_id": id,
-        "name": name,
-        "mobile": mobile,
-        "email": email,
-        "role": role,
-      };
-}
-
-class CreateCollectionModel {
-  String? message;
-  CollectionDoc? data;
-  int? status;
-  bool? isSuccess;
-
-  CreateCollectionModel({
-    this.message,
-    this.data,
-    this.status,
-    this.isSuccess,
-  });
-
-  factory CreateCollectionModel.fromJson(Map<String, dynamic> json) =>
-      CreateCollectionModel(
-        message: json["Message"],
-        data: json["Data"] == null ? null : CollectionDoc.fromJson(json["Data"]),
-        status: json["Status"],
-        isSuccess: json["IsSuccess"],
-      );
-
-  Map<String, dynamic> toJson() => {
-        "Message": message,
-        "Data": data?.toJson(),
-        "Status": status,
-        "IsSuccess": isSuccess,
-      };
+    "_id": id,
+    "name": name,
+    "email": email,
+    "mobile": mobile,
+  };
 }

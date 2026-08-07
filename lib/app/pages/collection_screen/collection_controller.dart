@@ -36,6 +36,9 @@ class CollectionController extends GetxController {
   List<Doc> userList = [];
   String? selectedUserId;
 
+  List<Doc> distributors = [];
+  String? selectedDistributorId;
+
   // ── Form Controllers & State ─────────────────────────────────────────────
   final formKey = GlobalKey<FormState>();
   final dateCtrl = TextEditingController();
@@ -68,6 +71,7 @@ class CollectionController extends GetxController {
     super.onInit();
     _loadUserContext().then((_) {
       fetchCollections(isRefresh: true);
+      fetchDistributors();
     });
   }
 
@@ -151,6 +155,45 @@ class CollectionController extends GetxController {
       }
     } catch (e) {
       debugPrint('fetchUserList error: $e');
+    }
+  }
+
+  // ── Fetch Distributors / Dealers ──────────────────────────────────────────
+  Future<void> fetchDistributors() async {
+    try {
+      final response = await Get.find<Repository>().getUsersListApi(
+        page: 1,
+        limit: 100,
+        type: 'dealer',
+        isLoading: false,
+      );
+      if (response != null && response.isSuccess) {
+        distributors = response.data.docs;
+        _matchSelectedDistributor();
+        update();
+      }
+    } catch (e) {
+      debugPrint('[Collection] fetchDistributors error: $e');
+    }
+  }
+
+  void _matchSelectedDistributor() {
+    if (partyNameCtrl.text.isNotEmpty && (selectedDistributorId == null || selectedDistributorId!.isEmpty)) {
+      // Try matching by ID first
+      for (var d in distributors) {
+        if (d.id == partyNameCtrl.text.trim()) {
+          selectedDistributorId = d.id;
+          partyNameCtrl.text = d.name;
+          return;
+        }
+      }
+      // Otherwise, match by name
+      for (var d in distributors) {
+        if (d.name.toLowerCase().trim() == partyNameCtrl.text.toLowerCase().trim()) {
+          selectedDistributorId = d.id;
+          break;
+        }
+      }
     }
   }
 
@@ -243,7 +286,7 @@ class CollectionController extends GetxController {
   // ── Prepare Form Page ─────────────────────────────────────────────────────
   void prepareForm([CollectionDoc? collection]) {
     if (collection != null) {
-      editingCollectionId = collection.id ?? collection.collectionid ?? '';
+      editingCollectionId = collection.id ?? '';
       if (collection.date != null && collection.date!.isNotEmpty) {
         final parsedDate = DateTime.tryParse(collection.date!);
         if (parsedDate != null) {
@@ -254,8 +297,10 @@ class CollectionController extends GetxController {
       } else {
         dateCtrl.text = '';
       }
-      partyNameCtrl.text = collection.partyname ?? '';
-      amountCtrl.text = collection.amount ?? '';
+      partyNameCtrl.text = collection.partyname?.name ?? '';
+      selectedDistributorId = null;
+      _matchSelectedDistributor();
+      amountCtrl.text = collection.amount?.toString() ?? '';
       remarkCtrl.text = collection.remark ?? '';
 
       final mode = collection.paymentmode?.toLowerCase().trim() ?? '';
@@ -276,6 +321,7 @@ class CollectionController extends GetxController {
       editingCollectionId = '';
       dateCtrl.text = DateFormat('yyyy-MM-dd').format(DateTime.now());
       partyNameCtrl.clear();
+      selectedDistributorId = null;
       amountCtrl.clear();
       remarkCtrl.clear();
       selectedPaymentMode = 'cash';
@@ -316,7 +362,7 @@ class CollectionController extends GetxController {
       collectionid: editingCollectionId.isNotEmpty ? editingCollectionId : '',
       date: dateCtrl.text.trim(),
       userid: effectiveUserId,
-      partyname: partyNameCtrl.text.trim(),
+      partyname: selectedDistributorId ?? partyNameCtrl.text.trim(),
       amount: amountCtrl.text.trim(),
       paymentmode: selectedPaymentMode,
       paymentstatus: selectedPaymentStatus,
@@ -381,16 +427,7 @@ class CollectionController extends GetxController {
     }
   }
 
-  // ── Fetch One Collection ───────────────────────────────────────────────────
-  Future<CollectionDoc?> getOneCollection(String collectionId) async {
-    Utility.showLoader();
-    final res = await Get.find<Repository>().getOneCollectionApi(
-      collectionid: collectionId,
-      isLoading: false,
-    );
-    Utility.closeLoader();
-    return res?.data;
-  }
+
 
   // ── Format Date for Collection Screen ──────────────────────────────────────
   String formatCollectionDate(String? dateStr) {
@@ -480,29 +517,33 @@ class CollectionController extends GetxController {
                   // Brand Header
                   pw.Row(
                     mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                    crossAxisAlignment: pw.CrossAxisAlignment.start,
                     children: [
-                      pw.Column(
-                        crossAxisAlignment: pw.CrossAxisAlignment.start,
-                        children: [
-                          pw.Text(
-                            'AGRO APP',
-                            style: pw.TextStyle(
-                              fontSize: 24,
-                              fontWeight: pw.FontWeight.bold,
-                              color: PdfColors.green800,
+                      pw.Expanded(
+                        child: pw.Column(
+                          crossAxisAlignment: pw.CrossAxisAlignment.start,
+                          children: [
+                            pw.Text(
+                              item.branchid?.name ?? 'Collection Receipt',
+                              style: pw.TextStyle(
+                                fontSize: 18,
+                                fontWeight: pw.FontWeight.bold,
+                                color: PdfColors.green800,
+                              ),
                             ),
-                          ),
-                          pw.SizedBox(height: 4),
-                          pw.Text(
-                            'Collection Receipt',
-                            style: pw.TextStyle(
-                              fontSize: 14,
-                              color: PdfColors.grey600,
-                              fontWeight: pw.FontWeight.bold,
+                            pw.SizedBox(height: 4),
+                            pw.Text(
+                              'Collection Receipt',
+                              style: pw.TextStyle(
+                                fontSize: 12,
+                                color: PdfColors.grey600,
+                                fontWeight: pw.FontWeight.bold,
+                              ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
+                      pw.SizedBox(width: 16),
                       pw.Column(
                         crossAxisAlignment: pw.CrossAxisAlignment.end,
                         children: [
@@ -545,8 +586,9 @@ class CollectionController extends GetxController {
                       1: const pw.FlexColumnWidth(),
                     },
                     children: [
-                      _buildTableRow('Party Name', item.partyname ?? 'N/A'),
-                      _buildTableRow('Amount', 'Rs. ${item.amount ?? '0'}'),
+                      _buildTableRow('Receipt No', item.receiptno ?? 'N/A'),
+                      _buildTableRow('Party Name', item.partyname?.name ?? 'N/A'),
+                      _buildTableRow('Amount', 'Rs. ${item.amount ?? 0}'),
                       _buildTableRow(
                         'Payment Mode',
                         (item.paymentmode ?? 'N/A').toUpperCase(),
@@ -610,7 +652,7 @@ class CollectionController extends GetxController {
       );
 
       final pdfBytes = await pdf.save();
-      final sanitizedParty = (item.partyname ?? 'unknown').replaceAll(
+      final sanitizedParty = (item.partyname?.name ?? 'unknown').replaceAll(
         RegExp(r'[^a-zA-Z0-9]'),
         '_',
       );

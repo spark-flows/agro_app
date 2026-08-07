@@ -88,6 +88,7 @@ class OrdersController extends GetxController {
 
   final TextEditingController titleController = TextEditingController();
   final TextEditingController deliveryDateController = TextEditingController();
+  final TextEditingController remarkController = TextEditingController();
 
   // ── Filter state ───────────────────────────────────────────────────────────
   DateTime? filterDateFrom;
@@ -532,6 +533,7 @@ class OrdersController extends GetxController {
     searchController.clear();
     titleController.clear();
     deliveryDateController.clear();
+    remarkController.clear();
     if (!isDealerRole && distributors.isEmpty) {
       fetchDistributors();
     }
@@ -564,6 +566,7 @@ class OrdersController extends GetxController {
 
     titleController.text = details.orderno ?? '';
     deliveryDateController.text = details.deliverydate?.split('T').first ?? '';
+    remarkController.text = details.remark ?? '';
 
     if (details.items != null) {
       for (var item in details.items!) {
@@ -623,6 +626,7 @@ class OrdersController extends GetxController {
       items: itemsPayload,
       totalamount: cartTotal,
       deliverydate: deliveryDateController.text.trim(),
+      remark: remarkController.text.trim(),
       isLoading: true,
     );
     isPlacingOrder = false;
@@ -646,6 +650,7 @@ class OrdersController extends GetxController {
       editingOrderId = null; // Clear edit mode after success
       titleController.clear();
       deliveryDateController.clear();
+      remarkController.clear();
       update();
       if (Get.isSnackbarOpen) await Get.closeCurrentSnackbar();
       Get.back();

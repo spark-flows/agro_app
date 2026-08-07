@@ -219,8 +219,13 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                                   side: BorderSide(color: Colors.grey.shade200),
                                 ),
                                 color: Colors.white,
-                                child: Padding(
-                                  padding: const EdgeInsets.all(16),
+                                child: InkWell(
+                                  onTap: controller.roleName == "User"
+                                      ? () => controller.fetchAttendanceDetailsAndOpenForm(record.id ?? '')
+                                      : null,
+                                  borderRadius: BorderRadius.circular(16),
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(16),
                                   child: Column(
                                     crossAxisAlignment:
                                         CrossAxisAlignment.start,
@@ -652,7 +657,8 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                                     ],
                                   ),
                                 ),
-                              );
+                              ),
+                            );
                             },
                           ),
                         ),

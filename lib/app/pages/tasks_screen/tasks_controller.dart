@@ -12,9 +12,14 @@ import 'package:agro_app/domain/models/getAll_tasks_model.dart'
 import 'package:agro_app/domain/models/upload_files_model.dart';
 import 'package:agro_app/domain/repositories/repository.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:agro_app/domain/services/enum.dart';
 
 class TasksController extends GetxController {
   // ── Task list & pagination state ──────────────────────────────────────────
+  bool get isAdmin => RoleUtils.isAdmin(
+        Get.find<Repository>().getStringValue(LocalKeys.roleHiveName),
+      );
+
   List<task_list_model.Doc> tasks = [];
   bool isLoading = false;
   bool isFetchingMore = false;

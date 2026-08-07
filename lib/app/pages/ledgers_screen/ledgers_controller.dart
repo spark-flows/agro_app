@@ -27,6 +27,9 @@ class LedgersController extends GetxController {
   int statementTotalDocs = 0;
   int statementLimit = 15;
 
+  DateTime? statementFromDate = DateTime.now();
+  DateTime? statementToDate = DateTime.now();
+
   double totalDebit = 0.0;
   double totalCredit = 0.0;
   double outstandingBalance = 0.0;
@@ -123,6 +126,13 @@ class LedgersController extends GetxController {
           ? branchId
           : 'e86c9627-2d96-4eab-9784-6afe9a6811d8';
 
+      final String fromDateStr = statementFromDate != null
+          ? DateFormat('yyyy-MM-dd').format(statementFromDate!)
+          : '';
+      final String toDateStr = statementToDate != null
+          ? DateFormat('yyyy-MM-dd').format(statementToDate!)
+          : '';
+
       final res = await Get.find<Repository>().getLedgerEntryListApi(
         ledgerName: ledgerName,
         branchid: actualBranchId,
@@ -131,6 +141,8 @@ class LedgersController extends GetxController {
         particulars: [],
         vouchertypes: [],
         voucherno: [],
+        fromDate: fromDateStr,
+        toDate: toDateStr,
         isLoading: false,
       );
 
@@ -186,7 +198,11 @@ class LedgersController extends GetxController {
   }
 
   // ── PDF statement generation ──────────────────────────────────────────────
-  Future<void> generateAndPreviewPdf(String ledgerName, String branchId) async {
+  Future<void> generateAndPreviewPdf(
+    String ledgerName,
+    String branchId, {
+    bool isDetailed = false,
+  }) async {
     try {
       Utility.showLoader();
 
@@ -196,6 +212,13 @@ class LedgersController extends GetxController {
           ? branchId
           : 'e86c9627-2d96-4eab-9784-6afe9a6811d8';
 
+      final String fromDateStr = statementFromDate != null
+          ? DateFormat('yyyy-MM-dd').format(statementFromDate!)
+          : '';
+      final String toDateStr = statementToDate != null
+          ? DateFormat('yyyy-MM-dd').format(statementToDate!)
+          : '';
+
       final res = await Get.find<Repository>().getLedgerEntryListApi(
         ledgerName: ledgerName,
         branchid: actualBranchId,
@@ -204,6 +227,8 @@ class LedgersController extends GetxController {
         particulars: [],
         vouchertypes: [],
         voucherno: [],
+        fromDate: fromDateStr,
+        toDate: toDateStr,
         isLoading: false,
       );
 
@@ -245,6 +270,79 @@ class LedgersController extends GetxController {
       // Step 2: Build PDF matching the reference design
       final pdf = pw.Document();
 
+      pw.Widget buildStatementRow({
+        required String date,
+        required String particulars,
+        required String type,
+        required String no,
+        required String debit,
+        required String credit,
+        bool isHeader = false,
+        bool isTotal = false,
+        PdfColor? particularsColor,
+      }) {
+        final fontWeight = (isHeader || isTotal) ? pw.FontWeight.bold : pw.FontWeight.normal;
+        return pw.Container(
+          decoration: const pw.BoxDecoration(
+            border: pw.Border(
+              bottom: pw.BorderSide(color: PdfColors.black, width: 0.5),
+            ),
+          ),
+          padding: const pw.EdgeInsets.symmetric(vertical: 6, horizontal: 4),
+          child: pw.Row(
+            children: [
+              pw.Container(
+                width: 60,
+                child: pw.Text(
+                  date,
+                  style: pw.TextStyle(fontSize: 7, fontWeight: fontWeight),
+                ),
+              ),
+              pw.Expanded(
+                child: pw.Text(
+                  particulars,
+                  style: pw.TextStyle(
+                    fontSize: 7,
+                    fontWeight: fontWeight,
+                    color: particularsColor ?? PdfColors.black,
+                  ),
+                ),
+              ),
+              pw.Container(
+                width: 80,
+                child: pw.Text(
+                  type,
+                  style: pw.TextStyle(fontSize: 7, fontWeight: fontWeight),
+                ),
+              ),
+              pw.Container(
+                width: 60,
+                child: pw.Text(
+                  no,
+                  style: pw.TextStyle(fontSize: 7, fontWeight: fontWeight),
+                ),
+              ),
+              pw.Container(
+                width: 65,
+                alignment: pw.Alignment.centerRight,
+                child: pw.Text(
+                  debit,
+                  style: pw.TextStyle(fontSize: 7, fontWeight: fontWeight),
+                ),
+              ),
+              pw.Container(
+                width: 65,
+                alignment: pw.Alignment.centerRight,
+                child: pw.Text(
+                  credit,
+                  style: pw.TextStyle(fontSize: 7, fontWeight: fontWeight),
+                ),
+              ),
+            ],
+          ),
+        );
+      }
+
       pdf.addPage(
         pw.MultiPage(
           pageTheme: pw.PageTheme(
@@ -257,131 +355,116 @@ class LedgersController extends GetxController {
             ),
           ),
           build: (context) => [
+            // Company name header
             pw.Container(
-              child: pw.Column(
-                crossAxisAlignment: pw.CrossAxisAlignment.stretch,
+              padding: const pw.EdgeInsets.symmetric(vertical: 16),
+              decoration: const pw.BoxDecoration(
+                border: pw.Border(
+                  bottom: pw.BorderSide(color: PdfColors.black, width: 1),
+                ),
+              ),
+              child: pw.Center(
+                child: pw.Text(
+                  companyName.toUpperCase(),
+                  style: pw.TextStyle(
+                    fontSize: 20,
+                    fontWeight: pw.FontWeight.bold,
+                  ),
+                ),
+              ),
+            ),
+
+            // Ledger name + Date row
+            pw.Container(
+              padding: const pw.EdgeInsets.symmetric(
+                horizontal: 12,
+                vertical: 8,
+              ),
+              child: pw.Row(
+                mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
                 children: [
-                  // Company name header
-                  pw.Container(
-                    padding: const pw.EdgeInsets.symmetric(vertical: 16),
-                    decoration: const pw.BoxDecoration(
-                      border: pw.Border(
-                        bottom: pw.BorderSide(color: PdfColors.black, width: 1),
-                      ),
-                    ),
-                    child: pw.Center(
-                      child: pw.Text(
-                        companyName.toUpperCase(),
-                        style: pw.TextStyle(
-                          fontSize: 20,
-                          fontWeight: pw.FontWeight.bold,
-                        ),
-                      ),
+                  pw.Text(
+                    ledgerName,
+                    style: pw.TextStyle(
+                      fontSize: 10,
+                      fontWeight: pw.FontWeight.bold,
                     ),
                   ),
-
-                  // Ledger name + Date row
-                  pw.Container(
-                    padding: const pw.EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 8,
+                  pw.Text(
+                    'Date: $todayDate',
+                    style: pw.TextStyle(
+                      fontSize: 10,
+                      fontWeight: pw.FontWeight.bold,
                     ),
-                    child: pw.Row(
-                      mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-                      children: [
-                        pw.Text(
-                          ledgerName,
-                          style: pw.TextStyle(
-                            fontSize: 10,
-                            fontWeight: pw.FontWeight.bold,
-                          ),
-                        ),
-                        pw.Text(
-                          'Date: $todayDate',
-                          style: pw.TextStyle(
-                            fontSize: 10,
-                            fontWeight: pw.FontWeight.bold,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-
-                  // Table
-                  pw.Table(
-                    border: pw.TableBorder.all(
-                      color: PdfColors.black,
-                      width: 0.5,
-                    ),
-                    columnWidths: {
-                      0: const pw.FlexColumnWidth(1.5), // Date
-                      1: const pw.FlexColumnWidth(3.5), // Particulars
-                      2: const pw.FlexColumnWidth(1.8), // Voucher Type
-                      3: const pw.FlexColumnWidth(1.5), // Voucher No
-                      4: const pw.FlexColumnWidth(1.5), // Debit (DR)
-                      5: const pw.FlexColumnWidth(1.5), // Credit (CR)
-                    },
-                    children: [
-                      // Header row
-                      pw.TableRow(
-                        decoration: pw.BoxDecoration(
-                          color: PdfColor.fromHex('#F5F5F5'),
-                        ),
-                        children: [
-                          _pdfHeaderCell('DATE'),
-                          _pdfHeaderCell('PARTICULARS'),
-                          _pdfHeaderCell('VOUCHER TYPE'),
-                          _pdfHeaderCell('VOUCHER NO'),
-                          _pdfHeaderCell('DEBIT (DR)'),
-                          _pdfHeaderCell('CREDIT (CR)'),
-                        ],
-                      ),
-                      // Data rows
-                      ...allEntries.map((txn) {
-                        final deb =
-                            double.tryParse(txn.debit?.toString() ?? '0') ??
-                            0.0;
-                        final cred =
-                            double.tryParse(txn.credit?.toString() ?? '0') ??
-                            0.0;
-                        final particularsText =
-                            txn.particulars?.isNotEmpty == true
-                            ? txn.particulars!
-                            : (txn.particular ?? '');
-
-                        return pw.TableRow(
-                          children: [
-                            _pdfDataCell(
-                              formatEntryDate(txn.date, txn.dateString),
-                            ),
-                            _pdfDataCell(particularsText),
-                            _pdfDataCell(txn.vouchertype ?? ''),
-                            _pdfDataCell(txn.voucherno ?? ''),
-                            _pdfDataCell(deb > 0 ? deb.toStringAsFixed(2) : ''),
-                            _pdfDataCell(
-                              cred > 0 ? cred.toStringAsFixed(2) : '',
-                            ),
-                          ],
-                        );
-                      }),
-                      // Totals row
-                      pw.TableRow(
-                        decoration: pw.BoxDecoration(
-                          color: PdfColor.fromHex('#F5F5F5'),
-                        ),
-                        children: [
-                          _pdfHeaderCell(''),
-                          _pdfHeaderCell(''),
-                          _pdfHeaderCell(''),
-                          _pdfHeaderCell('TOTAL'),
-                          _pdfHeaderCell(pdfTotalDebit.toStringAsFixed(2)),
-                          _pdfHeaderCell(pdfTotalCredit.toStringAsFixed(2)),
-                        ],
-                      ),
-                    ],
                   ),
                 ],
               ),
+            ),
+
+            // Column Header
+            buildStatementRow(
+              date: 'DATE',
+              particulars: 'PARTICULARS',
+              type: 'VOUCHER TYPE',
+              no: 'VOUCHER NO',
+              debit: 'DEBIT (DR)',
+              credit: 'CREDIT (CR)',
+              isHeader: true,
+            ),
+
+            // Data rows
+            ...allEntries.expand((txn) {
+              final deb = double.tryParse(txn.debit?.toString() ?? '0') ?? 0.0;
+              final cred = double.tryParse(txn.credit?.toString() ?? '0') ?? 0.0;
+              final particularsText = txn.particulars?.isNotEmpty == true
+                  ? txn.particulars!
+                  : (txn.particular ?? '');
+
+              final mainRow = buildStatementRow(
+                date: formatEntryDate(txn.date, txn.dateString),
+                particulars: particularsText,
+                type: txn.vouchertype ?? '',
+                no: txn.voucherno ?? '',
+                debit: deb > 0 ? deb.toStringAsFixed(2) : '',
+                credit: cred > 0 ? cred.toStringAsFixed(2) : '',
+              );
+
+              if (isDetailed && txn.items != null && txn.items!.isNotEmpty) {
+                final List<pw.Widget> rows = [mainRow];
+                for (var item in txn.items!) {
+                  final String pName = item.productName ?? 'Unknown Product';
+                  final String qty = item.quantity?.toString() ?? '0';
+                  final String rate = item.rate?.toString() ?? '0';
+                  final String amt = item.amount?.toString() ?? '0';
+                  final itemText = '   ↳ $pName (Qty: $qty, Rate: $rate, Amt: $amt)';
+                  
+                  rows.add(
+                    buildStatementRow(
+                      date: '',
+                      particulars: itemText,
+                      type: '',
+                      no: '',
+                      debit: '',
+                      credit: '',
+                      particularsColor: PdfColors.grey700,
+                    ),
+                  );
+                }
+                return rows;
+              }
+
+              return [mainRow];
+            }),
+
+            // Totals Row
+            buildStatementRow(
+              date: '',
+              particulars: 'TOTAL',
+              type: '',
+              no: '',
+              debit: pdfTotalDebit.toStringAsFixed(2),
+              credit: pdfTotalCredit.toStringAsFixed(2),
+              isTotal: true,
             ),
           ],
         ),
@@ -426,7 +509,13 @@ class LedgersController extends GetxController {
   pw.Widget _pdfDataCell(String text, {PdfColor? color}) {
     return pw.Padding(
       padding: const pw.EdgeInsets.all(6),
-      child: pw.Text(text, style: pw.TextStyle(fontSize: 7, color: color)),
+      child: pw.Text(
+        text,
+        style: pw.TextStyle(
+          fontSize: 7,
+          color: color ?? PdfColors.black,
+        ),
+      ),
     );
   }
 }

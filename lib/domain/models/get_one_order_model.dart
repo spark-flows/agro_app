@@ -46,6 +46,7 @@ class GetOneOrderData {
   String? deletedBy;
   String? createdBy;
   String? updatedBy;
+  String? remark;
   String? createdAt;
   String? updatedAt;
 
@@ -63,6 +64,7 @@ class GetOneOrderData {
     this.deletedBy,
     this.createdBy,
     this.updatedBy,
+    this.remark,
     this.createdAt,
     this.updatedAt,
   });
@@ -92,6 +94,7 @@ class GetOneOrderData {
         deletedBy: json["deletedBy"]?.toString(),
         createdBy: json["createdBy"]?.toString(),
         updatedBy: json["updatedBy"]?.toString(),
+        remark: json["remark"]?.toString(),
         createdAt: json["createdAt"]?.toString(),
         updatedAt: json["updatedAt"]?.toString(),
       );
@@ -112,6 +115,7 @@ class GetOneOrderData {
     "deletedBy": deletedBy,
     "createdBy": createdBy,
     "updatedBy": updatedBy,
+    "remark": remark,
     "createdAt": createdAt,
     "updatedAt": updatedAt,
   };

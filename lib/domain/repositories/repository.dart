@@ -647,6 +647,7 @@ class Repository {
     required num totalamount,
     String? deliverydate,
     String? distributorid,
+    String? remark,
     bool isLoading = false,
   }) async {
     try {
@@ -656,6 +657,7 @@ class Repository {
         totalamount: totalamount,
         deliverydate: deliverydate,
         distributorid: distributorid,
+        remark: remark,
         isLoading: isLoading,
       );
       if (response.hasError) {
@@ -1882,7 +1884,7 @@ class Repository {
     }
   }
 
-  Future<CreateCollectionModel?> createCollectionApi({
+  Future<ResponseModel?> createCollectionApi({
     String? collectionid,
     required String date,
     required String userid,
@@ -1913,10 +1915,8 @@ class Repository {
         Utility.showMessage(msg, MessageType.error, null, '');
         return null;
       }
-      if (response.data.isNotEmpty) {
-        return createCollectionModelFromJson(response.data);
-      }
-      return null;
+      
+        return response;
     } catch (e, st) {
       print('createCollectionApi error: $e\n$st');
       Utility.closeDialog();
@@ -2002,40 +2002,7 @@ class Repository {
     }
   }
 
-  Future<CreateCollectionModel?> getOneCollectionApi({
-    required String collectionid,
-    bool isLoading = false,
-  }) async {
-    try {
-      var response = await _dataRepository.getOneCollectionApi(
-        collectionid: collectionid,
-        isLoading: isLoading,
-      );
-      if (response.hasError) {
-        final msg = _parseErrorMessage(
-          response.data,
-          'Failed to load collection details',
-        );
-        Utility.showMessage(msg, MessageType.error, null, '');
-        return null;
-      }
-      if (response.data.isNotEmpty) {
-        return createCollectionModelFromJson(response.data);
-      }
-      return null;
-    } catch (e, st) {
-      print('getOneCollectionApi error: $e\n$st');
-      Utility.closeDialog();
-      Utility.showMessage(
-        'Failed to load collection details',
-        MessageType.error,
-        null,
-        '',
-      );
-      return null;
-    }
-  }
-
+ 
   Future<bool> changeCollectionStatusApi({
     required String collectionid,
     required String paymentstatus,
@@ -2388,6 +2355,8 @@ class Repository {
     List<String> particulars = const [],
     List<String> vouchertypes = const [],
     List<String> voucherno = const [],
+    String fromDate = "",
+    String toDate = "",
     bool isLoading = false,
   }) async {
     try {
@@ -2399,6 +2368,8 @@ class Repository {
         particulars: particulars,
         vouchertypes: vouchertypes,
         voucherno: voucherno,
+        fromDate: fromDate,
+        toDate: toDate,
         isLoading: isLoading,
       );
       if (response.hasError) {
