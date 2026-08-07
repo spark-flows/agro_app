@@ -106,6 +106,13 @@ abstract class Utility {
     return htmlText.replaceAll(exp, '');
   }
 
+  // Clean branch name by removing parentheses and surrounding special characters
+  static String cleanBranchName(String name) {
+    var cleaned = name.replaceAll(RegExp(r'\s*\(.*?\)\s*.*'), '');
+    cleaned = cleaned.replaceAll(RegExp(r'[\s\-\:\,\;]+$'), '');
+    return cleaned.trim();
+  }
+
   /// createDate '2018-04-10T04:00:00.000Z' To Time
   static String getFormatedTime(
     String dateTime,

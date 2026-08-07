@@ -1,6 +1,8 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:agro_app/app/app.dart';
 import 'package:agro_app/domain/domain.dart';
@@ -460,24 +462,43 @@ class _LedgerStatementScreenState extends State<LedgerStatementScreen> {
     );
   }
 
-  void _shareEntryDetails(LedgersController controller, LedgerEntryDoc item) {
-    final deb = double.tryParse(item.debit?.toString() ?? '0') ?? 0.0;
-    final cred = double.tryParse(item.credit?.toString() ?? '0') ?? 0.0;
-    final dateStr = controller.formatEntryDate(item.date, item.dateString);
-    final particularsText = item.particulars?.isNotEmpty == true
-        ? item.particulars!
-        : (item.particular?.isNotEmpty == true ? item.particular! : '-');
+  void _shareEntryDetails(LedgersController controller, LedgerEntryDoc item) async {
+    try {
+      Utility.showLoader();
+      final pdfBytes = await controller.generateSingleEntryPdf(
+        item,
+        item.ledgerName ?? ledgerName,
+      );
+      Utility.closeDialog();
 
-    final shareText =
-        'Ledger: ${item.ledgerName ?? ledgerName}\n'
-        'Date: $dateStr\n'
-        'Particulars: $particularsText\n'
-        'Voucher Type: ${item.vouchertype ?? '-'}\n'
-        'Voucher No: ${item.voucherno ?? '-'}\n'
-        'Debit (Dr): ${deb > 0 ? deb.toStringAsFixed(2) : '-'}\n'
-        'Credit (Cr): ${cred > 0 ? cred.toStringAsFixed(2) : '-'}';
+      final safeName = (item.ledgerName ?? ledgerName)
+          .replaceAll(RegExp(r'[^\w\s\-]'), '')
+          .replaceAll(' ', '_');
+      final safeVoucherNo = (item.voucherno ?? "N_A")
+          .replaceAll(RegExp(r'[^\w\s\-]'), '_')
+          .replaceAll(' ', '_');
+      final fileName = 'Voucher_${safeName}_$safeVoucherNo.pdf';
 
-    SharePlus.instance.share(ShareParams(text: shareText));
+      // Write bytes to temporary cache directory
+      final tempDir = await getTemporaryDirectory();
+      final file = File('${tempDir.path}/$fileName');
+      await file.writeAsBytes(pdfBytes);
+
+      final params = ShareParams(
+        files: [
+          XFile(file.path),
+        ],
+      );
+      await SharePlus.instance.share(params);
+    } catch (e) {
+      Utility.closeDialog();
+      Utility.showMessage(
+        'Failed to generate shareable PDF: $e',
+        MessageType.error,
+        null,
+        '',
+      );
+    }
   }
 
   void _showTransactionDetailsBottomSheet(

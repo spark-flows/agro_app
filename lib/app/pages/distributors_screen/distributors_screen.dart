@@ -403,6 +403,7 @@ class _DistributorsScreenState extends State<DistributorsScreen> {
                     child: ElevatedButton.icon(
                       onPressed: () async {
                         Get.back();
+                        await Future<void>.delayed(const Duration(milliseconds: 350));
                         await controller.setupEdit(user);
                         Get.toNamed<void>('/distributorForm');
                       },

@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:typed_data';
 import 'package:agro_app/app/app.dart';
 import 'package:agro_app/domain/domain.dart';
 import 'package:flutter/material.dart';
@@ -261,11 +262,17 @@ class LedgersController extends GetxController {
       // Extract branch/company name from entries branchid object
       String companyName = ledgerName;
       if (allEntries.isNotEmpty && allEntries.first.branchid is Map) {
-        companyName =
-            allEntries.first.branchid['name']?.toString() ?? ledgerName;
+        final bName = allEntries.first.branchid['name']?.toString();
+        companyName = bName != null ? Utility.cleanBranchName(bName) : ledgerName;
       }
 
-      final todayDate = DateFormat('dd-MM-yyyy').format(DateTime.now());
+      final pdfFromDateStr = statementFromDate != null
+          ? DateFormat('dd-MM-yyyy').format(statementFromDate!)
+          : '';
+      final pdfToDateStr = statementToDate != null
+          ? DateFormat('dd-MM-yyyy').format(statementToDate!)
+          : '';
+      final filterDateStr = '$pdfFromDateStr to $pdfToDateStr';
 
       // Step 2: Build PDF matching the reference design
       final pdf = pw.Document();
@@ -391,7 +398,7 @@ class LedgersController extends GetxController {
                     ),
                   ),
                   pw.Text(
-                    'Date: $todayDate',
+                    'Date: $filterDateStr',
                     style: pw.TextStyle(
                       fontSize: 10,
                       fontWeight: pw.FontWeight.bold,
@@ -517,5 +524,207 @@ class LedgersController extends GetxController {
         ),
       ),
     );
+  }
+
+  Future<Uint8List> generateSingleEntryPdf(
+    LedgerEntryDoc entry,
+    String ledgerName,
+  ) async {
+    final pdf = pw.Document();
+
+    final deb = double.tryParse(entry.debit?.toString() ?? '0') ?? 0.0;
+    final cred = double.tryParse(entry.credit?.toString() ?? '0') ?? 0.0;
+
+    String companyName = ledgerName;
+    if (entry.branchid is Map) {
+      final bName = entry.branchid['name']?.toString();
+      companyName = bName != null ? Utility.cleanBranchName(bName) : ledgerName;
+    }
+
+    final todayDate = DateFormat('dd-MM-yyyy').format(DateTime.now());
+
+    pw.Widget buildStatementRow({
+      required String date,
+      required String particulars,
+      required String type,
+      required String no,
+      required String debit,
+      required String credit,
+      bool isHeader = false,
+      bool isTotal = false,
+      PdfColor? particularsColor,
+    }) {
+      final fontWeight = (isHeader || isTotal) ? pw.FontWeight.bold : pw.FontWeight.normal;
+      return pw.Container(
+        decoration: const pw.BoxDecoration(
+          border: pw.Border(
+            bottom: pw.BorderSide(color: PdfColors.black, width: 0.5),
+          ),
+        ),
+        padding: const pw.EdgeInsets.symmetric(vertical: 6, horizontal: 4),
+        child: pw.Row(
+          children: [
+            pw.Container(
+              width: 60,
+              child: pw.Text(
+                date,
+                style: pw.TextStyle(fontSize: 7, fontWeight: fontWeight),
+              ),
+            ),
+            pw.Expanded(
+              child: pw.Text(
+                particulars,
+                style: pw.TextStyle(
+                  fontSize: 7,
+                  fontWeight: fontWeight,
+                  color: particularsColor ?? PdfColors.black,
+                ),
+              ),
+            ),
+            pw.Container(
+              width: 80,
+              child: pw.Text(
+                type,
+                style: pw.TextStyle(fontSize: 7, fontWeight: fontWeight),
+              ),
+            ),
+            pw.Container(
+              width: 60,
+              child: pw.Text(
+                no,
+                style: pw.TextStyle(fontSize: 7, fontWeight: fontWeight),
+              ),
+            ),
+            pw.Container(
+              width: 65,
+              alignment: pw.Alignment.centerRight,
+              child: pw.Text(
+                debit,
+                style: pw.TextStyle(fontSize: 7, fontWeight: fontWeight),
+              ),
+            ),
+            pw.Container(
+              width: 65,
+              alignment: pw.Alignment.centerRight,
+              child: pw.Text(
+                credit,
+                style: pw.TextStyle(fontSize: 7, fontWeight: fontWeight),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    pdf.addPage(
+      pw.MultiPage(
+        pageTheme: pw.PageTheme(
+          pageFormat: PdfPageFormat.a4,
+          margin: const pw.EdgeInsets.all(24),
+          buildBackground: (context) => pw.Container(
+            decoration: pw.BoxDecoration(
+              border: pw.Border.all(color: PdfColors.black, width: 1.5),
+            ),
+          ),
+        ),
+        build: (context) => [
+          // Company name header
+          pw.Container(
+            padding: const pw.EdgeInsets.symmetric(vertical: 16),
+            decoration: const pw.BoxDecoration(
+              border: pw.Border(
+                bottom: pw.BorderSide(color: PdfColors.black, width: 1),
+              ),
+            ),
+            child: pw.Center(
+              child: pw.Text(
+                companyName.toUpperCase(),
+                style: pw.TextStyle(
+                  fontSize: 20,
+                  fontWeight: pw.FontWeight.bold,
+                ),
+              ),
+            ),
+          ),
+
+          // Ledger name + Date row
+          pw.Container(
+            padding: const pw.EdgeInsets.symmetric(
+              horizontal: 12,
+              vertical: 8,
+            ),
+            child: pw.Row(
+              mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+              children: [
+                pw.Text(
+                  ledgerName,
+                  style: pw.TextStyle(
+                    fontSize: 10,
+                    fontWeight: pw.FontWeight.bold,
+                  ),
+                ),
+                pw.Text(
+                  'Date: $todayDate',
+                  style: pw.TextStyle(
+                    fontSize: 10,
+                    fontWeight: pw.FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          // Column Header
+          buildStatementRow(
+            date: 'DATE',
+            particulars: 'PARTICULARS',
+            type: 'VOUCHER TYPE',
+            no: 'VOUCHER NO',
+            debit: 'DEBIT (DR)',
+            credit: 'CREDIT (CR)',
+            isHeader: true,
+          ),
+
+          // Main Row
+          buildStatementRow(
+            date: formatEntryDate(entry.date, entry.dateString),
+            particulars: entry.particulars?.isNotEmpty == true
+                ? entry.particulars!
+                : (entry.particular ?? ''),
+            type: entry.vouchertype ?? '',
+            no: entry.voucherno ?? '',
+            debit: deb > 0 ? deb.toStringAsFixed(2) : '',
+            credit: cred > 0 ? cred.toStringAsFixed(2) : '',
+          ),
+
+          // Detailed items
+          if (entry.items != null && entry.items!.isNotEmpty) ...[
+            for (var item in entry.items!)
+              buildStatementRow(
+                date: '',
+                particulars: '   ↳ ${item.productName ?? 'Unknown Product'} (Qty: ${item.quantity?.toString() ?? '0'}, Rate: ${item.rate?.toString() ?? '0'}, Amt: ${item.amount?.toString() ?? '0'})',
+                type: '',
+                no: '',
+                debit: '',
+                credit: '',
+                particularsColor: PdfColors.grey700,
+              ),
+          ],
+
+          // Totals Row
+          buildStatementRow(
+            date: '',
+            particulars: 'TOTAL',
+            type: '',
+            no: '',
+            debit: deb > 0 ? deb.toStringAsFixed(2) : '',
+            credit: cred > 0 ? cred.toStringAsFixed(2) : '',
+            isTotal: true,
+          ),
+        ],
+      ),
+    );
+
+    return pdf.save();
   }
 }

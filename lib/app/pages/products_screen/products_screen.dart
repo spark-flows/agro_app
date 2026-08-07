@@ -281,25 +281,25 @@ class _ProductsScreenState extends State<ProductsScreen> {
                                           ),
                                         ),
                                         const SizedBox(width: 4),
-                                        IconButton(
-                                          icon: const Icon(
-                                            Icons.delete_outline,
-                                            color: Colors.red,
-                                            size: 20,
-                                          ),
-                                          onPressed: () {
-                                            Utility.showDeleteDialog(
-                                              title: 'Delete Product',
-                                              message:
-                                                  'Are you sure you want to delete ${product.name}?',
-                                              onConfirm: () {
-                                                controller.deleteProduct(
-                                                  product.id ?? '',
-                                                );
-                                              },
-                                            );
-                                          },
-                                        ),
+                                        // IconButton(
+                                        //   icon: const Icon(
+                                        //     Icons.delete_outline,
+                                        //     color: Colors.red,
+                                        //     size: 20,
+                                        //   ),
+                                        //   onPressed: () {
+                                        //     Utility.showDeleteDialog(
+                                        //       title: 'Delete Product',
+                                        //       message:
+                                        //           'Are you sure you want to delete ${product.name}?',
+                                        //       onConfirm: () {
+                                        //         controller.deleteProduct(
+                                        //           product.id ?? '',
+                                        //         );
+                                        //       },
+                                        //     );
+                                        //   },
+                                        // ),
                                       ],
                                     ),
                                   ),

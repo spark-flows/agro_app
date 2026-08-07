@@ -290,7 +290,7 @@ class DistributorsController extends GetxController {
     }
     update();
 
-    Utility.showLoader();
+    // Utility.showLoader();
     try {
       final GetOneUserModel? userModel = await Get.find<Repository>()
           .getOneUserApi(userid: user.id, isLoading: false);

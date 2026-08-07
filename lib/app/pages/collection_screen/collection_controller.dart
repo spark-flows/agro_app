@@ -524,7 +524,9 @@ class CollectionController extends GetxController {
                           crossAxisAlignment: pw.CrossAxisAlignment.start,
                           children: [
                             pw.Text(
-                              item.branchid?.name ?? 'Collection Receipt',
+                              item.branchid?.name != null
+                                  ? Utility.cleanBranchName(item.branchid!.name!)
+                                  : 'Collection Receipt',
                               style: pw.TextStyle(
                                 fontSize: 18,
                                 fontWeight: pw.FontWeight.bold,
