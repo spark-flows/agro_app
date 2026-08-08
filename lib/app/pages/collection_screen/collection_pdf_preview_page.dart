@@ -77,12 +77,7 @@ class CollectionPdfPreviewPage extends StatelessWidget {
                 // File downloaded successfully without opening
               } catch (e) {
                 Utility.closeLoader();
-                Utility.showMessage(
-                  'Failed to save file: $e',
-                  MessageType.error,
-                  null,
-                  '',
-                );
+                Utility.snacBar('Failed to save file: $e', Colors.red);
               }
             },
           ),

@@ -23,6 +23,7 @@ class ProductItem {
   Alternateunitid? alternateunitid;
   num? purchaseprice;
   num? saleprice;
+  String? remark;
 
   ProductItem({
     required this.id,
@@ -41,6 +42,7 @@ class ProductItem {
     this.qty,
     this.quantity = 0,
     this.selectedUnit,
+    this.remark,
   });
 }
 
@@ -525,6 +527,7 @@ class OrdersController extends GetxController {
   void resetOrderFlow() {
     for (var p in allProducts) {
       p.quantity = 0;
+      p.remark = '';
     }
     selectedCustomerId = historyCustomerId ?? '';
     selectedDistributorId = '';
@@ -584,6 +587,7 @@ class OrdersController extends GetxController {
           if (item.unit != null && item.unit.toString().isNotEmpty) {
             allProducts[idx].selectedUnit = item.unit.toString();
           }
+          allProducts[idx].remark = item.remark?.toString();
         }
       }
     }
@@ -615,6 +619,7 @@ class OrdersController extends GetxController {
         "quantity": p.quantity,
         "price": p.rawPrice,
         "unit": u,
+        "remark": p.remark ?? "",
       };
     }).toList();
 
@@ -636,6 +641,7 @@ class OrdersController extends GetxController {
       Utility.closeDialog();
       for (var p in allProducts) {
         p.quantity = 0;
+        p.remark = '';
       }
       historyCustomerId = selectedCustomerId.isNotEmpty
           ? selectedCustomerId

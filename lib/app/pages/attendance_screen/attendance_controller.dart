@@ -103,7 +103,9 @@ class AttendanceController extends GetxController with WidgetsBindingObserver {
       );
       final docs = response?.data.docs;
       if (docs != null && docs.isNotEmpty) {
-        userList = docs.where((u) => RoleUtils.isUser(u.roleid.rolename)).toList();
+        userList = docs
+            .where((u) => RoleUtils.isUser(u.roleid.rolename))
+            .toList();
         update();
       }
     } catch (e) {
@@ -855,7 +857,7 @@ class AttendanceController extends GetxController with WidgetsBindingObserver {
           Get.find<Repository>().saveValue('saved_timein_$todayStr', timeStr);
           setLocalAttendanceStatus('clocked_in');
           await fetchAttendance(isRefresh: false);
-          Utility.snacBar('Clocked in successfully', Colors.green);
+          Utility.snacBar('Punch in successfully', Colors.green);
           _triggerStartTracking(coordinates);
         }
       }
@@ -1268,8 +1270,8 @@ class AttendanceController extends GetxController with WidgetsBindingObserver {
                                     await fetchAttendance(isRefresh: false);
                                     Utility.snacBar(
                                       isClockOut
-                                          ? 'Clocked out successfully'
-                                          : 'Clocked in successfully',
+                                          ? 'Punch out successfully'
+                                          : 'Punch in successfully',
                                       Colors.green,
                                     );
                                     Get.find<Repository>().saveValue(
@@ -1430,7 +1432,7 @@ class AttendanceController extends GetxController with WidgetsBindingObserver {
           Get.find<Repository>().saveValue('saved_timeout_$todayStr', timeStr);
           setLocalAttendanceStatus('clocked_out');
           await fetchAttendance(isRefresh: false);
-          Utility.snacBar('Clocked out successfully', Colors.green);
+          Utility.snacBar('Punch out successfully', Colors.green);
           _triggerStopTracking(coordinates);
         }
       }

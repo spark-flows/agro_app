@@ -128,6 +128,7 @@ class GetOneOrderItem {
   String? unit;
   dynamic unitid;
   String? id;
+  String? remark;
 
   GetOneOrderItem({
     this.productid,
@@ -136,6 +137,7 @@ class GetOneOrderItem {
     this.unit,
     this.unitid,
     this.id,
+    this.remark,
   });
 
   factory GetOneOrderItem.fromJson(Map<String, dynamic> json) =>
@@ -146,6 +148,7 @@ class GetOneOrderItem {
         unit: json["unit"]?.toString(),
         unitid: json["unitid"],
         id: json["_id"],
+        remark: json["remark"]?.toString(),
       );
 
   Map<String, dynamic> toJson() => {
@@ -155,6 +158,7 @@ class GetOneOrderItem {
     "unit": unit,
     "unitid": unitid,
     "_id": id,
+    "remark": remark,
   };
 }
 

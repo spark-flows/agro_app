@@ -41,6 +41,7 @@ class LedgerEntriesData {
   int? pagingCounter;
   bool? hasPrevPage;
   bool? hasNextPage;
+  dynamic closingBalance;
 
   LedgerEntriesData({
     this.docs,
@@ -51,6 +52,7 @@ class LedgerEntriesData {
     this.pagingCounter,
     this.hasPrevPage,
     this.hasNextPage,
+    this.closingBalance,
   });
 
   factory LedgerEntriesData.fromJson(Map<String, dynamic> json) =>
@@ -67,6 +69,7 @@ class LedgerEntriesData {
         pagingCounter: json["pagingCounter"],
         hasPrevPage: json["hasPrevPage"],
         hasNextPage: json["hasNextPage"],
+        closingBalance: json["closingBalance"],
       );
 
   Map<String, dynamic> toJson() => {
@@ -80,6 +83,7 @@ class LedgerEntriesData {
         "pagingCounter": pagingCounter,
         "hasPrevPage": hasPrevPage,
         "hasNextPage": hasNextPage,
+        "closingBalance": closingBalance,
       };
 }
 

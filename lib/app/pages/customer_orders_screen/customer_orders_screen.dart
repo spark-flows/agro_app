@@ -227,6 +227,15 @@ class CustomerOrdersScreen extends StatelessWidget {
             customerName = order.customerid?.name ?? ' 0--0 ';
           }
 
+          String distributorName = '';
+          if (order.distributorid != null) {
+            if (order.distributorid is Map) {
+              distributorName = order.distributorid['name']?.toString() ?? '';
+            } else {
+              distributorName = order.distributorid.toString();
+            }
+          }
+
           String dateStr = '';
           if (order.createdAt != null) {
             try {
@@ -245,7 +254,17 @@ class CustomerOrdersScreen extends StatelessWidget {
               borderRadius: BorderRadius.circular(16),
             ),
             child: InkWell(
-              onTap: () => _showOrderDetails(context, order, controller),
+              onTap: () async {
+                final fetchedOrder = await controller.getOneCustomerOrder(
+                  order.id ?? '',
+                );
+                if (!context.mounted) return;
+                if (fetchedOrder != null) {
+                  _showOrderDetails(context, fetchedOrder, controller);
+                } else {
+                  _showOrderDetails(context, order, controller);
+                }
+              },
               borderRadius: BorderRadius.circular(16),
               child: Padding(
                 padding: const EdgeInsets.all(16),
@@ -296,16 +315,34 @@ class CustomerOrdersScreen extends StatelessWidget {
                         ),
                         const SizedBox(width: 12),
                         Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              Text(
-                                'Customer',
-                                style: Styles.txtGreyColorW40012,
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Customer',
+                                    style: Styles.txtGreyColorW40012,
+                                  ),
+                                  Text(
+                                    customerName,
+                                    style: Styles.txtBlackColorW60014,
+                                  ),
+                                ],
                               ),
-                              Text(
-                                customerName,
-                                style: Styles.txtBlackColorW60014,
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.end,
+                                children: [
+                                  Text(
+                                    'Distributor',
+                                    style: Styles.txtGreyColorW40012,
+                                  ),
+                                  Text(
+                                    distributorName,
+                                    style: Styles.txtBlackColorW60014,
+                                  ),
+                                ],
                               ),
                             ],
                           ),
@@ -445,7 +482,7 @@ class CustomerOrdersScreen extends StatelessWidget {
                         ),
                       ),
                     if (isAdmin || isUser) ...[
-                      if (order.remark != null && order.remark!.isNotEmpty)
+                      if (order.remark != null) ...[
                         for (int i = 0; i < order.remark!.length; i++) ...[
                           _buildRemarkCard(
                             'Remark ${i + 1}',
@@ -454,8 +491,8 @@ class CustomerOrdersScreen extends StatelessWidget {
                             controller.formatRemarkDate(order.remark![i].date),
                           ),
                           const SizedBox(height: 12),
-                        ]
-                      else ...[
+                        ],
+                      ] else ...[
                         _buildDetailRow('Remark 1', order.remark1 ?? '-'),
                         const SizedBox(height: 12),
                         _buildDetailRow('Remark 2', order.remark2 ?? '-'),
@@ -920,6 +957,50 @@ class CustomerOrdersScreen extends StatelessWidget {
                     const SizedBox(height: 20),
 
                     if (isAdmin || isUser) ...[
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            'Remarks',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: ColorsValue.txtBlackColor,
+                            ),
+                          ),
+                          ElevatedButton.icon(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: ctrl.isLocalPunchedIn
+                                  ? Colors.red
+                                  : ColorsValue.primary,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 8,
+                              ),
+                            ),
+                            onPressed: ctrl.togglePunchIn,
+                            icon: Icon(
+                              ctrl.isLocalPunchedIn
+                                  ? Icons.exit_to_app
+                                  : Icons.login,
+                              size: 16,
+                              color: Colors.white,
+                            ),
+                            label: Text(
+                              ctrl.isLocalPunchedIn ? 'Punch Out' : 'Punch In',
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 13,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
                       for (
                         int i = 0;
                         i < ctrl.remarkControllers.length;
@@ -932,9 +1013,13 @@ class CustomerOrdersScreen extends StatelessWidget {
                               child: _buildTextField(
                                 'Remark ${i + 1}',
                                 ctrl.remarkControllers[i],
+                                readOnly:
+                                    (i < ctrl.loadedRemarks.length) ||
+                                    !ctrl.isUserPunchedIn(),
                               ),
                             ),
-                            if (ctrl.remarkControllers.length > 1) ...[
+                            if (i >= ctrl.loadedRemarks.length &&
+                                ctrl.remarkControllers.length > 1) ...[
                               const SizedBox(width: 8),
                               Padding(
                                 padding: const EdgeInsets.only(top: 28.0),
@@ -1016,7 +1101,11 @@ class CustomerOrdersScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildTextField(String label, TextEditingController controller) {
+  Widget _buildTextField(
+    String label,
+    TextEditingController controller, {
+    bool readOnly = false,
+  }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -1024,9 +1113,12 @@ class CustomerOrdersScreen extends StatelessWidget {
         const SizedBox(height: 8),
         TextField(
           controller: controller,
+          readOnly: readOnly,
           decoration: InputDecoration(
             hintText: 'Enter $label',
             hintStyle: Styles.txtGreyColorW40014,
+            filled: readOnly,
+            fillColor: readOnly ? Colors.grey.shade100 : null,
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
               borderSide: BorderSide(color: Colors.grey.shade300),
@@ -1037,7 +1129,9 @@ class CustomerOrdersScreen extends StatelessWidget {
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: ColorsValue.primary),
+              borderSide: BorderSide(
+                color: readOnly ? Colors.grey.shade300 : ColorsValue.primary,
+              ),
             ),
             contentPadding: const EdgeInsets.symmetric(
               horizontal: 16,

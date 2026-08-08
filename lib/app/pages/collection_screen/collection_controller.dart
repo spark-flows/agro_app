@@ -53,7 +53,9 @@ class CollectionController extends GetxController {
   String selectedPaymentStatus = 'pending';
 
   String editingCollectionId = '';
+  String editingReceiptNo = '';
   Timer? _searchTimer;
+  String nextReceiptNo = '';
 
   static const List<String> paymentModeOptions = [
     'cash',
@@ -178,7 +180,8 @@ class CollectionController extends GetxController {
   }
 
   void _matchSelectedDistributor() {
-    if (partyNameCtrl.text.isNotEmpty && (selectedDistributorId == null || selectedDistributorId!.isEmpty)) {
+    if (partyNameCtrl.text.isNotEmpty &&
+        (selectedDistributorId == null || selectedDistributorId!.isEmpty)) {
       // Try matching by ID first
       for (var d in distributors) {
         if (d.id == partyNameCtrl.text.trim()) {
@@ -189,7 +192,8 @@ class CollectionController extends GetxController {
       }
       // Otherwise, match by name
       for (var d in distributors) {
-        if (d.name.toLowerCase().trim() == partyNameCtrl.text.toLowerCase().trim()) {
+        if (d.name.toLowerCase().trim() ==
+            partyNameCtrl.text.toLowerCase().trim()) {
           selectedDistributorId = d.id;
           break;
         }
@@ -233,6 +237,7 @@ class CollectionController extends GetxController {
           collections.addAll(docs);
         }
         totalPages = response.data!.totalPages ?? 1;
+        nextReceiptNo = response.data!.nextReceiptNo ?? '';
       }
     } catch (e) {
       debugPrint('fetchCollections error: $e');
@@ -287,6 +292,7 @@ class CollectionController extends GetxController {
   void prepareForm([CollectionDoc? collection]) {
     if (collection != null) {
       editingCollectionId = collection.id ?? '';
+      editingReceiptNo = collection.receiptno ?? '';
       if (collection.date != null && collection.date!.isNotEmpty) {
         final parsedDate = DateTime.tryParse(collection.date!);
         if (parsedDate != null) {
@@ -319,6 +325,7 @@ class CollectionController extends GetxController {
       selectedUserId = collection.userid?.id;
     } else {
       editingCollectionId = '';
+      editingReceiptNo = '';
       dateCtrl.text = DateFormat('yyyy-MM-dd').format(DateTime.now());
       partyNameCtrl.clear();
       selectedDistributorId = null;
@@ -345,12 +352,7 @@ class CollectionController extends GetxController {
       effectiveUserId = userId;
     } else if (RoleUtils.isAdmin(roleName)) {
       if (selectedUserId == null || selectedUserId!.isEmpty) {
-        Utility.showMessage(
-          'Please select a user',
-          MessageType.error,
-          null,
-          '',
-        );
+        Utility.snacBar('Please select a user', Colors.red);
         return;
       }
       effectiveUserId = selectedUserId!;
@@ -373,13 +375,11 @@ class CollectionController extends GetxController {
     Utility.closeLoader();
 
     if (result != null) {
-      Utility.showMessage(
+      Utility.snacBar(
         editingCollectionId.isNotEmpty
             ? 'Collection updated successfully'
             : 'Collection created successfully',
-        MessageType.information,
-        null,
-        '',
+        Colors.green,
       );
       Get.back();
       fetchCollections(isRefresh: true);
@@ -397,12 +397,7 @@ class CollectionController extends GetxController {
     Utility.closeLoader();
 
     if (success) {
-      Utility.showMessage(
-        'Status updated successfully',
-        MessageType.information,
-        null,
-        '',
-      );
+      Utility.snacBar('Status updated successfully', Colors.green);
       fetchCollections(isRefresh: true);
     }
   }
@@ -417,17 +412,10 @@ class CollectionController extends GetxController {
     Utility.closeLoader();
 
     if (success) {
-      Utility.showMessage(
-        'Collection deleted successfully',
-        MessageType.information,
-        null,
-        '',
-      );
+      Utility.snacBar('Collection deleted successfully', Colors.green);
       fetchCollections(isRefresh: true);
     }
   }
-
-
 
   // ── Format Date for Collection Screen ──────────────────────────────────────
   String formatCollectionDate(String? dateStr) {
@@ -525,7 +513,9 @@ class CollectionController extends GetxController {
                           children: [
                             pw.Text(
                               item.branchid?.name != null
-                                  ? Utility.cleanBranchName(item.branchid!.name!)
+                                  ? Utility.cleanBranchName(
+                                      item.branchid!.name!,
+                                    )
                                   : 'Collection Receipt',
                               style: pw.TextStyle(
                                 fontSize: 18,
@@ -589,7 +579,10 @@ class CollectionController extends GetxController {
                     },
                     children: [
                       _buildTableRow('Receipt No', item.receiptno ?? 'N/A'),
-                      _buildTableRow('Party Name', item.partyname?.name ?? 'N/A'),
+                      _buildTableRow(
+                        'Party Name',
+                        item.partyname?.name ?? 'N/A',
+                      ),
                       _buildTableRow('Amount', 'Rs. ${item.amount ?? 0}'),
                       _buildTableRow(
                         'Payment Mode',
@@ -667,12 +660,7 @@ class CollectionController extends GetxController {
       );
     } catch (e) {
       Utility.closeLoader();
-      Utility.showMessage(
-        'Failed to generate PDF: $e',
-        MessageType.error,
-        null,
-        '',
-      );
+      Utility.snacBar('Failed to generate PDF: $e', Colors.red);
     }
   }
 }

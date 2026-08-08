@@ -974,11 +974,13 @@ class ProductCard extends StatefulWidget {
 
 class _ProductCardState extends State<ProductCard> {
   late TextEditingController _qtyController;
+  late TextEditingController _remarkController;
 
   @override
   void initState() {
     super.initState();
     _qtyController = TextEditingController(text: '${widget.item.quantity}');
+    _remarkController = TextEditingController(text: widget.item.remark ?? '');
 
     // Default unit fallback logic
     final String defaultUnit = widget.item.unit.replaceAll("per ", "").trim();
@@ -999,11 +1001,17 @@ class _ProductCardState extends State<ProductCard> {
         !FocusScope.of(context).hasFocus) {
       _qtyController.text = targetQtyText;
     }
+    final targetRemarkText = widget.item.remark ?? '';
+    if (_remarkController.text != targetRemarkText &&
+        !FocusScope.of(context).hasFocus) {
+      _remarkController.text = targetRemarkText;
+    }
   }
 
   @override
   void dispose() {
     _qtyController.dispose();
+    _remarkController.dispose();
     super.dispose();
   }
 
@@ -1294,6 +1302,31 @@ class _ProductCardState extends State<ProductCard> {
                   ),
                 ),
               ],
+            ),
+            const SizedBox(height: 12),
+            TextFormField(
+              controller: _remarkController,
+              decoration: InputDecoration(
+                hintText: 'Enter product remark (optional)',
+                filled: true,
+                fillColor: Colors.white,
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 12,
+                ),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                  borderSide: BorderSide(color: Colors.grey.shade300),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                  borderSide: BorderSide(color: Colors.grey.shade300),
+                ),
+              ),
+              onChanged: (val) {
+                widget.item.remark = val.trim();
+                widget.controller.update();
+              },
             ),
           ],
         ),

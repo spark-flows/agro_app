@@ -34,6 +34,38 @@ class CollectionFormPage extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  // ── Receipt No / Next Receipt No ──
+                  if ((isEdit && controller.editingReceiptNo.isNotEmpty) ||
+                      (!isEdit && controller.nextReceiptNo.isNotEmpty)) ...[
+                    Text('Receipt No', style: Styles.txtBlackColorW60014),
+                    const SizedBox(height: 6),
+                    InputDecorator(
+                      decoration: InputDecoration(
+                        filled: true,
+                        fillColor: Colors.grey.shade100,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10),
+                          borderSide: BorderSide(color: Colors.grey.shade300),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10),
+                          borderSide: BorderSide(color: Colors.grey.shade300),
+                        ),
+                      ),
+                      child: Text(
+                        isEdit
+                            ? controller.editingReceiptNo
+                            : controller.nextReceiptNo,
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: Colors.grey.shade600,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                  ],
+
                   if (RoleUtils.isAdmin(controller.roleName)) ...[
                     Text('Select User', style: Styles.txtBlackColorW60014),
                     const SizedBox(height: 6),
@@ -156,7 +188,9 @@ class CollectionFormPage extends StatelessWidget {
                           : null;
 
                       final selectedDistText = selectedValue != null
-                          ? ((uniqueDistributors[selectedValue]!.name.isNotEmpty)
+                          ? ((uniqueDistributors[selectedValue]!
+                                    .name
+                                    .isNotEmpty)
                                 ? uniqueDistributors[selectedValue]!.name
                                 : 'Unknown Dealer')
                           : 'Select Dealer';
@@ -169,10 +203,13 @@ class CollectionFormPage extends StatelessWidget {
                               Get.dialog(
                                 _DealerSearchDialog(
                                   controller: controller,
-                                  distributors: uniqueDistributors.values.toList(),
+                                  distributors: uniqueDistributors.values
+                                      .toList(),
                                 ),
                               ).then((_) {
-                                state.didChange(controller.selectedDistributorId);
+                                state.didChange(
+                                  controller.selectedDistributorId,
+                                );
                               });
                             },
                             borderRadius: BorderRadius.circular(10),
@@ -183,11 +220,15 @@ class CollectionFormPage extends StatelessWidget {
                                 fillColor: Colors.white,
                                 border: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(10),
-                                  borderSide: BorderSide(color: Colors.grey.shade300),
+                                  borderSide: BorderSide(
+                                    color: Colors.grey.shade300,
+                                  ),
                                 ),
                                 enabledBorder: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(10),
-                                  borderSide: BorderSide(color: Colors.grey.shade300),
+                                  borderSide: BorderSide(
+                                    color: Colors.grey.shade300,
+                                  ),
                                 ),
                                 prefixIcon: const Icon(
                                   Icons.storefront_outlined,

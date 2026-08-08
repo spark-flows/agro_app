@@ -28,16 +28,21 @@ class LedgersController extends GetxController {
   int statementTotalDocs = 0;
   int statementLimit = 15;
 
-  DateTime? statementFromDate = DateTime.now();
-  DateTime? statementToDate = DateTime.now();
+  DateTime? statementFromDate;
+  DateTime? statementToDate;
 
   double totalDebit = 0.0;
   double totalCredit = 0.0;
   double outstandingBalance = 0.0;
+  double closingBalance = 0.0;
 
   @override
   void onInit() {
     super.onInit();
+    final now = DateTime.now();
+    final startYear = now.month >= 4 ? now.year : now.year - 1;
+    statementFromDate = DateTime(startYear, 4, 1);
+    statementToDate = DateTime(startYear + 1, 3, 31);
     fetchLedgers(isRefresh: true);
   }
 
@@ -115,6 +120,7 @@ class LedgersController extends GetxController {
       totalDebit = 0.0;
       totalCredit = 0.0;
       outstandingBalance = 0.0;
+      closingBalance = 0.0;
     } else {
       if (statementCurrentPage >= statementTotalPages) return;
       statementCurrentPage++;
@@ -155,6 +161,7 @@ class LedgersController extends GetxController {
         }
         statementTotalPages = res.data!.totalPages ?? 1;
         statementTotalDocs = res.data!.totalDocs ?? statementEntries.length;
+        closingBalance = double.tryParse(res.data!.closingBalance?.toString() ?? '0') ?? 0.0;
 
         // Calculate running totals on all fetched items
         totalDebit = 0.0;

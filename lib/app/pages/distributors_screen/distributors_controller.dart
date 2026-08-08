@@ -529,7 +529,7 @@ class DistributorsController extends GetxController {
         clockInTime: timein,
       );
       update();
-      Utility.snacBar('Clocked in successfully', Colors.green);
+      Utility.snacBar('Punch in successfully', Colors.green);
     } else {
       Utility.errorMessage('Clock In failed. Please try again.');
     }
@@ -621,9 +621,9 @@ class DistributorsController extends GetxController {
         clockOutTime: timeout,
       );
       update();
-      Utility.snacBar('Clocked out successfully', Colors.green);
+      Utility.snacBar('Punch out successfully', Colors.green);
     } else {
-      Utility.errorMessage('Clock Out failed. Please try again.');
+      Utility.errorMessage('Punch Out failed. Please try again.');
     }
   }
 

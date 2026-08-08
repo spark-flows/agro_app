@@ -117,12 +117,14 @@ class CreateorderItem {
     dynamic quantity;
     dynamic price;
     String? id;
+    String? remark;
 
     CreateorderItem({
         this.productid,
         this.quantity,
         this.price,
         this.id,
+        this.remark,
     });
 
     factory CreateorderItem.fromJson(Map<String, dynamic> json) => CreateorderItem(
@@ -130,6 +132,7 @@ class CreateorderItem {
         quantity: json["quantity"],
         price: json["price"],
         id: json["_id"],
+        remark: json["remark"]?.toString(),
     );
 
     Map<String, dynamic> toJson() => {
@@ -137,5 +140,6 @@ class CreateorderItem {
         "quantity": quantity,
         "price": price,
         "_id": id,
+        "remark": remark,
     };
 }

@@ -98,16 +98,17 @@ class _LedgerStatementScreenState extends State<LedgerStatementScreen> {
                       );
                     }
                   },
-                  itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
-                    const PopupMenuItem<String>(
-                      value: 'normal',
-                      child: Text('Normal'),
-                    ),
-                    const PopupMenuItem<String>(
-                      value: 'detailed',
-                      child: Text('Detailed'),
-                    ),
-                  ],
+                  itemBuilder: (BuildContext context) =>
+                      <PopupMenuEntry<String>>[
+                        const PopupMenuItem<String>(
+                          value: 'normal',
+                          child: Text('Normal'),
+                        ),
+                        const PopupMenuItem<String>(
+                          value: 'detailed',
+                          child: Text('Detailed'),
+                        ),
+                      ],
                 ),
               const SizedBox(width: 8),
             ],
@@ -124,83 +125,99 @@ class _LedgerStatementScreenState extends State<LedgerStatementScreen> {
                     // Date Filter Row
                     Container(
                       color: Colors.white,
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 8,
+                      ),
                       child: Row(
                         children: [
                           Expanded(
                             child: InkWell(
-                              onTap: () async {
-                                final picked = await showDatePicker(
-                                  context: context,
-                                  initialDate: controller.statementFromDate ?? DateTime.now(),
-                                  firstDate: DateTime(2000),
-                                  lastDate: DateTime(2100),
-                                );
-                                if (picked != null) {
-                                  controller.statementFromDate = picked;
-                                  controller.fetchStatement(ledgerName, savedBranchId, isRefresh: true);
-                                }
-                              },
+                              onTap: null, // Read-only
                               child: Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 10,
+                                ),
                                 decoration: BoxDecoration(
-                                  border: Border.all(color: Colors.grey.shade300),
+                                  color: Colors.grey.shade100,
+                                  border: Border.all(
+                                    color: Colors.grey.shade300,
+                                  ),
                                   borderRadius: BorderRadius.circular(8),
                                 ),
                                 child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
                                   children: [
                                     Text(
                                       controller.statementFromDate == null
                                           ? 'From Date'
-                                          : DateFormat('dd-MM-yyyy').format(controller.statementFromDate!),
+                                          : DateFormat('dd-MM-yyyy').format(
+                                              controller.statementFromDate!,
+                                            ),
                                       style: TextStyle(
                                         fontSize: 13,
-                                        color: controller.statementFromDate != null ? Colors.black87 : Colors.grey,
+                                        color:
+                                            controller.statementFromDate != null
+                                            ? Colors.black54
+                                            : Colors.grey,
                                       ),
                                     ),
-                                    const Icon(Icons.calendar_today, size: 14, color: Colors.grey),
+                                    const Icon(
+                                      Icons.calendar_today,
+                                      size: 14,
+                                      color: Colors.grey,
+                                    ),
                                   ],
                                 ),
                               ),
                             ),
                           ),
                           const SizedBox(width: 8),
-                          const Text('to', style: TextStyle(color: Colors.grey)),
+                          const Text(
+                            'to',
+                            style: TextStyle(color: Colors.grey),
+                          ),
                           const SizedBox(width: 8),
                           Expanded(
                             child: InkWell(
-                              onTap: () async {
-                                final picked = await showDatePicker(
-                                  context: context,
-                                  initialDate: controller.statementToDate ?? DateTime.now(),
-                                  firstDate: DateTime(2000),
-                                  lastDate: DateTime(2100),
-                                );
-                                if (picked != null) {
-                                  controller.statementToDate = picked;
-                                  controller.fetchStatement(ledgerName, savedBranchId, isRefresh: true);
-                                }
-                              },
+                              onTap: null, // Read-only
                               child: Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 10,
+                                ),
                                 decoration: BoxDecoration(
-                                  border: Border.all(color: Colors.grey.shade300),
+                                  color: Colors.grey.shade100,
+                                  border: Border.all(
+                                    color: Colors.grey.shade300,
+                                  ),
                                   borderRadius: BorderRadius.circular(8),
                                 ),
                                 child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
                                   children: [
                                     Text(
                                       controller.statementToDate == null
                                           ? 'To Date'
-                                          : DateFormat('dd-MM-yyyy').format(controller.statementToDate!),
+                                          : DateFormat('dd-MM-yyyy').format(
+                                              controller.statementToDate!,
+                                            ),
                                       style: TextStyle(
                                         fontSize: 13,
-                                        color: controller.statementToDate != null ? Colors.black87 : Colors.grey,
+                                        color:
+                                            controller.statementToDate != null
+                                            ? Colors.black54
+                                            : Colors.grey,
                                       ),
                                     ),
-                                    const Icon(Icons.calendar_today, size: 14, color: Colors.grey),
+                                    const Icon(
+                                      Icons.calendar_today,
+                                      size: 14,
+                                      color: Colors.grey,
+                                    ),
                                   ],
                                 ),
                               ),
@@ -313,6 +330,29 @@ class _LedgerStatementScreenState extends State<LedgerStatementScreen> {
                     const SizedBox(height: 2),
                     Text(
                       '₹${controller.totalCredit.toStringAsFixed(2)}',
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                        color: ColorsValue.textH2,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Container(width: 1, height: 26, color: Colors.grey.shade300),
+              Expanded(
+                child: Column(
+                  children: [
+                    const Text(
+                      'Closing Balance',
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: ColorsValue.textMuted,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      '₹${controller.closingBalance.toStringAsFixed(2)}',
                       style: const TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.bold,
@@ -462,7 +502,10 @@ class _LedgerStatementScreenState extends State<LedgerStatementScreen> {
     );
   }
 
-  void _shareEntryDetails(LedgersController controller, LedgerEntryDoc item) async {
+  void _shareEntryDetails(
+    LedgersController controller,
+    LedgerEntryDoc item,
+  ) async {
     try {
       Utility.showLoader();
       final pdfBytes = await controller.generateSingleEntryPdf(
@@ -484,11 +527,7 @@ class _LedgerStatementScreenState extends State<LedgerStatementScreen> {
       final file = File('${tempDir.path}/$fileName');
       await file.writeAsBytes(pdfBytes);
 
-      final params = ShareParams(
-        files: [
-          XFile(file.path),
-        ],
-      );
+      final params = ShareParams(files: [XFile(file.path)]);
       await SharePlus.instance.share(params);
     } catch (e) {
       Utility.closeDialog();

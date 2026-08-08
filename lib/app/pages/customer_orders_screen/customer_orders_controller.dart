@@ -9,6 +9,7 @@ import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:agro_app/app/pages/home_screen/home_controller.dart';
 import 'package:agro_app/domain/services/enum.dart';
+import 'package:intl/intl.dart';
 
 class CustomerOrdersController extends GetxController {
   final Repository _repository = Get.find<Repository>();
@@ -46,6 +47,7 @@ class CustomerOrdersController extends GetxController {
   final TextEditingController remark3Controller = TextEditingController();
   List<TextEditingController> remarkControllers = [];
   List<RemarkItem> loadedRemarks = [];
+  bool isLocalPunchedIn = false;
   String currentUserId = '';
   String currentUserName = '';
 
@@ -97,18 +99,35 @@ class CustomerOrdersController extends GetxController {
     super.onClose();
   }
 
+  bool isUserPunchedIn() {
+    return isLocalPunchedIn;
+  }
+
+  void togglePunchIn() {
+    isLocalPunchedIn = !isLocalPunchedIn;
+    update();
+    Utility.snacBar(
+      isLocalPunchedIn ? 'Punched In successfully' : 'Punched Out successfully',
+      isLocalPunchedIn ? Colors.green : Colors.red,
+    );
+  }
+
   void addRemarkField() {
+    if (!isUserPunchedIn()) {
+      Utility.snacBar('Please punch in first to add a remark.', Colors.red);
+      return;
+    }
     remarkControllers.add(TextEditingController());
     update();
   }
 
   void removeRemarkFieldAt(int index) {
+    if (index < loadedRemarks.length) {
+      return;
+    }
     if (remarkControllers.length > 1) {
       remarkControllers[index].dispose();
       remarkControllers.removeAt(index);
-      if (index < loadedRemarks.length) {
-        loadedRemarks.removeAt(index);
-      }
       update();
     }
   }
@@ -120,7 +139,7 @@ class CustomerOrdersController extends GetxController {
     remarkControllers.clear();
     loadedRemarks.clear();
 
-    if (order.remark != null && order.remark!.isNotEmpty) {
+    if (order.remark != null) {
       for (var r in order.remark!) {
         remarkControllers.add(TextEditingController(text: r.remark ?? ''));
         loadedRemarks.add(r);
@@ -350,6 +369,7 @@ class CustomerOrdersController extends GetxController {
     selectedImage = null;
     existingImageUrl = null;
     editingCustomerOrderId = null;
+    isLocalPunchedIn = false;
     for (var c in remarkControllers) {
       c.dispose();
     }
@@ -363,6 +383,7 @@ class CustomerOrdersController extends GetxController {
 
   Future<void> editOrder(CustomerOrderDoc order) async {
     editingCustomerOrderId = order.id;
+    isLocalPunchedIn = false;
 
     // order.customerid is a populated model object — extract .id directly
     final custId = order.customerid?.id ?? '';
@@ -393,6 +414,22 @@ class CustomerOrdersController extends GetxController {
     }
   }
 
+  Future<CustomerOrderDoc?> getOneCustomerOrder(String orderId) async {
+    Utility.showLoader();
+    try {
+      final fetchedOrder = await _repository.getOneCustomerOrderApi(
+        customerorderid: orderId,
+        isLoading: false,
+      );
+      return fetchedOrder;
+    } catch (e) {
+      debugPrint("Error fetching customer order details: $e");
+      return null;
+    } finally {
+      Utility.closeLoader();
+    }
+  }
+
   void removeImage() {
     selectedImage = null;
     existingImageUrl = null;
@@ -411,98 +448,100 @@ class CustomerOrdersController extends GetxController {
 
     Utility.showLoader();
 
-    // 1. Upload the image if a new one is selected
-    String imageUrl = existingImageUrl ?? '';
-    if (selectedImage != null) {
-      final uploadRes = await _repository.uploadCustomerOrderApi(
-        selectedImage!,
+    try {
+      // 1. Upload the image if a new one is selected
+      String imageUrl = existingImageUrl ?? '';
+      if (selectedImage != null) {
+        final uploadRes = await _repository.uploadCustomerOrderApi(
+          selectedImage!,
+          isLoading: false,
+        );
+        if (uploadRes != null &&
+            uploadRes.data != null &&
+            uploadRes.data!.url != null) {
+          imageUrl = uploadRes.data!.url!;
+        } else {
+          Utility.errorMessage('Failed to upload image. Please try again.');
+          return;
+        }
+      }
+
+      final String distributorId = await Utility.getSecureValue(
+        LocalKeys.distributorId,
+      );
+      final String currentDate = DateTime.now().toUtc().toIso8601String();
+
+      List<Map<String, dynamic>> remarkPayload = [];
+      for (int i = 0; i < remarkControllers.length; i++) {
+        final text = remarkControllers[i].text.trim();
+        if (text.isEmpty) {
+          continue;
+        }
+
+        String rDate = currentDate;
+        String rUserId = distributorId;
+
+        if (i < loadedRemarks.length) {
+          rDate = loadedRemarks[i].date ?? currentDate;
+          rUserId = loadedRemarks[i].userId?.id ?? distributorId;
+        }
+
+        remarkPayload.add({"date": rDate, "userid": rUserId, "remark": text});
+      }
+
+      // 2. Create or Update the order
+      final createRes = await _repository.createCustomerOrderApi(
+        customerorderid: editingCustomerOrderId,
+        customerid: selectedCustomerId,
+        image: imageUrl,
+        remark: remarkPayload,
         isLoading: false,
       );
-      if (uploadRes != null &&
-          uploadRes.data != null &&
-          uploadRes.data!.url != null) {
-        imageUrl = uploadRes.data!.url!;
-      } else {
-        Utility.closeDialog();
-        Utility.errorMessage('Failed to upload image. Please try again.');
-        return;
+
+      if (createRes != null && createRes.isSuccess == true) {
+        Get.back(); // Close bottom sheet
+        Utility.snacBar(
+          editingCustomerOrderId == null
+              ? 'Customer order created successfully!'
+              : 'Customer order updated successfully!',
+          Colors.green,
+        );
+        resetForm();
+        // Re-fetch using the current filter selection (not cleared by resetForm)
+        if (filterCustomerId.isNotEmpty) {
+          fetchCustomerOrdersByCustomer(filterCustomerId);
+        } else {
+          fetchAllCustomerOrders();
+        }
       }
-    }
-
-    final String distributorId = await Utility.getSecureValue(
-      LocalKeys.distributorId,
-    );
-    final String currentDate = DateTime.now().toUtc().toIso8601String();
-
-    List<Map<String, dynamic>> remarkPayload = [];
-    for (int i = 0; i < remarkControllers.length; i++) {
-      final text = remarkControllers[i].text.trim();
-      if (text.isEmpty && remarkControllers.length > 1) {
-        continue;
-      }
-
-      String rDate = currentDate;
-      String rUserId = distributorId;
-
-      if (i < loadedRemarks.length) {
-        rDate = loadedRemarks[i].date ?? currentDate;
-        rUserId = loadedRemarks[i].userId?.id ?? distributorId;
-      }
-
-      remarkPayload.add({"date": rDate, "userid": rUserId, "remark": text});
-    }
-
-    if (remarkPayload.isEmpty) {
-      remarkPayload.add({
-        "date": currentDate,
-        "userid": distributorId,
-        "remark": "",
-      });
-    }
-
-    // 2. Create or Update the order
-    final createRes = await _repository.createCustomerOrderApi(
-      customerorderid: editingCustomerOrderId,
-      customerid: selectedCustomerId,
-      image: imageUrl,
-      remark: remarkPayload,
-      isLoading: false,
-    );
-
-    Utility.closeDialog();
-
-    if (createRes != null && createRes.isSuccess == true) {
-      Get.back(); // Close bottom sheet
-      Utility.snacBar(
-        editingCustomerOrderId == null
-            ? 'Customer order created successfully!'
-            : 'Customer order updated successfully!',
-        Colors.green,
-      );
-      resetForm();
-      // Re-fetch using the current filter selection (not cleared by resetForm)
-      if (filterCustomerId.isNotEmpty) {
-        fetchCustomerOrdersByCustomer(filterCustomerId);
-      } else {
-        fetchAllCustomerOrders();
-      }
+    } catch (e) {
+      debugPrint("Error placing customer order: $e");
+      Utility.errorMessage('Failed to place customer order. Please try again.');
+    } finally {
+      Utility.closeDialog();
     }
   }
 
   Future<void> deleteOrder(String id) async {
     Utility.showLoader();
-    bool success = await _repository.deleteCustomerOrderApi(
-      customerorderid: id,
-      isLoading: false,
-    );
-    Utility.closeDialog();
-    if (success) {
-      Utility.snacBar('Customer order deleted successfully', Colors.green);
-      if (filterCustomerId.isNotEmpty) {
-        fetchCustomerOrdersByCustomer(filterCustomerId);
-      } else {
-        fetchAllCustomerOrders();
+    try {
+      bool success = await _repository.deleteCustomerOrderApi(
+        customerorderid: id,
+        isLoading: false,
+      );
+      if (success) {
+        Utility.snacBar('Customer order deleted successfully', Colors.green);
+        if (filterCustomerId.isNotEmpty) {
+          fetchCustomerOrdersByCustomer(filterCustomerId);
+        } else {
+          fetchAllCustomerOrders();
+        }
       }
+    } catch (e) {
+      debugPrint("Error deleting customer order: $e");
+      Utility.errorMessage('Failed to delete customer order. Please try again.');
+    } finally {
+      Utility.closeDialog();
     }
   }
 }

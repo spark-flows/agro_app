@@ -8,7 +8,6 @@ GetAllCollectionsModel getAllCollectionsModelFromJson(String str) =>
 String getAllCollectionsModelToJson(GetAllCollectionsModel data) =>
     json.encode(data.toJson());
 
-
 class GetAllCollectionsModel {
   String? message;
   CollectionData? data;
@@ -33,11 +32,11 @@ class GetAllCollectionsModel {
       );
 
   Map<String, dynamic> toJson() => {
-        "Message": message,
-        "Data": data?.toJson(),
-        "Status": status,
-        "IsSuccess": isSuccess,
-      };
+    "Message": message,
+    "Data": data?.toJson(),
+    "Status": status,
+    "IsSuccess": isSuccess,
+  };
 }
 
 class CollectionData {
@@ -51,6 +50,7 @@ class CollectionData {
   bool? hasNextPage;
   dynamic prevPage;
   dynamic nextPage;
+  String? nextReceiptNo;
 
   CollectionData({
     this.docs,
@@ -63,39 +63,42 @@ class CollectionData {
     this.hasNextPage,
     this.prevPage,
     this.nextPage,
+    this.nextReceiptNo,
   });
 
   factory CollectionData.fromJson(Map<String, dynamic> json) => CollectionData(
-        docs: json["docs"] == null
-            ? []
-            : List<CollectionDoc>.from(
-                json["docs"]!.map((x) => CollectionDoc.fromJson(x)),
-              ),
-        totalDocs: json["totalDocs"],
-        limit: json["limit"],
-        totalPages: json["totalPages"],
-        page: json["page"],
-        pagingCounter: json["pagingCounter"],
-        hasPrevPage: json["hasPrevPage"],
-        hasNextPage: json["hasNextPage"],
-        prevPage: json["prevPage"],
-        nextPage: json["nextPage"],
-      );
+    docs: json["docs"] == null
+        ? []
+        : List<CollectionDoc>.from(
+            json["docs"]!.map((x) => CollectionDoc.fromJson(x)),
+          ),
+    totalDocs: json["totalDocs"],
+    limit: json["limit"],
+    totalPages: json["totalPages"],
+    page: json["page"],
+    pagingCounter: json["pagingCounter"],
+    hasPrevPage: json["hasPrevPage"],
+    hasNextPage: json["hasNextPage"],
+    prevPage: json["prevPage"],
+    nextPage: json["nextPage"],
+    nextReceiptNo: json["nextReceiptNo"]?.toString(),
+  );
 
   Map<String, dynamic> toJson() => {
-        "docs": docs == null
-            ? []
-            : List<dynamic>.from(docs!.map((x) => x.toJson())),
-        "totalDocs": totalDocs,
-        "limit": limit,
-        "totalPages": totalPages,
-        "page": page,
-        "pagingCounter": pagingCounter,
-        "hasPrevPage": hasPrevPage,
-        "hasNextPage": hasNextPage,
-        "prevPage": prevPage,
-        "nextPage": nextPage,
-      };
+    "docs": docs == null
+        ? []
+        : List<dynamic>.from(docs!.map((x) => x.toJson())),
+    "totalDocs": totalDocs,
+    "limit": limit,
+    "totalPages": totalPages,
+    "page": page,
+    "pagingCounter": pagingCounter,
+    "hasPrevPage": hasPrevPage,
+    "hasNextPage": hasNextPage,
+    "prevPage": prevPage,
+    "nextPage": nextPage,
+    "nextReceiptNo": nextReceiptNo,
+  };
 }
 
 class CollectionDoc {
