@@ -237,8 +237,9 @@ class RemarkItem {
   String? date;
   UseridItem? userId;
   String? remark;
+  String? nextdate;
 
-  RemarkItem({this.date, this.userId, this.remark});
+  RemarkItem({this.date, this.userId, this.remark, this.nextdate});
 
   factory RemarkItem.fromJson(Map<String, dynamic> json) {
     return RemarkItem(
@@ -247,6 +248,7 @@ class RemarkItem {
         json['userid'] ?? json['userid'] ?? json['userids'] ?? json['userids'],
       ),
       remark: json['remark']?.toString(),
+      nextdate: json['nextdate']?.toString(),
     );
   }
 
@@ -254,6 +256,7 @@ class RemarkItem {
     "date": date,
     "userid": userId,
     "remark": remark,
+    "nextdate": nextdate,
   };
 }
 

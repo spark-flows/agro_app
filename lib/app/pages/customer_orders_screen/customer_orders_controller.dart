@@ -7,9 +7,6 @@ import 'package:agro_app/domain/models/get_all_users_model.dart' as users_model;
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:agro_app/app/pages/home_screen/home_controller.dart';
-import 'package:agro_app/domain/services/enum.dart';
-import 'package:intl/intl.dart';
 
 class CustomerOrdersController extends GetxController {
   final Repository _repository = Get.find<Repository>();
@@ -46,6 +43,7 @@ class CustomerOrdersController extends GetxController {
   final TextEditingController remark2Controller = TextEditingController();
   final TextEditingController remark3Controller = TextEditingController();
   List<TextEditingController> remarkControllers = [];
+  List<TextEditingController> nextDateControllers = [];
   List<RemarkItem> loadedRemarks = [];
   bool isLocalPunchedIn = false;
   String currentUserId = '';
@@ -79,10 +77,21 @@ class CustomerOrdersController extends GetxController {
     }
   }
 
+  String _getTomorrowDateString() {
+    final tomorrow = DateTime.now().add(const Duration(days: 1));
+    return '${tomorrow.year}-${tomorrow.month.toString().padLeft(2, '0')}-${tomorrow.day.toString().padLeft(2, '0')}';
+  }
+
   @override
   void onInit() {
     super.onInit();
     remarkControllers = [TextEditingController()];
+    customerRemarkLIst = [
+      CustomerRemarkModel(
+        remark: TextEditingController(),
+        nextDate: TextEditingController(text: _getTomorrowDateString()),
+      ),
+    ];
     _loadRole();
     fetchCustomers();
     fetchAllCustomerOrders();
@@ -92,6 +101,10 @@ class CustomerOrdersController extends GetxController {
   void onClose() {
     for (var c in remarkControllers) {
       c.dispose();
+    }
+    for (var item in customerRemarkLIst) {
+      item.remark?.dispose();
+      item.nextDate?.dispose();
     }
     remark1Controller.dispose();
     remark2Controller.dispose();
@@ -118,6 +131,12 @@ class CustomerOrdersController extends GetxController {
       return;
     }
     remarkControllers.add(TextEditingController());
+    customerRemarkLIst.add(
+      CustomerRemarkModel(
+        remark: TextEditingController(),
+        nextDate: TextEditingController(text: _getTomorrowDateString()),
+      ),
+    );
     update();
   }
 
@@ -125,9 +144,14 @@ class CustomerOrdersController extends GetxController {
     if (index < loadedRemarks.length) {
       return;
     }
-    if (remarkControllers.length > 1) {
-      remarkControllers[index].dispose();
-      remarkControllers.removeAt(index);
+    if (customerRemarkLIst.length > 1) {
+      if (index < remarkControllers.length) {
+        remarkControllers[index].dispose();
+        remarkControllers.removeAt(index);
+      }
+      customerRemarkLIst[index].remark?.dispose();
+      customerRemarkLIst[index].nextDate?.dispose();
+      customerRemarkLIst.removeAt(index);
       update();
     }
   }
@@ -137,11 +161,33 @@ class CustomerOrdersController extends GetxController {
       c.dispose();
     }
     remarkControllers.clear();
+    for (var item in customerRemarkLIst) {
+      item.remark?.dispose();
+      item.nextDate?.dispose();
+    }
+    customerRemarkLIst.clear();
     loadedRemarks.clear();
 
     if (order.remark != null) {
       for (var r in order.remark!) {
         remarkControllers.add(TextEditingController(text: r.remark ?? ''));
+        customerRemarkLIst.add(
+          CustomerRemarkModel(
+            remark: TextEditingController(text: r.remark ?? ''),
+            nextDate: TextEditingController(
+              text: r.nextdate != null && r.nextdate!.isNotEmpty
+                  ? (() {
+                      try {
+                        final parsed = DateTime.parse(r.nextdate!);
+                        return '${parsed.year}-${parsed.month.toString().padLeft(2, '0')}-${parsed.day.toString().padLeft(2, '0')}';
+                      } catch (_) {
+                        return r.nextdate ?? '';
+                      }
+                    })()
+                  : '',
+            ),
+          ),
+        );
         loadedRemarks.add(r);
       }
     } else {
@@ -159,6 +205,12 @@ class CustomerOrdersController extends GetxController {
       if (list.isNotEmpty) {
         for (var text in list) {
           remarkControllers.add(TextEditingController(text: text));
+          customerRemarkLIst.add(
+            CustomerRemarkModel(
+              remark: TextEditingController(text: text),
+              nextDate: TextEditingController(),
+            ),
+          );
           loadedRemarks.add(
             RemarkItem(
               remark: text,
@@ -170,8 +222,14 @@ class CustomerOrdersController extends GetxController {
       }
     }
 
-    if (remarkControllers.isEmpty) {
+    if (customerRemarkLIst.isEmpty) {
       remarkControllers.add(TextEditingController());
+      customerRemarkLIst.add(
+        CustomerRemarkModel(
+          remark: TextEditingController(),
+          nextDate: TextEditingController(text: _getTomorrowDateString()),
+        ),
+      );
     }
   }
 
@@ -374,6 +432,16 @@ class CustomerOrdersController extends GetxController {
       c.dispose();
     }
     remarkControllers = [TextEditingController()];
+    for (var item in customerRemarkLIst) {
+      item.remark?.dispose();
+      item.nextDate?.dispose();
+    }
+    customerRemarkLIst = [
+      CustomerRemarkModel(
+        remark: TextEditingController(),
+        nextDate: TextEditingController(text: _getTomorrowDateString()),
+      ),
+    ];
     loadedRemarks.clear();
     remark1Controller.clear();
     remark2Controller.clear();
@@ -436,6 +504,8 @@ class CustomerOrdersController extends GetxController {
     update();
   }
 
+  List<CustomerRemarkModel> customerRemarkLIst = [];
+
   Future<void> placeCustomerOrder() async {
     if (selectedCustomerId.isEmpty) {
       Utility.errorMessage('Please select a customer');
@@ -472,21 +542,40 @@ class CustomerOrdersController extends GetxController {
       final String currentDate = DateTime.now().toUtc().toIso8601String();
 
       List<Map<String, dynamic>> remarkPayload = [];
-      for (int i = 0; i < remarkControllers.length; i++) {
-        final text = remarkControllers[i].text.trim();
+      for (int i = 0; i < customerRemarkLIst.length; i++) {
+        final text = customerRemarkLIst[i].remark?.text.trim() ?? '';
+        final nextDateStr = customerRemarkLIst[i].nextDate?.text.trim() ?? '';
         if (text.isEmpty) {
           continue;
         }
 
         String rDate = currentDate;
         String rUserId = distributorId;
+        String? rNextDate;
+
+        if (nextDateStr.isNotEmpty) {
+          try {
+            final parsedDate = DateTime.parse(nextDateStr);
+            rNextDate = '${parsedDate.year}-${parsedDate.month.toString().padLeft(2, '0')}-${parsedDate.day.toString().padLeft(2, '0')}';
+          } catch (_) {
+            rNextDate = nextDateStr;
+          }
+        }
 
         if (i < loadedRemarks.length) {
           rDate = loadedRemarks[i].date ?? currentDate;
           rUserId = loadedRemarks[i].userId?.id ?? distributorId;
+          if (rNextDate == null || rNextDate.isEmpty) {
+            rNextDate = loadedRemarks[i].nextdate;
+          }
         }
 
-        remarkPayload.add({"date": rDate, "userid": rUserId, "remark": text});
+        remarkPayload.add({
+          "date": rDate,
+          "userid": rUserId,
+          "remark": text,
+          "nextdate": rNextDate ?? "",
+        });
       }
 
       // 2. Create or Update the order
@@ -539,9 +628,18 @@ class CustomerOrdersController extends GetxController {
       }
     } catch (e) {
       debugPrint("Error deleting customer order: $e");
-      Utility.errorMessage('Failed to delete customer order. Please try again.');
+      Utility.errorMessage(
+        'Failed to delete customer order. Please try again.',
+      );
     } finally {
       Utility.closeDialog();
     }
   }
+}
+
+class CustomerRemarkModel {
+  TextEditingController? remark;
+  TextEditingController? nextDate;
+
+  CustomerRemarkModel({this.remark, this.nextDate});
 }

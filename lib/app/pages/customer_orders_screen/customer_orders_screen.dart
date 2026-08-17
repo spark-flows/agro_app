@@ -1,6 +1,5 @@
 import 'package:agro_app/app/app.dart';
 import 'package:agro_app/domain/domain.dart';
-import 'package:agro_app/domain/services/enum.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
@@ -349,6 +348,55 @@ class CustomerOrdersScreen extends StatelessWidget {
                         ),
                       ],
                     ),
+                    (() {
+                      String? latestNextDate;
+                      if (order.remark != null && order.remark!.isNotEmpty) {
+                        for (int i = order.remark!.length - 1; i >= 0; i--) {
+                          final nd = order.remark![i].nextdate;
+                          if (nd != null && nd.isNotEmpty) {
+                            latestNextDate = nd;
+                            break;
+                          }
+                        }
+                      }
+                      if (latestNextDate != null && latestNextDate.isNotEmpty) {
+                        return Padding(
+                          padding: const EdgeInsets.only(top: 12.0),
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.calendar_today_outlined,
+                                size: 14,
+                                color: Colors.grey.shade600,
+                              ),
+                              const SizedBox(width: 6),
+                              Text(
+                                'Next Date: ',
+                                style: Styles.txtGreyColorW40012,
+                              ),
+                              Text(
+                                (() {
+                                  try {
+                                    final parsedDate = DateTime.parse(
+                                      latestNextDate!,
+                                    );
+                                    return DateFormat(
+                                      'dd MMM yyyy',
+                                    ).format(parsedDate);
+                                  } catch (_) {
+                                    return latestNextDate!;
+                                  }
+                                })(),
+                                style: Styles.txtBlackColorW50014.copyWith(
+                                  fontSize: 12,
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      }
+                      return const SizedBox.shrink();
+                    })(),
                   ],
                 ),
               ),
@@ -489,6 +537,7 @@ class CustomerOrdersScreen extends StatelessWidget {
                             order.remark![i].remark ?? '-',
                             controller.getRemarkUserName(order.remark![i]),
                             controller.formatRemarkDate(order.remark![i].date),
+                            order.remark![i].nextdate,
                           ),
                           const SizedBox(height: 12),
                         ],
@@ -629,6 +678,7 @@ class CustomerOrdersScreen extends StatelessWidget {
     String value,
     String author,
     String date,
+    String? nextDate,
   ) {
     return Container(
       width: double.infinity,
@@ -654,6 +704,34 @@ class CustomerOrdersScreen extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(value, style: Styles.txtBlackColorW50014),
+          if (nextDate != null && nextDate.isNotEmpty && nextDate != '-') ...[
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                Icon(
+                  Icons.calendar_today_outlined,
+                  size: 12,
+                  color: Colors.grey.shade600,
+                ),
+                const SizedBox(width: 6),
+                Text(
+                  'Next Date: ',
+                  style: Styles.txtGreyColorW40012.copyWith(fontSize: 11),
+                ),
+                Text(
+                  (() {
+                    try {
+                      final parsedDate = DateTime.parse(nextDate);
+                      return DateFormat('dd MMM yyyy').format(parsedDate);
+                    } catch (_) {
+                      return nextDate;
+                    }
+                  })(),
+                  style: Styles.txtBlackColorW50014.copyWith(fontSize: 11),
+                ),
+              ],
+            ),
+          ],
           if (author.isNotEmpty && author != '-') ...[
             const SizedBox(height: 8),
             Divider(color: Colors.grey.shade200, height: 1),
@@ -961,7 +1039,7 @@ class CustomerOrdersScreen extends StatelessWidget {
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Text(
-                            'Remarks',
+                            'Remarks & Next Date',
                             style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
@@ -1003,40 +1081,179 @@ class CustomerOrdersScreen extends StatelessWidget {
                       const SizedBox(height: 12),
                       for (
                         int i = 0;
-                        i < ctrl.remarkControllers.length;
+                        i < ctrl.customerRemarkLIst.length;
                         i++
                       ) ...[
-                        Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Expanded(
-                              child: _buildTextField(
-                                'Remark ${i + 1}',
-                                ctrl.remarkControllers[i],
+                        Container(
+                          margin: const EdgeInsets.only(bottom: 16),
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: Colors.grey.shade50,
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(color: Colors.grey.shade200),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(
+                                    'Remark & Next Date ${i + 1}',
+                                    style: Styles.txtBlackColorW60014,
+                                  ),
+                                  if (i >= ctrl.loadedRemarks.length &&
+                                      ctrl.customerRemarkLIst.length > 1)
+                                    IconButton(
+                                      onPressed: () {
+                                        ctrl.removeRemarkFieldAt(i);
+                                      },
+                                      constraints: const BoxConstraints(),
+                                      padding: EdgeInsets.zero,
+                                      icon: const Icon(
+                                        Icons.delete_outline,
+                                        color: Colors.red,
+                                        size: 20,
+                                      ),
+                                    ),
+                                ],
+                              ),
+                              const SizedBox(height: 12),
+                              _buildTextField(
+                                'Remark',
+                                ctrl.customerRemarkLIst[i].remark ??
+                                    TextEditingController(),
                                 readOnly:
                                     (i < ctrl.loadedRemarks.length) ||
                                     !ctrl.isUserPunchedIn(),
                               ),
-                            ),
-                            if (i >= ctrl.loadedRemarks.length &&
-                                ctrl.remarkControllers.length > 1) ...[
-                              const SizedBox(width: 8),
-                              Padding(
-                                padding: const EdgeInsets.only(top: 28.0),
-                                child: IconButton(
-                                  onPressed: () {
-                                    ctrl.removeRemarkFieldAt(i);
-                                  },
-                                  icon: const Icon(
-                                    Icons.delete_outline,
-                                    color: Colors.red,
+                              const SizedBox(height: 12),
+                              Text(
+                                'Next Date',
+                                style: Styles.txtBlackColorW60014,
+                              ),
+                              const SizedBox(height: 8),
+                              InkWell(
+                                onTap:
+                                    (i < ctrl.loadedRemarks.length ||
+                                        !ctrl.isUserPunchedIn())
+                                    ? null
+                                    : () async {
+                                        final initialDate =
+                                            ctrl
+                                                    .customerRemarkLIst[i]
+                                                    .nextDate
+                                                    ?.text
+                                                    .isNotEmpty ==
+                                                true
+                                            ? DateTime.tryParse(
+                                                    ctrl
+                                                        .customerRemarkLIst[i]
+                                                        .nextDate!
+                                                        .text,
+                                                  ) ??
+                                                  DateTime.now()
+                                            : DateTime.now();
+                                        final picked = await showDatePicker(
+                                          context: context,
+                                          initialDate: initialDate,
+                                          firstDate: DateTime.now().subtract(
+                                            const Duration(days: 365),
+                                          ),
+                                          lastDate: DateTime.now().add(
+                                            const Duration(days: 365 * 5),
+                                          ),
+                                          builder: (context, child) {
+                                            return Theme(
+                                              data: Theme.of(context).copyWith(
+                                                colorScheme:
+                                                    const ColorScheme.light(
+                                                      primary:
+                                                          ColorsValue.primary,
+                                                    ),
+                                              ),
+                                              child: child!,
+                                            );
+                                          },
+                                        );
+                                        if (picked != null) {
+                                          ctrl
+                                                  .customerRemarkLIst[i]
+                                                  .nextDate
+                                                  ?.text =
+                                              '${picked.year}-${picked.month.toString().padLeft(2, '0')}-${picked.day.toString().padLeft(2, '0')}';
+                                          ctrl.update();
+                                        }
+                                      },
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 16,
+                                    vertical: 14,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color:
+                                        (i < ctrl.loadedRemarks.length ||
+                                            !ctrl.isUserPunchedIn())
+                                        ? Colors.grey.shade100
+                                        : Colors.white,
+                                    border: Border.all(
+                                      color: Colors.grey.shade300,
+                                    ),
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  child: Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Text(
+                                        ctrl
+                                                    .customerRemarkLIst[i]
+                                                    .nextDate
+                                                    ?.text
+                                                    .isNotEmpty ==
+                                                true
+                                            ? (() {
+                                                try {
+                                                  final parsed = DateTime.parse(
+                                                    ctrl
+                                                        .customerRemarkLIst[i]
+                                                        .nextDate!
+                                                        .text,
+                                                  );
+                                                  return DateFormat(
+                                                    'dd/MM/yyyy',
+                                                  ).format(parsed);
+                                                } catch (_) {
+                                                  return ctrl
+                                                      .customerRemarkLIst[i]
+                                                      .nextDate!
+                                                      .text;
+                                                }
+                                              })()
+                                            : 'Select Next Date',
+                                        style:
+                                            ctrl
+                                                    .customerRemarkLIst[i]
+                                                    .nextDate
+                                                    ?.text
+                                                    .isNotEmpty ==
+                                                true
+                                            ? Styles.txtBlackColorW50014
+                                            : Styles.txtGreyColorW40014,
+                                      ),
+                                      Icon(
+                                        Icons.calendar_today,
+                                        color: Colors.grey.shade600,
+                                        size: 20,
+                                      ),
+                                    ],
                                   ),
                                 ),
                               ),
                             ],
-                          ],
+                          ),
                         ),
-                        const SizedBox(height: 16),
                       ],
                       Align(
                         alignment: Alignment.centerLeft,
