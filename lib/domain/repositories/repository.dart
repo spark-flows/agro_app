@@ -12,8 +12,6 @@ import 'package:agro_app/domain/models/getAll_tasks_model.dart';
 import 'package:agro_app/domain/models/get_all_branches_model.dart';
 import 'package:agro_app/domain/models/get_all_category_model.dart';
 import 'package:agro_app/domain/models/get_all_roll_model.dart';
-import 'package:agro_app/domain/models/get_all_unit_model.dart';
-import 'package:agro_app/domain/models/get_all_users_model.dart';
 import 'package:agro_app/domain/models/get_one_task_model.dart';
 import 'package:agro_app/domain/models/get_one_user_model.dart';
 
@@ -1915,8 +1913,8 @@ class Repository {
         Utility.showMessage(msg, MessageType.error, null, '');
         return null;
       }
-      
-        return response;
+
+      return response;
     } catch (e, st) {
       print('createCollectionApi error: $e\n$st');
       Utility.closeDialog();
@@ -2002,7 +2000,6 @@ class Repository {
     }
   }
 
- 
   Future<bool> changeCollectionStatusApi({
     required String collectionid,
     required String paymentstatus,
@@ -2303,6 +2300,40 @@ class Repository {
     }
   }
 
+  Future<LedgerModel?> postGeneratedPdf({
+    required String ledgerentryid,
+    bool isLoading = false,
+  }) async {
+    try {
+      var response = await _dataRepository.postGeneratedPdf(
+        ledgerentryid: ledgerentryid,
+        isLoading: isLoading,
+      );
+      if (response.hasError) {
+        final msg = _parseErrorMessage(
+          response.data,
+          'Failed to create particular',
+        );
+        Utility.showMessage(msg, MessageType.error, null, '');
+        return null;
+      }
+      if (response.data.isNotEmpty) {
+        return ledgerModelFromJson(response.data);
+      }
+      return null;
+    } catch (e, st) {
+      print('createParticularApi error: $e\n$st');
+      Utility.closeDialog();
+      Utility.showMessage(
+        'Failed to create particular',
+        MessageType.error,
+        null,
+        '',
+      );
+      return null;
+    }
+  }
+
   Future<GetAllLedgersModel?> getLedgerListApi({
     int page = 1,
     int limit = 15,
@@ -2323,10 +2354,7 @@ class Repository {
         isLoading: isLoading,
       );
       if (response.hasError) {
-        final msg = _parseErrorMessage(
-          response.data,
-          'Failed to load ledgers',
-        );
+        final msg = _parseErrorMessage(response.data, 'Failed to load ledgers');
         Utility.showMessage(msg, MessageType.error, null, '');
         return null;
       }

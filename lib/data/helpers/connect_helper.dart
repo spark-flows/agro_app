@@ -1617,7 +1617,7 @@ class ConnectHelper {
       }
 
       final response = await dio.post(
-        '${ApiWrapper.api}${EndPoints.uploadAttendanceApi}',
+        '${ApiWrapper.baseUrl}${EndPoints.uploadAttendanceApi}',
         data: formData,
         options: Options(headers: headers),
       );
@@ -2097,7 +2097,7 @@ class ConnectHelper {
       }
 
       final response = await dio.post(
-        '${ApiWrapper.api}${EndPoints.uploadExpenseApi}',
+        '${ApiWrapper.baseUrl}${EndPoints.uploadExpenseApi}',
         data: formData,
         options: Options(headers: headers),
       );
@@ -2145,6 +2145,20 @@ class ConnectHelper {
       EndPoints.createParticularApi,
       Request.post,
       {"particularid": "", "name": name},
+      isLoading,
+      await Utility.commonHeader(),
+    );
+    return response;
+  }
+
+  Future<ResponseModel> postGeneratedPdf({
+    required String ledgerentryid,
+    bool isLoading = true,
+  }) async {
+    var response = await apiWrapper.makeRequest(
+      EndPoints.postGeneratedPdf,
+      Request.post,
+      {"ledgerentryid": ledgerentryid},
       isLoading,
       await Utility.commonHeader(),
     );

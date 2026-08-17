@@ -6,6 +6,8 @@ import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:agro_app/app/app.dart';
 import 'package:agro_app/domain/domain.dart';
+import 'package:agro_app/data/helpers/api_wrapper.dart';
+import 'package:http/http.dart' as http;
 
 class LedgerStatementScreen extends StatefulWidget {
   const LedgerStatementScreen({super.key});
@@ -507,11 +509,45 @@ class _LedgerStatementScreenState extends State<LedgerStatementScreen> {
     LedgerEntryDoc item,
   ) async {
     try {
+      if (item.id == null || item.id!.isEmpty) {
+        Utility.showMessage('Invalid ledger entry ID', MessageType.error, null, '');
+        return;
+      }
+
       Utility.showLoader();
-      final pdfBytes = await controller.generateSingleEntryPdf(
-        item,
-        item.ledgerName ?? ledgerName,
+      final repository = Get.find<Repository>();
+      final ledgerModel = await repository.postGeneratedPdf(
+        ledgerentryid: item.id!,
+        isLoading: false,
       );
+
+      if (ledgerModel == null ||
+          ledgerModel.isSuccess != true ||
+          ledgerModel.data == null ||
+          ledgerModel.data!.isEmpty) {
+        Utility.closeDialog();
+        Utility.showMessage(
+          ledgerModel?.message ?? 'Failed to generate PDF',
+          MessageType.error,
+          null,
+          '',
+        );
+        return;
+      }
+
+      String pdfUrl = ledgerModel.data!;
+      if (!pdfUrl.startsWith('http')) {
+        pdfUrl = ApiWrapper.baseUrl + pdfUrl;
+      }
+
+      debugPrint('[Share] Downloading PDF from: $pdfUrl');
+
+      final response = await http.get(Uri.parse(pdfUrl));
+      if (response.statusCode != 200) {
+        throw Exception('Failed to download PDF (status: ${response.statusCode})');
+      }
+      final pdfBytes = response.bodyBytes;
+
       Utility.closeDialog();
 
       final safeName = (item.ledgerName ?? ledgerName)
@@ -532,7 +568,7 @@ class _LedgerStatementScreenState extends State<LedgerStatementScreen> {
     } catch (e) {
       Utility.closeDialog();
       Utility.showMessage(
-        'Failed to generate shareable PDF: $e',
+        'Failed to share PDF: $e',
         MessageType.error,
         null,
         '',

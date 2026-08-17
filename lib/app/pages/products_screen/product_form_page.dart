@@ -104,7 +104,7 @@ class _ProductFormPageState extends State<ProductFormPage> {
       });
 
       final response = await dioClient.post(
-        '${ApiWrapper.api}${EndPoints.productUploadApi}',
+        '${ApiWrapper.baseUrl}${EndPoints.productUploadApi}',
         data: formData,
         options: dio.Options(headers: headers),
       );
@@ -282,7 +282,8 @@ class _ProductFormPageState extends State<ProductFormPage> {
                 else
                   DropdownButtonFormField<String>(
                     autovalidateMode: AutovalidateMode.onUserInteraction,
-                    value: _categories.any((cat) => cat.id == _selectedCategoryId)
+                    value:
+                        _categories.any((cat) => cat.id == _selectedCategoryId)
                         ? _selectedCategoryId
                         : null,
                     decoration: InputDecoration(

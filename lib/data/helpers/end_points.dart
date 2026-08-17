@@ -76,4 +76,5 @@ class EndPoints {
   static String createParticularApi = 'api/particular/create';
   static String ledgerListApi = 'api/ledger/list';
   static String ledgerEntryListApi = 'api/ledgerentry/list';
+  static String postGeneratedPdf = 'api/ledgerentry/generatepdf';
 }

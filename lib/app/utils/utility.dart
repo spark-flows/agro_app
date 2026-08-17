@@ -1410,121 +1410,121 @@ abstract class Utility {
     }
   }
 
-  //DownloadPdfFile and Save (legacy wrapper)
-  static Future<void> downloadAndSavePDF(
-    String url,
-    String folderName,
-    int invoiceNo,
-  ) async {
-    await downloadAndOpenFile(fileUrl: url, folderName: folderName);
-  }
+  // //DownloadPdfFile and Save (legacy wrapper)
+  // static Future<void> downloadAndSavePDF(
+  //   String url,
+  //   String folderName,
+  //   int invoiceNo,
+  // ) async {
+  //   await downloadAndOpenFile(fileUrl: url, folderName: folderName);
+  // }
 
-  /// Download any file from URL, save to device, show feedback, and open it.
-  static Future<void> downloadAndOpenFile({
-    required String fileUrl,
-    String folderName = 'NPJ Whatsapp',
-    bool openAfterDownload = true,
-  }) async {
-    try {
-      if (fileUrl.isEmpty) {
-        errorMessage("File URL is empty");
-        return;
-      }
+  // /// Download any file from URL, save to device, show feedback, and open it.
+  // static Future<void> downloadAndOpenFile({
+  //   required String fileUrl,
+  //   String folderName = 'NPJ Whatsapp',
+  //   bool openAfterDownload = true,
+  // }) async {
+  //   try {
+  //     if (fileUrl.isEmpty) {
+  //       errorMessage("File URL is empty");
+  //       return;
+  //     }
 
-      // Show loading
-      showLoader();
+  //     // Show loading
+  //     showLoader();
 
-      // Build full URL — handle relative paths properly
-      String fullUrl;
-      if (fileUrl.startsWith('http')) {
-        fullUrl = fileUrl;
-      } else {
-        String base = ApiWrapper.api.endsWith('/')
-            ? ApiWrapper.api.substring(0, ApiWrapper.api.length - 1)
-            : ApiWrapper.api;
-        String path = fileUrl.startsWith('/') ? fileUrl : '/$fileUrl';
-        fullUrl = base + path;
-      }
+  //     // Build full URL — handle relative paths properly
+  //     String fullUrl;
+  //     if (fileUrl.startsWith('http')) {
+  //       fullUrl = fileUrl;
+  //     } else {
+  //       String base = ApiWrapper.api.endsWith('/')
+  //           ? ApiWrapper.api.substring(0, ApiWrapper.api.length - 1)
+  //           : ApiWrapper.api;
+  //       String path = fileUrl.startsWith('/') ? fileUrl : '/$fileUrl';
+  //       fullUrl = base + path;
+  //     }
 
-      final String fileName = fileUrl.split('/').last.split('?').first;
-      final String safeFileName = fileName.isEmpty
-          ? 'file_${DateTime.now().millisecondsSinceEpoch}'
-          : fileName;
+  //     final String fileName = fileUrl.split('/').last.split('?').first;
+  //     final String safeFileName = fileName.isEmpty
+  //         ? 'file_${DateTime.now().millisecondsSinceEpoch}'
+  //         : fileName;
 
-      debugPrint('Download URL: $fullUrl');
+  //     debugPrint('Download URL: $fullUrl');
 
-      // ── Permission check (Android only) ──────────────────────────────────
-      if (Platform.isAndroid) {
-        final info = await DeviceInfoPlugin().androidInfo;
-        if (info.version.sdkInt <= 29) {
-          // Android 9 and below need WRITE_EXTERNAL_STORAGE
-          final status = await Permission.storage.request();
-          if (!status.isGranted) {
-            closeLoader();
-            errorMessage("Storage permission is required to download files.");
-            return;
-          }
-        }
-        // Android 10–12: READ_EXTERNAL_STORAGE
-        // Android 13+  : App-scoped external dir needs no extra permission
-      }
+  //     // ── Permission check (Android only) ──────────────────────────────────
+  //     if (Platform.isAndroid) {
+  //       final info = await DeviceInfoPlugin().androidInfo;
+  //       if (info.version.sdkInt <= 29) {
+  //         // Android 9 and below need WRITE_EXTERNAL_STORAGE
+  //         final status = await Permission.storage.request();
+  //         if (!status.isGranted) {
+  //           closeLoader();
+  //           errorMessage("Storage permission is required to download files.");
+  //           return;
+  //         }
+  //       }
+  //       // Android 10–12: READ_EXTERNAL_STORAGE
+  //       // Android 13+  : App-scoped external dir needs no extra permission
+  //     }
 
-      // ── Determine save directory ──────────────────────────────────────────
-      Directory? saveDir;
-      if (Platform.isAndroid) {
-        // getExternalStorageDirectory() returns app-scoped external dir,
-        // works on all Android versions without MANAGE_EXTERNAL_STORAGE.
-        saveDir = await getExternalStorageDirectory();
-        saveDir ??= await getApplicationDocumentsDirectory();
-      } else {
-        saveDir = await getApplicationDocumentsDirectory();
-      }
+  //     // ── Determine save directory ──────────────────────────────────────────
+  //     Directory? saveDir;
+  //     if (Platform.isAndroid) {
+  //       // getExternalStorageDirectory() returns app-scoped external dir,
+  //       // works on all Android versions without MANAGE_EXTERNAL_STORAGE.
+  //       saveDir = await getExternalStorageDirectory();
+  //       saveDir ??= await getApplicationDocumentsDirectory();
+  //     } else {
+  //       saveDir = await getApplicationDocumentsDirectory();
+  //     }
 
-      // Create subfolder
-      final String folderPath = '${saveDir.path}/$folderName';
-      await Directory(folderPath).create(recursive: true);
+  //     // Create subfolder
+  //     final String folderPath = '${saveDir.path}/$folderName';
+  //     await Directory(folderPath).create(recursive: true);
 
-      // Unique file path (prevent overwrite)
-      String filePath = '$folderPath/$safeFileName';
-      int counter = 1;
-      while (await File(filePath).exists()) {
-        final name = safeFileName.contains('.')
-            ? safeFileName.substring(0, safeFileName.lastIndexOf('.'))
-            : safeFileName;
-        final ext = safeFileName.contains('.')
-            ? safeFileName.substring(safeFileName.lastIndexOf('.'))
-            : '';
-        filePath = '$folderPath/${name}_$counter$ext';
-        counter++;
-      }
+  //     // Unique file path (prevent overwrite)
+  //     String filePath = '$folderPath/$safeFileName';
+  //     int counter = 1;
+  //     while (await File(filePath).exists()) {
+  //       final name = safeFileName.contains('.')
+  //           ? safeFileName.substring(0, safeFileName.lastIndexOf('.'))
+  //           : safeFileName;
+  //       final ext = safeFileName.contains('.')
+  //           ? safeFileName.substring(safeFileName.lastIndexOf('.'))
+  //           : '';
+  //       filePath = '$folderPath/${name}_$counter$ext';
+  //       counter++;
+  //     }
 
-      // ── Download using Dio ───────────────────────────────────────────────
-      final dio = Dio();
-      await dio.download(
-        fullUrl,
-        filePath,
-        options: Options(
-          receiveTimeout: const Duration(minutes: 5),
-          sendTimeout: const Duration(minutes: 2),
-        ),
-      );
+  //     // ── Download using Dio ───────────────────────────────────────────────
+  //     final dio = Dio();
+  //     await dio.download(
+  //       fullUrl,
+  //       filePath,
+  //       options: Options(
+  //         receiveTimeout: const Duration(minutes: 5),
+  //         sendTimeout: const Duration(minutes: 2),
+  //       ),
+  //     );
 
-      // Close loader
-      closeLoader();
+  //     // Close loader
+  //     closeLoader();
 
-      // Success feedback
-      snacBar("$safeFileName downloaded successfully", Colors.green);
+  //     // Success feedback
+  //     snacBar("$safeFileName downloaded successfully", Colors.green);
 
-      // Open file
-      if (openAfterDownload) {
-        await OpenFilex.open(filePath);
-      }
-    } catch (e) {
-      closeLoader();
-      debugPrint('Download error: $e');
-      errorMessage("Download failed: ${e.toString()}");
-    }
-  }
+  //     // Open file
+  //     if (openAfterDownload) {
+  //       await OpenFilex.open(filePath);
+  //     }
+  //   } catch (e) {
+  //     closeLoader();
+  //     debugPrint('Download error: $e');
+  //     errorMessage("Download failed: ${e.toString()}");
+  //   }
+  // }
 
   static String formatTime(String apiTime) {
     DateTime dateTime = DateTime.parse(apiTime);

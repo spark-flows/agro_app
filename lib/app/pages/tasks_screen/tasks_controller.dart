@@ -434,7 +434,7 @@ class TasksController extends GetxController {
   // ── Attachment Picker Helpers ──────────────────────────────────────────────
   Future<void> pickAttachments() async {
     try {
-      FilePickerResult? result = await FilePicker.platform.pickFiles(
+      FilePickerResult? result = await FilePicker.pickFiles(
         type: FileType.custom,
         allowedExtensions: ['pdf', 'xls', 'xlsx', 'jpg', 'jpeg', 'png'],
         allowMultiple: true,

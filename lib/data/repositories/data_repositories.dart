@@ -94,8 +94,7 @@ class DataRepository extends DomainRepository {
   Future<ResponseModel> createUnitApi({
     required String name,
     bool isLoading = false,
-  }) async =>
-      connectHelper.createUnitApi(name: name, isLoading: isLoading);
+  }) async => connectHelper.createUnitApi(name: name, isLoading: isLoading);
 
   Future<ResponseModel> createProductApi({
     String? productid,
@@ -922,6 +921,14 @@ class DataRepository extends DomainRepository {
   }) async =>
       connectHelper.createParticularApi(name: name, isLoading: isLoading);
 
+  Future<ResponseModel> postGeneratedPdf({
+    required String ledgerentryid,
+    bool isLoading = false,
+  }) async => connectHelper.postGeneratedPdf(
+    ledgerentryid: ledgerentryid,
+    isLoading: isLoading,
+  );
+
   Future<ResponseModel> getLedgerListApi({
     int page = 1,
     int limit = 15,
@@ -930,16 +937,15 @@ class DataRepository extends DomainRepository {
     List<String> name = const [],
     List<String> parent = const [],
     bool isLoading = false,
-  }) async =>
-      connectHelper.getLedgerListApi(
-        page: page,
-        limit: limit,
-        search: search,
-        branchid: branchid,
-        name: name,
-        parent: parent,
-        isLoading: isLoading,
-      );
+  }) async => connectHelper.getLedgerListApi(
+    page: page,
+    limit: limit,
+    search: search,
+    branchid: branchid,
+    name: name,
+    parent: parent,
+    isLoading: isLoading,
+  );
 
   Future<ResponseModel> getLedgerEntryListApi({
     required String ledgerName,
@@ -952,17 +958,16 @@ class DataRepository extends DomainRepository {
     String fromDate = "",
     String toDate = "",
     bool isLoading = false,
-  }) async =>
-      connectHelper.getLedgerEntryListApi(
-        ledgerName: ledgerName,
-        branchid: branchid,
-        page: page,
-        limit: limit,
-        particulars: particulars,
-        vouchertypes: vouchertypes,
-        voucherno: voucherno,
-        fromDate: fromDate,
-        toDate: toDate,
-        isLoading: isLoading,
-      );
+  }) async => connectHelper.getLedgerEntryListApi(
+    ledgerName: ledgerName,
+    branchid: branchid,
+    page: page,
+    limit: limit,
+    particulars: particulars,
+    vouchertypes: vouchertypes,
+    voucherno: voucherno,
+    fromDate: fromDate,
+    toDate: toDate,
+    isLoading: isLoading,
+  );
 }
