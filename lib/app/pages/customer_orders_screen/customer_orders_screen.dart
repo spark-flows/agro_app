@@ -1158,12 +1158,8 @@ class CustomerOrdersScreen extends StatelessWidget {
                                         final picked = await showDatePicker(
                                           context: context,
                                           initialDate: initialDate,
-                                          firstDate: DateTime.now().subtract(
-                                            const Duration(days: 365),
-                                          ),
-                                          lastDate: DateTime.now().add(
-                                            const Duration(days: 365 * 5),
-                                          ),
+                                          firstDate: DateTime.now(),
+                                          lastDate: DateTime(3000),
                                           builder: (context, child) {
                                             return Theme(
                                               data: Theme.of(context).copyWith(
