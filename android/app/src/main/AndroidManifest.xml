@@ -20,7 +20,7 @@
         tools:node="remove" />
 
     <application
-        android:label="BABA Agro"
+        android:label="BABA AGRO"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity

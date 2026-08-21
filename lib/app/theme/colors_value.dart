@@ -39,45 +39,45 @@ abstract class ColorsValue {
   static const int lightmaincolor = 0xffDEF4F6;
 
   // ─── Beautiful Agro Theme ────────────────────────────────────────────────────
-  // Primary - Emerald Green
-  static const Color primary        = Color(0xFF059669);
-  static const Color primaryDark    = Color(0xFF047857);
-  static const Color primaryDeep    = Color(0xFF064E3B);
-  static const Color primaryLight   = Color(0xFFD1FAE5);
-  static const Color primarySurface = Color(0xFFF0FDF4);
+  // Primary - Purple
+  static const Color primary = Color(0xFF58377C);
+  static const Color primaryDark = Color(0xFF472C64);
+  static const Color primaryDeep = Color(0xFF2E1C41);
+  static const Color primaryLight = Color(0xFFE6D8F2);
+  static const Color primarySurface = Color(0xFFF7F4FA);
 
   // Accent - Warm Amber
-  static const Color accent         = Color(0xFFF59E0B);
-  static const Color accentDark     = Color(0xFFD97706);
-  static const Color accentLight    = Color(0xFFFEF3C7);
+  static const Color accent = Color(0xFFF59E0B);
+  static const Color accentDark = Color(0xFFD97706);
+  static const Color accentLight = Color(0xFFFEF3C7);
 
   // Neutrals
-  static const Color bgMain         = Color(0xFFF8FAFC);
-  static const Color surface        = Color(0xFFFFFFFF);
-  static const Color textH1         = Color(0xFF0F172A);
-  static const Color textH2         = Color(0xFF1E293B);
-  static const Color textBody       = Color(0xFF475569);
-  static const Color textMuted      = Color(0xFF94A3B8);
-  static const Color borderCol      = Color(0xFFE2E8F0);
-  static const Color divider        = Color(0xFFF1F5F9);
+  static const Color bgMain = Color(0xFFF8FAFC);
+  static const Color surface = Color(0xFFFFFFFF);
+  static const Color textH1 = Color(0xFF0F172A);
+  static const Color textH2 = Color(0xFF1E293B);
+  static const Color textBody = Color(0xFF475569);
+  static const Color textMuted = Color(0xFF94A3B8);
+  static const Color borderCol = Color(0xFFE2E8F0);
+  static const Color divider = Color(0xFFF1F5F9);
 
   // Status
-  static const Color statusPending      = Color(0xFFEA580C);
-  static const Color statusPendingBg    = Color(0xFFFFF7ED);
-  static const Color statusProcessing   = Color(0xFF2563EB);
+  static const Color statusPending = Color(0xFFEA580C);
+  static const Color statusPendingBg = Color(0xFFFFF7ED);
+  static const Color statusProcessing = Color(0xFF2563EB);
   static const Color statusProcessingBg = Color(0xFFEFF6FF);
-  static const Color statusComplete     = Color(0xFF16A34A);
-  static const Color statusCompleteBg   = Color(0xFFF0FDF4);
-  static const Color statusCancelled    = Color(0xFFDC2626);
-  static const Color statusCancelledBg  = Color(0xFFFEF2F2);
+  static const Color statusComplete = Color(0xFF16A34A);
+  static const Color statusCompleteBg = Color(0xFFF0FDF4);
+  static const Color statusCancelled = Color(0xFFDC2626);
+  static const Color statusCancelledBg = Color(0xFFFEF2F2);
 
   // Legacy dark aliases (kept for backward compat)
-  static Color darkBg            = const Color(0xFF0F1117);
-  static Color darkSidebar       = const Color(0xFF16181F);
-  static Color darkCard          = const Color(0xFF1C1E27);
-  static Color darkBorder        = const Color(0xFF2A2D38);
-  static Color darkTextPrimary   = const Color(0xFFE8EAF0);
+  static Color darkBg = const Color(0xFF0F1117);
+  static Color darkSidebar = const Color(0xFF16181F);
+  static Color darkCard = const Color(0xFF1C1E27);
+  static Color darkBorder = const Color(0xFF2A2D38);
+  static Color darkTextPrimary = const Color(0xFFE8EAF0);
   static Color darkTextSecondary = const Color(0xFF8A8FA8);
-  static Color appGreen          = const Color(0xFF059669);
-  static Color appGreenLight     = const Color(0xFFD1FAE5);
+  static Color appGreen = const Color(0xFF58377C);
+  static Color appGreenLight = const Color(0xFFE6D8F2);
 }

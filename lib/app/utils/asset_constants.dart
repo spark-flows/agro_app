@@ -78,6 +78,7 @@ abstract class AssetConstants {
   static const String ic_forgot = "assets/svg/ic_forgot.svg";
   static const String ic_reset_password = "assets/svg/ic_reset_password.svg";
 
+  static const String logo = "assets/images/logo.jpeg";
   static const String ssss = "";
   static const String emptySearch = "assets/svg/ic_chat_empty.svg";
 }

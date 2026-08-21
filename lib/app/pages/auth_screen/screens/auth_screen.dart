@@ -1,6 +1,6 @@
+import 'package:agro_app/app/app.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:agro_app/app/app.dart';
 
 class AuthScreen extends StatelessWidget {
   const AuthScreen({super.key});
@@ -10,7 +10,7 @@ class AuthScreen extends StatelessWidget {
     return GetBuilder<AuthController>(
       builder: (controller) {
         return Scaffold(
-          backgroundColor: ColorsValue.bgMain,
+          backgroundColor: ColorsValue.white,
           body: SafeArea(
             child: Form(
               key: controller.loginKey,
@@ -21,11 +21,7 @@ class AuthScreen extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     Dimens.boxHeight40,
-                    Icon(
-                      Icons.agriculture_rounded,
-                      size: 80,
-                      color: ColorsValue.primary,
-                    ),
+                    Image.asset(AssetConstants.logo, height: 150),
                     Dimens.boxHeight20,
                     Text(
                       'Agro ERP',
