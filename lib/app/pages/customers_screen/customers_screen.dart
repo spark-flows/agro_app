@@ -3,6 +3,7 @@ import 'package:agro_app/domain/services/enum.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
+import 'package:infinite_scroll_pagination/infinite_scroll_pagination.dart';
 
 class CustomersScreen extends StatelessWidget {
   const CustomersScreen({super.key});
@@ -48,245 +49,258 @@ class CustomersScreen extends StatelessWidget {
 
               /// List
               Expanded(
-                child: () {
-                  if (controller.isLoading) {
-                    return const Center(
-                      child: CircularProgressIndicator(
-                        color: ColorsValue.primary,
+                child: RefreshIndicator(
+                  onRefresh: () async {
+                    controller.customerPagingController.refresh();
+                  },
+                  color: ColorsValue.primary,
+                  child: PagedListView<int, CustomerItem>(
+                    pagingController: controller.customerPagingController,
+                    builderDelegate: PagedChildBuilderDelegate<CustomerItem>(
+                      firstPageProgressIndicatorBuilder: (_) => const Center(
+                        child: CircularProgressIndicator(
+                          color: ColorsValue.primary,
+                        ),
                       ),
-                    );
-                  }
-                  if (controller.customers.isEmpty) {
-                    return const Center(child: Text('No customers found.'));
-                  }
-                  return ListView.builder(
-                    itemCount: controller.customers.length,
-                    itemBuilder: (context, index) {
-                      final customer = controller.customers[index];
-                      return Card(
-                        margin: const EdgeInsets.symmetric(
-                          horizontal: 10,
-                          vertical: 6,
+                      newPageProgressIndicatorBuilder: (_) => const Center(
+                        child: Padding(
+                          padding: EdgeInsets.all(12),
+                          child: CircularProgressIndicator(
+                            color: ColorsValue.primary,
+                          ),
                         ),
-                        elevation: 1,
-                        clipBehavior: Clip.antiAlias,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Column(
-                          children: [
-                            ListTile(
-                              // onTap: () {
-                              //   if (!RoleUtils.isAdmin(
-                              //     homeController.roleName,
-                              //   )) {
-                              //     _showFeedbackDialog(
-                              //       context,
-                              //       controller,
-                              //       customer,
-                              //     );
-                              //   }
-                              // },
-                              contentPadding: const EdgeInsets.only(
-                                left: 16,
-                                right: 16,
-                                top: 4,
-                                bottom: 0,
-                              ),
-                              leading: CircleAvatar(
-                                radius: 24,
-                                backgroundColor: ColorsValue.primary.withValues(
-                                  alpha: 0.1,
+                      ),
+                      noItemsFoundIndicatorBuilder: (_) => const Center(
+                        child: Text('No customers found.'),
+                      ),
+                      itemBuilder: (context, customer, index) {
+                        return Card(
+                          margin: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 6,
+                          ),
+                          elevation: 1,
+                          clipBehavior: Clip.antiAlias,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Column(
+                            children: [
+                              ListTile(
+                                // onTap: () {
+                                //   if (!RoleUtils.isAdmin(
+                                //     homeController.roleName,
+                                //   )) {
+                                //     _showFeedbackDialog(
+                                //       context,
+                                //       controller,
+                                //       customer,
+                                //     );
+                                //   }
+                                // },
+                                contentPadding: const EdgeInsets.only(
+                                  left: 16,
+                                  right: 16,
+                                  top: 4,
+                                  bottom: 0,
                                 ),
-                                child: Text(
-                                  customer.name.isNotEmpty
-                                      ? customer.name
-                                            .substring(0, 1)
-                                            .toUpperCase()
-                                      : '?',
-                                  style: TextStyle(
-                                    color: ColorsValue.primary,
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 20,
+                                leading: CircleAvatar(
+                                  radius: 24,
+                                  backgroundColor:
+                                      ColorsValue.primary.withValues(
+                                    alpha: 0.1,
                                   ),
-                                ),
-                              ),
-                              title: Text(
-                                customer.name,
-                                style: Styles.txtBlackColorW70020.copyWith(
-                                  fontSize: 16,
-                                ),
-                              ),
-                              subtitle: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  const SizedBox(height: 6),
-                                  Row(
-                                    children: [
-                                      const Icon(
-                                        Icons.phone_outlined,
-                                        size: 14,
-                                        color: Colors.grey,
-                                      ),
-                                      const SizedBox(width: 4),
-                                      Text(
-                                        customer.phone,
-                                        style: Styles.txtGreyColorW40014,
-                                      ),
-                                    ],
-                                  ),
-                                  const SizedBox(height: 4),
-                                  Row(
-                                    children: [
-                                      const Icon(
-                                        Icons.email_outlined,
-                                        size: 14,
-                                        color: Colors.grey,
-                                      ),
-                                      const SizedBox(width: 4),
-                                      Text(
-                                        customer.location,
-                                        style: Styles.txtGreyColorW40014,
-                                      ),
-                                    ],
-                                  ),
-                                  const SizedBox(height: 6),
-                                  if (customer.village != 'N/A' &&
-                                      customer.village.isNotEmpty)
-                                    Padding(
-                                      padding: const EdgeInsets.only(
-                                        bottom: 6.0,
-                                      ),
-                                      child: Row(
-                                        children: [
-                                          const Icon(
-                                            Icons.home_outlined,
-                                            size: 14,
-                                            color: Colors.grey,
-                                          ),
-                                          const SizedBox(width: 4),
-                                          Text(
-                                            customer.village,
-                                            style: Styles.txtGreyColorW40014,
-                                          ),
-                                        ],
-                                      ),
+                                  child: Text(
+                                    customer.name.isNotEmpty
+                                        ? customer.name
+                                              .substring(0, 1)
+                                              .toUpperCase()
+                                        : '?',
+                                    style: TextStyle(
+                                      color: ColorsValue.primary,
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 20,
                                     ),
-                                  if (RoleUtils.isAdmin(
-                                        homeController.roleName,
-                                      ) &&
-                                      customer.feedback != 'N/A' &&
-                                      customer.feedback.isNotEmpty)
-                                    Padding(
-                                      padding: const EdgeInsets.only(top: 4.0),
-                                      child: RichText(
-                                        text: TextSpan(
+                                  ),
+                                ),
+                                title: Text(
+                                  customer.name,
+                                  style: Styles.txtBlackColorW70020.copyWith(
+                                    fontSize: 16,
+                                  ),
+                                ),
+                                subtitle: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    const SizedBox(height: 6),
+                                    Row(
+                                      children: [
+                                        const Icon(
+                                          Icons.phone_outlined,
+                                          size: 14,
+                                          color: Colors.grey,
+                                        ),
+                                        const SizedBox(width: 4),
+                                        Text(
+                                          customer.phone,
+                                          style: Styles.txtGreyColorW40014,
+                                        ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Row(
+                                      children: [
+                                        const Icon(
+                                          Icons.email_outlined,
+                                          size: 14,
+                                          color: Colors.grey,
+                                        ),
+                                        const SizedBox(width: 4),
+                                        Text(
+                                          customer.location,
+                                          style: Styles.txtGreyColorW40014,
+                                        ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 6),
+                                    if (customer.village != 'N/A' &&
+                                        customer.village.isNotEmpty)
+                                      Padding(
+                                        padding: const EdgeInsets.only(
+                                          bottom: 6.0,
+                                        ),
+                                        child: Row(
                                           children: [
-                                            const TextSpan(
-                                              text: 'Feedback: ',
-                                              style: TextStyle(
-                                                color: Colors.green,
-                                                fontWeight: FontWeight.bold,
-                                                fontSize: 14,
-                                              ),
+                                            const Icon(
+                                              Icons.home_outlined,
+                                              size: 14,
+                                              color: Colors.grey,
                                             ),
-                                            TextSpan(
-                                              text: customer.feedback,
-                                              style: TextStyle(
-                                                color: Colors.green,
-                                                fontSize: 14,
-                                              ),
+                                            const SizedBox(width: 4),
+                                            Text(
+                                              customer.village,
+                                              style: Styles.txtGreyColorW40014,
                                             ),
                                           ],
                                         ),
                                       ),
-                                    ),
-                                ],
-                              ),
-                            ),
-                            Divider(height: 1, color: Colors.grey.shade200),
-                            if (true)
-                              IntrinsicHeight(
-                                child: Row(
-                                  children: [
-                                    Expanded(
-                                      child: TextButton.icon(
-                                        onPressed: () {
-                                          controller.setupEdit(customer);
-                                          _showAddDialog(context, controller);
-                                        },
-                                        icon: const Icon(
-                                          Icons.edit_outlined,
-                                          color: Colors.blue,
-                                          size: 20,
-                                        ),
-                                        label: const Text(
-                                          'Edit',
-                                          style: TextStyle(
-                                            color: Colors.blue,
-                                            fontWeight: FontWeight.w600,
-                                          ),
-                                        ),
-                                        style: TextButton.styleFrom(
-                                          padding: const EdgeInsets.symmetric(
-                                            vertical: 14,
-                                          ),
-                                          shape: const RoundedRectangleBorder(
-                                            borderRadius: BorderRadius.zero,
+                                    if (RoleUtils.isAdmin(
+                                          homeController.roleName,
+                                        ) &&
+                                        customer.feedback != 'N/A' &&
+                                        customer.feedback.isNotEmpty)
+                                      Padding(
+                                        padding:
+                                            const EdgeInsets.only(top: 4.0),
+                                        child: RichText(
+                                          text: TextSpan(
+                                            children: [
+                                              const TextSpan(
+                                                text: 'Feedback: ',
+                                                style: TextStyle(
+                                                  color: Colors.green,
+                                                  fontWeight: FontWeight.bold,
+                                                  fontSize: 14,
+                                                ),
+                                              ),
+                                              TextSpan(
+                                                text: customer.feedback,
+                                                style: TextStyle(
+                                                  color: Colors.green,
+                                                  fontSize: 14,
+                                                ),
+                                              ),
+                                            ],
                                           ),
                                         ),
                                       ),
-                                    ),
-                                    VerticalDivider(
-                                      width: 1,
-                                      color: Colors.grey.shade200,
-                                      thickness: 1,
-                                    ),
-                                    Expanded(
-                                      child: TextButton.icon(
-                                        onPressed: () {
-                                          Utility.showDeleteDialog(
-                                            title: 'Delete Customer',
-                                            message:
-                                                'Are you sure you want to delete ${customer.name}? This action cannot be undone.',
-                                            onConfirm: () {
-                                              controller.deleteCustomer(
-                                                customer.id,
-                                              );
-                                            },
-                                          );
-                                        },
-                                        icon: const Icon(
-                                          Icons.delete_outline,
-                                          color: Colors.red,
-                                          size: 20,
-                                        ),
-                                        label: const Text(
-                                          'Delete',
-                                          style: TextStyle(
-                                            color: Colors.red,
-                                            fontWeight: FontWeight.w600,
-                                          ),
-                                        ),
-                                        style: TextButton.styleFrom(
-                                          padding: const EdgeInsets.symmetric(
-                                            vertical: 14,
-                                          ),
-                                          shape: const RoundedRectangleBorder(
-                                            borderRadius: BorderRadius.zero,
-                                          ),
-                                        ),
-                                      ),
-                                    ),
                                   ],
                                 ),
                               ),
-                          ],
-                        ),
-                      );
-                    },
-                  );
-                }(),
+                              Divider(height: 1, color: Colors.grey.shade200),
+                              if (true)
+                                IntrinsicHeight(
+                                  child: Row(
+                                    children: [
+                                      Expanded(
+                                        child: TextButton.icon(
+                                          onPressed: () {
+                                            controller.setupEdit(customer);
+                                            _showAddDialog(context, controller);
+                                          },
+                                          icon: const Icon(
+                                            Icons.edit_outlined,
+                                            color: Colors.blue,
+                                            size: 20,
+                                          ),
+                                          label: const Text(
+                                            'Edit',
+                                            style: TextStyle(
+                                              color: Colors.blue,
+                                              fontWeight: FontWeight.w600,
+                                            ),
+                                          ),
+                                          style: TextButton.styleFrom(
+                                            padding: const EdgeInsets.symmetric(
+                                              vertical: 14,
+                                            ),
+                                            shape: const RoundedRectangleBorder(
+                                              borderRadius: BorderRadius.zero,
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                      VerticalDivider(
+                                        width: 1,
+                                        color: Colors.grey.shade200,
+                                        thickness: 1,
+                                      ),
+                                      Expanded(
+                                        child: TextButton.icon(
+                                          onPressed: () {
+                                            Utility.showDeleteDialog(
+                                              title: 'Delete Customer',
+                                              message:
+                                                  'Are you sure you want to delete ${customer.name}? This action cannot be undone.',
+                                              onConfirm: () {
+                                                controller.deleteCustomer(
+                                                  customer.id,
+                                                );
+                                              },
+                                            );
+                                          },
+                                          icon: const Icon(
+                                            Icons.delete_outline,
+                                            color: Colors.red,
+                                            size: 20,
+                                          ),
+                                          label: const Text(
+                                            'Delete',
+                                            style: TextStyle(
+                                              color: Colors.red,
+                                              fontWeight: FontWeight.w600,
+                                            ),
+                                          ),
+                                          style: TextButton.styleFrom(
+                                            padding: const EdgeInsets.symmetric(
+                                              vertical: 14,
+                                            ),
+                                            shape: const RoundedRectangleBorder(
+                                              borderRadius: BorderRadius.zero,
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                            ],
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                ),
               ),
               Dimens.boxHeight10,
             ],

@@ -130,6 +130,16 @@ class DataRepository extends DomainRepository {
     isLoading: isLoading,
   );
 
+  Future<ResponseModel> getCustomerListGetApi({
+    String? distributorid,
+    String? branchid,
+    bool isLoading = false,
+  }) async => connectHelper.getCustomerListGetApi(
+    distributorid: distributorid,
+    branchid: branchid,
+    isLoading: isLoading,
+  );
+
   Future<ResponseModel> createCustomerApi({
     String? customerid,
     required String name,

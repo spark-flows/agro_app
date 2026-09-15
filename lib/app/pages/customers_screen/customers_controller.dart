@@ -1,11 +1,11 @@
 import 'dart:async';
-import 'package:get/get.dart';
-import 'package:flutter/material.dart';
-import 'package:agro_app/domain/domain.dart';
-import 'package:agro_app/app/utils/utility.dart';
-import 'package:agro_app/domain/models/get_all_users_model.dart';
-import 'package:agro_app/domain/services/enum.dart';
+
 import 'package:agro_app/app/pages/home_screen/home_controller.dart';
+import 'package:agro_app/app/utils/utility.dart';
+import 'package:agro_app/domain/domain.dart';
+import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:infinite_scroll_pagination/infinite_scroll_pagination.dart';
 
 class CustomerItem {
   final String id;
@@ -32,10 +32,12 @@ class CustomerItem {
 class CustomersController extends GetxController {
   List<CustomerItem> customers = [];
   bool isLoading = false;
-  
-  int currentPage = 1;
-  int limit = 10;
+
+  final int limit = 10;
   String _searchQuery = '';
+
+  late final PagingController<int, CustomerItem> customerPagingController =
+      PagingController(firstPageKey: 1);
 
   final TextEditingController searchController = TextEditingController();
   final TextEditingController nameCtrl = TextEditingController();
@@ -44,7 +46,7 @@ class CustomersController extends GetxController {
   final TextEditingController gstCtrl = TextEditingController();
   final TextEditingController villageCtrl = TextEditingController();
   final GlobalKey<FormState> addFormKey = GlobalKey<FormState>();
-  
+
   Timer? _searchTimer;
   String editingCustomerId = '';
 
@@ -56,7 +58,9 @@ class CustomersController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    fetchCustomers();
+    customerPagingController.addPageRequestListener((pageKey) {
+      fetchCustomersPage(pageKey);
+    });
     // Detect role and load distributors if admin
     final homeController = Get.find<HomeController>();
     isAdminView = RoleUtils.isAdmin(homeController.roleName);
@@ -65,17 +69,10 @@ class CustomersController extends GetxController {
     }
   }
 
-  Future<void> fetchCustomers({bool isRefresh = true}) async {
-    if (isRefresh) {
-      currentPage = 1;
-      customers.clear();
-      isLoading = true;
-    }
-    update();
-
+  Future<void> fetchCustomersPage(int pageKey) async {
     try {
       var customerModel = await Get.find<Repository>().getCustomerListApi(
-        page: currentPage,
+        page: pageKey,
         limit: limit,
         search: _searchQuery,
         isLoading: false,
@@ -83,52 +80,62 @@ class CustomersController extends GetxController {
       if (customerModel != null &&
           customerModel.data != null &&
           customerModel.data!.docs != null) {
-        
-        final docs = customerModel.data!.docs!
-            .map(
-              (doc) {
-                String distId = '';
-                if (doc.distributorid is Map) {
-                  distId = doc.distributorid["_id"]?.toString() ?? '';
-                } else {
-                  distId = doc.distributorid?.toString() ?? '';
-                }
-                return CustomerItem(
-                  id: doc.id ?? '',
-                  name: doc.name ?? '',
-                  phone: '${doc.countrycode ?? ''} ${doc.mobile ?? ''}',
-                  location: (doc.email?.isNotEmpty ?? false)
-                      ? doc.email!
-                      : 'N/A',
-                  feedback: (doc.feedback?.isNotEmpty ?? false)
-                      ? doc.feedback!
-                      : 'N/A',
-                  village: (doc.village?.isNotEmpty ?? false)
-                      ? doc.village!
-                      : 'N/A',
-                  distributorId: distId,
-                );
-              },
-            )
-            .toList();
-            
-        if (isRefresh) {
+        final docs = customerModel.data!.docs!.map((doc) {
+          String distId = '';
+          if (doc.distributorid is Map) {
+            distId = doc.distributorid["_id"]?.toString() ?? '';
+          } else {
+            distId = doc.distributorid?.toString() ?? '';
+          }
+          return CustomerItem(
+            id: doc.id ?? '',
+            name: doc.name ?? '',
+            phone: '${doc.countrycode ?? ''} ${doc.mobile ?? ''}',
+            location: (doc.email?.isNotEmpty ?? false) ? doc.email! : 'N/A',
+            feedback: (doc.feedback?.isNotEmpty ?? false)
+                ? doc.feedback!
+                : 'N/A',
+            village: (doc.village?.isNotEmpty ?? false) ? doc.village! : 'N/A',
+            distributorId: distId,
+          );
+        }).toList();
+
+        final hasNextPage =
+            customerModel.data!.hasNextPage ?? (docs.length >= limit);
+        final isLastPage = !hasNextPage || docs.length < limit;
+
+        if (pageKey == 1) {
           customers = docs;
         } else {
           customers.addAll(docs);
         }
+
+        if (isLastPage) {
+          customerPagingController.appendLastPage(docs);
+        } else {
+          final nextPageKey = pageKey + 1;
+          customerPagingController.appendPage(docs, nextPageKey);
+        }
+      } else {
+        if (pageKey == 1) {
+          customers.clear();
+        }
+        customerPagingController.appendLastPage([]);
       }
     } catch (e) {
-      debugPrint('Error fetching customers: $e');
-    } finally {
-      isLoading = false;
-      update();
+      debugPrint('Error fetching customers page $pageKey: $e');
+      customerPagingController.error = e;
     }
+  }
+
+  Future<void> fetchCustomers({bool isRefresh = true}) async {
+    customerPagingController.refresh();
   }
 
   @override
   void onClose() {
     _searchTimer?.cancel();
+    customerPagingController.dispose();
     searchController.dispose();
     nameCtrl.dispose();
     phoneCtrl.dispose();
@@ -170,7 +177,8 @@ class CustomersController extends GetxController {
     if (!addFormKey.currentState!.validate()) return;
 
     // Admin must select a distributor
-    if (isAdminView && (selectedDistributorId == null || selectedDistributorId!.isEmpty)) {
+    if (isAdminView &&
+        (selectedDistributorId == null || selectedDistributorId!.isEmpty)) {
       Utility.errorMessage('Please select a distributor.');
       return;
     }
@@ -179,8 +187,7 @@ class CustomersController extends GetxController {
 
     // For admin: use selected distributor. For dealer: connect_helper
     // reads the logged-in dealer's ID from secure storage automatically.
-    String? overrideDistributorId =
-        isAdminView ? selectedDistributorId : null;
+    String? overrideDistributorId = isAdminView ? selectedDistributorId : null;
 
     var response = await Get.find<Repository>().createCustomerApi(
       customerid: editingCustomerId.isEmpty ? null : editingCustomerId,
@@ -212,8 +219,9 @@ class CustomersController extends GetxController {
     gstCtrl.text = customer.feedback == 'N/A' ? '' : customer.feedback;
     villageCtrl.text = customer.village == 'N/A' ? '' : customer.village;
     if (isAdminView) {
-      selectedDistributorId =
-          customer.distributorId.isNotEmpty ? customer.distributorId : null;
+      selectedDistributorId = customer.distributorId.isNotEmpty
+          ? customer.distributorId
+          : null;
     }
     update();
   }
@@ -227,10 +235,7 @@ class CustomersController extends GetxController {
     Utility.closeLoader();
 
     if (success) {
-      Utility.snacBar(
-        'Customer deleted successfully',
-        Colors.green,
-      );
+      Utility.snacBar('Customer deleted successfully', Colors.green);
       fetchCustomers(isRefresh: true);
     } else {
       Utility.errorMessage('Failed to delete customer');
@@ -267,10 +272,7 @@ class CustomersController extends GetxController {
 
     if (errorMsg == null) {
       Get.back(); // Close the bottom sheet
-      Utility.snacBar(
-        'Feedback submitted successfully',
-        Colors.green,
-      );
+      Utility.snacBar('Feedback submitted successfully', Colors.green);
       feedbackCtrl.clear();
       // Optional: you can refresh customers if feedback is shown in the list
       fetchCustomers(isRefresh: true);

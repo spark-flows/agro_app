@@ -499,6 +499,42 @@ class Repository {
     }
   }
 
+  Future<GetAllCustomerModel?> getCustomerListGetApi({
+    String? distributorid,
+    String? branchid,
+    bool isLoading = false,
+  }) async {
+    try {
+      var response = await _dataRepository.getCustomerListGetApi(
+        distributorid: distributorid,
+        branchid: branchid,
+        isLoading: isLoading,
+      );
+      if (response.hasError) {
+        final msg = _parseErrorMessage(
+          response.data,
+          'Failed to load customers',
+        );
+        Utility.showMessage(msg, MessageType.error, null, '');
+        return null;
+      }
+      if (response.data.isNotEmpty) {
+        return getAllCustomerModelFromJson(response.data);
+      }
+      return null;
+    } catch (e) {
+      print('getCustomerListGetApi error: $e');
+      Utility.closeDialog();
+      Utility.showMessage(
+        'Failed to load customers',
+        MessageType.error,
+        null,
+        '',
+      );
+      return null;
+    }
+  }
+
   Future<CreateCustomerModel?> createCustomerApi({
     String? customerid,
     required String name,

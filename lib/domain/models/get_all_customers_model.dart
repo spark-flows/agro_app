@@ -4,8 +4,21 @@
 
 import 'dart:convert';
 
-GetAllCustomerModel getAllCustomerModelFromJson(String str) =>
-    GetAllCustomerModel.fromJson(json.decode(str));
+GetAllCustomerModel getAllCustomerModelFromJson(String str) {
+  final decoded = json.decode(str);
+  if (decoded is List) {
+    return GetAllCustomerModel(
+      isSuccess: true,
+      status: 200,
+      data: GetAllCustomerData(
+        docs: List<GetAllCustomerDoc>.from(
+          decoded.map((x) => GetAllCustomerDoc.fromJson(x)),
+        ),
+      ),
+    );
+  }
+  return GetAllCustomerModel.fromJson(decoded as Map<String, dynamic>);
+}
 
 String getAllCustomerModelToJson(GetAllCustomerModel data) =>
     json.encode(data.toJson());
@@ -20,12 +33,12 @@ class GetAllCustomerModel {
 
   factory GetAllCustomerModel.fromJson(Map<String, dynamic> json) =>
       GetAllCustomerModel(
-        message: json["Message"],
-        data: json["Data"] == null
+        message: json["Message"] ?? json["message"],
+        data: json["Data"] == null && json["data"] == null
             ? null
-            : GetAllCustomerData.fromJson(json["Data"]),
-        status: json["Status"],
-        isSuccess: json["IsSuccess"],
+            : GetAllCustomerData.fromJson(json["Data"] ?? json["data"]),
+        status: json["Status"] ?? json["status"],
+        isSuccess: json["IsSuccess"] ?? json["isSuccess"],
       );
 
   Map<String, dynamic> toJson() => {
@@ -61,13 +74,24 @@ class GetAllCustomerData {
     this.nextPage,
   });
 
-  factory GetAllCustomerData.fromJson(Map<String, dynamic> json) =>
-      GetAllCustomerData(
-        docs: json["docs"] == null
+  factory GetAllCustomerData.fromJson(dynamic json) {
+    if (json is List) {
+      return GetAllCustomerData(
+        docs: List<GetAllCustomerDoc>.from(
+          json.map((x) => GetAllCustomerDoc.fromJson(x)),
+        ),
+      );
+    }
+    if (json is Map<String, dynamic>) {
+      final dynamic rawDocs = json["docs"] ?? json["data"];
+      return GetAllCustomerData(
+        docs: rawDocs == null
             ? []
-            : List<GetAllCustomerDoc>.from(
-                json["docs"]!.map((x) => GetAllCustomerDoc.fromJson(x)),
-              ),
+            : (rawDocs is List
+                ? List<GetAllCustomerDoc>.from(
+                    rawDocs.map((x) => GetAllCustomerDoc.fromJson(x)),
+                  )
+                : []),
         totalDocs: json["totalDocs"],
         limit: json["limit"],
         totalPages: json["totalPages"],
@@ -78,6 +102,9 @@ class GetAllCustomerData {
         prevPage: json["prevPage"],
         nextPage: json["nextPage"],
       );
+    }
+    return GetAllCustomerData();
+  }
 
   Map<String, dynamic> toJson() => {
     "docs": docs == null

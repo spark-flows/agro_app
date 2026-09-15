@@ -764,6 +764,9 @@ class CustomerOrdersScreen extends StatelessWidget {
     if (!isEdit) {
       controller.resetForm();
     }
+    controller.fetchCustomersForCreateOrder(
+      showLoading: controller.createOrderCustomersList.isEmpty,
+    );
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -822,76 +825,77 @@ class CustomerOrdersScreen extends StatelessWidget {
                 child: ListView(
                   padding: const EdgeInsets.all(20),
                   children: [
-                    // Customer Dropdown
+                    // Customer Selection Field
                     Text(
                       'Select Customer *',
                       style: Styles.txtBlackColorW60014,
                     ),
                     const SizedBox(height: 8),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      decoration: BoxDecoration(
-                        border: Border.all(color: Colors.grey.shade300),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: DropdownButtonHideUnderline(
-                        child: DropdownButton<String>(
-                          isExpanded: true,
-                          hint: Text(
-                            ctrl.customersList.isEmpty
-                                ? 'Select or create customer'
-                                : 'Choose a customer',
-                          ),
-                          value:
-                              ctrl.selectedCustomerId.isNotEmpty &&
-                                  ctrl.customersList.any(
-                                    (c) => c.id == ctrl.selectedCustomerId,
-                                  )
-                              ? ctrl.selectedCustomerId
-                              : null,
-                          items: [
-                            ...ctrl.customersList.map(
-                              (c) => DropdownMenuItem(
-                                value: c.id,
-                                child: Text('${c.name} (${c.mobile ?? ''})'),
-                              ),
+                    Builder(
+                      builder: (context) {
+                        final currentList =
+                            ctrl.createOrderCustomersList.isNotEmpty
+                            ? ctrl.createOrderCustomersList
+                            : ctrl.customersList;
+                        final selectedCust = currentList.firstWhereOrNull(
+                          (c) => c.id == ctrl.selectedCustomerId,
+                        );
+                        final isSelected = selectedCust != null;
+                        final displayText = isSelected
+                            ? '${selectedCust.name ?? ''}${selectedCust.mobile != null && selectedCust.mobile!.isNotEmpty ? ' (${selectedCust.mobile})' : ''}'
+                            : (ctrl.selectedCustomerId.isNotEmpty
+                                  ? 'Customer Selected'
+                                  : (ctrl.isCustomerListLoading
+                                        ? 'Loading customers...'
+                                        : 'Select or create customer'));
+
+                        return InkWell(
+                          onTap: () =>
+                              _showCustomerSelectBottomSheet(context, ctrl),
+                          borderRadius: BorderRadius.circular(12),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 14,
                             ),
-                            if (RoleUtils.isDealer(homeController.roleName) ||
-                                RoleUtils.isUser(homeController.roleName))
-                              const DropdownMenuItem<String>(
-                                value: 'create_new_customer',
-                                child: Row(
-                                  children: [
-                                    Icon(
-                                      Icons.person_add_alt_1_outlined,
-                                      color: ColorsValue.primary,
-                                      size: 20,
-                                    ),
-                                    SizedBox(width: 8),
-                                    Text(
-                                      'Create New Customer',
-                                      style: TextStyle(
-                                        color: ColorsValue.primary,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                  ],
-                                ),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              border: Border.all(
+                                color: isSelected
+                                    ? ColorsValue.primary
+                                    : Colors.grey.shade300,
                               ),
-                          ],
-                          onChanged: (val) {
-                            if (val == 'create_new_customer') {
-                              _showQuickCreateCustomerBottomSheet(
-                                context,
-                                ctrl,
-                              );
-                            } else if (val != null) {
-                              ctrl.selectedCustomerId = val;
-                              ctrl.update();
-                            }
-                          },
-                        ),
-                      ),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Row(
+                              children: [
+                                Icon(
+                                  Icons.person_outline,
+                                  color: isSelected
+                                      ? ColorsValue.primary
+                                      : Colors.grey.shade600,
+                                  size: 20,
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Text(
+                                    displayText,
+                                    style: isSelected
+                                        ? Styles.txtBlackColorW50014
+                                        : Styles.txtGreyColorW40014,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                                Icon(
+                                  Icons.keyboard_arrow_down,
+                                  color: Colors.grey.shade600,
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      },
                     ),
                     const SizedBox(height: 20),
 
@@ -1356,6 +1360,352 @@ class CustomerOrdersScreen extends StatelessWidget {
     );
   }
 
+  void _showCustomerSelectBottomSheet(
+    BuildContext context,
+    CustomerOrdersController ctrl,
+  ) {
+    final homeController = Get.find<HomeController>();
+    final canCreateCustomer =
+        RoleUtils.isDealer(homeController.roleName) ||
+        RoleUtils.isUser(homeController.roleName);
+    final searchCtrl = TextEditingController();
+    String query = '';
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            return GetBuilder<CustomerOrdersController>(
+              builder: (controller) {
+                final sourceList =
+                    controller.createOrderCustomersList.isNotEmpty
+                    ? controller.createOrderCustomersList
+                    : controller.customersList;
+
+                final filteredList = query.isEmpty
+                    ? sourceList
+                    : sourceList.where((c) {
+                        final q = query.toLowerCase();
+                        final name = (c.name ?? '').toLowerCase();
+                        final mobile = (c.mobile ?? '').toLowerCase();
+                        final village = (c.village ?? '').toLowerCase();
+                        final email = (c.email ?? '').toLowerCase();
+                        return name.contains(q) ||
+                            mobile.contains(q) ||
+                            village.contains(q) ||
+                            email.contains(q);
+                      }).toList();
+
+                return Container(
+                  height: MediaQuery.of(context).size.height * 0.85,
+                  padding: EdgeInsets.only(
+                    bottom: MediaQuery.of(context).viewInsets.bottom,
+                  ),
+                  decoration: const BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.vertical(
+                      top: Radius.circular(24),
+                    ),
+                  ),
+                  child: Column(
+                    children: [
+                      // Header
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(20, 12, 20, 8),
+                        child: Column(
+                          children: [
+                            Container(
+                              width: 40,
+                              height: 4,
+                              decoration: BoxDecoration(
+                                color: Colors.grey.shade300,
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(
+                                  'Select Customer',
+                                  style: Styles.txtBlackColorW70020,
+                                ),
+                                IconButton(
+                                  onPressed: () => Navigator.pop(context),
+                                  icon: Container(
+                                    padding: const EdgeInsets.all(6),
+                                    decoration: BoxDecoration(
+                                      color: Colors.grey.shade100,
+                                      shape: BoxShape.circle,
+                                    ),
+                                    child: const Icon(Icons.close, size: 18),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+
+                      // Fixed (Non-Scrolling) Search & + Create New Customer Section
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 20),
+                        child: Column(
+                          children: [
+                            // 1. Search Bar (Fixed at Top)
+                            Container(
+                              height: 46,
+                              decoration: BoxDecoration(
+                                color: Colors.grey.shade50,
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(color: Colors.grey.shade300),
+                              ),
+                              child: TextField(
+                                controller: searchCtrl,
+                                onChanged: (val) {
+                                  setModalState(() {
+                                    query = val.trim();
+                                  });
+                                },
+                                decoration: InputDecoration(
+                                  hintText:
+                                      'Search by name, mobile, village...',
+                                  hintStyle: Styles.txtGreyColorW40014,
+                                  prefixIcon: const Icon(
+                                    Icons.search,
+                                    color: ColorsValue.primary,
+                                    size: 20,
+                                  ),
+                                  suffixIcon: query.isNotEmpty
+                                      ? IconButton(
+                                          icon: const Icon(
+                                            Icons.clear,
+                                            size: 18,
+                                            color: Colors.grey,
+                                          ),
+                                          onPressed: () {
+                                            searchCtrl.clear();
+                                            setModalState(() {
+                                              query = '';
+                                            });
+                                          },
+                                        )
+                                      : null,
+                                  border: InputBorder.none,
+                                  contentPadding: const EdgeInsets.symmetric(
+                                    vertical: 12,
+                                  ),
+                                ),
+                              ),
+                            ),
+
+                            // 2. + Create New Customer (Fixed at Top below search)
+                            if (canCreateCustomer) ...[
+                              const SizedBox(height: 12),
+                              InkWell(
+                                onTap: () {
+                                  Navigator.pop(context);
+                                  _showQuickCreateCustomerBottomSheet(
+                                    context,
+                                    controller,
+                                  );
+                                },
+                                borderRadius: BorderRadius.circular(12),
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 16,
+                                    vertical: 12,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: ColorsValue.primary.withValues(
+                                      alpha: 0.08,
+                                    ),
+                                    borderRadius: BorderRadius.circular(12),
+                                    border: Border.all(
+                                      color: ColorsValue.primary.withValues(
+                                        alpha: 0.25,
+                                      ),
+                                    ),
+                                  ),
+                                  child: const Row(
+                                    children: [
+                                      Icon(
+                                        Icons.person_add_alt_1_outlined,
+                                        color: ColorsValue.primary,
+                                        size: 20,
+                                      ),
+                                      SizedBox(width: 10),
+                                      Expanded(
+                                        child: Text(
+                                          '+ Create New Customer',
+                                          style: TextStyle(
+                                            color: ColorsValue.primary,
+                                            fontWeight: FontWeight.w600,
+                                            fontSize: 14,
+                                          ),
+                                        ),
+                                      ),
+                                      Icon(
+                                        Icons.arrow_forward_ios,
+                                        size: 14,
+                                        color: ColorsValue.primary,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ],
+                            const SizedBox(height: 12),
+                            Divider(height: 1, color: Colors.grey.shade200),
+                          ],
+                        ),
+                      ),
+
+                      // Scrollable Customer List (Only list scrolls)
+                      Expanded(
+                        child: controller.isCustomerListLoading
+                            ? const Center(
+                                child: CircularProgressIndicator(
+                                  color: ColorsValue.primary,
+                                ),
+                              )
+                            : filteredList.isEmpty
+                            ? Center(
+                                child: Padding(
+                                  padding: const EdgeInsets.all(24),
+                                  child: Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(
+                                        Icons.person_search_outlined,
+                                        size: 48,
+                                        color: Colors.grey.shade400,
+                                      ),
+                                      const SizedBox(height: 12),
+                                      Text(
+                                        'No customers found',
+                                        style: Styles.txtBlackColorW70016,
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        query.isNotEmpty
+                                            ? 'No customer matching "$query"'
+                                            : 'No customers available',
+                                        style: Styles.txtGreyColorW40012,
+                                        textAlign: TextAlign.center,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              )
+                            : ListView.separated(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 20,
+                                  vertical: 12,
+                                ),
+                                itemCount: filteredList.length,
+                                separatorBuilder: (_, _) => Divider(
+                                  height: 1,
+                                  color: Colors.grey.shade100,
+                                ),
+                                itemBuilder: (context, index) {
+                                  final customer = filteredList[index];
+                                  final isSelected =
+                                      customer.id ==
+                                      controller.selectedCustomerId;
+                                  final name = customer.name ?? '';
+                                  final initial = name.isNotEmpty
+                                      ? name[0].toUpperCase()
+                                      : '?';
+
+                                  List<String> details = [];
+                                  if (customer.mobile != null &&
+                                      customer.mobile!.isNotEmpty) {
+                                    details.add(customer.mobile!);
+                                  }
+                                  if (customer.village != null &&
+                                      customer.village!.isNotEmpty) {
+                                    details.add(customer.village!);
+                                  }
+
+                                  return ListTile(
+                                    contentPadding: const EdgeInsets.symmetric(
+                                      horizontal: 8,
+                                      vertical: 4,
+                                    ),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                    leading: CircleAvatar(
+                                      radius: 20,
+                                      backgroundColor: isSelected
+                                          ? ColorsValue.primary
+                                          : ColorsValue.primary.withValues(
+                                              alpha: 0.1,
+                                            ),
+                                      child: Text(
+                                        initial,
+                                        style: TextStyle(
+                                          color: isSelected
+                                              ? Colors.white
+                                              : ColorsValue.primary,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ),
+                                    title: Text(
+                                      name,
+                                      style: TextStyle(
+                                        fontSize: 15,
+                                        fontWeight: isSelected
+                                            ? FontWeight.w700
+                                            : FontWeight.w500,
+                                        color: isSelected
+                                            ? ColorsValue.primary
+                                            : Colors.black87,
+                                      ),
+                                    ),
+                                    subtitle: details.isNotEmpty
+                                        ? Text(
+                                            details.join(' • '),
+                                            style: Styles.txtGreyColorW40012,
+                                          )
+                                        : null,
+                                    trailing: isSelected
+                                        ? const Icon(
+                                            Icons.check_circle,
+                                            color: ColorsValue.primary,
+                                            size: 22,
+                                          )
+                                        : Icon(
+                                            Icons.radio_button_unchecked,
+                                            color: Colors.grey.shade300,
+                                            size: 22,
+                                          ),
+                                    onTap: () {
+                                      controller.selectedCustomerId =
+                                          customer.id ?? '';
+                                      controller.update();
+                                      Navigator.pop(context);
+                                    },
+                                  );
+                                },
+                              ),
+                      ),
+                    ],
+                  ),
+                );
+              },
+            );
+          },
+        );
+      },
+    );
+  }
+
   void _showQuickCreateCustomerBottomSheet(
     BuildContext context,
     CustomerOrdersController ctrl,
@@ -1534,15 +1884,19 @@ class CustomerOrdersScreen extends StatelessWidget {
 
                                 // Refresh customers list
                                 await ctrl.fetchCustomers();
+                                await ctrl.fetchCustomersForCreateOrder();
 
                                 // Try to find the newly created customer by mobile and select it!
-                                final newCust = ctrl.customersList
-                                    .firstWhereOrNull(
-                                      (c) =>
-                                          c.mobile == phoneCtrl.text.trim() ||
-                                          c.mobile ==
-                                              '+91 ${phoneCtrl.text.trim()}',
-                                    );
+                                final listToCheck =
+                                    ctrl.createOrderCustomersList.isNotEmpty
+                                    ? ctrl.createOrderCustomersList
+                                    : ctrl.customersList;
+                                final newCust = listToCheck.firstWhereOrNull(
+                                  (c) =>
+                                      c.mobile == phoneCtrl.text.trim() ||
+                                      c.mobile ==
+                                          '+91 ${phoneCtrl.text.trim()}',
+                                );
                                 if (newCust != null) {
                                   ctrl.selectedCustomerId = newCust.id ?? '';
                                   ctrl.update();

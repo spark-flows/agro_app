@@ -324,6 +324,56 @@ class ConnectHelper {
     return response;
   }
 
+  Future<ResponseModel> getCustomerListGetApi({
+    String? distributorid,
+    String? branchid,
+    bool isLoading = false,
+  }) async {
+    final String role = await _resolveUserRole();
+    final String resolvedBranchId = (branchid != null && branchid.isNotEmpty)
+        ? branchid
+        : await _resolveBranchId();
+    final String resolvedDistributorId =
+        (distributorid != null && distributorid.isNotEmpty)
+            ? distributorid
+            : await _resolveDistributorId();
+
+    final bool isUserRole = RoleUtils.isUser(role);
+
+    // Build query parameters:
+    // Role user: pass only branchid -> api/customer?branchid=...
+    // Distributor role: pass distributorid & branchid -> api/customer?distributorid=...&branchid=...
+    List<String> queryParams = [];
+
+    if (isUserRole) {
+      if (resolvedBranchId.isNotEmpty) {
+        queryParams.add('branchid=$resolvedBranchId');
+      }
+    } else {
+      if (resolvedDistributorId.isNotEmpty) {
+        queryParams.add('distributorid=$resolvedDistributorId');
+      }
+      if (resolvedBranchId.isNotEmpty) {
+        queryParams.add('branchid=$resolvedBranchId');
+      }
+    }
+
+    String url = EndPoints.customerListApi;
+    if (queryParams.isNotEmpty) {
+      url = '$url?${queryParams.join('&')}';
+    }
+
+    var response = await apiWrapper.makeRequest(
+      url,
+      Request.get,
+      null,
+      isLoading,
+      await Utility.commonHeader(),
+    );
+    return response;
+  }
+
+
   Future<ResponseModel> createCustomerApi({
     String? customerid,
     required String name,
@@ -911,6 +961,30 @@ class ConnectHelper {
     return userId;
   }
 
+  Future<String> _resolveDistributorId() async {
+    String distributorId = await Utility.getSecureValue(LocalKeys.distributorId);
+    if (distributorId.isNotEmpty) {
+      return distributorId;
+    }
+    String userId = await Utility.getSecureValue(LocalKeys.userIds);
+    if (userId.isNotEmpty) {
+      return userId;
+    }
+    final profileJson = await Utility.getSecureValue(LocalKeys.profileData);
+    if (profileJson.isNotEmpty) {
+      try {
+        final decoded = json.decode(profileJson);
+        distributorId =
+            decoded['_id']?.toString() ??
+            decoded['id']?.toString() ??
+            decoded['userData']?['_id']?.toString() ??
+            decoded['userData']?['id']?.toString() ??
+            '';
+      } catch (_) {}
+    }
+    return distributorId;
+  }
+
   Future<String> _resolveUserRole() async {
     String role = await Utility.getSecureValue(LocalKeys.roleName);
     if (role.isEmpty) {
@@ -918,7 +992,12 @@ class ConnectHelper {
       if (profileJson.isNotEmpty) {
         try {
           final decoded = json.decode(profileJson);
-          role = decoded['rolename']?.toString() ?? '';
+          role =
+              decoded['roleid']?['rolename']?.toString() ??
+              decoded['rolename']?.toString() ??
+              decoded['userData']?['roleid']?['rolename']?.toString() ??
+              decoded['userData']?['rolename']?.toString() ??
+              '';
         } catch (_) {}
       }
     }

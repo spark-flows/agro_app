@@ -15,6 +15,8 @@ class CustomerOrdersController extends GetxController {
   bool isLoading = false;
 
   List<GetAllCustomerDoc> customersList = [];
+  List<GetAllCustomerDoc> createOrderCustomersList = [];
+  bool isCustomerListLoading = false;
 
   // Used ONLY for the top-bar filter dropdown
   String filterCustomerId = '';
@@ -94,6 +96,7 @@ class CustomerOrdersController extends GetxController {
     ];
     _loadRole();
     fetchCustomers();
+    fetchCustomersForCreateOrder();
     fetchAllCustomerOrders();
   }
 
@@ -383,6 +386,27 @@ class CustomerOrdersController extends GetxController {
     }
   }
 
+  Future<void> fetchCustomersForCreateOrder({bool showLoading = false}) async {
+    if (showLoading) {
+      isCustomerListLoading = true;
+      update();
+    }
+    try {
+      final res = await _repository.getCustomerListGetApi(isLoading: false);
+      if (res != null && res.data != null && res.data!.docs != null) {
+        createOrderCustomersList = res.data!.docs!;
+        update();
+      }
+    } catch (e) {
+      debugPrint('[CustomerOrders] fetchCustomersForCreateOrder error: $e');
+    } finally {
+      if (showLoading) {
+        isCustomerListLoading = false;
+        update();
+      }
+    }
+  }
+
   Future<void> fetchAllCustomerOrders() async {
     isLoading = true;
     update();
@@ -456,8 +480,11 @@ class CustomerOrdersController extends GetxController {
     // order.customerid is a populated model object — extract .id directly
     final custId = order.customerid?.id ?? '';
     // Validate that this ID actually exists in the loaded customers list
-    final exists = customersList.any((c) => c.id == custId);
-    selectedCustomerId = exists ? custId : '';
+    final list = createOrderCustomersList.isNotEmpty
+        ? createOrderCustomersList
+        : customersList;
+    final exists = list.any((c) => c.id == custId);
+    selectedCustomerId = exists ? custId : (custId.isNotEmpty ? custId : '');
 
     populateRemarks(order);
     existingImageUrl = order.image;
