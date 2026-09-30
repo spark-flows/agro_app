@@ -36,6 +36,10 @@ class ProfileController extends GetxController {
       userData = response.data.userData;
 
       Get.find<Repository>().saveSecureValue(
+        LocalKeys.userName,
+        userData?.name ?? '',
+      );
+      Get.find<Repository>().saveSecureValue(
         LocalKeys.distributorId,
         userData?.id ?? '',
       );
@@ -54,6 +58,7 @@ class ProfileController extends GetxController {
 
   void logout() {
     Get.find<Repository>().deleteSecuredValue(LocalKeys.authToken);
+    Get.find<Repository>().deleteSecuredValue(LocalKeys.userName);
     Get.find<Repository>().deleteSecuredValue(LocalKeys.distributorId);
     Get.find<Repository>().deleteSecuredValue(LocalKeys.profileData);
     Get.find<Repository>().deleteSecuredValue(LocalKeys.roleName);

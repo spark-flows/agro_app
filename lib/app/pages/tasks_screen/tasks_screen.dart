@@ -1,12 +1,13 @@
 import 'package:agro_app/app/pages/tasks_screen/tasks_controller.dart';
 import 'package:agro_app/app/theme/theme.dart';
 import 'package:agro_app/app/utils/utility.dart';
+import 'package:agro_app/app/widgets/show_full_scareen_image.dart';
+import 'package:agro_app/data/helpers/api_wrapper.dart';
+import 'package:agro_app/domain/models/getAll_tasks_model.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
-import 'package:cached_network_image/cached_network_image.dart';
-import 'package:agro_app/data/helpers/api_wrapper.dart';
-import 'package:agro_app/app/widgets/show_full_scareen_image.dart';
 
 class TasksScreen extends StatefulWidget {
   const TasksScreen({super.key});
@@ -37,19 +38,79 @@ class _TasksScreenState extends State<TasksScreen> {
     super.dispose();
   }
 
-  String _formatDisplayDate(String? dateStr) {
-    if (dateStr == null || dateStr.isEmpty) return '';
-    try {
-      final parsed = DateTime.parse(dateStr);
-      return DateFormat('dd-MM-yyyy').format(parsed);
-    } catch (_) {
+  String _formatDisplayDateTime(Doc task) {
+    String datePart = '';
+    String timePart = '';
+
+    // 1. Check if task.time has a value
+    if (task.time != null && task.time!.trim().isNotEmpty) {
+      final rawTime = task.time!.trim();
       try {
-        final parsed = DateFormat('yyyy-MM-dd').parse(dateStr);
-        return DateFormat('dd-MM-yyyy').format(parsed);
-      } catch (_) {
-        return dateStr;
+        if (rawTime.contains(':')) {
+          final parts = rawTime.split(':');
+          if (parts.length >= 2) {
+            final h = int.tryParse(parts[0].trim());
+            final mParts = parts[1].trim().split(' ');
+            final m = int.tryParse(mParts[0].trim());
+            if (h != null && m != null) {
+              if (mParts.length > 1) {
+                timePart = rawTime;
+              } else {
+                final dt = DateTime(2000, 1, 1, h, m);
+                timePart = DateFormat('hh:mm a').format(dt);
+              }
+            }
+          }
+        }
+      } catch (_) {}
+      if (timePart.isEmpty) {
+        timePart = rawTime;
       }
     }
+
+    // 2. Check task.date
+    if (task.date != null && task.date!.isNotEmpty) {
+      try {
+        final parsed = DateTime.parse(task.date!);
+        datePart = DateFormat('dd-MM-yyyy').format(parsed.toLocal());
+        // If task.date has timestamp and task.time was empty
+        if (timePart.isEmpty &&
+            (task.date!.contains('T') ||
+                parsed.hour != 0 ||
+                parsed.minute != 0)) {
+          timePart = DateFormat('hh:mm a').format(parsed.toLocal());
+        }
+      } catch (_) {
+        try {
+          final parsed = DateFormat('yyyy-MM-dd').parse(task.date!);
+          datePart = DateFormat('dd-MM-yyyy').format(parsed);
+        } catch (_) {
+          datePart = task.date!;
+        }
+      }
+    }
+
+    // 3. If timePart still empty, check task.createdAt
+    if (timePart.isEmpty &&
+        task.createdAt != null &&
+        task.createdAt!.isNotEmpty) {
+      try {
+        final parsed = DateTime.parse(task.createdAt!).toLocal();
+        if (datePart.isEmpty) {
+          datePart = DateFormat('dd-MM-yyyy').format(parsed);
+        }
+        timePart = DateFormat('hh:mm a').format(parsed);
+      } catch (_) {}
+    }
+
+    if (datePart.isNotEmpty && timePart.isNotEmpty) {
+      return '$datePart $timePart';
+    } else if (datePart.isNotEmpty) {
+      return datePart;
+    } else if (timePart.isNotEmpty) {
+      return timePart;
+    }
+    return '';
   }
 
   Color _getStatusColor(String? status) {
@@ -127,6 +188,11 @@ class _TasksScreenState extends State<TasksScreen> {
         cleanPath.endsWith('.mkv') ||
         cleanPath.endsWith('.3gp') ||
         cleanPath.endsWith('.webm');
+  }
+
+  bool _isPdf(String path) {
+    final cleanPath = path.toLowerCase().split('?').first;
+    return cleanPath.endsWith('.pdf');
   }
 
   String? _resolveMediaUrl(String mediaPath) {
@@ -455,11 +521,9 @@ class _TasksScreenState extends State<TasksScreen> {
                                   const SizedBox(height: 8),
                                   if (task.description != null &&
                                       task.description!.isNotEmpty) ...[
-                                    Text(
-                                      task.description!,
+                                    _ExpandableTaskDescription(
+                                      text: task.description!,
                                       style: Styles.txtGreyColorW40012,
-                                      maxLines: 2,
-                                      overflow: TextOverflow.ellipsis,
                                     ),
                                   ],
                                   if (task.priority != null &&
@@ -491,20 +555,31 @@ class _TasksScreenState extends State<TasksScreen> {
 
                                           final isImg = _isImage(path);
                                           final isVid = _isVideo(path);
+                                          final isPdf = _isPdf(path);
                                           final resolvedUrl = _resolveMediaUrl(
                                             path,
                                           );
 
                                           return GestureDetector(
                                             onTap: () {
-                                              Get.to(
-                                                () =>
-                                                    const ShowFullScareenImage(),
-                                                arguments: [
-                                                  path,
-                                                  isVid ? 'video' : 'image',
-                                                ],
-                                              );
+                                              if (isPdf) {
+                                                final urlToOpen =
+                                                    resolvedUrl ?? path;
+                                                if (urlToOpen.isNotEmpty) {
+                                                  Utility.launchLinkURL(
+                                                    urlToOpen,
+                                                  );
+                                                }
+                                              } else {
+                                                Get.to(
+                                                  () =>
+                                                      const ShowFullScareenImage(),
+                                                  arguments: [
+                                                    path,
+                                                    isVid ? 'video' : 'image',
+                                                  ],
+                                                );
+                                              }
                                             },
                                             child: ClipRRect(
                                               borderRadius:
@@ -512,7 +587,9 @@ class _TasksScreenState extends State<TasksScreen> {
                                               child: Container(
                                                 width: 60,
                                                 height: 60,
-                                                color: Colors.grey.shade100,
+                                                color: isPdf
+                                                    ? Colors.red.shade50
+                                                    : Colors.grey.shade100,
                                                 child:
                                                     isImg && resolvedUrl != null
                                                     ? CachedNetworkImage(
@@ -568,6 +645,37 @@ class _TasksScreenState extends State<TasksScreen> {
                                                           ),
                                                         ],
                                                       )
+                                                    : isPdf
+                                                    ? Center(
+                                                        child: Column(
+                                                          mainAxisAlignment:
+                                                              MainAxisAlignment
+                                                                  .center,
+                                                          children: [
+                                                            const Icon(
+                                                              Icons
+                                                                  .picture_as_pdf,
+                                                              size: 26,
+                                                              color: Colors.red,
+                                                            ),
+                                                            const SizedBox(
+                                                              height: 2,
+                                                            ),
+                                                            Text(
+                                                              'PDF',
+                                                              style: TextStyle(
+                                                                fontSize: 10,
+                                                                fontWeight:
+                                                                    FontWeight
+                                                                        .bold,
+                                                                color: Colors
+                                                                    .red
+                                                                    .shade700,
+                                                              ),
+                                                            ),
+                                                          ],
+                                                        ),
+                                                      )
                                                     : const Icon(
                                                         Icons
                                                             .insert_drive_file_outlined,
@@ -592,6 +700,7 @@ class _TasksScreenState extends State<TasksScreen> {
                                         MainAxisAlignment.spaceBetween,
                                     children: [
                                       Row(
+                                        mainAxisSize: MainAxisSize.min,
                                         children: [
                                           const Icon(
                                             Icons.calendar_today_outlined,
@@ -600,59 +709,76 @@ class _TasksScreenState extends State<TasksScreen> {
                                           ),
                                           const SizedBox(width: 6),
                                           Text(
-                                            _formatDisplayDate(task.date),
+                                            _formatDisplayDateTime(task),
                                             style: Styles.txtGreyColorW40012,
                                           ),
                                         ],
                                       ),
-                                      Row(
-                                        children: [
-                                          if (assigneeName.isNotEmpty) ...[
-                                            const Icon(
-                                              Icons.person_outline,
-                                              size: 14,
-                                              color: ColorsValue.primary,
-                                            ),
-                                            const SizedBox(width: 4),
-                                            Text(
-                                              assigneeName,
-                                              style: const TextStyle(
-                                                fontSize: 12,
-                                                fontWeight: FontWeight.w500,
-                                                color: Colors.black87,
+                                      const SizedBox(width: 8),
+                                      Expanded(
+                                        child: Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.end,
+                                          children: [
+                                            if (assigneeName.isNotEmpty) ...[
+                                              const Icon(
+                                                Icons.person_outline,
+                                                size: 14,
+                                                color: ColorsValue.primary,
                                               ),
-                                            ),
-                                          ] else ...[
-                                            Text(
-                                              'Unassigned',
-                                              style: Styles.txtGreyColorW40012,
-                                            ),
-                                          ],
-                                          if (controller.isAdmin) ...[
-                                            const SizedBox(width: 8),
-                                            IconButton(
-                                              constraints: const BoxConstraints(),
-                                              padding: EdgeInsets.zero,
-                                              icon: const Icon(
-                                                Icons.delete_outline,
-                                                color: Colors.red,
-                                                size: 20,
+                                              const SizedBox(width: 4),
+                                              Flexible(
+                                                child: Text(
+                                                  assigneeName,
+                                                  style: const TextStyle(
+                                                    fontSize: 12,
+                                                    fontWeight: FontWeight.w500,
+                                                    color: Colors.black87,
+                                                  ),
+                                                  maxLines: 1,
+                                                  overflow:
+                                                      TextOverflow.ellipsis,
+                                                ),
                                               ),
-                                              onPressed: () {
-                                                Utility.showDeleteDialog(
-                                                  title: 'Delete Task',
-                                                  message:
-                                                      'Are you sure you want to delete "${task.taskname}"?',
-                                                  onConfirm: () {
-                                                    controller.deleteTask(
-                                                      task.id ?? '',
-                                                    );
-                                                  },
-                                                );
-                                              },
-                                            ),
+                                            ] else ...[
+                                              Flexible(
+                                                child: Text(
+                                                  'Unassigned',
+                                                  style:
+                                                      Styles.txtGreyColorW40012,
+                                                  maxLines: 1,
+                                                  overflow:
+                                                      TextOverflow.ellipsis,
+                                                ),
+                                              ),
+                                            ],
+                                            if (controller.isAdmin) ...[
+                                              const SizedBox(width: 8),
+                                              IconButton(
+                                                constraints:
+                                                    const BoxConstraints(),
+                                                padding: EdgeInsets.zero,
+                                                icon: const Icon(
+                                                  Icons.delete_outline,
+                                                  color: Colors.red,
+                                                  size: 20,
+                                                ),
+                                                onPressed: () {
+                                                  Utility.showDeleteDialog(
+                                                    title: 'Delete Task',
+                                                    message:
+                                                        'Are you sure you want to delete "${task.taskname}"?',
+                                                    onConfirm: () {
+                                                      controller.deleteTask(
+                                                        task.id ?? '',
+                                                      );
+                                                    },
+                                                  );
+                                                },
+                                              ),
+                                            ],
                                           ],
-                                        ],
+                                        ),
                                       ),
                                     ],
                                   ),
@@ -907,7 +1033,7 @@ class _TasksScreenState extends State<TasksScreen> {
                       items: controller.usersList.map((user) {
                         return DropdownMenuItem(
                           value: user.id,
-                          child: Text(user.name??""),
+                          child: Text(user.name ?? ""),
                         );
                       }).toList(),
                       onChanged: (val) {
@@ -951,6 +1077,100 @@ class _TasksScreenState extends State<TasksScreen> {
               ),
             );
           },
+        );
+      },
+    );
+  }
+}
+
+class _ExpandableTaskDescription extends StatefulWidget {
+  final String text;
+  final TextStyle? style;
+
+  const _ExpandableTaskDescription({
+    required this.text,
+    this.style,
+  });
+
+  static const int _trimLines = 2;
+
+  @override
+  State<_ExpandableTaskDescription> createState() =>
+      _ExpandableTaskDescriptionState();
+}
+
+class _ExpandableTaskDescriptionState
+    extends State<_ExpandableTaskDescription> {
+  bool _isExpanded = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final style = widget.style ?? Styles.txtGreyColorW40012;
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final textSpan = TextSpan(text: widget.text, style: style);
+        final textPainter = TextPainter(
+          text: textSpan,
+          textDirection: Directionality.of(context),
+          maxLines: _ExpandableTaskDescription._trimLines,
+        )..layout(maxWidth: constraints.maxWidth);
+
+        final isOverflowing = textPainter.didExceedMaxLines;
+
+        if (!isOverflowing && !_isExpanded) {
+          return Text(
+            widget.text,
+            style: style,
+          );
+        }
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              widget.text,
+              style: style,
+              maxLines: _isExpanded
+                  ? null
+                  : _ExpandableTaskDescription._trimLines,
+              overflow:
+                  _isExpanded ? TextOverflow.visible : TextOverflow.ellipsis,
+            ),
+            const SizedBox(height: 4),
+            GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: () {
+                setState(() {
+                  _isExpanded = !_isExpanded;
+                });
+              },
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 2),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      _isExpanded ? 'Show Less' : 'Show More',
+                      style: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: ColorsValue.primary,
+                      ),
+                    ),
+                    const SizedBox(width: 2),
+                    Icon(
+                      _isExpanded
+                          ? Icons.keyboard_arrow_up
+                          : Icons.keyboard_arrow_down,
+                      size: 16,
+                      color: ColorsValue.primary,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
         );
       },
     );

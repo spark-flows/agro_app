@@ -131,6 +131,8 @@ class Doc {
   List<Attachment>? attachment;
   String? tasktype;
   List<TaskRemark>? remarks;
+  String? createdAt;
+  String? updatedAt;
 
   Doc({
     this.id,
@@ -149,6 +151,8 @@ class Doc {
     this.attachment,
     this.tasktype,
     this.remarks,
+    this.createdAt,
+    this.updatedAt,
   });
 
   factory Doc.fromJson(Map<String, dynamic> json) => Doc(
@@ -190,6 +194,8 @@ class Doc {
         : List<TaskRemark>.from(
             json["remarks"]!.map((x) => TaskRemark.fromJson(x)),
           ),
+    createdAt: json["createdAt"]?.toString(),
+    updatedAt: json["updatedAt"]?.toString(),
   );
 
   Map<String, dynamic> toJson() => {
@@ -215,6 +221,8 @@ class Doc {
     "remarks": remarks == null
         ? []
         : List<dynamic>.from(remarks!.map((x) => x.toJson())),
+    "createdAt": createdAt,
+    "updatedAt": updatedAt,
   };
 }
 

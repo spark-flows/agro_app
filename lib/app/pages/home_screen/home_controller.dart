@@ -8,6 +8,7 @@ import 'package:get/get.dart';
 
 class HomeController extends GetxController {
   String roleName = '';
+  String userName = '';
   List<branch_model.Doc> branches = [];
   branch_model.Doc? selectedBranch;
   bool isBranchesLoading = false;
@@ -24,8 +25,16 @@ class HomeController extends GetxController {
     final storedRole = await Get.find<Repository>().getSecureValue(
       LocalKeys.roleName,
     );
+    final storedUserName = await Get.find<Repository>().getSecureValue(
+      LocalKeys.userName,
+    );
     if (storedRole.isNotEmpty) {
       roleName = storedRole;
+    }
+    if (storedUserName.isNotEmpty) {
+      userName = storedUserName;
+    }
+    if (roleName.isNotEmpty && userName.isNotEmpty) {
       update();
       return;
     }
@@ -39,6 +48,11 @@ class HomeController extends GetxController {
         final userData = ProfileDataUserData.fromJson(json.decode(localData));
         if (userData.rolename.isNotEmpty) {
           roleName = userData.rolename;
+        }
+        if (userData.name.isNotEmpty) {
+          userName = userData.name;
+        }
+        if (roleName.isNotEmpty || userName.isNotEmpty) {
           update();
           return;
         }
@@ -54,7 +68,12 @@ class HomeController extends GetxController {
     if (response != null) {
       final userData = response.data.userData;
       roleName = userData.rolename;
+      userName = userData.name;
 
+      Get.find<Repository>().saveSecureValue(
+        LocalKeys.userName,
+        userData.name,
+      );
       Get.find<Repository>().saveSecureValue(
         LocalKeys.distributorId,
         userData.id,

@@ -1,7 +1,7 @@
 import 'package:agro_app/app/app.dart';
-import 'package:agro_app/domain/services/enum.dart';
 import 'package:agro_app/domain/models/get_all_branches_model.dart'
     as branch_model;
+import 'package:agro_app/domain/services/enum.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -39,7 +39,7 @@ class HomeScreen extends StatelessWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'Welcome, ${controller.roleName.isNotEmpty ? Utility.capitalizeFirst(controller.roleName) : ' - - '}',
+                              'Welcome, ${controller.userName.isNotEmpty ? Utility.capitalizeFirst(controller.userName) : "Users"}',
                               style: Styles.txtBlackColorW70020,
                               overflow: TextOverflow.ellipsis,
                               maxLines: 1,
@@ -200,14 +200,14 @@ class HomeScreen extends StatelessWidget {
                         onTap: controller.goToCustomerOrders,
                       ),
 
-                      if (!RoleUtils.isDealer(controller.roleName)) ...[
-                        _buildMenuCard(
-                          title: 'Attendance',
-                          icon: Icons.fingerprint,
-                          color: Colors.blueAccent,
-                          onTap: controller.goToAttendance,
-                        ),
-                      ],
+                      // if (!RoleUtils.isDealer(controller.roleName)) ...[
+                      //   _buildMenuCard(
+                      //     title: 'Attendance',
+                      //     icon: Icons.fingerprint,
+                      //     color: Colors.blueAccent,
+                      //     onTap: controller.goToAttendance,
+                      //   ),
+                      // ],
                       if (!RoleUtils.isDealer(controller.roleName))
                         _buildMenuCard(
                           title: 'Tasks',
@@ -215,22 +215,22 @@ class HomeScreen extends StatelessWidget {
                           color: Colors.teal,
                           onTap: controller.goToTasks,
                         ),
-                      if (controller.roleName == "Admin") ...[
-                        _buildMenuCard(
-                          title: 'Salary',
-                          icon: Icons.account_balance_wallet_outlined,
-                          color: Colors.green,
-                          onTap: controller.goToSalary,
-                        ),
-                      ],
-                      if (!RoleUtils.isDealer(controller.roleName)) ...[
-                        _buildMenuCard(
-                          title: 'Leaves',
-                          icon: Icons.beach_access,
-                          color: Colors.green,
-                          onTap: controller.goToLeaves,
-                        ),
-                      ],
+                      // if (controller.roleName == "Admin") ...[
+                      //   _buildMenuCard(
+                      //     title: 'Salary',
+                      //     icon: Icons.account_balance_wallet_outlined,
+                      //     color: Colors.green,
+                      //     onTap: controller.goToSalary,
+                      //   ),
+                      // ],
+                      // if (!RoleUtils.isDealer(controller.roleName)) ...[
+                      //   _buildMenuCard(
+                      //     title: 'Leaves',
+                      //     icon: Icons.beach_access,
+                      //     color: Colors.green,
+                      //     onTap: controller.goToLeaves,
+                      //   ),
+                      // ],
                       if (RoleUtils.isAdmin(controller.roleName) ||
                           RoleUtils.isUser(controller.roleName)) ...[
                         _buildMenuCard(

@@ -1,6 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:io';
+
 import 'package:agro_app/app/utils/utility.dart';
 import 'package:agro_app/domain/domain.dart';
 import 'package:flutter/material.dart';
@@ -8,8 +8,7 @@ import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
-import 'package:path_provider/path_provider.dart';
-import 'package:open_filex/open_filex.dart';
+
 import 'collection_pdf_preview_page.dart';
 
 class CollectionController extends GetxController {

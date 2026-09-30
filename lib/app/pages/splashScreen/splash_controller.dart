@@ -36,6 +36,11 @@ class SplashController extends GetxController {
           final profileData = profileResponse.data!.userData;
 
           Get.find<Repository>().saveSecureValue(
+            LocalKeys.userName,
+            profileData.name,
+          );
+
+          Get.find<Repository>().saveSecureValue(
             LocalKeys.distributorId,
             profileData.id,
           );

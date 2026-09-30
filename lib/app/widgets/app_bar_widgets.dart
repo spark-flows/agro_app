@@ -1,6 +1,6 @@
+import 'package:agro_app/app/app.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
-import 'package:agro_app/app/app.dart';
 
 // ignore: must_be_immutable
 class AppBarWidget extends StatelessWidget implements PreferredSizeWidget {
@@ -34,7 +34,13 @@ class AppBarWidget extends StatelessWidget implements PreferredSizeWidget {
           padding: Dimens.edgeInsets12,
           child: InkWell(
             onTap: onTapBack,
-            child: SvgPicture.asset(AssetConstants.back_arrow),
+            child: SvgPicture.asset(
+              AssetConstants.back_arrow,
+              colorFilter: ColorFilter.mode(
+                ColorsValue.blackColor,
+                BlendMode.srcIn,
+              ),
+            ),
           ),
         ),
       ),
