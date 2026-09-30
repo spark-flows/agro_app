@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:typed_data';
+
 import 'package:agro_app/app/app.dart';
 import 'package:agro_app/domain/domain.dart';
 import 'package:flutter/material.dart';
@@ -161,7 +162,8 @@ class LedgersController extends GetxController {
         }
         statementTotalPages = res.data!.totalPages ?? 1;
         statementTotalDocs = res.data!.totalDocs ?? statementEntries.length;
-        closingBalance = double.tryParse(res.data!.closingBalance?.toString() ?? '0') ?? 0.0;
+        closingBalance =
+            double.tryParse(res.data!.closingBalance?.toString() ?? '0') ?? 0.0;
 
         // Calculate running totals on all fetched items
         totalDebit = 0.0;
@@ -266,11 +268,24 @@ class LedgersController extends GetxController {
         pdfTotalCredit += cred;
       }
 
+      double pdfClosingBalance = 0.0;
+      if (res?.data?.closingBalance != null) {
+        pdfClosingBalance =
+            double.tryParse(res!.data!.closingBalance.toString()) ??
+            closingBalance;
+      } else if (closingBalance != 0.0) {
+        pdfClosingBalance = closingBalance;
+      } else {
+        pdfClosingBalance = pdfTotalDebit - pdfTotalCredit;
+      }
+
       // Extract branch/company name from entries branchid object
       String companyName = ledgerName;
       if (allEntries.isNotEmpty && allEntries.first.branchid is Map) {
         final bName = allEntries.first.branchid['name']?.toString();
-        companyName = bName != null ? Utility.cleanBranchName(bName) : ledgerName;
+        companyName = bName != null
+            ? Utility.cleanBranchName(bName)
+            : ledgerName;
       }
 
       final pdfFromDateStr = statementFromDate != null
@@ -295,7 +310,9 @@ class LedgersController extends GetxController {
         bool isTotal = false,
         PdfColor? particularsColor,
       }) {
-        final fontWeight = (isHeader || isTotal) ? pw.FontWeight.bold : pw.FontWeight.normal;
+        final fontWeight = (isHeader || isTotal)
+            ? pw.FontWeight.bold
+            : pw.FontWeight.normal;
         return pw.Container(
           decoration: const pw.BoxDecoration(
             border: pw.Border(
@@ -405,6 +422,13 @@ class LedgersController extends GetxController {
                     ),
                   ),
                   pw.Text(
+                    'Closing Balance: Rs. ${pdfClosingBalance.toStringAsFixed(2)}',
+                    style: pw.TextStyle(
+                      fontSize: 10,
+                      fontWeight: pw.FontWeight.bold,
+                    ),
+                  ),
+                  pw.Text(
                     'Date: $filterDateStr',
                     style: pw.TextStyle(
                       fontSize: 10,
@@ -429,7 +453,8 @@ class LedgersController extends GetxController {
             // Data rows
             ...allEntries.expand((txn) {
               final deb = double.tryParse(txn.debit?.toString() ?? '0') ?? 0.0;
-              final cred = double.tryParse(txn.credit?.toString() ?? '0') ?? 0.0;
+              final cred =
+                  double.tryParse(txn.credit?.toString() ?? '0') ?? 0.0;
               final particularsText = txn.particulars?.isNotEmpty == true
                   ? txn.particulars!
                   : (txn.particular ?? '');
@@ -450,8 +475,9 @@ class LedgersController extends GetxController {
                   final String qty = item.quantity?.toString() ?? '0';
                   final String rate = item.rate?.toString() ?? '0';
                   final String amt = item.amount?.toString() ?? '0';
-                  final itemText = '   ↳ $pName (Qty: $qty, Rate: $rate, Amt: $amt)';
-                  
+                  final itemText =
+                      '   - $pName (Qty: $qty, Rate: $rate, Amt: $amt)';
+
                   rows.add(
                     buildStatementRow(
                       date: '',
@@ -480,6 +506,63 @@ class LedgersController extends GetxController {
               credit: pdfTotalCredit.toStringAsFixed(2),
               isTotal: true,
             ),
+
+            // Closing Balance Row
+            buildStatementRow(
+              date: '',
+              particulars: 'CLOSING BALANCE',
+              type: '',
+              no: '',
+              debit: pdfClosingBalance >= 0
+                  ? pdfClosingBalance.toStringAsFixed(2)
+                  : '',
+              credit: pdfClosingBalance < 0
+                  ? pdfClosingBalance.abs().toStringAsFixed(2)
+                  : '',
+              isTotal: true,
+            ),
+
+            pw.SizedBox(height: 12),
+            pw.Container(
+              padding: const pw.EdgeInsets.symmetric(
+                horizontal: 12,
+                vertical: 8,
+              ),
+              decoration: pw.BoxDecoration(
+                border: pw.Border.all(color: PdfColors.grey400, width: 0.5),
+                borderRadius: const pw.BorderRadius.all(pw.Radius.circular(4)),
+                color: PdfColors.grey100,
+              ),
+              child: pw.Row(
+                mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                children: [
+                  pw.Text(
+                    'Total Debit: Rs. ${pdfTotalDebit.toStringAsFixed(2)}',
+                    style: pw.TextStyle(
+                      fontSize: 8,
+                      fontWeight: pw.FontWeight.bold,
+                    ),
+                  ),
+                  pw.Text(
+                    'Total Credit: Rs. ${pdfTotalCredit.toStringAsFixed(2)}',
+                    style: pw.TextStyle(
+                      fontSize: 8,
+                      fontWeight: pw.FontWeight.bold,
+                    ),
+                  ),
+                  pw.Text(
+                    'Closing Balance: Rs. ${pdfClosingBalance.toStringAsFixed(2)}',
+                    style: pw.TextStyle(
+                      fontSize: 9,
+                      fontWeight: pw.FontWeight.bold,
+                      color: pdfClosingBalance >= 0
+                          ? PdfColors.red700
+                          : PdfColors.green700,
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ],
         ),
       );
@@ -503,34 +586,6 @@ class LedgersController extends GetxController {
         '',
       );
     }
-  }
-
-  // ── PDF helper widgets ────────────────────────────────────────────────────
-  pw.Widget _pdfHeaderCell(String text, {PdfColor? color}) {
-    return pw.Padding(
-      padding: const pw.EdgeInsets.all(6),
-      child: pw.Text(
-        text,
-        style: pw.TextStyle(
-          fontSize: 8,
-          fontWeight: pw.FontWeight.bold,
-          color: color ?? PdfColors.black,
-        ),
-      ),
-    );
-  }
-
-  pw.Widget _pdfDataCell(String text, {PdfColor? color}) {
-    return pw.Padding(
-      padding: const pw.EdgeInsets.all(6),
-      child: pw.Text(
-        text,
-        style: pw.TextStyle(
-          fontSize: 7,
-          color: color ?? PdfColors.black,
-        ),
-      ),
-    );
   }
 
   Future<Uint8List> generateSingleEntryPdf(
@@ -561,7 +616,9 @@ class LedgersController extends GetxController {
       bool isTotal = false,
       PdfColor? particularsColor,
     }) {
-      final fontWeight = (isHeader || isTotal) ? pw.FontWeight.bold : pw.FontWeight.normal;
+      final fontWeight = (isHeader || isTotal)
+          ? pw.FontWeight.bold
+          : pw.FontWeight.normal;
       return pw.Container(
         decoration: const pw.BoxDecoration(
           border: pw.Border(
@@ -656,10 +713,7 @@ class LedgersController extends GetxController {
 
           // Ledger name + Date row
           pw.Container(
-            padding: const pw.EdgeInsets.symmetric(
-              horizontal: 12,
-              vertical: 8,
-            ),
+            padding: const pw.EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             child: pw.Row(
               mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
               children: [
@@ -709,7 +763,8 @@ class LedgersController extends GetxController {
             for (var item in entry.items!)
               buildStatementRow(
                 date: '',
-                particulars: '   ↳ ${item.productName ?? 'Unknown Product'} (Qty: ${item.quantity?.toString() ?? '0'}, Rate: ${item.rate?.toString() ?? '0'}, Amt: ${item.amount?.toString() ?? '0'})',
+                particulars:
+                    '   - ${item.productName ?? 'Unknown Product'} (Qty: ${item.quantity?.toString() ?? '0'}, Rate: ${item.rate?.toString() ?? '0'}, Amt: ${item.amount?.toString() ?? '0'})',
                 type: '',
                 no: '',
                 debit: '',

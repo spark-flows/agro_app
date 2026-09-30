@@ -1,13 +1,14 @@
 import 'dart:io';
+
+import 'package:agro_app/app/app.dart';
+import 'package:agro_app/data/helpers/api_wrapper.dart';
+import 'package:agro_app/domain/domain.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
-import 'package:agro_app/app/app.dart';
-import 'package:agro_app/domain/domain.dart';
-import 'package:agro_app/data/helpers/api_wrapper.dart';
-import 'package:http/http.dart' as http;
 
 class LedgerStatementScreen extends StatefulWidget {
   const LedgerStatementScreen({super.key});
@@ -135,14 +136,32 @@ class _LedgerStatementScreenState extends State<LedgerStatementScreen> {
                         children: [
                           Expanded(
                             child: InkWell(
-                              onTap: null, // Read-only
+                              onTap: () async {
+                                final picked = await showDatePicker(
+                                  context: context,
+                                  initialDate:
+                                      controller.statementFromDate ??
+                                      DateTime.now(),
+                                  firstDate: DateTime(2000),
+                                  lastDate: DateTime(2100),
+                                );
+                                if (picked != null) {
+                                  controller.statementFromDate = picked;
+                                  controller.fetchStatement(
+                                    ledgerName,
+                                    savedBranchId,
+                                    isRefresh: true,
+                                  );
+                                }
+                              },
+                              borderRadius: BorderRadius.circular(8),
                               child: Container(
                                 padding: const EdgeInsets.symmetric(
                                   horizontal: 12,
                                   vertical: 10,
                                 ),
                                 decoration: BoxDecoration(
-                                  color: Colors.grey.shade100,
+                                  color: Colors.white,
                                   border: Border.all(
                                     color: Colors.grey.shade300,
                                   ),
@@ -162,14 +181,14 @@ class _LedgerStatementScreenState extends State<LedgerStatementScreen> {
                                         fontSize: 13,
                                         color:
                                             controller.statementFromDate != null
-                                            ? Colors.black54
+                                            ? Colors.black87
                                             : Colors.grey,
                                       ),
                                     ),
                                     const Icon(
                                       Icons.calendar_today,
                                       size: 14,
-                                      color: Colors.grey,
+                                      color: ColorsValue.primary,
                                     ),
                                   ],
                                 ),
@@ -184,14 +203,32 @@ class _LedgerStatementScreenState extends State<LedgerStatementScreen> {
                           const SizedBox(width: 8),
                           Expanded(
                             child: InkWell(
-                              onTap: null, // Read-only
+                              onTap: () async {
+                                final picked = await showDatePicker(
+                                  context: context,
+                                  initialDate:
+                                      controller.statementToDate ??
+                                      DateTime.now(),
+                                  firstDate: DateTime(2000),
+                                  lastDate: DateTime(2100),
+                                );
+                                if (picked != null) {
+                                  controller.statementToDate = picked;
+                                  controller.fetchStatement(
+                                    ledgerName,
+                                    savedBranchId,
+                                    isRefresh: true,
+                                  );
+                                }
+                              },
+                              borderRadius: BorderRadius.circular(8),
                               child: Container(
                                 padding: const EdgeInsets.symmetric(
                                   horizontal: 12,
                                   vertical: 10,
                                 ),
                                 decoration: BoxDecoration(
-                                  color: Colors.grey.shade100,
+                                  color: Colors.white,
                                   border: Border.all(
                                     color: Colors.grey.shade300,
                                   ),
@@ -211,14 +248,14 @@ class _LedgerStatementScreenState extends State<LedgerStatementScreen> {
                                         fontSize: 13,
                                         color:
                                             controller.statementToDate != null
-                                            ? Colors.black54
+                                            ? Colors.black87
                                             : Colors.grey,
                                       ),
                                     ),
                                     const Icon(
                                       Icons.calendar_today,
                                       size: 14,
-                                      color: Colors.grey,
+                                      color: ColorsValue.primary,
                                     ),
                                   ],
                                 ),
@@ -393,12 +430,12 @@ class _LedgerStatementScreenState extends State<LedgerStatementScreen> {
           child: Row(
             children: [
               CircleAvatar(
-                backgroundColor: isDebit
+                backgroundColor: !isDebit
                     ? ColorsValue.statusCancelled.withValues(alpha: 0.1)
                     : ColorsValue.statusComplete.withValues(alpha: 0.1),
                 child: Icon(
                   isDebit ? Icons.arrow_upward : Icons.arrow_downward,
-                  color: isDebit
+                  color: !isDebit
                       ? ColorsValue.statusCancelled
                       : ColorsValue.statusComplete,
                 ),
@@ -481,7 +518,7 @@ class _LedgerStatementScreenState extends State<LedgerStatementScreen> {
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.bold,
-                      color: isDebit
+                      color: !isDebit
                           ? ColorsValue.statusCancelled
                           : ColorsValue.statusComplete,
                     ),
@@ -510,7 +547,12 @@ class _LedgerStatementScreenState extends State<LedgerStatementScreen> {
   ) async {
     try {
       if (item.id == null || item.id!.isEmpty) {
-        Utility.showMessage('Invalid ledger entry ID', MessageType.error, null, '');
+        Utility.showMessage(
+          'Invalid ledger entry ID',
+          MessageType.error,
+          null,
+          '',
+        );
         return;
       }
 
@@ -544,7 +586,9 @@ class _LedgerStatementScreenState extends State<LedgerStatementScreen> {
 
       final response = await http.get(Uri.parse(pdfUrl));
       if (response.statusCode != 200) {
-        throw Exception('Failed to download PDF (status: ${response.statusCode})');
+        throw Exception(
+          'Failed to download PDF (status: ${response.statusCode})',
+        );
       }
       final pdfBytes = response.bodyBytes;
 

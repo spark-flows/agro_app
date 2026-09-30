@@ -51,6 +51,7 @@ class TasksController extends GetxController {
   final remarkCtrl = TextEditingController();
   List<String> selectedAssignedToIds = []; // Store User ID strings
   String selectedStatus = 'pending'; // Default: pending
+  String initialStatus = 'pending';
   String selectedPriority = 'medium'; // Default: medium
   String selectedTaskType = 'regular'; // Options: regular, advance
   List<task_list_model.TaskRemark> existingRemarks = [];
@@ -62,6 +63,10 @@ class TasksController extends GetxController {
   List<task_list_model.Assignedto> currentAssignees = [];
   String editingTaskId = '';
   Timer? _searchTimer;
+
+  bool get isStatusChanged =>
+      editingTaskId.isNotEmpty &&
+      selectedStatus.trim().toLowerCase() != initialStatus.trim().toLowerCase();
 
   @override
   void onInit() {
@@ -236,6 +241,7 @@ class TasksController extends GetxController {
       dateCtrl.text = DateFormat('dd-MM-yyyy').format(DateTime.now());
       selectedAssignedToIds = [];
       selectedStatus = 'pending'; // Default as requested
+      initialStatus = 'pending';
       dueCtrl.clear();
       dueTimeCtrl.clear();
       selectedPriority = 'medium';
@@ -296,18 +302,11 @@ class TasksController extends GetxController {
         }
       }
       selectedStatus = task.status ?? 'pending';
+      initialStatus = task.status ?? 'pending';
       existingRemarks = List<task_list_model.TaskRemark>.from(
         task.remarks ?? [],
       );
       remarkCtrl.clear();
-      if (currentUserId.isNotEmpty) {
-        final myRemark = existingRemarks.firstWhereOrNull(
-          (r) => r.updatedById.isNotEmpty && r.updatedById == currentUserId,
-        );
-        if (myRemark != null) {
-          remarkCtrl.text = myRemark.remark ?? '';
-        }
-      }
       selectedFiles = [];
       existingAttachments =
           task.attachment?.map((att) => {"path": att.path ?? ""}).toList() ??
@@ -319,6 +318,10 @@ class TasksController extends GetxController {
   // ── Save Task (Create/Update via API) ──────────────────────────────────────
   Future<void> saveTask() async {
     try {
+      if (isStatusChanged && remarkCtrl.text.trim().isEmpty) {
+        Utility.errorMessage('Please enter a remark for status change');
+        return;
+      }
       // Convert display dd-MM-yyyy to API yyyy-MM-dd
       String apiDate = dateCtrl.text.trim();
       try {
@@ -382,22 +385,13 @@ class TasksController extends GetxController {
       }
 
       if (newRemarkText.isNotEmpty && loggedInUserId.isNotEmpty) {
-        final userRemarkIdx = remarksPayload.indexWhere(
-          (r) =>
-              r["updatedBy"] != null &&
-              r["updatedBy"].toString() == loggedInUserId,
-        );
         final newRemarkMap = {
           "status": selectedTaskType,
           "remark": newRemarkText,
           "updatedBy": loggedInUserId,
           "date": todayDate,
         };
-        if (userRemarkIdx != -1) {
-          remarksPayload[userRemarkIdx] = newRemarkMap;
-        } else {
-          remarksPayload.add(newRemarkMap);
-        }
+        remarksPayload.add(newRemarkMap);
       }
 
       final response = await Get.find<Repository>().createTaskApi(
@@ -486,6 +480,9 @@ class TasksController extends GetxController {
   // ── Fetch Task Details & Open Form (via getone API) ───────────────────────
   Future<void> fetchTaskDetailsAndOpenForm(String id) async {
     try {
+      if (currentUserId.isEmpty) {
+        await _loadCurrentUserId();
+      }
       final response = await Get.find<Repository>().getOneTaskApi(
         taskid: id,
         isLoading: true,

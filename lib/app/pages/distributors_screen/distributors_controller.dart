@@ -1,18 +1,18 @@
 import 'dart:convert';
+
+import 'package:agro_app/app/pages/attendance_screen/attendance_controller.dart';
+import 'package:agro_app/app/pages/home_screen/home_controller.dart';
+import 'package:agro_app/app/utils/utility.dart';
 import 'package:agro_app/domain/models/get_all_roll_model.dart';
 import 'package:agro_app/domain/models/get_all_users_model.dart';
 import 'package:agro_app/domain/models/get_one_user_model.dart';
-import 'package:agro_app/domain/repositories/repository.dart';
 import 'package:agro_app/domain/repositories/local_storage_keys.dart';
-import 'package:agro_app/app/utils/utility.dart';
+import 'package:agro_app/domain/repositories/repository.dart';
+import 'package:agro_app/domain/services/enum.dart';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
-import 'package:agro_app/app/pages/attendance_screen/attendance_controller.dart';
-
-import 'package:agro_app/domain/services/enum.dart';
-import 'package:agro_app/app/pages/home_screen/home_controller.dart';
 
 class DistributorsController extends GetxController {
   List<Doc> users = [];
@@ -432,13 +432,13 @@ class DistributorsController extends GetxController {
           );
         }
 
-        if (!isClockedIn) {
-          isClockInLoading.value = false;
-          Utility.errorMessage(
-            'First you need to Clock In in the Attendance Screen.',
-          );
-          return;
-        }
+        // if (!isClockedIn) {
+        //   isClockInLoading.value = false;
+        //   Utility.errorMessage(
+        //     'First you need to Clock In in the Attendance Screen.',
+        //   );
+        //   return;
+        // }
       }
 
       final hasPermission = await Utility.handleLocationPermission();

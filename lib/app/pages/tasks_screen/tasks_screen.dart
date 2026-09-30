@@ -695,6 +695,21 @@ class _TasksScreenState extends State<TasksScreen> {
                                     color: Colors.grey.shade100,
                                   ),
                                   const SizedBox(height: 12),
+                                  RichText(
+                                    text: TextSpan(
+                                      children: [
+                                        TextSpan(
+                                          text: "Assign By :- ",
+                                          style: Styles.txtGreyColorW40012,
+                                        ),
+                                        TextSpan(
+                                          text: task.createdBy?.name ?? "",
+                                          style: Styles.txtGreyColorW40012,
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  Dimens.boxHeight10,
                                   Row(
                                     mainAxisAlignment:
                                         MainAxisAlignment.spaceBetween,
@@ -1087,10 +1102,7 @@ class _ExpandableTaskDescription extends StatefulWidget {
   final String text;
   final TextStyle? style;
 
-  const _ExpandableTaskDescription({
-    required this.text,
-    this.style,
-  });
+  const _ExpandableTaskDescription({required this.text, this.style});
 
   static const int _trimLines = 2;
 
@@ -1119,10 +1131,7 @@ class _ExpandableTaskDescriptionState
         final isOverflowing = textPainter.didExceedMaxLines;
 
         if (!isOverflowing && !_isExpanded) {
-          return Text(
-            widget.text,
-            style: style,
-          );
+          return Text(widget.text, style: style);
         }
 
         return Column(
@@ -1134,8 +1143,9 @@ class _ExpandableTaskDescriptionState
               maxLines: _isExpanded
                   ? null
                   : _ExpandableTaskDescription._trimLines,
-              overflow:
-                  _isExpanded ? TextOverflow.visible : TextOverflow.ellipsis,
+              overflow: _isExpanded
+                  ? TextOverflow.visible
+                  : TextOverflow.ellipsis,
             ),
             const SizedBox(height: 4),
             GestureDetector(

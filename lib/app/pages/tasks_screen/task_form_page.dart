@@ -56,7 +56,8 @@ class _TaskFormPageState extends State<TaskFormPage> {
   Widget build(BuildContext context) {
     return GetBuilder<TasksController>(
       builder: (controller) {
-        final bool canEditAdminFields = controller.editingTaskId.isEmpty || controller.isAdmin;
+        final bool canEditAdminFields =
+            controller.editingTaskId.isEmpty || controller.isAdmin;
         return Scaffold(
           backgroundColor: ColorsValue.bgMain,
           appBar: AppBar(
@@ -221,7 +222,10 @@ class _TaskFormPageState extends State<TaskFormPage> {
                       .map(
                         (val) => DropdownMenuItem<String>(
                           value: val,
-                          child: Text(val.toUpperCase(),style: Styles.txtBlackColorW50014,),
+                          child: Text(
+                            val.toUpperCase(),
+                            style: Styles.txtBlackColorW50014,
+                          ),
                         ),
                       )
                       .toList(),
@@ -251,7 +255,8 @@ class _TaskFormPageState extends State<TaskFormPage> {
                 ] else ...[
                   InkWell(
                     onTap: canEditAdminFields
-                        ? () => _showAssigneesSelectionSheet(context, controller)
+                        ? () =>
+                              _showAssigneesSelectionSheet(context, controller)
                         : null,
                     borderRadius: BorderRadius.circular(12),
                     child: Container(
@@ -320,7 +325,9 @@ class _TaskFormPageState extends State<TaskFormPage> {
                         onDeleted: canEditAdminFields
                             ? () {
                                 controller.currentAssignees.remove(user);
-                                controller.selectedAssignedToIds.remove(user.id);
+                                controller.selectedAssignedToIds.remove(
+                                  user.id,
+                                );
                                 controller.update();
                               }
                             : null,
@@ -419,9 +426,15 @@ class _TaskFormPageState extends State<TaskFormPage> {
                       color: ColorsValue.primary,
                     ),
                   ),
-                  items:  [
-                    DropdownMenuItem(value: 'regular', child: Text('Regular',style: Styles.txtBlackColorW50014)),
-                    DropdownMenuItem(value: 'advance', child: Text('Advance', style: Styles.txtBlackColorW50014)),
+                  items: [
+                    DropdownMenuItem(
+                      value: 'regular',
+                      child: Text('Regular', style: Styles.txtBlackColorW50014),
+                    ),
+                    DropdownMenuItem(
+                      value: 'advance',
+                      child: Text('Advance', style: Styles.txtBlackColorW50014),
+                    ),
                   ],
                   onChanged: canEditAdminFields
                       ? (val) {
@@ -549,11 +562,20 @@ class _TaskFormPageState extends State<TaskFormPage> {
 
                 _buildField(
                   fieldController: controller.remarkCtrl,
-                  label: 'Add / Edit Remark',
+                  label: controller.isStatusChanged
+                      ? 'Add New Remark *'
+                      : 'Add New Remark',
                   icon: Icons.comment_outlined,
                   keyboardType: TextInputType.multiline,
                   action: TextInputAction.newline,
                   maxLines: 2,
+                  validator: (v) {
+                    if (controller.isStatusChanged &&
+                        (v == null || v.trim().isEmpty)) {
+                      return 'Please enter a remark for status change';
+                    }
+                    return null;
+                  },
                 ),
                 const SizedBox(height: 24),
                 _sectionHeader('Attachments'),

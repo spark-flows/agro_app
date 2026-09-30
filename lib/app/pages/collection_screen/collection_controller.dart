@@ -374,15 +374,30 @@ class CollectionController extends GetxController {
     Utility.closeLoader();
 
     if (result != null) {
-      Utility.snacBar(
-        editingCollectionId.isNotEmpty
-            ? 'Collection updated successfully'
-            : 'Collection created successfully',
-        Colors.green,
-      );
       Get.back();
-      fetchCollections(isRefresh: true);
+      clearDataCollection();
+
+      Future.delayed(const Duration(seconds: 1), () {
+        Utility.snacBar(
+          editingCollectionId.isNotEmpty
+              ? 'Collection updated successfully'
+              : 'Collection created successfully',
+          Colors.green,
+        );
+        fetchCollections(isRefresh: true);
+        update();
+      });
     }
+  }
+
+  void clearDataCollection() {
+    selectedUserId = null;
+    selectedDistributorId = null;
+    amountCtrl.clear();
+    selectedPaymentMode = 'cash';
+    selectedPaymentStatus = 'pending';
+    remarkCtrl.clear();
+    update();
   }
 
   // ── Change Payment Status ──────────────────────────────────────────────────

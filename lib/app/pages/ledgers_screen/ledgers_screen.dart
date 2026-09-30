@@ -1,6 +1,6 @@
+import 'package:agro_app/app/app.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:agro_app/app/app.dart';
 
 class LedgersScreen extends StatefulWidget {
   const LedgersScreen({super.key});
@@ -145,7 +145,7 @@ class _LedgersScreenState extends State<LedgersScreen> {
             onTap: () {
               RouteManagement.goToLedgerStatementScreen(
                 item.id ?? '',
-                item.name ?? 'Unknown Ledger'
+                item.name ?? 'Unknown Ledger',
               );
             },
             child: Padding(
@@ -195,9 +195,7 @@ class _LedgersScreenState extends State<LedgersScreen> {
                               style: TextStyle(
                                 fontSize: 11,
                                 fontWeight: FontWeight.bold,
-                                color: closing >= 0
-                                    ? ColorsValue.statusCancelled
-                                    : ColorsValue.statusComplete,
+                                color: ColorsValue.statusCancelled,
                               ),
                             ),
                           ],
