@@ -12,12 +12,14 @@ class HomeController extends GetxController {
   List<branch_model.Doc> branches = [];
   branch_model.Doc? selectedBranch;
   bool isBranchesLoading = false;
+  int unreadNotificationCount = 0;
 
   @override
   void onInit() {
     super.onInit();
     _loadRoleFromLocal();
     fetchBranches();
+    fetchUnreadNotificationsCount();
   }
 
   Future<void> _loadRoleFromLocal() async {
@@ -112,6 +114,27 @@ class HomeController extends GetxController {
   void goToCollection() => RouteManagement.goToCollectionScreen();
   void goToExpense() => RouteManagement.goToExpenseScreen();
   void goToLedgers() => RouteManagement.goToLedgersScreen();
+  void goToNotifications() async {
+    await RouteManagement.goToNotificationScreen();
+    fetchUnreadNotificationsCount();
+  }
+
+  void setUnreadNotificationCount(int count) {
+    unreadNotificationCount = count;
+    update();
+  }
+
+  Future<void> fetchUnreadNotificationsCount() async {
+    try {
+      final count = await Get.find<Repository>().getNotificationUnreadCountApi(
+        isLoading: false,
+      );
+      if (count != null) {
+        unreadNotificationCount = count;
+        update();
+      }
+    } catch (_) {}
+  }
 
   Future<void> fetchBranches() async {
     isBranchesLoading = true;

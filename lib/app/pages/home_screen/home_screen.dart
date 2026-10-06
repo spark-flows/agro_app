@@ -68,8 +68,12 @@ class HomeScreen extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(width: 8),
+                      NotificationBellIcon(
+                        unreadCount: controller.unreadNotificationCount,
+                        onTap: controller.goToNotifications,
+                      ),
                       IconButton(
-                        icon: Icon(
+                        icon: const Icon(
                           Icons.perm_identity_sharp,
                           color: Colors.black87,
                         ),
@@ -300,29 +304,6 @@ class HomeScreen extends StatelessWidget {
             const SizedBox(height: 12),
             Text(title, style: Styles.txtBlackColorW60014),
           ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildStatCard(
-    String title,
-    String value,
-    IconData icon,
-    Color color,
-  ) {
-    return Card(
-      elevation: 1,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-      child: ListTile(
-        leading: CircleAvatar(
-          backgroundColor: color.withValues(alpha: 0.2),
-          child: Icon(icon, color: color),
-        ),
-        title: Text(title, style: Styles.txtGreyColorW40014),
-        trailing: Text(
-          value,
-          style: Styles.txtBlackColorW70016.copyWith(color: color),
         ),
       ),
     );

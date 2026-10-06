@@ -26,6 +26,7 @@ export 'get_salary_model.dart';
 export 'image_form_data_model.dart';
 export 'leave_model.dart';
 export 'ledger_model.dart';
+export 'notification_model.dart';
 export 'response_model.dart';
 export 'salary_model.dart';
 export 'send_message_model.dart';

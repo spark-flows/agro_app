@@ -215,6 +215,13 @@ class AppPages {
       binding: LedgersBinding(),
       transition: Transition.rightToLeft,
     ),
+    GetPage<NotificationScreen>(
+      name: _Paths.notificationScreen,
+      transitionDuration: transitionDuration,
+      page: NotificationScreen.new,
+      binding: NotificationBinding(),
+      transition: Transition.rightToLeft,
+    ),
   ];
 }
 

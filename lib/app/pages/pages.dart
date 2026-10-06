@@ -16,3 +16,4 @@ export 'leave_screen/leave_page.dart';
 export 'collection_screen/collection_page.dart';
 export 'expense_screen/expense_page.dart';
 export 'ledgers_screen/ledgers_page.dart';
+export 'notification_screen/notification_page.dart';

@@ -980,4 +980,50 @@ class DataRepository extends DomainRepository {
     toDate: toDate,
     isLoading: isLoading,
   );
+
+  Future<ResponseModel> getNotificationListApi({
+    int page = 1,
+    int limit = 20,
+    String search = "",
+    bool? isRead,
+    String type = "",
+    String startDate = "",
+    String endDate = "",
+    bool isLoading = false,
+  }) async => connectHelper.getNotificationListApi(
+    page: page,
+    limit: limit,
+    search: search,
+    isRead: isRead,
+    type: type,
+    startDate: startDate,
+    endDate: endDate,
+    isLoading: isLoading,
+  );
+
+  Future<ResponseModel> getNotificationUnreadCountApi({
+    bool isLoading = false,
+  }) async => connectHelper.getNotificationUnreadCountApi(
+    isLoading: isLoading,
+  );
+
+  Future<ResponseModel> markNotificationReadApi({
+    String? notificationId,
+    bool? markAll,
+    bool? isRead,
+    bool isLoading = false,
+  }) async => connectHelper.markNotificationReadApi(
+    notificationId: notificationId,
+    markAll: markAll,
+    isRead: isRead,
+    isLoading: isLoading,
+  );
+
+  Future<ResponseModel> deleteNotificationApi({
+    required String notificationId,
+    bool isLoading = false,
+  }) async => connectHelper.deleteNotificationApi(
+    notificationId: notificationId,
+    isLoading: isLoading,
+  );
 }

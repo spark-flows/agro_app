@@ -77,4 +77,9 @@ class EndPoints {
   static String ledgerListApi = 'api/ledger/list';
   static String ledgerEntryListApi = 'api/ledgerentry/list';
   static String postGeneratedPdf = 'api/ledgerentry/generatepdf';
+
+  static String notificationListApi = 'api/notification/list';
+  static String notificationUnreadCountApi = 'api/notification/unread-count';
+  static String notificationMarkReadApi = 'api/notification/mark-read';
+  static String notificationDeleteApi = 'api/notification/delete';
 }

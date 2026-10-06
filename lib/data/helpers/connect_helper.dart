@@ -2301,6 +2301,98 @@ class ConnectHelper {
     );
     return response;
   }
+
+  Future<ResponseModel> getNotificationListApi({
+    int page = 1,
+    int limit = 20,
+    String search = "",
+    bool? isRead,
+    String type = "",
+    String startDate = "",
+    String endDate = "",
+    bool isLoading = false,
+  }) async {
+    var data = <String, dynamic>{
+      "page": page,
+      "limit": limit,
+      "search": search,
+      "type": type,
+      "startDate": startDate,
+      "endDate": endDate,
+    };
+    if (isRead != null) {
+      data["isRead"] = isRead;
+    }
+    var response = await apiWrapper.makeRequest(
+      EndPoints.notificationListApi,
+      Request.post,
+      data,
+      isLoading,
+      await Utility.commonHeader(),
+    );
+    return response;
+  }
+
+  Future<ResponseModel> getNotificationUnreadCountApi({
+    bool isLoading = false,
+  }) async {
+    var response = await apiWrapper.makeRequest(
+      EndPoints.notificationUnreadCountApi,
+      Request.get,
+      null,
+      isLoading,
+      await Utility.commonHeader(),
+    );
+    if (response.statusCode == 404 || response.statusCode == 405) {
+      response = await apiWrapper.makeRequest(
+        EndPoints.notificationUnreadCountApi,
+        Request.post,
+        {},
+        isLoading,
+        await Utility.commonHeader(),
+      );
+    }
+    return response;
+  }
+
+  Future<ResponseModel> markNotificationReadApi({
+    String? notificationId,
+    bool? markAll,
+    bool? isRead,
+    bool isLoading = false,
+  }) async {
+    var data = <String, dynamic>{};
+    if (markAll == true) {
+      data["markAll"] = true;
+    } else if (notificationId != null && notificationId.isNotEmpty) {
+      data["notificationId"] = notificationId;
+      if (isRead != null) {
+        data["isRead"] = isRead;
+      }
+    }
+    var response = await apiWrapper.makeRequest(
+      EndPoints.notificationMarkReadApi,
+      Request.post,
+      data,
+      isLoading,
+      await Utility.commonHeader(),
+    );
+    return response;
+  }
+
+  Future<ResponseModel> deleteNotificationApi({
+    required String notificationId,
+    bool isLoading = false,
+  }) async {
+    var response = await apiWrapper.makeRequest(
+      EndPoints.notificationDeleteApi,
+      Request.post,
+      {"notificationId": notificationId},
+      isLoading,
+      await Utility.commonHeader(),
+    );
+    return response;
+  }
 }
 
 class FileUrl {

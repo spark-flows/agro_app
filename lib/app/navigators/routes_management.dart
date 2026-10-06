@@ -75,4 +75,6 @@ abstract class RouteManagement {
         Routes.ledgerPdfPreviewScreen,
         arguments: [pdfBytes, fileName],
       );
+  static Future<dynamic>? goToNotificationScreen() =>
+      Get.toNamed<dynamic>(Routes.notificationScreen);
 }

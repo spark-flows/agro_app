@@ -2460,4 +2460,137 @@ class Repository {
       return null;
     }
   }
+
+  Future<NotificationModel?> getNotificationListApi({
+    int page = 1,
+    int limit = 20,
+    String search = "",
+    bool? isRead,
+    String type = "",
+    String startDate = "",
+    String endDate = "",
+    bool isLoading = false,
+  }) async {
+    try {
+      var response = await _dataRepository.getNotificationListApi(
+        page: page,
+        limit: limit,
+        search: search,
+        isRead: isRead,
+        type: type,
+        startDate: startDate,
+        endDate: endDate,
+        isLoading: isLoading,
+      );
+      if (response.hasError) {
+        final msg = _parseErrorMessage(
+          response.data,
+          'Failed to load notifications',
+        );
+        Utility.showMessage(msg, MessageType.error, null, '');
+        return null;
+      }
+      if (response.data.isNotEmpty) {
+        return notificationModelFromJson(response.data);
+      }
+      return null;
+    } catch (e) {
+      print('getNotificationListApi error: $e');
+      Utility.closeDialog();
+      Utility.showMessage(
+        'Failed to load notifications',
+        MessageType.error,
+        null,
+        '',
+      );
+      return null;
+    }
+  }
+
+  Future<int?> getNotificationUnreadCountApi({
+    bool isLoading = false,
+  }) async {
+    try {
+      var response = await _dataRepository.getNotificationUnreadCountApi(
+        isLoading: isLoading,
+      );
+      if (response.hasError) {
+        return null;
+      }
+      if (response.data.isNotEmpty) {
+        final decoded = json.decode(response.data);
+        if (decoded is Map<String, dynamic>) {
+          if (decoded['Data'] is Map && decoded['Data']['unreadCount'] != null) {
+            return (decoded['Data']['unreadCount'] as num?)?.toInt();
+          }
+          if (decoded['unreadCount'] != null) {
+            return (decoded['unreadCount'] as num?)?.toInt();
+          }
+          if (decoded['data'] is Map && decoded['data']['unreadCount'] != null) {
+            return (decoded['data']['unreadCount'] as num?)?.toInt();
+          }
+        }
+      }
+      return null;
+    } catch (e) {
+      print('getNotificationUnreadCountApi error: $e');
+      return null;
+    }
+  }
+
+  Future<bool> markNotificationReadApi({
+    String? notificationId,
+    bool? markAll,
+    bool? isRead,
+    bool isLoading = false,
+  }) async {
+    try {
+      var response = await _dataRepository.markNotificationReadApi(
+        notificationId: notificationId,
+        markAll: markAll,
+        isRead: isRead,
+        isLoading: isLoading,
+      );
+      if (response.hasError) {
+        final msg = _parseErrorMessage(
+          response.data,
+          isRead == false
+              ? 'Failed to mark notification as unread'
+              : 'Failed to mark notification as read',
+        );
+        Utility.showMessage(msg, MessageType.error, null, '');
+        return false;
+      }
+      return true;
+    } catch (e) {
+      print('markNotificationReadApi error: $e');
+      Utility.closeDialog();
+      return false;
+    }
+  }
+
+  Future<bool> deleteNotificationApi({
+    required String notificationId,
+    bool isLoading = false,
+  }) async {
+    try {
+      var response = await _dataRepository.deleteNotificationApi(
+        notificationId: notificationId,
+        isLoading: isLoading,
+      );
+      if (response.hasError) {
+        final msg = _parseErrorMessage(
+          response.data,
+          'Failed to delete notification',
+        );
+        Utility.showMessage(msg, MessageType.error, null, '');
+        return false;
+      }
+      return true;
+    } catch (e) {
+      print('deleteNotificationApi error: $e');
+      Utility.closeDialog();
+      return false;
+    }
+  }
 }

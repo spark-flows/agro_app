@@ -35,6 +35,7 @@ abstract class Routes {
   static const ledgersScreen = _Paths.ledgersScreen;
   static const ledgerStatementScreen = _Paths.ledgerStatementScreen;
   static const ledgerPdfPreviewScreen = _Paths.ledgerPdfPreviewScreen;
+  static const notificationScreen = _Paths.notificationScreen;
 }
 
 abstract class _Paths {
@@ -72,5 +73,6 @@ abstract class _Paths {
   static const ledgersScreen = '/ledgersScreen';
   static const ledgerStatementScreen = '/ledgerStatementScreen';
   static const ledgerPdfPreviewScreen = '/ledgerPdfPreviewScreen';
+  static const notificationScreen = '/notificationScreen';
 }
 
