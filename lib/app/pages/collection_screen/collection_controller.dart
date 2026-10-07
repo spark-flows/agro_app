@@ -88,41 +88,16 @@ class CollectionController extends GetxController {
 
   // ── Load Role & User ID from Storage / Profile API ─────────────────────────
   Future<void> _loadUserContext() async {
-    // 1. Try reading from secure storage
-    roleName = await Get.find<Repository>().getSecureValue(LocalKeys.roleName);
+    roleName = await Utility.getRoleName();
 
-    // 2. Try reading from cached profile JSON
-    if (roleName.isEmpty) {
-      final profileJson = await Get.find<Repository>().getSecureValue(
-        LocalKeys.profileData,
-      );
-      if (profileJson.isNotEmpty) {
-        try {
-          final decoded = json.decode(profileJson);
-          final userData =
-              decoded['Data']?['userData'] ?? decoded['userData'] ?? decoded;
-          roleName =
-              userData['roleid']?['rolename']?.toString() ??
-              userData['rolename']?.toString() ??
-              userData['role']?.toString() ??
-              '';
-        } catch (_) {}
-      }
-    }
-
-    // 3. Fallback: fetch profile API directly
     if (roleName.isEmpty) {
       try {
         final profileRes = await Get.find<Repository>().getProfileApi(
           isLoading: false,
         );
-        if (profileRes != null &&
-            profileRes.data.userData.rolename.isNotEmpty) {
-          roleName = profileRes.data.userData.rolename;
-          Get.find<Repository>().saveSecureValue(
-            LocalKeys.roleName,
-            profileRes.data.userData.roleid.rolename ?? roleName,
-          );
+        if (profileRes != null && profileRes.data.userData != null) {
+          await Utility.saveUserSession(userData: profileRes.data.userData);
+          roleName = profileRes.data.userData.effectiveRoleName;
         }
       } catch (_) {}
     }

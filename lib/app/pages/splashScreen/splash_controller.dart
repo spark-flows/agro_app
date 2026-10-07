@@ -34,37 +34,25 @@ class SplashController extends GetxController {
         );
         if (profileResponse != null && profileResponse.data != null) {
           final profileData = profileResponse.data!.userData;
-
-          Get.find<Repository>().saveSecureValue(
-            LocalKeys.userName,
-            profileData.name,
-          );
-
-          Get.find<Repository>().saveSecureValue(
-            LocalKeys.distributorId,
-            profileData.id,
-          );
-
-          Get.find<Repository>().saveSecureValue(
+          await Utility.saveUserSession(userData: profileData);
+          RouteManagement.goToBottomScreen();
+        } else {
+          // If offline or profile fetch failed, check if we have cached profile data
+          String cachedProfile = await Get.find<Repository>().getSecureValue(
             LocalKeys.profileData,
-            json.encode(profileData.toJson()),
           );
-
-          Get.find<Repository>().saveSecureValue(
-            LocalKeys.roleName,
-            profileData.roleid.rolename ?? "",
-          );
-
-          // Pre-populate branchId so it's available for the first API calls
-          if (profileData.branchid != null &&
-              profileData.branchid!.id.isNotEmpty) {
-            Get.find<Repository>().saveSecureValue(
-              LocalKeys.selectedBranchId,
-              profileData.branchid!.id,
-            );
+          if (cachedProfile.isNotEmpty) {
+            try {
+              final cachedData = ProfileDataUserData.fromJson(
+                json.decode(cachedProfile),
+              );
+              await Utility.saveUserSession(userData: cachedData);
+              RouteManagement.goToBottomScreen();
+              return;
+            } catch (_) {}
           }
+          await Utility.logout();
         }
-        RouteManagement.goToBottomScreen();
       } else {
         RouteManagement.goToAuthScreen();
       }

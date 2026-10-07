@@ -66,7 +66,7 @@ class AuthController extends GetxController {
 
     if (response != null && response.status == 200) {
       if (response.data?.accessToken != null) {
-        Get.find<Repository>().saveSecureValue(
+        await Get.find<Repository>().saveSecureValue(
           LocalKeys.authToken,
           response.data!.accessToken!,
         );
@@ -77,47 +77,14 @@ class AuthController extends GetxController {
       );
       if (profileResponse != null) {
         final profileData = profileResponse.data.userData;
-
-        Get.find<Repository>().saveSecureValue(
-          LocalKeys.userName,
-          profileData.name,
+        await Utility.saveUserSession(
+          token: response.data?.accessToken,
+          userData: profileData,
         );
-
-        Get.find<Repository>().saveSecureValue(
-          LocalKeys.distributorId,
-          profileData.id,
-        );
-
-        Get.find<Repository>().saveSecureValue(
-          LocalKeys.userIds,
-          profileData.id,
-        );
-
-        Get.find<Repository>().saveSecureValue(
-          LocalKeys.roleName,
-          profileData.rolename,
-        );
-
-        Get.find<Repository>().saveValue(
-          LocalKeys.roleHiveName,
-          profileData.rolename,
-        );
-
-        Get.find<Repository>().saveSecureValue(
-          LocalKeys.profileData,
-          json.encode(profileData.toJson()),
-        );
-
-        // Pre-populate branchId so it's available for the first API calls
-        if (profileData.branchid != null &&
-            profileData.branchid!.id.isNotEmpty) {
-          Get.find<Repository>().saveSecureValue(
-            LocalKeys.selectedBranchId,
-            profileData.branchid!.id,
-          );
-        }
       }
 
+      userNameController.clear();
+      passController.clear();
       RouteManagement.goToBottomScreen();
     } else {
       Utility.errorMessage(

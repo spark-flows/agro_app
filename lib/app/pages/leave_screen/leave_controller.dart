@@ -81,32 +81,18 @@ class LeaveController extends GetxController {
       } catch (_) {}
     }
 
-    // 1. Try reading role from secure storage
-    roleName = await Get.find<Repository>().getSecureValue(LocalKeys.roleName);
+    // 1. Try reading role
+    roleName = await Utility.getRoleName();
 
-    // 2. Try reading role from cached profile JSON
-    if (roleName.isEmpty && profileData != null) {
-      roleName = profileData!.rolename;
-    }
-
-    // 3. Fetch profile API directly to get latest timings/role
+    // 2. Fetch profile API directly to get latest timings/role
     try {
       final profileRes = await Get.find<Repository>().getProfileApi(
         isLoading: false,
       );
       if (profileRes != null && profileRes.data != null) {
         profileData = profileRes.data.userData;
-        roleName = profileRes.data.userData.rolename.isNotEmpty
-            ? profileRes.data.userData.rolename
-            : roleName;
-        Get.find<Repository>().saveSecureValue(
-          LocalKeys.roleName,
-          profileRes.data.userData.roleid.rolename ?? roleName,
-        );
-        Get.find<Repository>().saveSecureValue(
-          LocalKeys.profileData,
-          json.encode(profileRes.data.userData.toJson()),
-        );
+        await Utility.saveUserSession(userData: profileData!);
+        roleName = profileData!.effectiveRoleName;
       }
     } catch (_) {}
 

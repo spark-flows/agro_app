@@ -30,14 +30,16 @@ class DeviceRepository extends DomainRepository {
   Box _getBox() => Hive.box<dynamic>(StringConstants.appName);
 
   @override
-  void clearData(dynamic key) {
-    _getBox().delete(key);
+  Future<void> clearData(dynamic key) async {
+    await _getBox().delete(key);
   }
 
   /// Delete the box
   @override
-  void deleteBox() {
-    Hive.box<dynamic>(StringConstants.appName).clear();
+  Future<void> deleteBox() async {
+    try {
+      await _getBox().clear();
+    } catch (_) {}
   }
 
   /// returns stored string value
@@ -48,20 +50,24 @@ class DeviceRepository extends DomainRepository {
     if (key == DeviceConstants.localLang) {
       defaultValue = DataConstants.defaultLang;
     }
-    String? value = box.get(key, defaultValue: defaultValue) as String;
-    return value;
+    var raw = box.get(key, defaultValue: defaultValue);
+    return raw?.toString() ?? defaultValue;
   }
 
   /// store the data
   @override
-  void saveValue(dynamic key, dynamic value) {
-    _getBox().put(key, value);
+  Future<void> saveValue(dynamic key, dynamic value) async {
+    await _getBox().put(key, value);
   }
 
   /// return bool value
   @override
-  bool getBoolValue(String key) =>
-      _getBox().get(key, defaultValue: false) as bool;
+  bool getBoolValue(String key) {
+    var raw = _getBox().get(key, defaultValue: false);
+    if (raw is bool) return raw;
+    if (raw is String) return raw.toLowerCase() == 'true';
+    return false;
+  }
 
   /// Get data from secure storage
   @override
@@ -79,20 +85,26 @@ class DeviceRepository extends DomainRepository {
 
   /// Save data in secure storage
   @override
-  void saveValueSecurely(String key, String value) {
-    _flutterSecureStorage.write(key: key, value: value);
+  Future<void> saveValueSecurely(String key, String value) async {
+    try {
+      await _flutterSecureStorage.write(key: key, value: value);
+    } catch (_) {}
   }
 
   /// Delete data from secure storage
   @override
-  void deleteSecuredValue(String key) {
-    _flutterSecureStorage.delete(key: key);
+  Future<void> deleteSecuredValue(String key) async {
+    try {
+      await _flutterSecureStorage.delete(key: key);
+    } catch (_) {}
   }
 
   /// Delete all data from secure storage
   @override
-  void deleteAllSecuredValues() {
-    _flutterSecureStorage.deleteAll();
+  Future<void> deleteAllSecuredValues() async {
+    try {
+      await _flutterSecureStorage.deleteAll();
+    } catch (_) {}
   }
 
   /// API to get the IP of the user

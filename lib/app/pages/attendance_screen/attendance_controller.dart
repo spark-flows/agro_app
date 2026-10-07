@@ -37,9 +37,9 @@ class AttendanceController extends GetxController with WidgetsBindingObserver {
   String? filterStatus;
 
   String? roleName;
-  void loadRoleName() async {
-    roleName = Get.find<Repository>().getStringValue(LocalKeys.roleHiveName);
-    isAdmin = roleName?.toLowerCase() == 'admin';
+  Future<void> loadRoleName() async {
+    roleName = await Utility.getRoleName();
+    isAdmin = RoleUtils.isAdmin(roleName);
     update();
   }
 
@@ -86,8 +86,9 @@ class AttendanceController extends GetxController with WidgetsBindingObserver {
   }
 
   Future<void> checkAdminRole() async {
-    final role = Get.find<Repository>().getStringValue(LocalKeys.roleHiveName);
-    isAdmin = role.toLowerCase() == 'admin';
+    final role = await Utility.getRoleName();
+    roleName = role;
+    isAdmin = RoleUtils.isAdmin(role);
     if (isAdmin) {
       fetchUserList();
     }
@@ -145,7 +146,7 @@ class AttendanceController extends GetxController with WidgetsBindingObserver {
     update();
 
     var userId = await Utility.getSecureValue(LocalKeys.distributorId);
-    var role = Get.find<Repository>().getStringValue(LocalKeys.roleHiveName);
+    var role = await Utility.getRoleName();
 
     try {
       final response = await Get.find<Repository>().getAttendanceListApi(
@@ -155,7 +156,7 @@ class AttendanceController extends GetxController with WidgetsBindingObserver {
         date: filterDate != null
             ? DateFormat('yyyy-MM-dd').format(filterDate!)
             : "",
-        userid: role == "Admin" ? "" : userId,
+        userid: RoleUtils.isAdmin(role) ? "" : userId,
         status: filterStatus ?? "",
         isLoading: isRefresh,
       );

@@ -276,6 +276,7 @@ class ConnectHelper {
             // Save for next time
             if (role.isNotEmpty) {
               Get.find<Repository>().saveSecureValue(LocalKeys.roleName, role);
+              Get.find<Repository>().saveValue(LocalKeys.roleHiveName, role);
             }
             final freshDistId = userData['_id']?.toString() ?? '';
             if (freshDistId.isNotEmpty && distributorId.isEmpty) {
@@ -335,8 +336,8 @@ class ConnectHelper {
         : await _resolveBranchId();
     final String resolvedDistributorId =
         (distributorid != null && distributorid.isNotEmpty)
-            ? distributorid
-            : await _resolveDistributorId();
+        ? distributorid
+        : await _resolveDistributorId();
 
     final bool isUserRole = RoleUtils.isUser(role);
 
@@ -372,7 +373,6 @@ class ConnectHelper {
     );
     return response;
   }
-
 
   Future<ResponseModel> createCustomerApi({
     String? customerid,
@@ -962,7 +962,9 @@ class ConnectHelper {
   }
 
   Future<String> _resolveDistributorId() async {
-    String distributorId = await Utility.getSecureValue(LocalKeys.distributorId);
+    String distributorId = await Utility.getSecureValue(
+      LocalKeys.distributorId,
+    );
     if (distributorId.isNotEmpty) {
       return distributorId;
     }
@@ -1075,6 +1077,10 @@ class ConnectHelper {
             if (freshRole.isNotEmpty) {
               Get.find<Repository>().saveSecureValue(
                 LocalKeys.roleName,
+                freshRole,
+              );
+              Get.find<Repository>().saveValue(
+                LocalKeys.roleHiveName,
                 freshRole,
               );
             }
@@ -1652,8 +1658,9 @@ class ConnectHelper {
     var brachId = await Get.find<Repository>().getSecureValue(
       LocalKeys.selectedBranchId,
     );
+    var role = await Utility.getRoleName();
     var response = await apiWrapper.makeRequest(
-      "${EndPoints.usersApi}?role=${Get.find<Repository>().getStringValue(LocalKeys.roleHiveName)}&branchid=${brachId}",
+      "${EndPoints.usersApi}?role=${role}&branchid=${brachId}",
       Request.get,
       null,
       isLoading,

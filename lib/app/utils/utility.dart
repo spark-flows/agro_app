@@ -4,7 +4,6 @@ import 'dart:io';
 import 'dart:math';
 
 import 'package:agro_app/app/app.dart';
-import 'package:agro_app/data/data.dart';
 import 'package:agro_app/domain/domain.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:device_info_plus/device_info_plus.dart';
@@ -12,6 +11,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
@@ -19,7 +19,6 @@ import 'package:open_filex/open_filex.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:geolocator/geolocator.dart';
 
 abstract class Utility {
   //Internet Connection Checker
@@ -69,6 +68,115 @@ abstract class Utility {
   /// Read a value from secure storage
   static Future<String> getSecureValue(String key) async {
     return await Get.find<Repository>().getSecureValue(key);
+  }
+
+  /// Get role name safely from Hive, SecureStorage, or cached profile JSON
+  static Future<String> getRoleName() async {
+    try {
+      final repo = Get.find<Repository>();
+      // 1. Check Hive first
+      String hiveRole = repo.getStringValue(LocalKeys.roleHiveName);
+      if (hiveRole.isNotEmpty) return hiveRole;
+
+      // 2. Check Secure Storage
+      String secRole = await repo.getSecureValue(LocalKeys.roleName);
+      if (secRole.isNotEmpty) {
+        await repo.saveValue(LocalKeys.roleHiveName, secRole);
+        return secRole;
+      }
+
+      // 3. Fallback: Parse cached profileData JSON
+      String profileJson = await repo.getSecureValue(LocalKeys.profileData);
+      if (profileJson.isNotEmpty) {
+        final decoded = json.decode(profileJson);
+        final userData =
+            decoded['Data']?['userData'] ?? decoded['userData'] ?? decoded;
+        final role =
+            (userData['roleid']?['rolename'] ??
+                    userData['rolename'] ??
+                    userData['role'] ??
+                    '')
+                .toString()
+                .trim();
+        if (role.isNotEmpty) {
+          await repo.saveSecureValue(LocalKeys.roleName, role);
+          await repo.saveValue(LocalKeys.roleHiveName, role);
+          return role;
+        }
+      }
+    } catch (_) {}
+    return '';
+  }
+
+  /// Get role name synchronously from Hive storage
+  static String getSyncRoleName() {
+    try {
+      return Get.find<Repository>().getStringValue(LocalKeys.roleHiveName);
+    } catch (_) {
+      return '';
+    }
+  }
+
+  /// Save user session info (token, profile, role in both Hive and Secure Storage, branch, etc.)
+  static Future<void> saveUserSession({
+    String? token,
+    required ProfileDataUserData userData,
+  }) async {
+    final repo = Get.find<Repository>();
+
+    if (token != null && token.isNotEmpty) {
+      await repo.saveSecureValue(LocalKeys.authToken, token);
+    }
+
+    final String role = userData.effectiveRoleName;
+
+    await repo.saveSecureValue(LocalKeys.userName, userData.name);
+    await repo.saveSecureValue(LocalKeys.distributorId, userData.id);
+    await repo.saveSecureValue(LocalKeys.userIds, userData.id);
+    await repo.saveSecureValue(LocalKeys.roleName, role);
+    await repo.saveValue(LocalKeys.roleHiveName, role);
+    await repo.saveSecureValue(
+      LocalKeys.profileData,
+      json.encode(userData.toJson()),
+    );
+
+    if (userData.branchid != null && userData.branchid!.id.isNotEmpty) {
+      await repo.saveSecureValue(
+        LocalKeys.selectedBranchId,
+        userData.branchid!.id,
+      );
+    }
+  }
+
+  /// Thoroughly clear all local user session data and reset app state
+  static Future<void> logout() async {
+    try {
+      final repo = Get.find<Repository>();
+
+      // Delete known secure storage keys
+      await repo.deleteSecuredValue(LocalKeys.authToken);
+      await repo.deleteSecuredValue(LocalKeys.userName);
+      await repo.deleteSecuredValue(LocalKeys.distributorId);
+      await repo.deleteSecuredValue(LocalKeys.userIds);
+      await repo.deleteSecuredValue(LocalKeys.profileData);
+      await repo.deleteSecuredValue(LocalKeys.roleName);
+      await repo.deleteSecuredValue(LocalKeys.selectedBranchId);
+      await repo.deleteSecuredValue(LocalKeys.trackingId);
+      await repo.deleteSecuredValue(LocalKeys.lastOdometer);
+      await repo.deleteSecuredValue(LocalKeys.lastSelfieUrl);
+      await repo.deleteSecuredValue(LocalKeys.chanelId);
+      await repo.deleteSecuredValue(LocalKeys.peerId);
+      await repo.deleteSecuredValue(LocalKeys.groupPeerId);
+
+      // Clear Hive keys & box
+      await repo.saveValue(LocalKeys.roleHiveName, '');
+      await repo.clearAllLocalData();
+    } catch (e) {
+      print('Logout storage clear error: $e');
+    }
+
+    // Navigate to Auth Screen and clear navigation stack
+    RouteManagement.goToAuthScreen();
   }
 
   //Password validation
@@ -492,7 +600,9 @@ abstract class Utility {
     if (permission == LocationPermission.denied) {
       permission = await Geolocator.requestPermission();
       if (permission == LocationPermission.denied) {
-        errorMessage('Location permission is required to Clock In/Out. Please allow it.');
+        errorMessage(
+          'Location permission is required to Clock In/Out. Please allow it.',
+        );
         return false;
       }
     }

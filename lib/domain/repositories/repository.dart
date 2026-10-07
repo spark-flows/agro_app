@@ -26,12 +26,21 @@ class Repository {
   final DataRepository _dataRepository;
 
   /// Clear data from local storage for [key].
-  void clearData(dynamic key) {
+  Future<void> clearData(dynamic key) async {
     try {
-      _deviceRepository.clearData(key);
+      await _deviceRepository.clearData(key);
     } catch (_) {
-      _dataRepository.clearData(key);
+      try {
+        await _dataRepository.clearData(key);
+      } catch (_) {}
     }
+  }
+
+  /// Delete Hive box
+  Future<void> deleteBox() async {
+    try {
+      await _deviceRepository.deleteBox();
+    } catch (_) {}
   }
 
   /// Get the string value for the [key].
@@ -49,11 +58,13 @@ class Repository {
   ///
   /// [key] : The key to which [value] will be saved.
   /// [value] : The value which needs to be saved.
-  void saveValue(dynamic key, dynamic value) {
+  Future<void> saveValue(dynamic key, dynamic value) async {
     try {
-      _deviceRepository.saveValue(key, value);
+      await _deviceRepository.saveValue(key, value);
     } catch (_) {
-      _dataRepository.saveValue(key, value);
+      try {
+        await _dataRepository.saveValue(key, value);
+      } catch (_) {}
     }
   }
 
@@ -85,38 +96,58 @@ class Repository {
     try {
       return await _deviceRepository.getSecuredValue(key);
     } catch (_) {
-      return await _dataRepository.getSecuredValue(key);
+      try {
+        return await _dataRepository.getSecuredValue(key);
+      } catch (_) {
+        return '';
+      }
     }
   }
 
-  /// Save the value to the string.
+  /// Save the value to secure storage.
   ///
   /// [key] : The key to which [value] will be saved.
   /// [value] : The value which needs to be saved.
-  void saveSecureValue(String key, String value) {
+  Future<void> saveSecureValue(String key, String value) async {
     try {
-      _deviceRepository.saveValueSecurely(key, value);
+      await _deviceRepository.saveValueSecurely(key, value);
     } catch (_) {
-      _dataRepository.saveValueSecurely(key, value);
+      try {
+        await _dataRepository.saveValueSecurely(key, value);
+      } catch (_) {}
     }
   }
 
   /// Clear data from secure storage for [key].
-  void deleteSecuredValue(String key) {
+  Future<void> deleteSecuredValue(String key) async {
     try {
-      _deviceRepository.deleteSecuredValue(key);
+      await _deviceRepository.deleteSecuredValue(key);
     } catch (_) {
-      _dataRepository.deleteSecuredValue(key);
+      try {
+        await _dataRepository.deleteSecuredValue(key);
+      } catch (_) {}
     }
   }
 
-  /// Clear all data from secure storage .
-  void deleteAllSecuredValues() {
+  /// Clear all data from secure storage.
+  Future<void> deleteAllSecuredValues() async {
     try {
-      _deviceRepository.deleteAllSecuredValues();
+      await _deviceRepository.deleteAllSecuredValues();
     } catch (_) {
-      _dataRepository.deleteAllSecuredValues();
+      try {
+        await _dataRepository.deleteAllSecuredValues();
+      } catch (_) {}
     }
+  }
+
+  /// Clear all data from both secure storage and Hive box.
+  Future<void> clearAllLocalData() async {
+    try {
+      await _deviceRepository.deleteAllSecuredValues();
+    } catch (_) {}
+    try {
+      await _deviceRepository.deleteBox();
+    } catch (_) {}
   }
 
   Future<LoginModel?> loginApi({

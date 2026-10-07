@@ -253,31 +253,14 @@ class CustomerOrdersController extends GetxController {
         }
       } catch (_) {}
     }
-    try {
-      final homeController = Get.find<HomeController>();
-      isAdmin = RoleUtils.isAdmin(homeController.roleName);
-      print(
-        '[CustomerOrders] Resolved isAdmin=$isAdmin from HomeController roleName="${homeController.roleName}"',
-      );
-    } catch (e) {
-      print(
-        '[CustomerOrders] Error finding HomeController: $e. Falling back to local storage.',
-      );
-      String role = await Utility.getSecureValue(LocalKeys.roleName);
-      if (role.isEmpty) {
-        final profileJson = await Utility.getSecureValue(LocalKeys.profileData);
-        if (profileJson.isNotEmpty) {
-          try {
-            final decoded = json.decode(profileJson);
-            role =
-                decoded['roleid']?['rolename']?.toString() ??
-                decoded['rolename']?.toString() ??
-                '';
-          } catch (_) {}
-        }
-      }
-      isAdmin = RoleUtils.isAdmin(role);
+    String role = '';
+    if (Get.isRegistered<HomeController>()) {
+      role = Get.find<HomeController>().roleName;
     }
+    if (role.isEmpty) {
+      role = await Utility.getRoleName();
+    }
+    isAdmin = RoleUtils.isAdmin(role);
     update();
 
     if (isAdmin) {

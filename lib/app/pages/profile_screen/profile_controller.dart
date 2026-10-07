@@ -1,8 +1,9 @@
 import 'dart:convert';
-import 'package:agro_app/device/device.dart';
-import 'package:get/get.dart';
-import 'package:agro_app/domain/domain.dart';
 import 'package:agro_app/app/navigators/routes_management.dart';
+import 'package:agro_app/app/utils/utility.dart';
+import 'package:agro_app/device/device.dart';
+import 'package:agro_app/domain/domain.dart';
+import 'package:get/get.dart';
 
 class ProfileController extends GetxController {
   final RxBool isLoading = false.obs;
@@ -34,37 +35,13 @@ class ProfileController extends GetxController {
     var response = await Get.find<Repository>().getProfileApi(isLoading: false);
     if (response != null && response.data != null) {
       userData = response.data.userData;
-
-      Get.find<Repository>().saveSecureValue(
-        LocalKeys.userName,
-        userData?.name ?? '',
-      );
-      Get.find<Repository>().saveSecureValue(
-        LocalKeys.distributorId,
-        userData?.id ?? '',
-      );
-      Get.find<Repository>().saveSecureValue(
-        LocalKeys.profileData,
-        json.encode(userData!.toJson()),
-      );
-      Get.find<Repository>().saveSecureValue(
-        LocalKeys.roleName,
-        userData?.roleid.rolename ?? '',
-      );
+      await Utility.saveUserSession(userData: userData!);
     }
     isLoading.value = false;
     update();
   }
 
-  void logout() {
-    Get.find<Repository>().deleteSecuredValue(LocalKeys.authToken);
-    Get.find<Repository>().deleteSecuredValue(LocalKeys.userName);
-    Get.find<Repository>().deleteSecuredValue(LocalKeys.distributorId);
-    Get.find<Repository>().deleteSecuredValue(LocalKeys.profileData);
-    Get.find<Repository>().deleteSecuredValue(LocalKeys.roleName);
-    Get.find<Repository>().saveValue(LocalKeys.roleHiveName, "");
-    Get.find<DeviceRepository>().deleteAllSecuredValues();
-    Get.find<DeviceRepository>().deleteBox();
-    RouteManagement.goToAuthScreen();
+  void logout() async {
+    await Utility.logout();
   }
 }

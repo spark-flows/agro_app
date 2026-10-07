@@ -12,13 +12,13 @@ class DataRepository extends DomainRepository {
   final ConnectHelper connectHelper;
 
   @override
-  void clearData(dynamic key) {
+  Future<void> clearData(dynamic key) async {
     throw UnimplementedError();
   }
 
   /// Delete the box
   @override
-  void deleteBox() {
+  Future<void> deleteBox() async {
     throw UnimplementedError();
   }
 
@@ -30,7 +30,7 @@ class DataRepository extends DomainRepository {
 
   /// store the data
   @override
-  void saveValue(dynamic key, dynamic value) {
+  Future<void> saveValue(dynamic key, dynamic value) async {
     throw UnimplementedError();
   }
 
@@ -44,17 +44,17 @@ class DataRepository extends DomainRepository {
   }
 
   @override
-  void saveValueSecurely(String key, String value) {
+  Future<void> saveValueSecurely(String key, String value) async {
     throw UnimplementedError();
   }
 
   @override
-  void deleteSecuredValue(String key) {
+  Future<void> deleteSecuredValue(String key) async {
     throw UnimplementedError();
   }
 
   @override
-  void deleteAllSecuredValues() {
+  Future<void> deleteAllSecuredValues() async {
     throw UnimplementedError();
   }
 

@@ -302,19 +302,7 @@ class OrdersController extends GetxController {
   }
 
   Future<void> _loadRole() async {
-    String role = await Utility.getSecureValue(LocalKeys.roleName);
-    if (role.isEmpty) {
-      final profileJson = await Utility.getSecureValue(LocalKeys.profileData);
-      if (profileJson.isNotEmpty) {
-        try {
-          final decoded = json.decode(profileJson);
-          role =
-              decoded['roleid']?['rolename']?.toString() ??
-              decoded['rolename']?.toString() ??
-              '';
-        } catch (_) {}
-      }
-    }
+    String role = await Utility.getRoleName();
     userRole = role;
     isAdmin = RoleUtils.isAdmin(role);
     update();

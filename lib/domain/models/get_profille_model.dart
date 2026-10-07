@@ -115,8 +115,25 @@ class ProfileDataUserData {
     this.breakend,
   });
 
-  factory ProfileDataUserData.fromJson(Map<String, dynamic> json) =>
-      ProfileDataUserData(
+      factory ProfileDataUserData.fromJson(Map<String, dynamic> json) {
+    Roleid roleObj;
+    if (json["roleid"] != null && json["roleid"] is Map<String, dynamic>) {
+      roleObj = Roleid.fromJson(json["roleid"] as Map<String, dynamic>);
+    } else if (json["roleid"] != null && json["roleid"] is String) {
+      roleObj = Roleid(
+        id: json["roleid"] as String,
+        rolename: json["rolename"] as String? ?? '',
+      );
+    } else {
+      roleObj = Roleid(id: '', rolename: '');
+    }
+
+    String roleNameStr = (json["rolename"] as String? ?? '').trim();
+    if (roleNameStr.isEmpty && roleObj.rolename != null && roleObj.rolename!.isNotEmpty) {
+      roleNameStr = roleObj.rolename!.trim();
+    }
+
+    return ProfileDataUserData(
         id: json["_id"] as String? ?? '',
         code: json["code"] as String? ?? '',
         name: json["name"] as String? ?? '',
@@ -125,10 +142,8 @@ class ProfileDataUserData {
         profilepic: json["profilepic"] as String? ?? '',
         isVerified: json["isVerified"] as bool? ?? false,
         isActive: json["isActive"] as bool? ?? false,
-        roleid: json["roleid"] != null
-            ? Roleid.fromJson(json["roleid"] as Map<String, dynamic>)
-            : Roleid(id: '', rolename: ''),
-        rolename: json["rolename"] as String? ?? '',
+        roleid: roleObj,
+        rolename: roleNameStr,
         status: json["status"] as bool? ?? false,
         availability: json["availability"] as String? ?? '',
         salestarget: json["salestarget"] != null
@@ -160,6 +175,15 @@ class ProfileDataUserData {
         breakstart: (json["breakstart"] ?? json["breakStart"] ?? json["break_start"])?.toString(),
         breakend: (json["breakend"] ?? json["breakEnd"] ?? json["break_end"])?.toString(),
       );
+  }
+
+  String get effectiveRoleName {
+    if (rolename.isNotEmpty) return rolename;
+    if (roleid.rolename != null && roleid.rolename!.isNotEmpty) {
+      return roleid.rolename!;
+    }
+    return '';
+  }
 
   Map<String, dynamic> toJson() => {
     "_id": id,
@@ -171,7 +195,7 @@ class ProfileDataUserData {
     "isVerified": isVerified,
     "isActive": isActive,
     "roleid": roleid.toJson(),
-    "rolename": rolename,
+    "rolename": effectiveRoleName,
     "status": status,
     "availability": availability,
     "salestarget": salestarget.toJson(),
@@ -223,7 +247,7 @@ class Roleid {
   Roleid({this.id, this.rolename});
 
   factory Roleid.fromJson(Map<String, dynamic> json) =>
-      Roleid(id: json["_id"], rolename: json["rolename"]);
+      Roleid(id: json["_id"] ?? json["id"], rolename: json["rolename"] ?? json["name"]);
 
   Map<String, dynamic> toJson() => {"_id": id, "rolename": rolename};
 }

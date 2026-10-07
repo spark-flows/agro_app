@@ -84,38 +84,16 @@ class ExpenseController extends GetxController {
 
   // ── Load Role & User ID from Storage / Profile API ─────────────────────────
   Future<void> _loadUserContext() async {
-    roleName = await Get.find<Repository>().getSecureValue(LocalKeys.roleName);
-
-    if (roleName.isEmpty) {
-      final profileJson = await Get.find<Repository>().getSecureValue(
-        LocalKeys.profileData,
-      );
-      if (profileJson.isNotEmpty) {
-        try {
-          final decoded = json.decode(profileJson);
-          final userData =
-              decoded['Data']?['userData'] ?? decoded['userData'] ?? decoded;
-          roleName =
-              userData['roleid']?['rolename']?.toString() ??
-              userData['rolename']?.toString() ??
-              userData['role']?.toString() ??
-              '';
-        } catch (_) {}
-      }
-    }
+    roleName = await Utility.getRoleName();
 
     if (roleName.isEmpty) {
       try {
         final profileRes = await Get.find<Repository>().getProfileApi(
           isLoading: false,
         );
-        if (profileRes != null &&
-            profileRes.data.userData.rolename.isNotEmpty) {
-          roleName = profileRes.data.userData.rolename;
-          Get.find<Repository>().saveSecureValue(
-            LocalKeys.roleName,
-            profileRes.data.userData.roleid.rolename ?? roleName,
-          );
+        if (profileRes != null && profileRes.data.userData != null) {
+          await Utility.saveUserSession(userData: profileRes.data.userData);
+          roleName = profileRes.data.userData.effectiveRoleName;
         }
       } catch (_) {}
     }

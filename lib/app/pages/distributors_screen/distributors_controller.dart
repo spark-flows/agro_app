@@ -151,30 +151,19 @@ class DistributorsController extends GetxController {
         role = Get.find<HomeController>().roleName;
       }
       if (role.isEmpty) {
-        role = await Get.find<Repository>().getSecureValue(LocalKeys.roleName);
-      }
-      if (role.isEmpty) {
-        final localData = await Get.find<Repository>().getSecureValue(
-          LocalKeys.profileData,
-        );
-        if (localData.isNotEmpty) {
-          final decoded = json.decode(localData);
-          role = (decoded['rolename'] ?? decoded['roleName'] ?? '').toString();
-        }
+        role = await Utility.getRoleName();
       }
       if (role.isEmpty) {
         final profile = await Get.find<Repository>().getProfileApi(
           isLoading: false,
         );
-        role = profile?.data.userData.rolename ?? '';
+        if (profile != null && profile.data.userData != null) {
+          await Utility.saveUserSession(userData: profile.data.userData);
+          role = profile.data.userData.effectiveRoleName;
+        }
       }
 
-      if (role.isNotEmpty) {
-        isAdminView.value =
-            RoleUtils.isAdmin(role) || role.toLowerCase().contains('admin');
-      } else {
-        isAdminView.value = false;
-      }
+      isAdminView.value = RoleUtils.isAdmin(role);
     } catch (e) {
       debugPrint('[DistributorsController] checkAdminRole error: $e');
       isAdminView.value = false;

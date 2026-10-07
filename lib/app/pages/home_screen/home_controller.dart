@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:agro_app/app/navigators/routes_management.dart';
+import 'package:agro_app/app/utils/utility.dart';
 import 'package:agro_app/domain/domain.dart';
 import 'package:agro_app/domain/models/get_all_branches_model.dart'
     as branch_model;
@@ -23,10 +24,8 @@ class HomeController extends GetxController {
   }
 
   Future<void> _loadRoleFromLocal() async {
-    // 1. Try reading from secure storage first (fastest path)
-    final storedRole = await Get.find<Repository>().getSecureValue(
-      LocalKeys.roleName,
-    );
+    // 1. Try reading role and username from storage
+    final storedRole = await Utility.getRoleName();
     final storedUserName = await Get.find<Repository>().getSecureValue(
       LocalKeys.userName,
     );
@@ -48,8 +47,9 @@ class HomeController extends GetxController {
     if (localData.isNotEmpty) {
       try {
         final userData = ProfileDataUserData.fromJson(json.decode(localData));
-        if (userData.rolename.isNotEmpty) {
-          roleName = userData.rolename;
+        final effRole = userData.effectiveRoleName;
+        if (effRole.isNotEmpty) {
+          roleName = effRole;
         }
         if (userData.name.isNotEmpty) {
           userName = userData.name;
@@ -69,33 +69,10 @@ class HomeController extends GetxController {
     );
     if (response != null) {
       final userData = response.data.userData;
-      roleName = userData.rolename;
+      roleName = userData.effectiveRoleName;
       userName = userData.name;
 
-      Get.find<Repository>().saveSecureValue(
-        LocalKeys.userName,
-        userData.name,
-      );
-      Get.find<Repository>().saveSecureValue(
-        LocalKeys.distributorId,
-        userData.id,
-      );
-      Get.find<Repository>().saveSecureValue(
-        LocalKeys.roleName,
-        userData.roleid.rolename ?? "",
-      );
-      Get.find<Repository>().saveSecureValue(
-        LocalKeys.profileData,
-        json.encode(userData.toJson()),
-      );
-
-      // Pre-populate branchId so it's available for the first API calls
-      if (userData.branchid != null && userData.branchid!.id.isNotEmpty) {
-        Get.find<Repository>().saveSecureValue(
-          LocalKeys.selectedBranchId,
-          userData.branchid!.id,
-        );
-      }
+      await Utility.saveUserSession(userData: userData);
       update();
     }
   }
