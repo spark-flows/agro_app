@@ -17,7 +17,7 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   if (!kIsWeb) {
-    FirebaseApi.initilizeNotification();
+    await FirebaseApi.initilizeNotification();
     await BackgroundLocationService.initialize();
   }
   await initServices();

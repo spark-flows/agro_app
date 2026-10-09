@@ -120,6 +120,9 @@ class _TasksScreenState extends State<TasksScreen> {
         return Colors.blue;
       case 'completed':
         return Colors.green;
+      case 'reopen':
+      case 'reopened':
+        return Colors.teal;
       case 'cancelled':
         return Colors.red;
       case 'pending':
@@ -132,36 +135,60 @@ class _TasksScreenState extends State<TasksScreen> {
     required String title,
     required int count,
     required Color color,
+    required bool isSelected,
+    required VoidCallback onTap,
   }) {
-    return Padding(
-      padding: const EdgeInsets.only(right: 8.0),
-      child: Container(
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(16),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
         height: Dimens.seventy,
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        constraints: const BoxConstraints(minWidth: 85),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
         decoration: BoxDecoration(
-          color: color.withValues(alpha: 0.08),
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: color.withValues(alpha: 0.3), width: 1),
+          color: isSelected ? color : color.withValues(alpha: 0.08),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: isSelected ? color : color.withValues(alpha: 0.3),
+            width: isSelected ? 2 : 1,
+          ),
+          boxShadow: isSelected
+              ? [
+                  BoxShadow(
+                    color: color.withValues(alpha: 0.35),
+                    blurRadius: 8,
+                    offset: const Offset(0, 3),
+                  ),
+                ]
+              : null,
         ),
         child: Column(
-          spacing: Dimens.three,
           mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Text(
-              title,
-              style: TextStyle(
-                color: color,
-                fontWeight: FontWeight.w600,
-                fontSize: 12,
+            FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text(
+                title,
+                maxLines: 1,
+                style: TextStyle(
+                  color: isSelected ? Colors.white : color,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 12,
+                ),
               ),
             ),
-            const SizedBox(width: 6),
-            Text(
-              count.toString(),
-              style: TextStyle(
-                color: color,
-                fontWeight: FontWeight.bold,
-                fontSize: 16,
+            const SizedBox(height: 4),
+            FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text(
+                count.toString(),
+                style: TextStyle(
+                  color: isSelected ? Colors.white : color,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                ),
               ),
             ),
           ],
@@ -265,28 +292,229 @@ class _TasksScreenState extends State<TasksScreen> {
                         ),
                       ),
                     ),
-                    const SizedBox(width: 10),
-                    Container(
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: Colors.grey.shade200),
-                      ),
-                      child: IconButton(
-                        icon: Icon(
-                          Icons.filter_alt_outlined,
-                          color:
-                              (controller.filterStatus != null ||
-                                  controller.filterFromDate != null ||
-                                  controller.filterToDate != null ||
-                                  controller.filterAssignedBy != null)
-                              ? ColorsValue.primary
-                              : Colors.grey,
+                    // const SizedBox(width: 10),
+                    // Container(
+                    //   decoration: BoxDecoration(
+                    //     color: Colors.white,
+                    //     borderRadius: BorderRadius.circular(12),
+                    //     border: Border.all(color: Colors.grey.shade200),
+                    //   ),
+                    //   child: IconButton(
+                    //     icon: Icon(
+                    //       Icons.filter_alt_outlined,
+                    //       color:
+                    //           (controller.filterStatus != null ||
+                    //               controller.filterFromDate != null ||
+                    //               controller.filterToDate != null ||
+                    //               controller.filterAssignedBy != null)
+                    //           ? ColorsValue.primary
+                    //           : Colors.grey,
+                    //     ),
+                    //     onPressed: () =>
+                    //         _showFilterBottomSheet(context, controller),
+                    //   ),
+                    // ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+
+                // ── Date Range Filter (Directly below search) ───────────────
+                Row(
+                  children: [
+                    Expanded(
+                      child: InkWell(
+                        onTap: () async {
+                          final picked = await showDatePicker(
+                            context: context,
+                            initialDate:
+                                controller.filterFromDate ?? DateTime.now(),
+                            firstDate: DateTime(2020),
+                            lastDate: DateTime(2100),
+                            builder: (context, child) {
+                              return Theme(
+                                data: Theme.of(context).copyWith(
+                                  colorScheme: const ColorScheme.light(
+                                    primary: ColorsValue.primary,
+                                  ),
+                                ),
+                                child: child!,
+                              );
+                            },
+                          );
+                          if (picked != null) {
+                            controller.setFilters(
+                              fromDate: picked,
+                              toDate: controller.filterToDate,
+                              status: controller.filterStatus,
+                              assignedBy: controller.filterAssignedBy,
+                            );
+                          }
+                        },
+                        borderRadius: BorderRadius.circular(10),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 10,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(
+                              color: controller.filterFromDate != null
+                                  ? ColorsValue.primary
+                                  : Colors.grey.shade300,
+                            ),
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  controller.filterFromDate == null
+                                      ? 'From Date'
+                                      : DateFormat(
+                                          'dd-MM-yyyy',
+                                        ).format(controller.filterFromDate!),
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    fontWeight:
+                                        controller.filterFromDate != null
+                                        ? FontWeight.w600
+                                        : FontWeight.normal,
+                                    color: controller.filterFromDate != null
+                                        ? Colors.black87
+                                        : Colors.grey.shade600,
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                              const Icon(
+                                Icons.calendar_today,
+                                size: 14,
+                                color: ColorsValue.primary,
+                              ),
+                            ],
+                          ),
                         ),
-                        onPressed: () =>
-                            _showFilterBottomSheet(context, controller),
                       ),
                     ),
+                    const SizedBox(width: 8),
+                    const Text(
+                      'to',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.grey,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: InkWell(
+                        onTap: () async {
+                          final picked = await showDatePicker(
+                            context: context,
+                            initialDate:
+                                controller.filterToDate ??
+                                controller.filterFromDate ??
+                                DateTime.now(),
+                            firstDate:
+                                controller.filterFromDate ?? DateTime(2020),
+                            lastDate: DateTime(2100),
+                            builder: (context, child) {
+                              return Theme(
+                                data: Theme.of(context).copyWith(
+                                  colorScheme: const ColorScheme.light(
+                                    primary: ColorsValue.primary,
+                                  ),
+                                ),
+                                child: child!,
+                              );
+                            },
+                          );
+                          if (picked != null) {
+                            controller.setFilters(
+                              fromDate: controller.filterFromDate,
+                              toDate: picked,
+                              status: controller.filterStatus,
+                              assignedBy: controller.filterAssignedBy,
+                            );
+                          }
+                        },
+                        borderRadius: BorderRadius.circular(10),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 10,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(
+                              color: controller.filterToDate != null
+                                  ? ColorsValue.primary
+                                  : Colors.grey.shade300,
+                            ),
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  controller.filterToDate == null
+                                      ? 'To Date'
+                                      : DateFormat(
+                                          'dd-MM-yyyy',
+                                        ).format(controller.filterToDate!),
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: controller.filterToDate != null
+                                        ? FontWeight.w600
+                                        : FontWeight.normal,
+                                    color: controller.filterToDate != null
+                                        ? Colors.black87
+                                        : Colors.grey.shade600,
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                              const Icon(
+                                Icons.calendar_today,
+                                size: 14,
+                                color: ColorsValue.primary,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                    if (controller.filterFromDate != null ||
+                        controller.filterToDate != null) ...[
+                      const SizedBox(width: 8),
+                      InkWell(
+                        onTap: () {
+                          controller.setFilters(
+                            fromDate: null,
+                            toDate: null,
+                            status: controller.filterStatus,
+                            assignedBy: controller.filterAssignedBy,
+                          );
+                        },
+                        borderRadius: BorderRadius.circular(8),
+                        child: Container(
+                          padding: const EdgeInsets.all(9),
+                          decoration: BoxDecoration(
+                            color: Colors.red.shade50,
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: Colors.red.shade200),
+                          ),
+                          child: const Icon(
+                            Icons.close,
+                            size: 16,
+                            color: Colors.red,
+                          ),
+                        ),
+                      ),
+                    ],
                   ],
                 ),
                 const SizedBox(height: 16),
@@ -299,7 +527,7 @@ class _TasksScreenState extends State<TasksScreen> {
                       controller: _scrollController,
                       physics: const AlwaysScrollableScrollPhysics(),
                       itemCount:
-                          2 +
+                          1 +
                           (controller.isLoading
                               ? 1
                               : (controller.tasks.isEmpty
@@ -310,59 +538,106 @@ class _TasksScreenState extends State<TasksScreen> {
                                               : 0)))),
                       itemBuilder: (context, index) {
                         if (index == 0) {
-                          return Row(
-                            children: [
-                              Expanded(
-                                child: _buildStatusChip(
-                                  title: 'Pending',
-                                  count: controller.pendingCount,
-                                  color: Colors.amber.shade800,
-                                ),
-                              ),
-                              Expanded(
-                                child: _buildStatusChip(
-                                  title: 'Processing',
-                                  count: controller.processingCount,
-                                  color: Colors.blue,
-                                ),
-                              ),
-                              Expanded(
-                                child: _buildStatusChip(
-                                  title: 'Completed',
-                                  count: controller.completedCount,
-                                  color: Colors.green,
-                                ),
-                              ),
-                            ],
-                          );
-                        }
-                        if (index == 1) {
                           return Padding(
-                            padding: const EdgeInsets.only(top: 10, bottom: 16),
-                            child: Row(
-                              children: [
-                                Expanded(
-                                  child: _buildStatusChip(
+                            padding: const EdgeInsets.only(bottom: 16),
+                            child: SingleChildScrollView(
+                              scrollDirection: Axis.horizontal,
+                              physics: const BouncingScrollPhysics(),
+                              child: Row(
+                                children: [
+                                  _buildStatusChip(
+                                    title: 'Total',
+                                    count: controller.totalCount,
+                                    color: Colors.indigo.shade700,
+                                    isSelected: controller.filterStatus == null ||
+                                        controller.filterStatus!.isEmpty,
+                                    onTap: () => controller.filterByStatus(null),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  _buildStatusChip(
+                                    title: 'Pending',
+                                    count: controller.pendingCount,
+                                    color: Colors.amber.shade800,
+                                    isSelected: controller.filterStatus
+                                            ?.toLowerCase() ==
+                                        'pending',
+                                    onTap: () =>
+                                        controller.filterByStatus('pending'),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  _buildStatusChip(
+                                    title: 'Processing',
+                                    count: controller.processingCount,
+                                    color: Colors.blue,
+                                    isSelected: controller.filterStatus
+                                            ?.toLowerCase() ==
+                                        'processing',
+                                    onTap: () =>
+                                        controller.filterByStatus('processing'),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  _buildStatusChip(
+                                    title: 'Completed',
+                                    count: controller.completedCount,
+                                    color: Colors.green,
+                                    isSelected: controller.filterStatus
+                                            ?.toLowerCase() ==
+                                        'completed',
+                                    onTap: () =>
+                                        controller.filterByStatus('completed'),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  _buildStatusChip(
+                                    title: 'Reopen',
+                                    count: controller.reopenCount,
+                                    color: Colors.teal,
+                                    isSelected: controller.filterStatus
+                                            ?.toLowerCase() ==
+                                        'reopen',
+                                    onTap: () =>
+                                        controller.filterByStatus('reopen'),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  _buildStatusChip(
                                     title: 'Cancelled',
                                     count: controller.cancelledCount,
                                     color: Colors.red,
+                                    isSelected: controller.filterStatus
+                                            ?.toLowerCase() ==
+                                        'cancelled',
+                                    onTap: () =>
+                                        controller.filterByStatus('cancelled'),
                                   ),
-                                ),
-                                Expanded(
-                                  child: _buildStatusChip(
+                                  const SizedBox(width: 8),
+                                  _buildStatusChip(
                                     title: 'Before Due',
                                     count: controller.beforeDueCount,
                                     color: Colors.purple,
+                                    isSelected: controller.filterStatus
+                                                ?.toLowerCase() ==
+                                            'before_due' ||
+                                        controller.filterStatus
+                                                ?.toLowerCase() ==
+                                            'beforedue',
+                                    onTap: () =>
+                                        controller.filterByStatus('before_due'),
                                   ),
-                                ),
-                                Expanded(
-                                  child: _buildStatusChip(
+                                  const SizedBox(width: 8),
+                                  _buildStatusChip(
                                     title: 'After Due',
                                     count: controller.afterDueCount,
                                     color: Colors.blueGrey,
+                                    isSelected: controller.filterStatus
+                                                ?.toLowerCase() ==
+                                            'after_due' ||
+                                        controller.filterStatus
+                                                ?.toLowerCase() ==
+                                            'afterdue',
+                                    onTap: () =>
+                                        controller.filterByStatus('after_due'),
                                   ),
-                                ),
-                              ],
+                                ],
+                              ),
                             ),
                           );
                         }
@@ -400,7 +675,7 @@ class _TasksScreenState extends State<TasksScreen> {
                             ),
                           );
                         }
-                        final taskIndex = index - 2;
+                        final taskIndex = index - 1;
                         if (taskIndex == controller.tasks.length) {
                           return const Padding(
                             padding: EdgeInsets.symmetric(vertical: 16),
@@ -476,6 +751,10 @@ class _TasksScreenState extends State<TasksScreen> {
                                             child: Text('Completed'),
                                           ),
                                           PopupMenuItem(
+                                            value: 'reopen',
+                                            child: Text('Reopen'),
+                                          ),
+                                          PopupMenuItem(
                                             value: 'cancelled',
                                             child: Text('Cancelled'),
                                           ),
@@ -543,7 +822,7 @@ class _TasksScreenState extends State<TasksScreen> {
                                       child: ListView.separated(
                                         scrollDirection: Axis.horizontal,
                                         itemCount: task.attachment!.length,
-                                        separatorBuilder: (_, __) =>
+                                        separatorBuilder: (_, _) =>
                                             const SizedBox(width: 8),
                                         itemBuilder: (context, index) {
                                           final attach =
@@ -876,88 +1155,6 @@ class _TasksScreenState extends State<TasksScreen> {
                       ],
                     ),
                     const Divider(),
-                    const SizedBox(height: 8),
-
-                    // Date Range
-                    const Text(
-                      'Date Range',
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 14,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: OutlinedButton(
-                            style: OutlinedButton.styleFrom(
-                              padding: const EdgeInsets.symmetric(vertical: 12),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                            ),
-                            onPressed: () async {
-                              final picked = await showDatePicker(
-                                context: context,
-                                initialDate: tempFromDate ?? DateTime.now(),
-                                firstDate: DateTime(2020),
-                                lastDate: DateTime(2100),
-                              );
-                              if (picked != null) {
-                                setModalState(() => tempFromDate = picked);
-                              }
-                            },
-                            child: Text(
-                              tempFromDate == null
-                                  ? 'From Date'
-                                  : DateFormat(
-                                      'dd-MM-yyyy',
-                                    ).format(tempFromDate!),
-                              style: TextStyle(
-                                color: tempFromDate != null
-                                    ? Colors.black87
-                                    : Colors.grey.shade600,
-                              ),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: OutlinedButton(
-                            style: OutlinedButton.styleFrom(
-                              padding: const EdgeInsets.symmetric(vertical: 12),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                            ),
-                            onPressed: () async {
-                              final picked = await showDatePicker(
-                                context: context,
-                                initialDate: tempToDate ?? DateTime.now(),
-                                firstDate: DateTime(2020),
-                                lastDate: DateTime(2100),
-                              );
-                              if (picked != null) {
-                                setModalState(() => tempToDate = picked);
-                              }
-                            },
-                            child: Text(
-                              tempToDate == null
-                                  ? 'To Date'
-                                  : DateFormat(
-                                      'dd-MM-yyyy',
-                                    ).format(tempToDate!),
-                              style: TextStyle(
-                                color: tempToDate != null
-                                    ? Colors.black87
-                                    : Colors.grey.shade600,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
                     const SizedBox(height: 16),
 
                     // Status Dropdown
@@ -1004,6 +1201,10 @@ class _TasksScreenState extends State<TasksScreen> {
                           child: Text('Completed'),
                         ),
                         DropdownMenuItem(
+                          value: 'reopen',
+                          child: Text('Reopen'),
+                        ),
+                        DropdownMenuItem(
                           value: 'cancelled',
                           child: Text('Cancelled'),
                         ),
@@ -1048,7 +1249,7 @@ class _TasksScreenState extends State<TasksScreen> {
                       items: controller.usersList.map((user) {
                         return DropdownMenuItem(
                           value: user.id,
-                          child: Text(user.name ?? ""),
+                          child: Text(user.name),
                         );
                       }).toList(),
                       onChanged: (val) {

@@ -14,6 +14,22 @@ class TaskFormPage extends StatefulWidget {
 }
 
 class _TaskFormPageState extends State<TaskFormPage> {
+  String _formatRemarkDate(String? rawDate) {
+    if (rawDate == null || rawDate.trim().isEmpty) return '';
+    try {
+      final parsed = DateTime.parse(rawDate.trim()).toLocal();
+      return DateFormat('dd-MM-yyyy hh:mm a').format(parsed);
+    } catch (_) {
+      try {
+        final parsed =
+            DateFormat('yyyy-MM-dd HH:mm:ss').parse(rawDate.trim()).toLocal();
+        return DateFormat('dd-MM-yyyy hh:mm a').format(parsed);
+      } catch (_) {
+        return rawDate;
+      }
+    }
+  }
+
   Future<void> _selectDate(
     BuildContext context,
     TasksController controller,
@@ -381,6 +397,7 @@ class _TaskFormPageState extends State<TaskFormPage> {
                       value: 'completed',
                       child: Text('Completed'),
                     ),
+                    DropdownMenuItem(value: 'reopen', child: Text('Reopen')),
                     DropdownMenuItem(
                       value: 'cancelled',
                       child: Text('Cancelled'),
@@ -546,7 +563,7 @@ class _TaskFormPageState extends State<TaskFormPage> {
                           if (rem.date != null && rem.date!.isNotEmpty) ...[
                             const SizedBox(height: 4),
                             Text(
-                              rem.date!,
+                              _formatRemarkDate(rem.date),
                               style: TextStyle(
                                 fontSize: 10,
                                 color: Colors.grey.shade600,

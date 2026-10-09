@@ -105,6 +105,7 @@ class TasksController extends GetxController {
   int pendingCount = 0;
   int processingCount = 0;
   int completedCount = 0;
+  int reopenCount = 0;
   int cancelledCount = 0;
   int beforeDueCount = 0;
   int afterDueCount = 0;
@@ -155,6 +156,7 @@ class TasksController extends GetxController {
         pendingCount = response.data?.totalPending ?? 0;
         processingCount = response.data?.totalProcessing ?? 0;
         completedCount = response.data?.totalCompleted ?? 0;
+        reopenCount = response.data?.totalReopen ?? 0;
         cancelledCount = response.data?.totalCancelled ?? 0;
         beforeDueCount = response.data?.beforeDue ?? 0;
         afterDueCount = response.data?.afterDue ?? 0;
@@ -206,6 +208,17 @@ class TasksController extends GetxController {
     _searchTimer = Timer(const Duration(milliseconds: 500), () {
       fetchTasks(isRefresh: true);
     });
+  }
+
+  void filterByStatus(String? status) {
+    if (status == null || status.isEmpty) {
+      filterStatus = null;
+    } else if (filterStatus?.toLowerCase() == status.toLowerCase()) {
+      filterStatus = null; // Toggle off back to all tasks if clicked again
+    } else {
+      filterStatus = status;
+    }
+    fetchTasks(isRefresh: true);
   }
 
   void setFilters({

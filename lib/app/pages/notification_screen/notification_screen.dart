@@ -158,8 +158,8 @@ class NotificationScreen extends StatelessWidget {
                         // Start & End Date Range Picker Button
                         InkWell(
                           onTap: () async {
-                            final DateTimeRange? picked =
-                                await showDateRangePicker(
+                            final DateTimeRange?
+                            picked = await showDateRangePicker(
                               context: context,
                               firstDate: DateTime(2020),
                               lastDate: DateTime(2035),
@@ -184,45 +184,51 @@ class NotificationScreen extends StatelessWidget {
                                       onSecondary: Colors.white,
                                     ),
                                     datePickerTheme: DatePickerThemeData(
-                                      headerBackgroundColor: ColorsValue.primary,
+                                      headerBackgroundColor:
+                                          ColorsValue.primary,
                                       headerForegroundColor: Colors.white,
                                       rangePickerHeaderBackgroundColor:
                                           ColorsValue.primary,
                                       rangePickerHeaderForegroundColor:
                                           Colors.white,
-                                      rangeSelectionBackgroundColor:
-                                          ColorsValue.primary
-                                              .withValues(alpha: 0.18),
+                                      rangeSelectionBackgroundColor: ColorsValue
+                                          .primary
+                                          .withValues(alpha: 0.18),
                                       rangeSelectionOverlayColor:
                                           WidgetStateProperty.all(
-                                        ColorsValue.primary
-                                            .withValues(alpha: 0.12),
-                                      ),
+                                            ColorsValue.primary.withValues(
+                                              alpha: 0.12,
+                                            ),
+                                          ),
                                       todayBorder: const BorderSide(
                                         color: ColorsValue.primary,
                                       ),
                                       todayForegroundColor:
                                           WidgetStateProperty.all(
-                                        ColorsValue.primary,
-                                      ),
+                                            ColorsValue.primary,
+                                          ),
                                       dayForegroundColor:
-                                          WidgetStateProperty.resolveWith(
-                                              (states) {
-                                        if (states
-                                            .contains(WidgetState.selected)) {
-                                          return Colors.white;
-                                        }
-                                        return Colors.black87;
-                                      }),
+                                          WidgetStateProperty.resolveWith((
+                                            states,
+                                          ) {
+                                            if (states.contains(
+                                              WidgetState.selected,
+                                            )) {
+                                              return Colors.white;
+                                            }
+                                            return Colors.black87;
+                                          }),
                                       dayBackgroundColor:
-                                          WidgetStateProperty.resolveWith(
-                                              (states) {
-                                        if (states
-                                            .contains(WidgetState.selected)) {
-                                          return ColorsValue.primary;
-                                        }
-                                        return null;
-                                      }),
+                                          WidgetStateProperty.resolveWith((
+                                            states,
+                                          ) {
+                                            if (states.contains(
+                                              WidgetState.selected,
+                                            )) {
+                                              return ColorsValue.primary;
+                                            }
+                                            return null;
+                                          }),
                                     ),
                                   ),
                                   child: child!,
@@ -308,42 +314,42 @@ class NotificationScreen extends StatelessWidget {
                           ),
                         )
                       : controller.notifications.isEmpty
-                          ? _buildEmptyState(controller)
-                          : ListView.separated(
-                              controller: controller.scrollController,
-                              physics: const AlwaysScrollableScrollPhysics(),
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 16,
-                                vertical: 12,
-                              ),
-                              itemCount: controller.notifications.length +
-                                  (controller.isMoreLoading ? 1 : 0),
-                              separatorBuilder: (_, _) =>
-                                  const SizedBox(height: 10),
-                              itemBuilder: (context, index) {
-                                if (index == controller.notifications.length) {
-                                  return const Padding(
-                                    padding: EdgeInsets.all(16),
-                                    child: Center(
-                                      child: CircularProgressIndicator(
-                                        color: ColorsValue.primary,
-                                        strokeWidth: 2,
-                                      ),
-                                    ),
-                                  );
-                                }
-                                final item = controller.notifications[index];
-                                return _buildNotificationCard(
-                                  item: item,
-                                  onTap: () =>
-                                      controller.onNotificationTap(item),
-                                  onToggleRead: () =>
-                                      controller.toggleReadStatus(item),
-                                  onDelete: () => controller
-                                      .deleteNotification(item.id ?? ''),
-                                );
-                              },
-                            ),
+                      ? _buildEmptyState(controller)
+                      : ListView.separated(
+                          controller: controller.scrollController,
+                          physics: const AlwaysScrollableScrollPhysics(),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 12,
+                          ),
+                          itemCount:
+                              controller.notifications.length +
+                              (controller.isMoreLoading ? 1 : 0),
+                          separatorBuilder: (_, _) =>
+                              const SizedBox(height: 10),
+                          itemBuilder: (context, index) {
+                            if (index == controller.notifications.length) {
+                              return const Padding(
+                                padding: EdgeInsets.all(16),
+                                child: Center(
+                                  child: CircularProgressIndicator(
+                                    color: ColorsValue.primary,
+                                    strokeWidth: 2,
+                                  ),
+                                ),
+                              );
+                            }
+                            final item = controller.notifications[index];
+                            return _buildNotificationCard(
+                              item: item,
+                              onTap: () => controller.onNotificationTap(item),
+                              onToggleRead: () =>
+                                  controller.toggleReadStatus(item),
+                              onDelete: () =>
+                                  controller.deleteNotification(item.id ?? ''),
+                            );
+                          },
+                        ),
                 ),
               ),
             ],
@@ -473,11 +479,7 @@ class NotificationScreen extends StatelessWidget {
                   color: iconBgColor.withValues(alpha: 0.15),
                   shape: BoxShape.circle,
                 ),
-                child: Icon(
-                  iconData,
-                  color: iconBgColor,
-                  size: 22,
-                ),
+                child: Icon(iconData, color: iconBgColor, size: 22),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -492,8 +494,9 @@ class NotificationScreen extends StatelessWidget {
                             item.title ?? 'Notification',
                             style: TextStyle(
                               fontSize: 14,
-                              fontWeight:
-                                  isUnread ? FontWeight.w700 : FontWeight.w600,
+                              fontWeight: isUnread
+                                  ? FontWeight.w700
+                                  : FontWeight.w600,
                               color: Colors.black87,
                             ),
                             maxLines: 1,
@@ -582,10 +585,12 @@ class NotificationScreen extends StatelessWidget {
                         item.body!,
                         style: TextStyle(
                           fontSize: 13,
-                          color:
-                              isUnread ? Colors.black87 : Colors.grey.shade600,
-                          fontWeight:
-                              isUnread ? FontWeight.w500 : FontWeight.normal,
+                          color: isUnread
+                              ? Colors.black87
+                              : Colors.grey.shade600,
+                          fontWeight: isUnread
+                              ? FontWeight.w500
+                              : FontWeight.normal,
                           height: 1.3,
                         ),
                         maxLines: 3,
@@ -612,7 +617,9 @@ class NotificationScreen extends StatelessWidget {
                               borderRadius: BorderRadius.circular(6),
                               border: Border.all(
                                 color: isUnread
-                                    ? ColorsValue.primary.withValues(alpha: 0.25)
+                                    ? ColorsValue.primary.withValues(
+                                        alpha: 0.25,
+                                      )
                                     : Colors.grey.shade300,
                               ),
                             ),
@@ -665,7 +672,8 @@ class NotificationScreen extends StatelessWidget {
   }
 
   Widget _buildEmptyState(NotificationController controller) {
-    final bool hasFilter = controller.isReadFilter != null ||
+    final bool hasFilter =
+        controller.isReadFilter != null ||
         controller.isDateFilterActive ||
         controller.searchQuery.isNotEmpty;
 

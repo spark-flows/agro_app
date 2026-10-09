@@ -48,6 +48,7 @@ class Data {
   int? totalPending;
   int? totalProcessing;
   int? totalCompleted;
+  int? totalReopen;
   int? totalCancelled;
   int? beforeDue;
   int? afterDue;
@@ -66,6 +67,7 @@ class Data {
     this.totalPending,
     this.totalProcessing,
     this.totalCompleted,
+    this.totalReopen,
     this.totalCancelled,
     this.beforeDue,
     this.afterDue,
@@ -87,6 +89,7 @@ class Data {
     totalPending: json["totalPending"],
     totalProcessing: json["totalProcessing"],
     totalCompleted: json["totalCompleted"],
+    totalReopen: json["totalReopen"] ?? json["totalReopened"] ?? json["reopen"],
     totalCancelled: json["totalCancelled"],
     beforeDue: json["beforeDue"],
     afterDue: json["afterDue"],
@@ -108,6 +111,7 @@ class Data {
     "totalPending": totalPending,
     "totalProcessing": totalProcessing,
     "totalCompleted": totalCompleted,
+    "totalReopen": totalReopen,
     "totalCancelled": totalCancelled,
     "beforeDue": beforeDue,
     "afterDue": afterDue,

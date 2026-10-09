@@ -14,6 +14,7 @@ class SplashController extends GetxController {
   @override
   void onInit() {
     super.onInit();
+    FirebaseApi.onAppTerminateMode();
     startTimer();
   }
 
@@ -32,10 +33,11 @@ class SplashController extends GetxController {
         var profileResponse = await Get.find<Repository>().getProfileApi(
           isLoading: false,
         );
-        if (profileResponse != null && profileResponse.data != null) {
-          final profileData = profileResponse.data!.userData;
+        if (profileResponse != null) {
+          final profileData = profileResponse.data.userData;
           await Utility.saveUserSession(userData: profileData);
           RouteManagement.goToBottomScreen();
+          FirebaseApi.processPendingNotification();
         } else {
           // If offline or profile fetch failed, check if we have cached profile data
           String cachedProfile = await Get.find<Repository>().getSecureValue(
@@ -48,12 +50,15 @@ class SplashController extends GetxController {
               );
               await Utility.saveUserSession(userData: cachedData);
               RouteManagement.goToBottomScreen();
+              FirebaseApi.processPendingNotification();
               return;
             } catch (_) {}
           }
+          FirebaseApi.clearPendingNotification();
           await Utility.logout();
         }
       } else {
+        FirebaseApi.clearPendingNotification();
         RouteManagement.goToAuthScreen();
       }
     });

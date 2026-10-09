@@ -23,6 +23,12 @@ class HomeController extends GetxController {
     fetchUnreadNotificationsCount();
   }
 
+  @override
+  void onReady() {
+    super.onReady();
+    FirebaseApi.processPendingNotification();
+  }
+
   Future<void> _loadRoleFromLocal() async {
     // 1. Try reading role and username from storage
     final storedRole = await Utility.getRoleName();
